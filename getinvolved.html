@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <title>Get Involved!</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+    />
+    <link rel="icon" href="images/favicons/favicon.png" />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta
+      property="og:image"
+      content="images/logo_transparent_small_original.png"
+    />
+
+    <link rel="stylesheet" href="./css/master.css" />
+    <script type="module" src="./js/reusableComponents.js"></script>
+  </head>
+
+  <body class="body">
+    <our-header></our-header>
+    <button id="toggle-dark-mode">☀️</button>
+
+    <!-- Wrapper -->
+    <div id="wrapper" , class="dark-mode">
+      <!-- Main -->
+      <section id="main" , class="longform dark-mode">
+        <h1>Get Involved!</h1>
+
+        <h2>Join A Team</h2>
+        <p>
+          At Code Collective, our people are our most valuable asset. Whether you are talented at computer development, life sciences, or community organizing, Code Collective wants you! Please submit an application at the following link. 
+        </p>
+        <p>
+          <a
+            href="https://forms.gle/q5UrAsHN7iQoUC4T8"
+            target="_blank"
+            >Join Us</a
+          >
+        </p>
+
+        <h2>Give a Lightning Talk</h2>
+        <p>
+          Interested in giving a quick, focused presentation? Sign up to give a
+          Lightning Talk, a 10-minute technical discussion followed by 5 minutes
+          of Q&A.
+        </p>
+        <p>
+          <a
+            href="https://forms.gle/7Mx6NvjBovTtxAZy5"
+            target="_blank"
+            >Sign up to Give a Lightning Talk</a
+          >
+        </p>
+
+        <h2>Improve this Site</h2>
+        <p>
+          Code Collective is seeking talented Web Developers to assist in the maintenance of
+          this website.
+        </p>
+        <p>
+          <a
+            href="https://github.com/julianfl0w/CodeCollective"
+            target="_blank"
+            >Submit a PR at the GitHub</a
+          >
+        </p>
+      </section>
+
+      <our-footer></our-footer>
+    </div>
+
+    <our-slack-link></our-slack-link>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        document.body.classList.add("loaded"); // Adds the 'loaded' class to the body to trigger the fade-in effect
+      });
+    </script>
+    <script src="./lightdark.js"></script>
+    <script src="./js/scripts.js" type="module"></script>
+  </body>
+</html>

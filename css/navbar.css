@@ -1,0 +1,336 @@
+/* Basic reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Navbar container */
+.navbar {
+  background-color: #fff;
+  color: #a0d6ff;
+  overflow: hidden;
+  justify-content: center;
+  gap: 1em;
+  display: flex;
+  padding: 10px;
+  border-bottom: solid 1px black;
+  width: 100%;
+}
+
+.navbar.dark-mode {
+  background-color: #002a61;
+  overflow: hidden;
+  border-bottom: solid 1px white;
+}
+
+.navbar a {
+  --s: 0.1em;
+  /* the thickness of the line */
+  --c: #002a61;
+  /* the color */
+
+  color: #0000;
+  padding: .5em .5em;
+  width: 100%;
+  text-align: center;
+  padding-bottom: var(--s);
+  background:
+    linear-gradient(90deg, var(--c) 50%, #000 0) calc(100% - var(--_p, 0%))/200% 100%,
+    linear-gradient(var(--c) 0 0) 0% 100%/var(--_p, 0%) var(--s) no-repeat;
+  -webkit-background-clip: text, padding-box;
+  background-clip: text, padding-box;
+  transition: 0.5s;
+  font-family: system-ui, sans-serif;
+  font-size: 1.5rem;
+  cursor: pointer;
+  text-decoration: none;
+  width: 230px;
+  display: block;
+}
+
+.navbar a {
+  --s: 0.1em;
+  /* the thickness of the line */
+  --c: #002a61;
+  /* the color */
+
+  color: #0000;
+  padding: .5em .5em;
+  width: 100%;
+  text-align: center;
+  padding-bottom: var(--s);
+  background:
+    linear-gradient(90deg, var(--c) 50%, #000 0) calc(100% - var(--_p, 0%))/200% 100%,
+    linear-gradient(var(--c) 0 0) 0% 100%/var(--_p, 0%) var(--s) no-repeat;
+  -webkit-background-clip: text, padding-box;
+  background-clip: text, padding-box;
+  transition: 0.5s;
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  width: 230px;
+  display: block;
+}
+
+.navbar a:hover {
+  --_p: 100%;
+}
+
+.navbar.dark-mode a {
+  --c: #ffffff;
+  /* Set the color to white in dark mode */
+  color: white;
+  /* Set text color to white */
+}
+
+.mobile-nav-bars {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  border: none;
+  background-color: #002a61;
+
+  .bar {
+    width: 25px;
+    height: 3px;
+    background-color: #fff;
+    ;
+  }
+
+  .bar.dark-mode {
+    width: 25px;
+    height: 3px;
+    background-color: #fff;
+    ;
+  }
+}
+
+.main-nav {
+  height: auto;
+  background-color: #002a61;
+  display: flex;
+  justify-content: center;
+  /* padding: 20px; */
+}
+
+.main-nav.dark-mode{
+  height: auto;
+  background-color: #002a61;
+  display: flex;
+  justify-content: center;
+  /* padding: 20px; */
+}
+
+button:focus {
+  outline: none;
+  background-color: #002a61;
+}
+
+.mobile-open {
+  .navbar {
+    display: flex;
+  }
+}
+
+
+/* Add responsiveness */
+@media screen and (max-width: 800px) {
+  .navbar {
+    flex-direction: column;
+    display: none;
+    border-bottom: none;
+
+    a {
+      font-size: 1.5rem;
+    }
+  }
+
+  .mobile-nav-bars {
+    display: flex;
+  }
+
+  .main-nav {
+    justify-content: right;
+    padding: 20px;
+  }
+
+  .main-nav.mobile-closed {
+    animation-name: slideUp;
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+    position: absolute;
+    z-index: 3;
+
+    .navbar {
+      display: flex;
+      justify-content: flex-start;
+      width: 100%;
+      /* animation-name: hideAfterSlideUp;
+      animation-duration: 1s;
+      animation-fill-mode: forwards; */
+    }
+
+    .navbar a {
+      text-align: left;
+    }
+
+    .top.bar {
+      position: relative;
+      animation-name: unTiltDown;
+      animation-duration: .5s;
+      animation-fill-mode: forwards;
+    }
+
+    .bottom.bar {
+      animation-name: unTiltUp;
+      animation-duration: .5s;
+      animation-fill-mode: forwards;
+    }
+
+    .middle.bar {
+      animation-name: fadeIn;
+      animation-duration: .5s;
+      animation-fill-mode: forwards;
+    }
+  }
+
+  .main-nav.mobile-open {
+    animation-name: slideDown;
+    animation-duration: 1s;
+    animation-fill-mode: forwards;
+    position: absolute;
+    z-index: 3;
+
+    .navbar {
+      display: flex;
+      justify-content: flex-start;
+      width: 100%;
+    }
+
+    .navbar a {
+      text-align: left;
+    }
+
+    .top.bar {
+      position: relative;
+      animation-name: tiltDown;
+      animation-duration: .5s;
+      animation-fill-mode: forwards;
+    }
+
+    .bottom.bar {
+      animation-name: tiltUp;
+      animation-duration: .5s;
+      animation-fill-mode: forwards;
+    }
+
+    .middle.bar {
+      animation-name: fadeOut;
+      animation-duration: .5s;
+      animation-fill-mode: forwards;
+    }
+  }
+
+  @keyframes slideDown {
+    0% {
+      height: 56px
+    }
+
+    100% {
+      height: 100vh;
+    }
+  }
+
+  @keyframes slideUp {
+    0% {
+      height: 100vh;
+    }
+
+    100% {
+      height: 56px;
+      position: static
+    }
+  }
+
+  @keyframes hideAfterSlideUp {
+    0% {
+      display: flex
+    }
+
+    99% {
+      display: flex
+    }
+
+    100% {
+      display: none
+    }
+  }
+
+  @keyframes tiltUp {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(45deg);
+    }
+  }
+
+  @keyframes unTiltUp {
+    0% {
+      transform: rotate(45deg);
+    }
+
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  @keyframes tiltDown {
+    0% {
+      top: 0px;
+      transform: rotate(0deg);
+    }
+
+    100% {
+      top: 14px;
+      transform: rotate(-45deg);
+    }
+  }
+
+  @keyframes unTiltDown {
+    0% {
+      top: 14px;
+      transform: rotate(-45deg);
+    }
+
+    100% {
+      top: 0px;
+      transform: rotate(0deg);
+    }
+  }
+
+  @keyframes fadeOut {
+    0% {
+      opacity: 1
+    }
+
+    50% {
+      opacity: 0
+    }
+
+    100% {
+      opacity: 0
+    }
+  }
+}
+
+
+/* Materialize overrides */
+@media only screen and (max-width: 800px) {
+  .navbar {
+    line-height: initial;
+  }
+}

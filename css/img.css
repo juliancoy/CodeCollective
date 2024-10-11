@@ -1,0 +1,140 @@
+.img-fluid {
+	max-width: 40%;
+	height: auto;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background-color: #FFF;
+	text-align: center;
+	padding: 5px;
+	margin: 0px;
+}
+
+.card-image {
+	position: relative;
+	width: 300px;
+	/* Ensure square dimensions */
+	height: 300px;
+	/* Ensure square dimensions */
+	margin-bottom: 15px;
+	/* Space between image and text */
+	overflow: hidden;
+	/* Ensure the image does not overflow */
+	border-radius: 50%;
+	/* Ensures the container is circular */
+}
+
+.circle-image {
+	border-radius: 50%;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	/* Ensures the image covers the container */
+	display: block;
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background-color: #FFF;
+	text-align: left;
+	padding: 5px;
+	margin: 0px 0px;
+}
+
+
+.card.dark-mode {
+	background-color: #002a61;
+}
+
+.card-image {
+	position: relative;
+	width: 250px;
+	/* Adjust the width as needed */
+	height: 250px;
+	/* Adjust the height as needed */
+	margin-bottom: 15px;
+	/* Space between image and text */
+	overflow: hidden;
+	/* Ensure the image does not overflow */
+}
+
+.circle-image {
+	border-radius: 50%;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	/* Ensures the image covers the container */
+}
+
+.hover-image {
+	position: absolute;
+	top: 0;
+	left: 0;
+	opacity: 0;
+	transition: opacity 0.3s ease-in-out;
+	width: 100%;
+	height: 100%;
+}
+
+.card-image:hover .hover-image {
+	opacity: 1;
+}
+
+.card-image:hover img:not(.hover-image) {
+	opacity: 0;
+}
+
+.card-content {
+	padding: 0px 0px;
+	margin: 0px 0px;
+	line-height: 1.2;
+	text-align: left;
+	background-color: #fff;
+}
+
+.card-content.dark-mode {
+	color: #fff;
+	background-color: #002a61;
+}
+
+
+.imageBox {
+	position: relative;
+	width: 250px;
+	/* Ensure square dimensions */
+	height: 250px;
+	/* Ensure square dimensions */
+	margin-bottom: 15px;
+	/* Space between image and text */
+}
+
+.imageBox .hoverImg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	display: none;
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	/* Ensures hover image remains circular */
+}
+
+.imageBox:hover .hoverImg {
+	border-radius: 50%;
+	display: block;
+}
+
+.imageBox:hover .hoverImg {
+	display: block;
+}
+
+.imageInn {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}

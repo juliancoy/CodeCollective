@@ -1,0 +1,18 @@
+# Allow all web crawlers access to everything
+User-agent: *
+Disallow:
+
+# Block a specific folder (example: /private-folder/)
+User-agent: *
+Disallow: /templates/
+
+# Block a specific file (example: /no-access.html)
+User-agent: *
+Disallow: /no-access.html
+
+# Allow Googlebot access to everything (replace Googlebot with another bot name if needed)
+User-agent: Googlebot
+Disallow:
+
+# Sitemap location
+Sitemap: https://baltimorecodecollective.us/sitemap.xml

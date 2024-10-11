@@ -1,0 +1,205 @@
+@import url(fontawesome.min.css);
+
+/* # Webfonts */
+@font-face {
+  font-family: NectoMono;
+  src: url(../fonts/CLT-NectoMono/web/NectoMono-Regular.woff2) format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: MaziusDisplay;
+  src: url(../fonts/CLT-MaziusDisplay/web/MaziusDisplay-Bold.woff2) format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: Mattone;
+  src: url(../fonts/CLT-Mattone/web/Mattone-Black.woff2) format("woff2");
+  font-weight: 900;
+  font-style: normal;
+}
+
+.font-Mattone-regular {
+  font-family: "Mattone";
+  font-weight: 400;
+}
+
+.font-Mattone-bold {
+  font-family: "Mattone";
+  font-weight: 700;
+}
+
+.font-Mattone-black {
+  font-family: "Mattone";
+  font-weight: 900;
+}
+
+.font-MaziusDisplay-bold {
+  font-family: "MaziusDisplay";
+  font-weight: 700;
+}
+
+.font-NectoMono-regular {
+  font-family: "NectoMono";
+  font-weight: 400;
+}
+
+::selection {
+  background: #002a61;
+  color: #fff;
+}
+
+/* Button */
+
+#wrapper .title {
+  position: relative;
+  display: block;
+  margin-bottom: 1em;
+
+  font-family: "Mattone";
+  letter-spacing: 0em;
+  font-size: 2em;
+  color: #002a61;
+}
+
+.type-wrapper {
+  /*This part is important for centering*/
+  display: grid;
+  place-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.typing-demo {
+  width: 13ch;
+  animation: typing 2s steps(22), blink 0.5s step-end infinite alternate;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 3px solid;
+  font-family: monospace;
+  font-size: 1.5em;
+}
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes blink {
+  50% {
+    border-color: transparent;
+  }
+}
+
+#wrapper h1,
+#wrapper h2,
+#wrapper h3,
+#wrapper h4,
+#wrapper h5,
+#wrapper h6 {
+  line-height: 1.2;
+  margin: 1.5em 0 0.5em 0;
+  font-family: "Mattone";
+  font-weight: 400;
+  border-bottom: solid 2px black;
+}
+
+#wrapper h1 {
+  color: #002a61;
+  font-size: 1.5em;
+}
+
+#wrapper h2 {
+  color: rgb(0, 0, 255);
+  font-size: 1.2em;
+}
+
+#wrapper h3 {
+  color: rgb(0, 72, 197);
+  font-size: 1em;
+}
+
+#wrapper h4 {
+  color: purple;
+  font-size: 0.9em;
+}
+
+#wrapper h5 {
+  color: green;
+  font-size: 0.75em;
+}
+
+#wrapper h6 {
+  color: green;
+  font-size: 0.6em;
+}
+
+@media screen and (max-width: 800px) {
+  #wrapper {
+    padding: 4em 2em 2.5em 2em;
+    width: 100%;
+  }
+}
+
+/* Wrapper Section Fade-In Effect */
+#wrapper {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+  position: relative;
+  height: 100%;
+  padding: 1em 15em;
+  z-index: 2;
+  background: #ade0ff;
+  box-sizing: border-box;
+  border-bottom: solid 2px white;
+  /* Ensures padding is included within the height/width */
+}
+
+#wrapper.dark-mode {
+  background: #002a61;
+  border-bottom: solid 2px white;
+}
+
+#wrapper:before {
+  content: "";
+  display: block;
+}
+
+@media screen and (max-width: 800px) {
+  #wrapper {
+    padding: 4em 2em 2.5em 2em;
+    padding: 0.75em;
+  }
+}
+
+/* Button styles */
+#toggle-dark-mode {
+  position: fixed;
+  bottom: 15px;
+  left: 20px;
+  padding: 10px 20px;
+  background-color: transparent;
+  color: #fff;
+  border-color: transparent;
+  cursor: pointer;
+  border-radius: 5px;
+  z-index: 100;
+}
+
+#toggle-dark-mode:hover {
+  background-color: #555;
+}
+
+#home-wrapper {
+  max-height: 90vh;
+  /* Force the height to 60vh */
+  position: relative;
+  /* Ensure positioning context for contained elements */
+}
