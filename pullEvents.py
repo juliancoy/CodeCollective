@@ -7,7 +7,7 @@ import pytz
 
 # Define the timezone for EST
 utc_timezone = pytz.timezone("UTC")
-est_timezone = pytz.timezone("US/Eastern")
+est_timezone = pytz.timezone("America/New_York")
 
 # URL of the Baltimore Code Collective Meetup group
 MEETUP_URL = "https://www.meetup.com/code-collective/"

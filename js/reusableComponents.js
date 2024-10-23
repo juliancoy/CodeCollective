@@ -42,7 +42,7 @@ class OurSlackLink extends HTMLElement {
                 >
                     <button class="slack-social__button">
                     <img
-                        src="./images/slack_icon.png"
+                        src="/images/slack_icon.png"
                         alt="Slack icon"
                         class="slack-social__icon"
                     />
