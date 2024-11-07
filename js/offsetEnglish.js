@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", function () {
             if (previousTop !== null && currentTop > previousTop) {
                 // If word is on a new line, add spacing
                 if (lineNo % 3 == 1) {
-                    wordSpan.style.marginTop = "0.2em";
+                    wordSpan.style.marginTop = "0.1em";
                 }
                 if (lineNo % 3 == 2) {
-                    wordSpan.style.marginTop = "0.1em";
+                    wordSpan.style.marginTop = "0.05em";
                 }
                 lineNo++;
             }

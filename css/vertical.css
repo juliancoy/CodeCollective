@@ -9,8 +9,15 @@
 }
 
 @font-face {
+    font-family: 'ChineseRocksHalf';
+    src: url('/fonts/chinese_rocks_rg_halfheight.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
     font-family: 'ChineseRocks';
-    src: url('/fonts/chinese rocks rg.otf') format('opentype');
+    src: url('/fonts/chinese_rocks_rg.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
 }
@@ -27,21 +34,22 @@
     align-items: flex-start;
     /* Align items at the top of the container */
     width: 100%;
+    text-align: left;
 }
 
 /* Vertical text styling for English */
 .vertical-text.english {
     /*font-family: 'Bungee', sans-serif;
     font-family: 'Noto Sans JP', sans-serif;*/
-    font-family: 'ChineseRocks', sans-serif;
-    font-size: 1.2em;
+    font-family: 'ChineseRocksHalf', sans-serif;
+    font-size: 2.4em;
     writing-mode: vertical-lr;
     text-orientation: upright;
-    line-height: 1.6;
-    letter-spacing: -0.2em; /*Slightly reduces space between characters */
+    /* transform: scaleY(0.5); Compresses vertically */
+    line-height: 1;
+    letter-spacing: -0.9em; /*Slightly reduces space between characters */
     white-space: normal;
     overflow-wrap: break-word;
-    text-align: left;
     flex-grow: 1;
     /* Allows English to take up available space on the left */
 
@@ -63,7 +71,6 @@
     line-height: 1.6;
     white-space: normal;
     overflow-wrap: break-word;
-    text-align: left;
     flex-grow: 0;
     /* Chinese text remains at the right */
 }
