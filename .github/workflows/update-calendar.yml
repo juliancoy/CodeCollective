@@ -1,0 +1,47 @@
+name: Update Calendar
+
+on:
+  push:
+    branches:
+      - main  # Runs on push to the main branch (adjust if needed)
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+
+jobs:
+  update_calendar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run getCalendar.py
+        run: |
+          python getCalendar.py
+
+      - name: Check for changes
+        run: |
+          if git diff --exit-code calendar.html; then
+            echo "No changes in calendar.html"
+            exit 0
+          else
+            echo "Changes detected in calendar.html"
+          fi
+
+      - name: Commit and push changes
+        if: always()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add calendar.html
+          git commit -m "Update calendar.html"
+          git push

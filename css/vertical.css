@@ -1,0 +1,65 @@
+/* Load the custom font */
+@import url('https://fonts.googleapis.com/css2?family=Bungee&display=swap');
+
+@font-face {
+    font-family: 'NulshockBold';
+    src: url('/fonts/nulshock_bd.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'ChineseRocks';
+    src: url('/fonts/chinese_rocks_rg.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+/* Adjust vertelements to display columns */
+.vertelements {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    justify-content: space-between;
+    /* Distribute space between elements */
+    align-items: flex-start;
+    /* Align items at the top of the container */
+    width: 100%;
+}
+
+/* Vertical text styling for English */
+.vertical-text.english {
+    font-family: 'Bungee', sans-serif;
+    font-size: 1.2em;
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+    line-height: 1.6;
+    /* letter-spacing: -0.2em; Slightly reduces space between characters */
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: left;
+    flex-grow: 1;
+    /* Allows English to take up available space on the left */
+
+}
+
+/* Vertical text styling for Whitespace */
+.vertical-text.whitespace {
+    flex-grow: 1;
+    /* Expands to fill the middle space */
+}
+
+/* Vertical text styling for Chinese */
+.vertical-text.chinese {
+    font-family: 'ChineseRocks', sans-serif;
+    font-size: 2em;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    line-height: 1.6;
+    white-space: normal;
+    overflow-wrap: break-word;
+    text-align: right;
+    flex-grow: 0;
+    /* Chinese text remains at the right */
+}

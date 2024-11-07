@@ -150,16 +150,28 @@
   display: flex;
   align-items: center;
   flex-direction: column;
-  -webkit-perspective: 1000px;
-  perspective: 1000px;
   position: relative;
   height: 100%;
   padding: 1em 15em;
   z-index: 2;
   background: #ade0ff;
-  box-sizing: border-box;
-  border-bottom: solid 2px white;
+  border-bottom: solid 2px 002a61;
   /* Ensures padding is included within the height/width */
+}
+
+#wrapper.horizontal {
+  padding: 2em 2em;
+  /* Reduced padding for the horizontal layout */
+  height: auto;
+  /* Occupy full viewport height */
+  overflow: hidden;
+  /* Prevent any overflow that might cause scroll */
+  overflow-y: hidden;
+  /* Prevent vertical scrolling */
+  overflow-x: auto;
+  /* Allow horizontal expansion */
+  flex-direction: row;
+  /* Ensure content flows horizontally */
 }
 
 #wrapper.dark-mode {
@@ -167,10 +179,11 @@
   border-bottom: solid 2px white;
 }
 
+/*
 #wrapper:before {
   content: "";
   display: block;
-}
+}*/
 
 @media screen and (max-width: 800px) {
   #wrapper {
@@ -198,7 +211,7 @@
 }
 
 #home-wrapper {
-  max-height: 90vh;
+  max-height: 90%;
   /* Force the height to 60vh */
   position: relative;
   /* Ensure positioning context for contained elements */

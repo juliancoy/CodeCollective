@@ -6,7 +6,7 @@ const slackButton = document.getElementById("slackButton");
 const cardContentElements = document.querySelectorAll(".card-content");
 const cardElements = document.querySelectorAll(".card");
 const navbarElements = document.querySelectorAll(".navbar");
-const mainnavElements = document.querySelectorAll("main-nav");
+const mainnavElements = document.querySelectorAll(".main-nav");
 
 // Flatten NodeLists into arrays
 const cardContentArray = Array.from(cardContentElements);

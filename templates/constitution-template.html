@@ -1,81 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      property="og:image"
-      content="images/logo_transparent_small_original.png"
-    />
-    <title>Constitution and Bylaws</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
-    />
-    <link rel="icon" href="images/favicons/favicon.png" />
-    <link rel="stylesheet" href="./css/master.css" />
-    <script type="module" src="./js/reusableComponents.js"></script>
-  </head>
 
-  <body class="body">
-    <our-header></our-header>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta property="og:image" content="images/logo_transparent_small_original.png" />
+  <title>Constitution and Bylaws</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+  <link rel="icon" href="/images/favicons/favicon.png" />
+  <link rel="stylesheet" href="./css/master.css" />
+  <script type="module" src="./js/reusableComponents.js"></script>
+</head>
 
-    <button id="toggle-dark-mode">☀️</button>
-
-    <!-- Wrapper -->
-    <div id="wrapper" , class="dark-mode">
-      <!-- Main -->
-      <section id="main" class="longform dark-mode">
-        <h1>Constitution</h1>
-        <h3>Disclaimer</h3>
-        <p style="font-size: 0.7em; line-height: 1">
-          The organizational descriptions provided herein are intended solely as
-          non-binding guidelines for informational purposes. They are not
-          ratified or endorsed by any legal or governing authority and do not
-          create any legal rights, obligations, or responsibilities. These
-          descriptions are not to be construed as formal agreements or
-          contracts, and they do not impose any binding commitments or
-          liabilities upon any parties involved. The content herein should be
-          used as a reference only and may be subject to change without notice.
-          Any reliance on these descriptions is at the sole discretion and risk
-          of the reader.
-        </p>
-
-        <h3>Motivation</h3>
-        <p style="font-size: 0.7em; line-height: 1">
-          For some introductory notes on the motivation for this document,
-          please see
-          <a href="./philosophy-cnb.html"
-            >Philosophy of Constitution and Bylaws</a
-          >
-        </p>
-        <h3>Contribute!</h3>
-        <p style="font-size: 0.7em; line-height: 1">
-          The document that follows is a formatted snapshot of the
-          <a
-            href="https://docs.google.com/document/d/165qyAEnNhpsRHSHNbQh6Q5TFea9YgmJftDFAeXLMcOY/edit?usp=sharing"
-            >Google Doc</a
-          >. If you would like to contribute to these Constitution and Bylaws
-          prior to ratification, please do so there.
-        </p>
-
-        <br />
-        <hr />
-        ORG_STRUCTURE
-      </section>
-
-      <our-footer></our-footer>
+<body class="body">
+  <nav class="main-nav">
+    <div class="navbar dark-mode">
+      <a href="/index.html" target="_top">Home</a>
+      <a href="/calendar.html" target="_top">Calendar</a>
+      <a href="/curriculum.html" target="_top">Curriculum</a>
+      <a href="/getinvolved.html" target="_top">Get Involved!</a>
+      <a href="/sponsors.html" target="_top">Sponsors</a>
+      <a href="/about-us.html" target="_top">About Us</a>
     </div>
+    <button class="mobile-nav-bars">
+      <div class="top bar"></div>
+      <div class="middle bar"></div>
+      <div class="bottom bar"></div>
+    </button>
+  </nav>
 
-    <our-slack-link></our-slack-link>
+  <button id="toggle-dark-mode">☀️</button>
 
-    <!-- Scripts -->
-    <script src="./lightdark.js">
-      document.addEventListener("DOMContentLoaded", function() {
-          document.body.classList.add("loaded"); // Add 'loaded' class when the document is fully loaded
-          });
-    </script>
-    <script src="./lightdark.js"></script>
-    <script src="./js/scripts.js" type="module"></script>
-  </body>
+  <!-- Wrapper -->
+  <div id="wrapper" , class="dark-mode">
+    <!-- Main -->
+    <section id="main" class="longform dark-mode">
+      <h1>Constitution</h1>
+      <h3>Disclaimer</h3>
+      <p style="font-size: 0.7em; line-height: 1">
+        The organizational descriptions provided herein are intended solely as
+        non-binding guidelines for informational purposes. They are not
+        ratified or endorsed by any legal or governing authority and do not
+        create any legal rights, obligations, or responsibilities. These
+        descriptions are not to be construed as formal agreements or
+        contracts, and they do not impose any binding commitments or
+        liabilities upon any parties involved. The content herein should be
+        used as a reference only and may be subject to change without notice.
+        Any reliance on these descriptions is at the sole discretion and risk
+        of the reader.
+      </p>
+
+      <h3>Motivation</h3>
+      <p style="font-size: 0.7em; line-height: 1">
+        For some introductory notes on the motivation for this document,
+        please see
+        <a href="./philosophy-cnb.html">Philosophy of Constitution and Bylaws</a>
+      </p>
+      <h3>Contribute!</h3>
+      <p style="font-size: 0.7em; line-height: 1">
+        The document that follows is a formatted snapshot of the
+        <a href="https://docs.google.com/document/d/165qyAEnNhpsRHSHNbQh6Q5TFea9YgmJftDFAeXLMcOY/edit?usp=sharing">Google
+          Doc</a>. If you would like to contribute to these Constitution and Bylaws
+        prior to ratification, please do so there.
+      </p>
+
+      <br />
+      <hr />
+      ORG_STRUCTURE
+    </section>
+
+    <our-footer></our-footer>
+  </div>
+
+  <our-slack-link></our-slack-link>
+
+  <!-- Scripts -->
+  <script src="./lightdark.js">
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.classList.add("loaded"); // Add 'loaded' class when the document is fully loaded
+    });
+  </script>
+  <script src="./lightdark.js"></script>
+  <script src="./js/scripts.js" type="module"></script>
+</body>
+
 </html>

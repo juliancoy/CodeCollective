@@ -7,7 +7,6 @@
     background: #a0d6ff;
     cursor: default;
     max-width: 100%;
-    position: relative;
     text-align: center;
     width: 36em;
     color: #002a61;
@@ -18,6 +17,24 @@
     border-radius: 30px;
     -webkit-filter: drop-shadow(2px 2px 0px #002a61);
     filter: drop-shadow(4px 4px 0px #002a61);
+    box-sizing: border-box;
+    /* Include padding and border in width calculation */
+
+}
+
+#main.horizontal {
+    padding: 2em 2em;
+    width: 100%;
+    /* Take full width in horizontal layout */
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    /* Prevent horizontal overflow */
+    overflow-y: hidden;
+    /* Prevent vertical overflow */
 }
 
 #main img {
@@ -28,7 +45,6 @@
     margin: 0 auto;
     /* Centers the image horizontally */
 }
-
 
 @media screen and (max-width: 800) {
     #main {
@@ -82,8 +98,6 @@
     background: #002a61;
     color: #fff;
     border: 4px solid #fff;
-    border-radius: 30px;
-
 }
 
 /* Dark Mode - Inverse Highlight Color */

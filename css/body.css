@@ -1,8 +1,32 @@
 #body {
-  position: relative;
-  min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* Arrange elements in a column */
+    gap: 0;
+    /* No space between elements */
+    padding: 0;
+    /* Remove any default padding on the body */
+    margin: 0;
+    /* Remove any default margin on the body */
+    min-height: 100vh;
+    /* Ensure it takes the full viewport height */
+    box-sizing: border-box;
+    /* Include padding/border in element dimensions */
+    background-color: #002a61;
 }
 
-#body.dark-mode {
-  background: #002a61;
+#body.horizontal {
+    height: 100vh;
+    /* Ensure it takes the full viewport height */
+    min-height: 0px;
+    /* Ensure it takes the full viewport height */
+}
+
+
+
+#html {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    background-color: #002a61;
 }
