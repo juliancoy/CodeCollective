@@ -47,10 +47,10 @@
   font-weight: 400;
 }
 
-::selection {
+/* ::selection {
   background: #002a61;
   color: #fff;
-}
+}*/
 
 /* Button */
 
@@ -154,9 +154,14 @@
   height: 100%;
   padding: 1em 15em;
   z-index: 2;
-  background: #ade0ff;
   border-bottom: solid 2px 002a61;
-  /* Ensures padding is included within the height/width */
+  /* background: #ade0ff;
+  Ensures padding is included within the height/width */
+
+  background-image: url('/images/people_bg.jpg');
+  background-size: cover; /* Ensures the image covers the entire background */
+  background-position: center; /* Centers the image */
+  background-repeat: no-repeat; /* Prevents tiling */
 }
 
 #wrapper.horizontal {
@@ -175,7 +180,7 @@
 }
 
 #wrapper.dark-mode {
-  background: #002a61;
+  /*background: #002a61;*/
   border-bottom: solid 2px white;
 }
 

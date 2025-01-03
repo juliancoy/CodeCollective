@@ -42,9 +42,6 @@ def parse_meetup_html(page_content):
         except json.JSONDecodeError:
             continue
 
-    if not events_json:
-        raise Exception("No events data found in the HTML page.")
-
     return events_json
 
 

@@ -1,6 +1,5 @@
 import json
-with open("curriculum.json", 'r') as f:
-    curriculum = json.loads(f.read())
+from curriculum import curriculum
 
 def toHTML(indict, depth = 1):
     retstring = ""
@@ -14,7 +13,7 @@ def toHTML(indict, depth = 1):
             continue
         retstring += f"<h{depth}>{k}"
         if type(v) is dict and "meta" in v.keys() and "required" in v["meta"].keys():
-            retstring += f' ({v["meta"]["required"][0]} Required)\n'
+            retstring += f' ({v["meta"]["required"]} Required)\n'
         retstring += f"</h{depth}>\n"
         retstring += "<ol>\n"
         retstring += f"{toHTML(v, depth=depth+1)}\n"

@@ -1,6 +1,9 @@
-{
+curriculum = {
+  "Introduction": 
+    "The Cybernetics Curriculum has been developed to encourage standards and professionalism in computer science. It is roughly as rigorous as a collegiate Bachelor\'s degree. The Master\'s variant includes additional courses, and necessitates a thesis defense. Anyone who completes this program may apply for a degree"
+  ,
   "Code Collective Cybernetics Curriculum": {
-    "Observe The Cosmos": {
+    "Natural Science": {
       "meta": {
         "required": 1
       },
@@ -26,7 +29,7 @@
         }
       }
     },
-    "Observe Humankind": {
+    "Human Science": {
       "meta": {
         "required": 4
       },
@@ -127,7 +130,7 @@
         }
       }
     },
-    "Design Systems": {
+    "Engineering": {
       "meta": {
         "required": 4
       },
@@ -174,18 +177,6 @@
           ]
         }
       },
-      "Agile Scrum Practitioner": {
-        "meta": {
-          "reference": ["scrum.org"]
-        }
-      },
-      "Google Project Management: Professional Certificate": {
-        "meta": {
-          "reference": [
-            "https://www.coursera.org/google-certificates/project-management-certificate"
-          ]
-        }
-      },
       "Neural Networks and Deep Learning": {
         "meta": {
           "reference": [
@@ -222,8 +213,24 @@
         }
       }
     },
-
-    "Cloud Cert": {
+    "Leadership": {
+      "meta": {
+        "required": 1
+      },
+      "Agile Scrum Practitioner": {
+        "meta": {
+          "reference": ["scrum.org"]
+        }
+      },
+      "Google Project Management: Professional Certificate": {
+        "meta": {
+          "reference": [
+            "https://www.coursera.org/google-certificates/project-management-certificate"
+          ]
+        }
+      }
+    },
+    "Cloud Certification": {
       "meta": {
         "required": 1
       },
@@ -256,7 +263,7 @@
         }
       }
     },
-    "Maintain Humankind": {
+    "Medical Sciences": {
       "meta": {
         "required": 4
       },
