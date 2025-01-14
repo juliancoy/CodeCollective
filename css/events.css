@@ -1,0 +1,103 @@
+.event-card {
+    background-color: transparent;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
+}
+
+.event-title {
+    font-size: 1.5em;
+    margin: 0 0 10px;
+}
+
+.event-title a {
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.event-title a:hover {
+    color: #0056b3;
+}
+
+.event-subtitle {
+    font-size: 1.2em;
+    margin: 15px 0 5px;
+}
+
+.event-date,
+.event-location {
+    font-size: 1em;
+    margin: 0 0 10px;
+    line-height: 1.5;
+}
+
+.event-description {
+    font-size: 1em;
+    margin: 0 0 10px;
+    max-height: 60px; /* Adjust based on your needs */
+    line-height: 1.5;
+    position: relative;
+    overflow: hidden;
+}
+
+.event-description.collapsed {
+    max-height: 60px; /* Adjust based on your needs */
+}
+
+.event-description.expanded {
+    max-height: none;
+}
+
+.see-more {
+    color: #007bff;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.see-more:hover {
+    text-decoration: underline;
+}
+
+.divider {
+    border: 0;
+    height: 1px;
+    background: #ddd;
+    margin: 20px 0;
+}
+
+.event-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.event-actions button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.event-actions button:hover {
+    background-color: #0056b3;
+}
+.event-image {
+    border-radius: 2rem; /* Rounded corners */
+    object-fit: cover; /* Ensure the image covers the area without distortion */
+    margin-bottom: 1rem; /* Add some spacing below the image */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border: 2px solid #e0e0e0; /* Optional: Add a light border */
+    width: 100%; /* Fill the width of the container */
+    height: 100%; /* Fill the height of the container */
+    display: block; /* Remove extra space below the image */
+}

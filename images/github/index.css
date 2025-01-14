@@ -1,0 +1,93 @@
+body {
+    font-family: Georgia, serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers horizontally */
+    justify-content: center; /* Centers vertically */
+    font-size: large;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-color: white;
+    color: white;
+}
+
+.step {
+    background: linear-gradient(to bottom, #860083, #310030);
+    color: white;
+    width: calc(90% - 3rem); /* Adjusted width to account for border and padding */
+    height: 95vh; /* Use viewport height to fill the screen */
+    border-radius: 8rem;
+    margin: 10px;
+    padding: 20px;
+    box-shadow: 0 1rem 1rem #ffffff1a;
+    text-align: left;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers children horizontally */
+    justify-content: center; /* Centers children vertically */
+    position: relative;
+    border: 1.5rem solid black; /* Added 10% border */
+    box-sizing: border-box; /* Ensures padding and border are included in the element's total width and height */
+}
+
+.swipe {
+    text-align: right;
+    font-size: 2.5em;
+    font-weight: bold;
+    color: white;
+    position: absolute; /* Position absolutely within the .step container */
+    bottom: 1rem; /* Distance from the bottom */
+    right: 4rem; /* Distance from the right */
+    margin: 0; /* Remove any default margins */
+}
+
+.step h3 {
+    margin: 10px 30px;
+    font-size: 7em;
+    flex: 1; /* Allows h3 to grow and take up available space */
+}
+
+.step p {
+    margin-top: 3rem;
+    margin-bottom: 0;
+    font-size: 3em; /* Adjusted paragraph text size for better readability */
+    line-height: 1.2;
+    flex: 2; /* Allows p to grow and take up more space */
+}
+
+.diagram {
+    flex: 3; /* Allows diagram to grow and take up the most space */
+    width: 100%;
+    height: 40vh; /* Set a fixed height for the diagram container */
+    background-color: transparent;
+    border-radius: 5rem;
+    border: 0rem solid white;
+    text-align: center;
+    overflow: hidden; /* Ensures content stays within bounds */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.innerimage {
+    width: 100%;
+    height: auto; /* Maintains the aspect ratio of the image */
+    object-fit: contain; /* Ensures the image fits without cropping */
+    display: block;
+    max-height: 100%; /* Prevents the image from exceeding container height */
+    max-width: 100%; /* Prevents the image from exceeding container width */
+    margin: 0; /* Removes unnecessary margins */
+}
+
+.error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 20px;
+    text-align: center;
+}

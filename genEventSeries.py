@@ -69,15 +69,14 @@ def parse_meetup_html(page_content):
             
     return events_json
 
-
-def create_html(events):
+def create_html(events, seriesName):
     """Creates an HTML string for the events, including event images."""
-    html_content = "<h1>Upcoming Events for Baltimore Code Collective</h1>"
+    html_content = f"<h1>{seriesName}</h1>"
 
     if not events:
         html_content += "<p>No upcoming events at this time.</p>"
     else:
-        for event in events:
+        for index, event in enumerate(events):
             print(json.dumps(event, indent=2))
             event_name = escape(event.get("name", "No title available"))
             event_date = event.get("startDate", "No date available")
@@ -110,39 +109,29 @@ def create_html(events):
                         <img src="{event_image}" alt="{event_name}" class="event-thumbnail">
                     </div>
                 """
+            
+            # Alternate the layout for each event
+            if index % 2 == 0:
+                layout_class = "event-card-left"
+            else:
+                layout_class = "event-card-right"
                 
-                html_content += f"""
-                    <div class="event-card">
-                        {image_html}
-                        <div class="event-content">
-                            <div class="event-detail">
-                                <h4 class="event-date">{event_date} EST</h4>
-                                <p class="event-location">@{event_location}</p>
-                            </div>
-                            <h2 class="event-title">
-                                <a href="{event_link}" target="_blank">{event_name}</a>
-                            </h2>
-                            <div class="event-details">
-                                <div class="event-description collapsed">{event_description}</div>
-                                <span class="see-more" onclick="toggleDescription(this)">See more</span>
-                            </div>
-                            <div class="event-actions">
-                                <button class="rsvp-button">RSVP</button>
-                                <button class="share-button">Share</button>
-                            </div>
+            html_content += f"""
+                <div class="event-card {layout_class}">
+                    <div class="event-content">
+                        <h2 class="event-title">
+                            <a href="{event_link}" target="_blank">{event_name}</a>
+                        </h2>
+                        <div class="event-detail">
+                            <h4 class="event-date">{event_date} EST</h4>
+                            <p class="event-location">@{event_location}</p>
+                            {image_html}
                         </div>
                     </div>
-                    <hr class="divider">
-                """
+                </div>
+                <hr class="divider">
+            """
     return html_content
-
-
-def save_html_file(content, filename="calendar.html"):
-    """Saves the HTML content to a file."""
-    with open(filename, "w", encoding="utf-8") as file:
-        file.write(content)
-    print(f"HTML file saved as {filename}")
-
 
 if __name__ == "__main__":
     # Fetch the Meetup page content
@@ -154,10 +143,15 @@ if __name__ == "__main__":
     events = parse_meetup_html(page_content)
 
     # Create HTML content for the events
-    html_content = create_html(events)
+    html_content = create_html(events, "Code Collective Workshop Series at Dear Globe")
 
     with open("templates/events-template.html", "r") as f:
         html_template = f.read()
 
     # Save the HTML content to a file
-    save_html_file(html_template.replace("EVENTS_HTML", html_content))
+    html_template = html_template.replace("EVENTS_HTML", html_content)
+
+    """Saves the HTML content to a file."""
+    with open("series.html", "w", encoding="utf-8") as file:
+        file.write(html_template)
+    print(f"HTML file saved as {"series.html"}")

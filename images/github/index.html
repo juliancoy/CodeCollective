@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Basic Proficiency Steps</title>
+    
+    <link rel="stylesheet" href="index.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.4.0/mermaid.min.js"></script>
+</head>
+
+<body>
+    <div class="container" id="steps-container">
+        <!-- Steps with Mermaid diagrams will be dynamically generated here -->
+    </div>
+
+    <script src="json2mmd.js"></script>
+    <script>
+        // Initialize when the DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            json2html('steps.json', 'steps-container');
+        });
+    </script>
+</body>
+
+</html>

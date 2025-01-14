@@ -1,0 +1,175 @@
+[
+    {
+        "Step": "Fork",
+        "Description": "Create a copy of the repository in your own GitHub account",
+        "Diagram": {
+            "type": "graph",
+            "direction": "TD",
+            "nodes": [
+                {
+                    "id": "B",
+                    "label": "main",
+                    "shape": "circle"
+                },
+                {
+                    "id": "C",
+                    "label": "main",
+                    "shape": "circle"
+                },
+                {
+                    "id": "D",
+                    "label": "yours",
+                    "shape": "circle"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "B",
+                    "to": "C"
+                },
+                {
+                    "from": "B",
+                    "to": "D",
+                    "label": "Fork"
+                }
+            ]
+        }
+    },
+    {
+        "Step": "Clone",
+        "Description": "Download your version of the code to your computer",
+        "Diagram": {
+            "type": "graph",
+            "direction": "TD",
+            "nodes": [
+                {
+                    "id": "B",
+                    "label": "GitHub",
+                    "shape": "square"
+                },
+                {
+                    "id": "C",
+                    "label": "⠀Local⠀",
+                    "shape": "square"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "B",
+                    "to": "C",
+                    "label": "Clone"
+                }
+            ]
+        }
+    },
+    {
+        "Step": "Run",
+        "Description": "Run the code to ensure it works as expected",
+        "Diagram": {
+            "type": "graph",
+            "direction": "TD",
+            "nodes": [
+                {
+                    "id": "A",
+                    "label": "# npm install⠀\n# npm run dev",
+                    "shape": "square"
+                }
+            ],
+            "edges": []
+        }
+    },
+    {
+        "Step": "Code",
+        "Description": "Add the changes or new features you want to implement",
+        "URL": "/images/github/woman-3597095_1280.jpg"
+    },
+    {
+        "Step": "Commit",
+        "Description": "Save your changes to the version history with a descriptive message",
+        "Diagram": {
+            "type": "graph",
+            "direction": "TD",
+            "nodes": [
+                {
+                    "id": "A",
+                    "label": "yours 1.0.0",
+                    "shape": "circle"
+                },
+                {
+                    "id": "B",
+                    "label": "yours 1.0.1",
+                    "shape": "circle"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "A",
+                    "to": "B"
+                }
+            ]
+        }
+    },
+    {
+        "Step": "Push",
+        "Description": "Upload your changes to your repository on GitHub",
+        "Diagram": {
+            "type": "graph",
+            "direction": "BT",
+            "nodes": [
+                {
+                    "id": "B",
+                    "label": "GitHub",
+                    "shape": "square"
+                },
+                {
+                    "id": "C",
+                    "label": "⠀Local⠀",
+                    "shape": "square"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "C",
+                    "to": "B",
+                    "label": "Push"
+                }
+            ]
+        }
+    },
+    {
+        "Step": "Pull Request",
+        "Description": "Request the code maintainer to review and accept your changes",
+        "Diagram": {
+            "type": "graph",
+            "direction": "TD",
+            "nodes": [
+                {
+                    "id": "B",
+                    "label": "yours",
+                    "shape": "circle"
+                },
+                {
+                    "id": "C",
+                    "label": "main",
+                    "shape": "circle"
+                },
+                {
+                    "id": "D",
+                    "label": "main",
+                    "shape": "circle"
+                }
+            ],
+            "edges": [
+                {
+                    "from": "B",
+                    "to": "D",
+                    "label": "P.R."
+                },
+                {
+                    "from": "C",
+                    "to": "D"
+                }
+            ]
+        }
+    }
+]
