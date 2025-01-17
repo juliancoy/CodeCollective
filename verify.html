@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>
+        Code Collective | Professional Development through Team Building
+    </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+    <link rel="icon" href="/images/favicons/favicon.png" />
+
+    <link rel="canonical" href="https://codecollective.us/" />
+    <meta property="og:type" content="Code Collective" />
+    <meta property="og:url" content="https://codecollective.us/" />
+    <meta property="og:site_name" content="Code Collective" />
+    <meta property="og:title" content="Code Collective" />
+    <meta property="og:description" content="Professional Development through Team Building." />
+    <meta name="description" content="Professional Development through Team Building." />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <link rel="stylesheet" href="/css/master.css" />
+    <script type="module" src="/js/reusableComponents.js"></script>
+</head>
+
+<body id="body">
+    <nav class="main-nav">
+        <div class="navbar dark-mode">
+            <a href="/index.html" target="_top">Home</a>
+            <a href="/calendar.html" target="_top">Calendar</a>
+            <a href="/curriculum.html" target="_top">Curriculum</a>
+            <a href="/getinvolved.html" target="_top">Get Involved!</a>
+            <a href="/sponsors.html" target="_top">Sponsors</a>
+            <a href="/about-us.html" target="_top">About Us</a>
+        </div>
+        <button class="mobile-nav-bars">
+            <div class="top bar"></div>
+            <div class="middle bar"></div>
+            <div class="bottom bar"></div>
+        </button>
+    </nav>
+
+    <button id="toggle-dark-mode">☀️</button>
+
+    <!-- Wrapper -->
+    <div id="wrapper" , class="dark-mode">
+        <!-- Main -->
+        <section id="main" , class="longform dark-mode">
+            <header class=""></header>
+            <div id="verification-container">
+                <img id="verification-image" src="/images/github-basic.webp" alt="Verification Image"
+                    style="border: 5px solid transparent;">
+                <p id="verification-status">Verifying...</p>
+                <div id="verification-details"></div> <!-- Changed from <pre> to <div> for table -->
+            </div>
+
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    // Extract query parameters from the URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const timename = urlParams.get('timename') || '2025-01-17_02:33:16_UTC_Julian_Coy'; // Default value
+                    const tablename = urlParams.get('tablename') || 'github-basic'; // Default value
+
+                    // Construct the API URL dynamically
+                    const apiUrl = `https://e9qo6paygh.execute-api.us-east-1.amazonaws.com/main/verify?timename=${timename}&tablename=${tablename}`;
+
+                    const imageElement = document.getElementById("verification-image");
+                    const statusElement = document.getElementById("verification-status");
+                    const detailsElement = document.getElementById("verification-details");
+
+                    // Add initial styling to the status element
+                    statusElement.style.fontSize = "24px"; // Large text
+                    statusElement.style.fontWeight = "bold"; // Bold text
+                    statusElement.style.padding = "10px"; // Add some padding
+                    statusElement.style.borderRadius = "5px"; // Rounded corners
+
+                    fetch(apiUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        }).then(data => {
+                            if (data.statusCode === 200) {
+                                const body = JSON.parse(data.body);
+                                imageElement.style.borderColor = "green";
+                                statusElement.textContent = "VERIFIED";
+                                statusElement.style.color = "white"; // White text
+                                statusElement.style.backgroundColor = "green"; // Green background
+
+                                // Format JSON into a vertical table
+                                const table = document.createElement("table");
+                                table.classList.add("striped"); // Add Materialize CSS styling
+
+                                // Create table body
+                                const tbody = document.createElement("tbody");
+
+                                // Iterate over the key-value pairs and create a row for each
+                                Object.entries(body).forEach(([key, value]) => {
+                                    const row = document.createElement("tr");
+
+                                    // Create and append the key cell
+                                    const keyCell = document.createElement("td");
+                                    keyCell.textContent = key;
+                                    keyCell.style.fontWeight = "bold"; // Make keys bold for better readability
+                                    row.appendChild(keyCell);
+
+                                    // Create and append the value cell
+                                    const valueCell = document.createElement("td");
+                                    valueCell.textContent = value;
+                                    row.appendChild(valueCell);
+
+                                    // Append the row to the table body
+                                    tbody.appendChild(row);
+                                });
+
+                                // Append the table body to the table
+                                table.appendChild(tbody);
+
+                                // Append table to the details container
+                                detailsElement.appendChild(table);
+                            } else {
+                                imageElement.style.borderColor = "red";
+                                statusElement.textContent = "NOT VERIFIED";
+                                statusElement.style.color = "white"; // White text
+                                statusElement.style.backgroundColor = "red"; // Red background
+                                detailsElement.textContent = "Verification failed. Please check the parameters.";
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Fetch error:", error);
+                            imageElement.style.borderColor = "red";
+                            statusElement.textContent = "NOT VERIFIED";
+                            statusElement.style.color = "white"; // White text
+                            statusElement.style.backgroundColor = "red"; // Red background
+                            detailsElement.textContent = "An error occurred while verifying. Please try again later.";
+                        });
+                });
+            </script>
+        </section>
+
+        <our-footer></our-footer>
+    </div>
+
+    <our-slack-link></our-slack-link>
+
+    <!-- Scripts -->
+    <!-- Clicky Analytics -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.body.classList.add("loaded"); // Add 'loaded' class when the document is fully loaded
+        });
+    </script>
+    <script src="/lightdark.js"></script>
+    <script src="/js/scripts.js" type="module"></script>
+    <script async data-id="101449400" src="//static.getclicky.com/js"></script>
+</body>
+
+</html>

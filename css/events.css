@@ -6,6 +6,21 @@
     padding: 20px;
     margin: 20px auto;
     max-width: 600px;
+    display: flex;
+    align-items: center; /* Center items vertically */
+    gap: 20px; /* Space between image and text */
+}
+
+.event-card-left {
+    flex-direction: row; /* Image on the left, text on the right */
+}
+
+.event-card-right {
+    flex-direction: row-reverse; /* Image on the right, text on the left */
+}
+
+.event-content {
+    flex: 1; /* Allow text content to take up remaining space */
 }
 
 .event-title {
@@ -14,7 +29,7 @@
 }
 
 .event-title a {
-    text-decoration: none;
+    text-decoration: none; /* Remove underline from links */
     transition: color 0.3s;
 }
 
@@ -57,6 +72,7 @@
     font-size: 0.9em;
     margin-top: 10px;
     display: inline-block;
+    text-decoration: none; /* Remove underline from "see more" links */
 }
 
 .see-more:hover {
@@ -91,13 +107,18 @@
 .event-actions button:hover {
     background-color: #0056b3;
 }
+
 .event-image {
     border-radius: 2rem; /* Rounded corners */
-    object-fit: cover; /* Ensure the image covers the area without distortion */
-    margin-bottom: 1rem; /* Add some spacing below the image */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-    border: 2px solid #e0e0e0; /* Optional: Add a light border */
-    width: 100%; /* Fill the width of the container */
-    height: 100%; /* Fill the height of the container */
+    width: 300px; /* Fixed width for the image */
+    height: 200px; /* Fixed height for the image */
+    flex-shrink: 0; /* Prevent the image from shrinking */
+    overflow: visible; /* Ensure the image is not clipped */
+}
+
+.event-image img {    
+    height: 100%;
+    border-radius: 2rem; /* Match the container's border radius */
+    object-fit: scale-down; /* Ensure the image fills the container */
     display: block; /* Remove extra space below the image */
 }

@@ -73,6 +73,7 @@ def parse_meetup_html(page_content):
 def create_html(events):
     """Creates an HTML string for the events, including event images."""
     html_content = "<h1>Upcoming Events for Baltimore Code Collective</h1>"
+    html_content += '<a href="https://www.meetup.com/code-collective/">Join our Meetup!</a>'
 
     if not events:
         html_content += "<p>No upcoming events at this time.</p>"

@@ -5,6 +5,15 @@ import datetime
 from html import escape
 import markdown
 import pytz
+import os
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 # Define the timezone for EST
 utc_timezone = pytz.timezone("UTC")
@@ -13,6 +22,26 @@ est_timezone = pytz.timezone("America/New_York")
 # URL of the Baltimore Code Collective Meetup group
 MEETUP_URL = "https://www.meetup.com/code-collective/"
 
+import time
+def html2image(html_filename_in, browser, output_dir="screenshots", index=0):
+    # Load the temporary HTML file in the browser
+    browser.get(f"http://localhost:8000/{html_filename_in}")
+
+    try:
+        #WebDriverWait(browser, 5).until(
+        #    EC.presence_of_element_located((By.CSS_SELECTOR, '.event-description'))
+        #)
+        time.sleep(2)
+        print("HTML rendered successfully.")
+    except TimeoutException:
+        print(f"Warning: Content not found for step {index}. Skipping screenshot.")
+        return
+
+    # Take a screenshot
+    screenshot_path = os.path.join(output_dir, html_filename_in + ".png")
+    browser.save_screenshot(screenshot_path)
+    print(f"Saved screenshot for step {index}: {screenshot_path}")
+    return screenshot_path
 
 def fetch_meetup_page(url):
     """Fetches the HTML content of the Meetup page."""
@@ -69,6 +98,23 @@ def parse_meetup_html(page_content):
             
     return events_json
 
+def setup_browser(aspect=1):
+    chrome_options = Options()
+    chrome_options.add_argument('--headless')  # Run in headless mode
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+
+    # Set the path to the ChromeDriver
+    service = Service('/usr/bin/chromedriver')  # Update this to the actual path
+    browser = webdriver.Chrome(service=service, options=chrome_options)
+
+    # Set the window size to 1:1.91 aspect ratio (LinkedIn recommended size)
+    width = 4000  # Width in pixels
+    height = int(width * aspect)  # Calculate height based on the aspect ratio
+    browser.set_window_size(width, height)  # Set the browser window size
+
+    return browser
+
 def create_html(events, seriesName):
     """Creates an HTML string for the events, including event images."""
     html_content = f"<h1>{seriesName}</h1>"
@@ -80,6 +126,7 @@ def create_html(events, seriesName):
             print(json.dumps(event, indent=2))
             event_name = escape(event.get("name", "No title available"))
             event_date = event.get("startDate", "No date available")
+            
             # Assuming event_date is in ISO format with 'Z' at the end, indicating UTC
             event_date = datetime.datetime.fromisoformat(event_date.replace("Z", ""))
             # Convert to UTC timezone first
@@ -87,8 +134,8 @@ def create_html(events, seriesName):
             # Then convert to EST
             event_date_est = event_date.astimezone(est_timezone)
 
-            # Format the date into a string as required
-            event_date = event_date_est.strftime("%Y-%m-%d %H:%M:%S")
+            # Format the date into a human-readable string with the day of the week
+            event_date = event_date_est.strftime("%A, %B %d, %Y, %I:%M %p")  # Example: Saturday, October 15, 2023, 2:30 PM
 
             event_description = escape(
                 event.get("description", "No description available")
@@ -118,19 +165,18 @@ def create_html(events, seriesName):
                 
             html_content += f"""
                 <div class="event-card {layout_class}">
+                    {image_html}
                     <div class="event-content">
                         <h2 class="event-title">
                             <a href="{event_link}" target="_blank">{event_name}</a>
                         </h2>
                         <div class="event-detail">
-                            <h4 class="event-date">{event_date} EST</h4>
+                            <h4 class="event-date">{event_date}</h4>
                             <p class="event-location">@{event_location}</p>
-                            {image_html}
                         </div>
                     </div>
                 </div>
-                <hr class="divider">
-            """
+                """
     return html_content
 
 if __name__ == "__main__":
@@ -150,8 +196,12 @@ if __name__ == "__main__":
 
     # Save the HTML content to a file
     html_template = html_template.replace("EVENTS_HTML", html_content)
-
-    """Saves the HTML content to a file."""
+    html_template = html_template.replace("[Free, IN-PERSON]", "")
+    html_template = html_template.replace("[IN-PERSON]", "")
+    
     with open("series.html", "w", encoding="utf-8") as file:
         file.write(html_template)
     print(f"HTML file saved as {"series.html"}")
+
+    html2image(html_filename_in="series.html", browser=setup_browser(), output_dir=".")
+    """Saves the HTML content to a file."""
