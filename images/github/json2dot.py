@@ -111,7 +111,7 @@ conclusionHTML =f"""
     </div>
     """
 
-def setup_browser(aspect=1):
+def setup_browser(aspect=1920.0/1080):
     chrome_options = Options()
     chrome_options.add_argument('--headless')  # Run in headless mode
     chrome_options.add_argument('--no-sandbox')

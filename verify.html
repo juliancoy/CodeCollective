@@ -49,7 +49,7 @@
         <section id="main" , class="longform dark-mode">
             <header class=""></header>
             <div id="verification-container">
-                <img id="verification-image" src="/images/github-basic.webp" alt="Verification Image"
+                <img id="verification-image" src="/images/version-control-basic.webp" alt="Verification Image"
                     style="border: 5px solid transparent;">
                 <p id="verification-status">Verifying...</p>
                 <div id="verification-details"></div> <!-- Changed from <pre> to <div> for table -->
@@ -59,7 +59,7 @@
                 document.addEventListener("DOMContentLoaded", function () {
                     // Extract query parameters from the URL
                     const urlParams = new URLSearchParams(window.location.search);
-                    const timename = urlParams.get('timename') || '2025-01-17_02:33:16_UTC_Julian_Coy'; // Default value
+                    const timename = urlParams.get('timename'); // Default value
                     const tablename = urlParams.get('tablename') || 'github-basic'; // Default value
 
                     // Construct the API URL dynamically
