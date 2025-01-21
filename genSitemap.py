@@ -4,7 +4,7 @@ from urllib.parse import urljoin
 import datetime
 
 # Base URL of your site
-BASE_URL = "https://www.codecollective.us"
+BASE_URL = "https://codecollective.us"
 
 # Directory where index.html is located
 HTML_FILE = "index.html"
