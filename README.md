@@ -2,7 +2,7 @@
 
 The official website of Code Collective.  
 The main branch here is hosted directly as:  
-https://baltimorecodecollective.us/  
+https://codecollective.us/  
 using GitHub pages
 
 ## Contributing to the Project
