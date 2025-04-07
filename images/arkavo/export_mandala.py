@@ -19,7 +19,7 @@ def radial_unity_to_cartesian(radial_data, height, width):
 
     centerY = int(height / 2)
     centerX = int(width / 2)
-    max_dim = min(width/2, height/2)
+    max_dim = min(width/2, height/2) -1
 
     # Denormalize radial coordinates
     r = r_unity * max_dim
@@ -71,8 +71,7 @@ if __name__ == "__main__":
     filename = sys.argv[1]
     output_video = filename + "_output.mp4"  # Output video file name
     output_image = filename + "_output.png"
-    repetitions = 3
-    frames_per_rep = 60
+    frame_count = 300
 
     input_image = cv2.imread(filename)
     input_image = quadrupleMirror(input_image)
@@ -90,36 +89,42 @@ if __name__ == "__main__":
     #input_r_unity, input_t_unity = compute_unity_coordinates(height=input_height,width=input_width)
     output_coords_radial = cartesian_to_radial_unity(height=output_height,width=output_width)
     #modular system on radius
-    output_coords_radial[:,:,0] *= 3
-    output_coords_radial[:,:,1] = np.fmod(output_coords_radial[:,:,1], 1)
-    sample_coords = radial_unity_to_cartesian(output_coords_radial, input_height, input_width).astype(int)
-    print(np.min(sample_coords[:,:,1]))
-    print("sampling")
-    print(sample_coords.shape)
+    output_coords_radial[:,:,0] *= 12
+    repititions = 3
+    #original_r = np.fmod(output_coords_radial[:,:,1],1)
+    phase = 0
+    output_coords_radial[:,:,0] += 0.25
+    phase = repititions * (1 / frame_count)
 
-    # Split the sample_coords into separate y and x indices (to keep from killing the computer)
-    y_indices = sample_coords[..., 0].astype(int)  # Extract y-coordinates
-    x_indices = sample_coords[..., 1].astype(int)  # Extract x-coordinates
+    for j in range(frame_count):
+        print(f"   {j} {phase}")
+        
+        output_coords_radial[:,:,1] = np.fmod(output_coords_radial[:,:,1] + phase, 1)
+        thisoutput = np.copy(output_coords_radial)
+        #thisoutput[:,:,1] = np.power(output_coords_radial[:,:,1], 5)
+        
+        sample_coords = radial_unity_to_cartesian(thisoutput, input_width, input_height).astype(int)
 
-    mandala = input_image[y_indices, x_indices]
-    print("writing")
-    cv2.imwrite(output_image, mandala)
-    die
-    for i in range(repetitions):
-        for j in range(frames_per_rep):
-            phase = j / frames_per_rep
-            C.updateR(phase)
-            print(np.max(C.r_unity))
-            print(f"Phase: {phase}")
+        # Split the sample_coords into separate y and x indices (to keep from killing the computer)
+        y_indices = sample_coords[..., 0].astype(int)  # Extract y-coordinates
+        x_indices = sample_coords[..., 1].astype(int)  # Extract x-coordinates
+        #debug_image = (y_indices * 255).astype(np.uint8)
+        #cv2.imshow("Debug", cv2.resize(debug_image,(200,200)))
+        #cv2.waitKey(0)  # Wait for 1 ms to update the display
 
-            mandala_img = input_image[C.t_unity, C.r_unity]
 
-            # Ensure the generated image has the correct size
-            if mandala_img.shape[1] != output_frame_size[0] or mandala_img.shape[0] != output_frame_size[1]:
-                raise(Exception(f"Wrong Size {mandala_img.shape, output_frame_size}"))
-            
-            # Write frame to video
-            video_writer.write(mandala_img)
+        mandala_img = input_image[y_indices, x_indices]
+
+        # Create a grayscale image where pixel intensity corresponds to r_unity
+        cv2.imshow("Debug", cv2.resize(mandala_img,(200,200)))
+        cv2.waitKey(1)  # Wait for 1 ms to update the display
+
+        # Ensure the generated image has the correct size
+        if mandala_img.shape[1] != output_frame_size[0] or mandala_img.shape[0] != output_frame_size[1]:
+            raise(Exception(f"Wrong Size {mandala_img.shape, output_frame_size}"))
+        
+        # Write frame to video
+        video_writer.write(mandala_img)
 
     # Release the VideoWriter
     video_writer.release()

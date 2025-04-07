@@ -1,0 +1,3 @@
+ffmpeg -i gradient.png_output.mp4 -vf reverse -af areverse arkgrad_rev.mp4
+ffmpeg -i arkgrad_rev.mp4 -i devstack_transparent_2.png -filter_complex "[0:v]scale=1080:1920[bg];[bg][1:v]overlay=0:0" -an -loop 0 -r 15 -q:v 80 gradient_arkavo_2.mp4
+ffmpeg -i gradient_arkavo_2.mp4 -i attack-on-titan-t-kt-hiroyuki-sawano-made-with-Voicemod.mp3 -c:v copy -c:a aac -shortest arkavo_stack_final.mp4
