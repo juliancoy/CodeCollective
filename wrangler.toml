@@ -1,0 +1,15 @@
+name = "codecollective-site"
+main = "cloudflare/worker.js"
+compatibility_date = "2026-04-24"
+
+[assets]
+directory = ".cloudflare/site"
+binding = "ASSETS"
+
+[vars]
+GOVERNANCE_API_ORIGIN = "https://portal.arkavo.org"
+PIDP_API_ORIGIN = "https://pidp.arkavo.org"
+
+[[r2_buckets]]
+binding = "JOBS_BUCKET"
+bucket_name = "codecollective-usajobs"

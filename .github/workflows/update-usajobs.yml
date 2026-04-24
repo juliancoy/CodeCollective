@@ -2,71 +2,62 @@ name: Update USAJOBS Data
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Runs weekly on Sunday at 00:00 UTC (once a week)
-  workflow_dispatch:  # Allows manual trigger from the Actions tab
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
 
 jobs:
-  update_usajobs:
+  update_usajobs_and_publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-
-      - name: Compute USAJOBS cache key
-        id: usajobs_cache_key
-        run: |
-          echo "key=usajobs-gz-${{ runner.os }}-$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore USAJOBS gzip cache
-        id: usajobs_cache_restore
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            usa/data/usajobs.json.gz
-            usa/data/usajobs-lite.json.gz
-          key: ${{ steps.usajobs_cache_key.outputs.key }}
-          restore-keys: |
-            usajobs-gz-${{ runner.os }}-
+          python -m pip install --upgrade pip
 
       - name: Refresh USAJOBS cache
         env:
           USAJOBS_API_KEY: ${{ secrets.USAJOBS_API_KEY }}
           USAJOBS_USER_AGENT: ${{ secrets.USAJOBS_USER_AGENT }}
           USAJOBS_EMAIL: ${{ secrets.USAJOBS_EMAIL }}
-          USAJOBS_MAX_AGE_DAYS: '7'
+          USAJOBS_MAX_AGE_DAYS: '1'
         run: |
           ./usa/refresh_usajobs_search.sh
 
-      - name: Save USAJOBS gzip cache
-        if: always() && steps.usajobs_cache_restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            usa/data/usajobs.json.gz
-            usa/data/usajobs-lite.json.gz
-          key: ${{ steps.usajobs_cache_restore.outputs.cache-primary-key }}
-
-      - name: Upload usajobs.json.gz as release artifact
-        if: always()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build sharded USAJOBS payload
         run: |
-          # Create or update the 'usajobs-data' release with the large file
-          if [ -f "usa/data/usajobs.json.gz" ]; then
-            # Delete existing asset if it exists, then upload new one
-            gh release upload usajobs-data usa/data/usajobs.json.gz --clobber 2>/dev/null || \
-            gh release create usajobs-data usa/data/usajobs.json.gz \
-              --title "USAJOBS Data" \
-              --notes "Auto-updated USAJOBS data file. Download: usajobs.json.gz" \
-              --latest=false
-          fi
+          python usa/shard_jobs.py \
+            --input usa/data/usajobs-lite.json.gz \
+            --output-root usa/data/publish \
+            --prefix jobs \
+            --shard-size 500
+
+      - name: Publish shards to Cloudflare R2 via Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          npm i -g wrangler@4
+          count=0
+          while IFS= read -r -d '' f; do
+            key="${f#usa/data/publish/}"
+            wrangler r2 object put "codecollective-usajobs/${key}" --file "$f" --remote
+            count=$((count+1))
+            if [ $((count % 20)) -eq 0 ]; then
+              echo "Uploaded ${count} objects"
+            fi
+          done < <(find usa/data/publish/jobs -type f -print0 | sort -z)
+          echo "Uploaded total ${count} objects"
