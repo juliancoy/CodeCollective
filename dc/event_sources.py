@@ -16,6 +16,7 @@ sources = [
     {"url": "https://www.meetup.com/platform-engineers-washington-dc/", "tags": ["Tech Skills", "Cloud & Platform", "DevOps"]},
     {"url": "https://www.meetup.com/washington-dc-cyber-security-for-control-systems/", "tags": ["Tech Skills", "Cybersecurity"]},
     {"url": "https://www.meetup.com/producttank-washington-dc/", "tags": ["Tech Skills", "Product", "UX"]},
+    {"url": "https://www.meetup.com/content-strategy-dc/", "tags": ["Tech Skills", "UX", "Professional Networking"]},
     {"url": "https://www.meetup.com/dc-ai-llms/", "tags": ["Tech Skills", "AI"]},
     {"url": "https://www.meetup.com/sierradc/", "tags": ["Infrastructure"]},
     {"url": "https://www.meetup.com/carbonfreedc/", "tags": ["Infrastructure"]},

@@ -1,18 +1,10 @@
-# Allow all web crawlers access to everything
-User-agent: *
-Disallow:
-
-# Block a specific folder (example: /private-folder/)
+# General crawl policy
 User-agent: *
 Disallow: /templates/
-
-# Block a specific file (example: /no-access.html)
-User-agent: *
 Disallow: /no-access.html
 
-# Allow Googlebot access to everything (replace Googlebot with another bot name if needed)
-User-agent: Googlebot
-Disallow:
-
-# Sitemap location
+# Discovery files
 Sitemap: https://codecollective.us/sitemap.xml
+# Experimental AI-readable site guide
+# Not a formal robots directive, but useful for operators and tooling.
+# llms.txt: https://codecollective.us/llms.txt
