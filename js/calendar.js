@@ -1167,6 +1167,8 @@ function getAdvancedFilterElements() {
     dateToInput: document.getElementById('calendar-date-to-input'),
     timeStartInput: document.getElementById('calendar-time-start-input'),
     timeEndInput: document.getElementById('calendar-time-end-input'),
+    locationButton: document.getElementById('use-current-location-button'),
+    locationReadout: document.getElementById('current-location-readout'),
     applyButton: document.getElementById('calendar-filter-apply'),
     clearButton: document.getElementById('calendar-filter-clear'),
     status: document.getElementById('calendar-filter-status')
@@ -1267,10 +1269,15 @@ function writeAdvancedFiltersToControls(values) {
 
 function clearAdvancedFilters() {
   const searchInput = document.getElementById('calendar-search-input');
+  const locationReadout = getAdvancedFilterElements().locationReadout;
   if (searchInput) {
     searchInput.value = '';
     textSearchQuery = '';
     syncSearchQueryToUrl('');
+  }
+  if (locationReadout) {
+    locationReadout.hidden = true;
+    locationReadout.innerHTML = '';
   }
   writeAdvancedFiltersToControls({
     near: '',
@@ -1289,9 +1296,115 @@ function clearFieldById(fieldId) {
   const input = document.getElementById(fieldId);
   if (!input) return;
   input.value = '';
+  if (fieldId === 'proximity-filter-input') {
+    const locationReadout = getAdvancedFilterElements().locationReadout;
+    if (locationReadout) {
+      locationReadout.hidden = true;
+      locationReadout.innerHTML = '';
+    }
+  }
   input.dispatchEvent(new Event('input', { bubbles: true }));
   input.dispatchEvent(new Event('change', { bubbles: true }));
   input.focus();
+}
+
+function setCurrentLocationButtonState(state, label) {
+  const button = getAdvancedFilterElements().locationButton;
+  if (!button) return;
+  button.disabled = state === 'loading';
+  button.dataset.state = state || '';
+  button.textContent = label || 'Use my location';
+}
+
+function setCurrentLocationReadout(latitude, longitude, accuracy) {
+  const readout = getAdvancedFilterElements().locationReadout;
+  if (!readout) return;
+
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    readout.hidden = true;
+    readout.innerHTML = '';
+    return;
+  }
+
+  const roundedLat = lat.toFixed(5);
+  const roundedLon = lon.toFixed(5);
+  const accuracyText = Number.isFinite(Number(accuracy))
+    ? `<div class="current-location-accuracy">Accuracy: about ${Math.round(Number(accuracy))} meters</div>`
+    : '';
+  const bbox = [
+    (lon - 0.015).toFixed(5),
+    (lat - 0.01).toFixed(5),
+    (lon + 0.015).toFixed(5),
+    (lat + 0.01).toFixed(5)
+  ].join('%2C');
+  const marker = `${roundedLat}%2C${roundedLon}`;
+  const mapSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`;
+  const mapLink = `https://www.openstreetmap.org/?mlat=${roundedLat}&mlon=${roundedLon}#map=14/${roundedLat}/${roundedLon}`;
+
+  readout.innerHTML = `
+    <div class="current-location-coordinates">
+      <span>Latitude: <strong>${escapeHtml(roundedLat)}</strong></span>
+      <span>Longitude: <strong>${escapeHtml(roundedLon)}</strong></span>
+    </div>
+    ${accuracyText}
+    <details class="current-location-map">
+      <summary>Map preview</summary>
+      <iframe
+        title="Current location map preview"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        src="${mapSrc}">
+      </iframe>
+      <a href="${mapLink}" target="_blank" rel="noopener noreferrer">Open larger map</a>
+    </details>
+  `;
+  readout.hidden = false;
+}
+
+function useCurrentLocation() {
+  const { nearInput } = getAdvancedFilterElements();
+  if (!nearInput) return;
+
+  if (!navigator.geolocation) {
+    setCurrentLocationButtonState('error', 'Location unavailable');
+    proximityFilter.error = 'browser location is unavailable';
+    updateAdvancedFilterStatus(calendarDisplayEvents.length);
+    return;
+  }
+
+  setCurrentLocationButtonState('loading', 'Getting location...');
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      const { latitude, longitude } = position.coords || {};
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        setCurrentLocationButtonState('error', 'Location unavailable');
+        proximityFilter.error = 'browser location is unavailable';
+        updateAdvancedFilterStatus(calendarDisplayEvents.length);
+        return;
+      }
+
+      nearInput.value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+      setCurrentLocationReadout(latitude, longitude, position.coords?.accuracy);
+      nearInput.dispatchEvent(new Event('input', { bubbles: true }));
+      nearInput.dispatchEvent(new Event('change', { bubbles: true }));
+      setCurrentLocationButtonState('ready', 'Using your location');
+      setTimeout(() => setCurrentLocationButtonState('', 'Use my location'), 2200);
+    },
+    error => {
+      const denied = error && error.code === error.PERMISSION_DENIED;
+      setCurrentLocationButtonState('error', denied ? 'Location denied' : 'Location failed');
+      proximityFilter.error = denied ? 'location permission was denied' : 'could not get current location';
+      updateAdvancedFilterStatus(calendarDisplayEvents.length);
+      setTimeout(() => setCurrentLocationButtonState('', 'Use my location'), 2800);
+    },
+    {
+      enableHighAccuracy: false,
+      timeout: 10000,
+      maximumAge: 300000
+    }
+  );
 }
 
 function setupFieldClearButtons() {
@@ -1398,6 +1511,7 @@ function setupAdvancedFilters() {
 
   elements.applyButton?.addEventListener('click', applyFilters);
   elements.clearButton?.addEventListener('click', clearAdvancedFilters);
+  elements.locationButton?.addEventListener('click', useCurrentLocation);
   setupFieldClearButtons();
   updateDateRangeInputConstraints();
 
