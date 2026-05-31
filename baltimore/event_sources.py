@@ -827,6 +827,11 @@ sources = [
         "tags": ["MarylandGov", "Community", "Education", "Belonging", "Growth"],
     },
     {
+        "name": "Inner Arbor Trust Events",
+        "url": "https://innerarbortrust.org/events",
+        "tags": ["Culture", "Community", "Belonging", "Growth"],
+    },
+    {
         "name": "Prince George's Parks Events",
         "url": "https://www.pgparks.com/events",
         "tags": ["MarylandGov", "Politics", "Community", "Economic Development", "Purpose"],
