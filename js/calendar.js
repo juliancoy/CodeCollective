@@ -18,11 +18,34 @@ let filterApplyTimer = null;
 let useLocalTime = true;
 let selectedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 let dayImageByDate = new Map();
+let geocodeLookupCache = {};
+let proximityFilter = {
+  query: '',
+  radiusMiles: 25,
+  center: null,
+  pending: false,
+  error: ''
+};
+let timeFilter = {
+  dateFrom: '',
+  dateTo: '',
+  timeStart: '',
+  timeEnd: ''
+};
+let advancedFilterApplyTimer = null;
+let proximityResolutionSequence = 0;
+const remoteZipLookupCache = new Map();
 const calendarSearchBlobCache = new WeakMap();
 const rawSearchBlobCache = new WeakMap();
 const TIMEZONE_PREFS_KEY = 'calendarTimezonePrefs';
 const filterUtils = window.CalendarFilterUtils || null;
 const SEARCH_QUERY_PARAM = 'q';
+const PROXIMITY_QUERY_PARAM = 'near';
+const RADIUS_QUERY_PARAM = 'radius';
+const DATE_FROM_QUERY_PARAM = 'from';
+const DATE_TO_QUERY_PARAM = 'to';
+const TIME_START_QUERY_PARAM = 'start';
+const TIME_END_QUERY_PARAM = 'end';
 const LEGEND_MAP_QUERY_PARAM = 'lm';
 const LEGEND_TAGS_QUERY_PARAM = 'lt';
 const LEGEND_EXCLUDED_QUERY_PARAM = 'lx';
@@ -522,7 +545,7 @@ function setHoverPanelSide(clientX) {
 }
 
 function showHoverPreview(eventInfo, mouseEvent) {
-  if (isMobile) return;
+  if (isMobile && !document.body.classList.contains('calendar-filter-page')) return;
 
   const panel = ensureHoverPreviewPanel();
   const event = eventInfo.event;
@@ -1132,6 +1155,333 @@ function filterRawEventsBySearch(events) {
   return events.filter(event => getRawEventSearchBlob(event).includes(query));
 }
 
+function hasAdvancedFilterControls() {
+  return Boolean(document.getElementById('proximity-filter-input'));
+}
+
+function getAdvancedFilterElements() {
+  return {
+    nearInput: document.getElementById('proximity-filter-input'),
+    radiusInput: document.getElementById('proximity-radius-input'),
+    dateFromInput: document.getElementById('calendar-date-from-input'),
+    dateToInput: document.getElementById('calendar-date-to-input'),
+    timeStartInput: document.getElementById('calendar-time-start-input'),
+    timeEndInput: document.getElementById('calendar-time-end-input'),
+    applyButton: document.getElementById('calendar-filter-apply'),
+    clearButton: document.getElementById('calendar-filter-clear'),
+    status: document.getElementById('calendar-filter-status')
+  };
+}
+
+function mergeGeocodeCaches(cacheList) {
+  return Object.assign({}, ...cacheList.filter(cache => cache && typeof cache === 'object' && !Array.isArray(cache)));
+}
+
+async function fetchOptionalJson(url) {
+  try {
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) return {};
+    return response.json();
+  } catch (error) {
+    return {};
+  }
+}
+
+async function loadGeocodeLookupCache(city) {
+  if (!hasAdvancedFilterControls()) return {};
+  const caches = await Promise.all([
+    fetchOptionalJson('/geocode_cache.json'),
+    fetchOptionalJson(`/${city}/geocode_cache.json`)
+  ]);
+  return mergeGeocodeCaches(caches);
+}
+
+function getAdvancedFiltersFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    near: params.get(PROXIMITY_QUERY_PARAM) || '',
+    radius: params.get(RADIUS_QUERY_PARAM) || '25',
+    dateFrom: params.get(DATE_FROM_QUERY_PARAM) || '',
+    dateTo: params.get(DATE_TO_QUERY_PARAM) || '',
+    timeStart: params.get(TIME_START_QUERY_PARAM) || '',
+    timeEnd: params.get(TIME_END_QUERY_PARAM) || ''
+  };
+}
+
+function syncAdvancedFiltersToUrl() {
+  if (!window.history || typeof window.history.replaceState !== 'function') return;
+  const url = new URL(window.location.href);
+  const setOrDelete = (param, value) => {
+    const normalized = String(value || '').trim();
+    if (normalized) url.searchParams.set(param, normalized);
+    else url.searchParams.delete(param);
+  };
+
+  setOrDelete(PROXIMITY_QUERY_PARAM, proximityFilter.query);
+  setOrDelete(RADIUS_QUERY_PARAM, proximityFilter.query ? String(proximityFilter.radiusMiles || 25) : '');
+  setOrDelete(DATE_FROM_QUERY_PARAM, timeFilter.dateFrom);
+  setOrDelete(DATE_TO_QUERY_PARAM, timeFilter.dateTo);
+  setOrDelete(TIME_START_QUERY_PARAM, timeFilter.timeStart);
+  setOrDelete(TIME_END_QUERY_PARAM, timeFilter.timeEnd);
+
+  window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+}
+
+function readAdvancedFiltersFromControls() {
+  const elements = getAdvancedFilterElements();
+  const radius = Number(elements.radiusInput?.value || 25);
+  proximityFilter.query = String(elements.nearInput?.value || '').trim();
+  proximityFilter.radiusMiles = Number.isFinite(radius) && radius > 0 ? radius : 25;
+  proximityFilter.center = proximityFilter.query && filterUtils?.resolveProximityQuery
+    ? filterUtils.resolveProximityQuery(proximityFilter.query, rawEvents, geocodeLookupCache)
+    : null;
+  proximityFilter.pending = false;
+  proximityFilter.error = '';
+
+  let dateFrom = String(elements.dateFromInput?.value || '').trim();
+  let dateTo = String(elements.dateToInput?.value || '').trim();
+  if (dateFrom && dateTo && dateFrom > dateTo) {
+    [dateFrom, dateTo] = [dateTo, dateFrom];
+    if (elements.dateFromInput) elements.dateFromInput.value = dateFrom;
+    if (elements.dateToInput) elements.dateToInput.value = dateTo;
+  }
+
+  timeFilter = {
+    dateFrom,
+    dateTo,
+    timeStart: String(elements.timeStartInput?.value || '').trim(),
+    timeEnd: String(elements.timeEndInput?.value || '').trim()
+  };
+  updateDateRangeInputConstraints();
+}
+
+function writeAdvancedFiltersToControls(values) {
+  const elements = getAdvancedFilterElements();
+  if (elements.nearInput) elements.nearInput.value = values.near || '';
+  if (elements.radiusInput) elements.radiusInput.value = values.radius || '25';
+  if (elements.dateFromInput) elements.dateFromInput.value = values.dateFrom || '';
+  if (elements.dateToInput) elements.dateToInput.value = values.dateTo || '';
+  if (elements.timeStartInput) elements.timeStartInput.value = values.timeStart || '';
+  if (elements.timeEndInput) elements.timeEndInput.value = values.timeEnd || '';
+}
+
+function clearAdvancedFilters() {
+  const searchInput = document.getElementById('calendar-search-input');
+  if (searchInput) {
+    searchInput.value = '';
+    textSearchQuery = '';
+    syncSearchQueryToUrl('');
+  }
+  writeAdvancedFiltersToControls({
+    near: '',
+    radius: '25',
+    dateFrom: '',
+    dateTo: '',
+    timeStart: '',
+    timeEnd: ''
+  });
+  readAdvancedFiltersFromControls();
+  syncAdvancedFiltersToUrl();
+  applyTagFilters();
+}
+
+function clearFieldById(fieldId) {
+  const input = document.getElementById(fieldId);
+  if (!input) return;
+  input.value = '';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+  input.focus();
+}
+
+function setupFieldClearButtons() {
+  document.querySelectorAll('[data-clear-field]').forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      clearFieldById(button.dataset.clearField);
+    });
+  });
+}
+
+function updateDateRangeInputConstraints() {
+  const { dateFromInput, dateToInput } = getAdvancedFilterElements();
+  if (!dateFromInput || !dateToInput) return;
+  dateToInput.min = dateFromInput.value || '';
+  dateFromInput.max = dateToInput.value || '';
+}
+
+function getZipOnlyQuery(query) {
+  const normalized = String(query || '').trim();
+  const zip = filterUtils?.extractZipCode ? filterUtils.extractZipCode(normalized) : '';
+  return zip && /^(\d{5})(?:-\d{4})?$/.test(normalized) ? zip : '';
+}
+
+async function resolveRemoteZip(zip) {
+  if (remoteZipLookupCache.has(zip)) {
+    return remoteZipLookupCache.get(zip);
+  }
+
+  const lookup = fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`)
+    .then(response => {
+      if (!response.ok) throw new Error(`ZIP lookup HTTP ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+      const place = Array.isArray(data?.places) ? data.places[0] : null;
+      const latitude = Number(place?.latitude);
+      const longitude = Number(place?.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        throw new Error(`ZIP lookup did not include coordinates for ${zip}`);
+      }
+      return {
+        latitude,
+        longitude,
+        source: 'zip',
+        label: `${zip}${place?.['place name'] ? ` ${place['place name']}` : ''}`
+      };
+    })
+    .catch(error => {
+      remoteZipLookupCache.delete(zip);
+      throw error;
+    });
+
+  remoteZipLookupCache.set(zip, lookup);
+  return lookup;
+}
+
+function maybeResolveRemoteProximity() {
+  const zip = getZipOnlyQuery(proximityFilter.query);
+  if (!zip || proximityFilter.center) return;
+
+  const sequence = ++proximityResolutionSequence;
+  proximityFilter.pending = true;
+  proximityFilter.error = '';
+  updateAdvancedFilterStatus(calendarDisplayEvents.length);
+
+  resolveRemoteZip(zip)
+    .then(center => {
+      if (sequence !== proximityResolutionSequence || getZipOnlyQuery(proximityFilter.query) !== zip) return;
+      proximityFilter.center = center;
+      proximityFilter.pending = false;
+      proximityFilter.error = '';
+      applyTagFilters();
+    })
+    .catch(error => {
+      if (sequence !== proximityResolutionSequence || getZipOnlyQuery(proximityFilter.query) !== zip) return;
+      console.error('Failed to resolve ZIP proximity filter:', error);
+      proximityFilter.center = null;
+      proximityFilter.pending = false;
+      proximityFilter.error = `could not resolve "${proximityFilter.query}"`;
+      applyTagFilters();
+    });
+}
+
+function setupAdvancedFilters() {
+  if (!hasAdvancedFilterControls()) return;
+
+  const elements = getAdvancedFilterElements();
+  writeAdvancedFiltersToControls(getAdvancedFiltersFromUrl());
+  readAdvancedFiltersFromControls();
+
+  const applyFilters = () => {
+    readAdvancedFiltersFromControls();
+    syncAdvancedFiltersToUrl();
+    applyTagFilters();
+    maybeResolveRemoteProximity();
+  };
+
+  const scheduleApplyFilters = () => {
+    clearTimeout(advancedFilterApplyTimer);
+    advancedFilterApplyTimer = setTimeout(applyFilters, 180);
+  };
+
+  elements.applyButton?.addEventListener('click', applyFilters);
+  elements.clearButton?.addEventListener('click', clearAdvancedFilters);
+  setupFieldClearButtons();
+  updateDateRangeInputConstraints();
+
+  [
+    elements.nearInput,
+    elements.radiusInput,
+    elements.dateFromInput,
+    elements.dateToInput,
+    elements.timeStartInput,
+    elements.timeEndInput
+  ].filter(Boolean).forEach(input => {
+    input.addEventListener('keydown', event => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        clearTimeout(advancedFilterApplyTimer);
+        applyFilters();
+      }
+    });
+    input.addEventListener('change', applyFilters);
+    input.addEventListener('input', scheduleApplyFilters);
+  });
+
+  maybeResolveRemoteProximity();
+}
+
+function eventMatchesProximityFilter(event) {
+  if (!proximityFilter.query) return true;
+  if (proximityFilter.pending) return true;
+  if (!proximityFilter.center || !filterUtils?.distanceMiles) return false;
+  const location = event?.location || event?.extendedProps?.location || null;
+  if (filterUtils?.isUsableProximityLocation && !filterUtils.isUsableProximityLocation(location)) {
+    return false;
+  }
+  const distance = filterUtils.distanceMiles(location, proximityFilter.center);
+  return distance !== null && distance <= proximityFilter.radiusMiles;
+}
+
+function eventMatchesCalendarTimeFilter(event) {
+  if (!filterUtils?.eventMatchesTimeFilters) return true;
+  return filterUtils.eventMatchesTimeFilters(event, {
+    ...timeFilter,
+    timeZone: getActiveTimeZone()
+  });
+}
+
+function filterEventsByAdvancedFilters(events) {
+  if (!hasAdvancedFilterControls()) return events;
+  return events.filter(event => eventMatchesProximityFilter(event) && eventMatchesCalendarTimeFilter(event));
+}
+
+function filterRawEventsByAdvancedFilters(events) {
+  if (!hasAdvancedFilterControls()) return events;
+  return events.filter(event => eventMatchesProximityFilter(event) && eventMatchesCalendarTimeFilter(event));
+}
+
+function updateAdvancedFilterStatus(visibleCount) {
+  if (!hasAdvancedFilterControls()) return;
+  const status = getAdvancedFilterElements().status;
+  if (!status) return;
+
+  const activeParts = [];
+  if (proximityFilter.query) {
+    if (proximityFilter.pending) {
+      activeParts.push(`resolving ${proximityFilter.query}`);
+    } else if (proximityFilter.center) {
+      activeParts.push(`within ${proximityFilter.radiusMiles} miles of ${proximityFilter.query}`);
+    } else if (proximityFilter.error) {
+      activeParts.push(proximityFilter.error);
+    } else {
+      activeParts.push(`could not resolve "${proximityFilter.query}"`);
+    }
+  }
+  if (timeFilter.dateFrom || timeFilter.dateTo) {
+    activeParts.push(`dates ${timeFilter.dateFrom || 'any'} to ${timeFilter.dateTo || 'any'}`);
+  }
+  if (timeFilter.timeStart || timeFilter.timeEnd) {
+    activeParts.push(`times ${timeFilter.timeStart || 'any'} to ${timeFilter.timeEnd || 'any'}`);
+  }
+
+  status.textContent = activeParts.length
+    ? `${visibleCount} matching events; ${activeParts.join('; ')}.`
+    : `${visibleCount} matching events.`;
+}
+
 function setupTextSearch() {
   const searchInput = document.getElementById('calendar-search-input');
   if (!searchInput) return;
@@ -1170,21 +1520,22 @@ function setupTextSearch() {
 
 function applyTagFilters() {
   const tagFilteredEvents = filterEventsByTags(allEvents);
-  const filteredByLegendAndSearch = filterEventsBySearch(tagFilteredEvents);
-  calendarDisplayEvents = filteredByLegendAndSearch;
-  dayImageByDate = buildDayImageIndex(filteredByLegendAndSearch);
+  const filteredByLegendSearchAndAdvanced = filterEventsByAdvancedFilters(filterEventsBySearch(tagFilteredEvents));
+  calendarDisplayEvents = filteredByLegendSearchAndAdvanced;
+  dayImageByDate = buildDayImageIndex(filteredByLegendSearchAndAdvanced);
 
   if (isMobile) {
-    initializeMobileCards(filteredByLegendAndSearch);
+    initializeMobileCards(filteredByLegendSearchAndAdvanced);
   } else if (calendar) {
     calendar.removeAllEvents();
-    calendar.addEventSource(filteredByLegendAndSearch);
+    calendar.addEventSource(filteredByLegendSearchAndAdvanced);
   } else {
-    initializeCalendar(filteredByLegendAndSearch);
+    initializeCalendar(filteredByLegendSearchAndAdvanced);
   }
 
-  const rawFilteredByLegendAndSearch = filterRawEventsBySearch(filterRawEventsByTags(rawEvents));
-  populateCodeCollectiveEvents(rawFilteredByLegendAndSearch);
+  const rawFilteredByLegendSearchAndAdvanced = filterRawEventsByAdvancedFilters(filterRawEventsBySearch(filterRawEventsByTags(rawEvents)));
+  populateCodeCollectiveEvents(rawFilteredByLegendSearchAndAdvanced);
+  updateAdvancedFilterStatus(filteredByLegendSearchAndAdvanced.length);
   saveLegendPrefs();
 }
 
@@ -1488,13 +1839,15 @@ document.addEventListener('DOMContentLoaded', function () {
         throw new Error(`Failed to fetch events for city: ${city}`);
       }
       return response.json();
-    })
+    }),
+    loadGeocodeLookupCache(city)
   ])
-    .then(([mapConfig, events]) => {
+    .then(([mapConfig, events, geocodeCache]) => {
       if (mapConfig && Array.isArray(mapConfig.maps) && mapConfig.maps.length > 0) {
         categoryMapConfig = mapConfig;
         activeCategoryMap = getCategoryMapById(mapConfig.default_map);
       }
+      geocodeLookupCache = geocodeCache || {};
       rawEvents = Array.isArray(events) ? events : [];
       allEvents = processEvents(rawEvents);
 
@@ -1509,6 +1862,7 @@ document.addEventListener('DOMContentLoaded', function () {
       filteredEvents = [...allEvents]; // Make a copy for filtering
 
       setupTextSearch();
+      setupAdvancedFilters();
       buildLegend(activeCategoryMap);
       applyTagFilters();
 
@@ -1563,6 +1917,11 @@ function initializeMobileCards(events) {
   const container = document.getElementById('calendar');
   if (!container) return;
 
+  if (document.body.classList.contains('calendar-filter-page')) {
+    initializeSimpleListCards(events, container);
+    return;
+  }
+
   container.style.display = '';
   container.innerHTML = '';
   container.className = 'mobile-cards-container';
@@ -1594,6 +1953,111 @@ function initializeMobileCards(events) {
     `;
     container.appendChild(noEventsMsg);
   }
+}
+
+function initializeSimpleListCards(events, container) {
+  container.style.display = '';
+  container.innerHTML = '';
+  container.className = 'simple-events-list';
+
+  const todayStart = getTodayStart();
+  const futureEvents = events
+    .filter(event => isEventOnOrAfterToday(event.start, todayStart))
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  if (futureEvents.length === 0) {
+    const noEventsMsg = document.createElement('div');
+    noEventsMsg.className = 'no-events-message';
+    noEventsMsg.innerHTML = `
+      <i class="fas fa-calendar-times"></i>
+      <h3>No matching events</h3>
+      <p>Adjust the filters and try again.</p>
+    `;
+    container.appendChild(noEventsMsg);
+    return;
+  }
+
+  let currentDateKey = '';
+  futureEvents.forEach((event, index) => {
+    const dateKey = getDateKeyInTimeZone(event.start, getActiveTimeZone());
+    if (dateKey !== currentDateKey) {
+      currentDateKey = dateKey;
+      const heading = document.createElement('h2');
+      heading.className = 'date-head';
+      heading.textContent = formatDateWithTimeZone(new Date(event.start), {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+      container.appendChild(heading);
+    }
+    container.appendChild(createSimpleListEvent(event, index));
+  });
+}
+
+function createSimpleListEvent(event, index) {
+  const article = document.createElement('article');
+  article.className = 'event';
+  article.tabIndex = 0;
+
+  const detailsId = `filter-event-details-${index}-${new Date(event.start).getTime()}`;
+  const eventUrl = safeUrl(event.url);
+  const eventTitle = escapeHtml(event.title || 'Untitled');
+  const titleHtml = eventUrl
+    ? `<a href="${escapeAttr(eventUrl)}" target="_blank" rel="noopener noreferrer">${eventTitle}</a>`
+    : `<span class="nolink">${eventTitle}</span>`;
+  const startTime = formatEventTime(new Date(event.start));
+  const endTime = event.end ? formatEventTime(new Date(event.end)) : '';
+  const timeRange = endTime ? `${startTime} - ${endTime}` : startTime;
+  const description = buildEventDisplayDescription({
+    description: event.description || event.extendedProps?.description || '',
+    agenda: event.extendedProps?.agenda || null
+  });
+  const eventLocation = event.extendedProps?.location || event.location || null;
+  const locationText = [
+    eventLocation?.name,
+    eventLocation?.address
+  ].filter(Boolean).join(', ');
+  const imageUrl = safeUrl(getPreferredEventImage(event));
+
+  article.innerHTML = `
+    <div class="event-header">
+      <div class="event-meta">
+        <div class="event-time">${escapeHtml(timeRange)}</div>
+        <div class="event-title">${titleHtml}</div>
+      </div>
+      <button class="toggle-btn" type="button" aria-expanded="false" aria-controls="${detailsId}" aria-label="Show details">+</button>
+    </div>
+    <div class="event-body" id="${detailsId}" hidden>
+      ${description ? `<div class="event-desc">${renderRichText(description)}</div>` : ''}
+      ${locationText ? `<div class="location">${escapeHtml(locationText)}</div>` : ''}
+      ${imageUrl ? `<img class="event-image" src="${escapeAttr(imageUrl)}" alt="${eventTitle}" loading="lazy">` : ''}
+    </div>
+  `;
+
+  const toggle = article.querySelector('.toggle-btn');
+  const body = article.querySelector('.event-body');
+  toggle.addEventListener('click', () => {
+    const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    toggle.textContent = isOpen ? '+' : '-';
+    body.hidden = isOpen;
+    body.classList.toggle('open', !isOpen);
+  });
+  article.addEventListener('mouseenter', mouseEvent => {
+    showHoverPreview({ event }, mouseEvent);
+  });
+  article.addEventListener('mousemove', mouseEvent => {
+    setHoverPanelSide(mouseEvent.clientX);
+  });
+  article.addEventListener('mouseleave', hideHoverPreview);
+  article.addEventListener('focus', focusEvent => {
+    showHoverPreview({ event }, focusEvent);
+  });
+  article.addEventListener('blur', hideHoverPreview);
+
+  return article;
 }
 
 // Create individual event card with expandable description

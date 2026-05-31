@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Code Collective | Filtered Tech Events Calendar</title>
+  <meta name="description"
+    content="Filter Code Collective's unified event calendar by city, proximity, date, time, text search, and event category." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://codecollective.us/calendarfilter.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://codecollective.us/calendarfilter.html" />
+  <meta property="og:site_name" content="Code Collective" />
+  <meta property="og:title" content="Code Collective | Filtered Tech Events Calendar" />
+  <meta property="og:description"
+    content="A community-wide events calendar with proximity, address, ZIP, date, and time filters." />
+  <link rel="icon" href="/images/favicons/favicon.png" />
+  <link rel="preload" href="/css/master.css" as="style">
+  <link rel="preload" href="/css/calendar.css" as="style">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="/css/master.css" />
+  <link rel="stylesheet" href="/css/calendar.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    (function () {
+      window.CALENDAR_DEFAULT_CATEGORY_MAP = 'lenses';
+      window.CALENDAR_CATEGORY_MAPS_INDEX_URL = '/data/category_maps/index.json';
+      window.CALENDAR_LENSES_SCHEMA_URL = '/data/category_maps/lenses.json';
+      window.CALENDAR_COMMUNITY_SECTORS_SCHEMA_URL = '/data/category_maps/community_sectors.json';
+      window.FORCE_CALENDAR_CARDS = true;
+
+      const DEFAULT_CITY_OPTIONS = ['baltimore', 'westvirginia', 'hawaii', 'dc', 'pittsburgh', 'philadelphia', 'virtual'];
+      const DEFAULT_CITY_DISPLAY_NAMES = {
+        baltimore: 'Baltimore',
+        westvirginia: 'West Virginia',
+        hawaii: 'Hawaii',
+        dc: 'Washington, D.C.',
+        pittsburgh: 'Pittsburgh',
+        philadelphia: 'Philadelphia',
+        virtual: 'Virtual',
+      };
+
+      window.CALENDAR_CITY_OPTIONS = window.CALENDAR_CITY_OPTIONS || DEFAULT_CITY_OPTIONS;
+      window.CALENDAR_CITY_DISPLAY_NAMES = window.CALENDAR_CITY_DISPLAY_NAMES || DEFAULT_CITY_DISPLAY_NAMES;
+
+      const cityOptions = window.CALENDAR_CITY_OPTIONS;
+      const cityDisplayNames = window.CALENDAR_CITY_DISPLAY_NAMES;
+
+      function getCityDisplayName(city) {
+        return cityDisplayNames[city] || city.charAt(0).toUpperCase() + city.slice(1);
+      }
+
+      function getCityFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const city = urlParams.get('city');
+        return cityOptions.includes(city) ? city : 'baltimore';
+      }
+
+      function updateIcsLink() {
+        const city = getCityFromUrl();
+        const icsLink = document.querySelector('.download-button');
+        if (icsLink) {
+          const template = icsLink.dataset.icsTemplate || 'https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/{city}/cc_events.ics';
+          icsLink.href = template.replace('{city}', city);
+        }
+      }
+
+      function updateCityDetails() {
+        const city = getCityFromUrl();
+        const displayName = getCityDisplayName(city);
+        const cityNameEl = document.getElementById('calendar-city-name');
+        if (cityNameEl) cityNameEl.textContent = displayName;
+        const calendarSection = document.getElementById('calendar-section');
+        if (calendarSection) calendarSection.setAttribute('aria-label', `${displayName} Filtered Events Calendar`);
+      }
+
+      function populateCitySelector() {
+        const select = document.getElementById('city-select');
+        if (!select) return;
+        select.innerHTML = '';
+        cityOptions.forEach(city => {
+          const option = document.createElement('option');
+          option.value = city;
+          option.textContent = getCityDisplayName(city);
+          select.appendChild(option);
+        });
+        select.value = getCityFromUrl();
+        select.addEventListener('change', () => {
+          const url = new URL(window.location.href);
+          url.searchParams.set('city', select.value);
+          window.location.href = url.toString();
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        updateIcsLink();
+        updateCityDetails();
+        populateCitySelector();
+      });
+    })();
+  </script>
+</head>
+
+<body id="body" class="calendar-filter-page">
+  <video id="bg-video" autoplay loop muted playsinline>
+    <source src="/videos/craig_baltimore_video.mp4" type="video/mp4" media="(max-width: 768px)">
+    <source src="/videos/baltimorenight_15s_crossfaded.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <nav class="main-nav" aria-label="Main Navigation">
+    <div class="navbar dark-mode">
+      <a href="/#main">Home</a>
+      <a href="/platform.html">Platform</a>
+      <a href="/calendar.html?city=baltimore">Calendar</a>
+      <a href="/calendarfilter.html?city=baltimore">Filtered Calendar</a>
+      <a href="/projects.html">Projects</a>
+    </div>
+  </nav>
+
+  <main id="wrapper" class="longform dark-mode" style="padding: 0; margin: 0;">
+    <section id="main" class="longform dark-mode" style="padding: 0; margin: 0;">
+      <header class="header-container" style="text-align: center; padding: 20px 0;">
+        <p style="margin-bottom: 8px; font-size: 1.2rem;">Code Collective brings you</p>
+        <h1 style="margin: 10px 0; font-size: 2.5rem;">A Filtered <span id="calendar-city-name">Baltimore</span> Techonomics Calendar</h1>
+
+        <div class="city-selector">
+          <label for="city-select">Show events for:</label>
+          <select id="city-select" aria-label="Select a city for the calendar"></select>
+        </div>
+
+        <div class="calendar-search">
+          <label for="calendar-search-input">Search events:</label>
+          <span class="calendar-clearable-field">
+            <input id="calendar-search-input" type="search"
+              placeholder="Title, tag, org, description, location..." aria-label="Search events" />
+            <button type="button" class="calendar-field-clear" data-clear-field="calendar-search-input"
+              aria-label="Clear search">×</button>
+          </span>
+        </div>
+
+        <section class="calendar-filter-panel" aria-label="Calendar filters">
+          <div class="calendar-filter-grid">
+            <fieldset class="calendar-filter-group calendar-filter-group-wide">
+              <legend>Location</legend>
+              <div class="calendar-filter-row">
+                <label for="proximity-filter-input">
+                  <span>Near</span>
+                  <span class="calendar-clearable-field">
+                    <input id="proximity-filter-input" type="search"
+                      placeholder="39.2904, -76.6122; 21201; address; venue" autocomplete="off" />
+                    <button type="button" class="calendar-field-clear" data-clear-field="proximity-filter-input"
+                      aria-label="Clear location filter">×</button>
+                  </span>
+                </label>
+                <label for="proximity-radius-input">
+                  <span>Radius</span>
+                  <span class="calendar-input-with-unit calendar-clearable-field">
+                    <input id="proximity-radius-input" type="number" min="1" step="1" value="25" inputmode="numeric" />
+                    <span class="calendar-unit-label">mi</span>
+                    <button type="button" class="calendar-field-clear" data-clear-field="proximity-radius-input"
+                      aria-label="Clear radius">×</button>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+            <fieldset class="calendar-filter-group">
+              <legend>Date Range</legend>
+              <div class="calendar-filter-row">
+                <label for="calendar-date-from-input">
+                  <span>Start Date</span>
+                  <span class="calendar-clearable-field">
+                    <input id="calendar-date-from-input" type="date" />
+                    <button type="button" class="calendar-field-clear" data-clear-field="calendar-date-from-input"
+                      aria-label="Clear start date">×</button>
+                  </span>
+                </label>
+                <label for="calendar-date-to-input">
+                  <span>End Date</span>
+                  <span class="calendar-clearable-field">
+                    <input id="calendar-date-to-input" type="date" />
+                    <button type="button" class="calendar-field-clear" data-clear-field="calendar-date-to-input"
+                      aria-label="Clear end date">×</button>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+            <fieldset class="calendar-filter-group">
+              <legend>Time Range</legend>
+              <div class="calendar-filter-row">
+                <label for="calendar-time-start-input">
+                  <span>Start Time</span>
+                  <span class="calendar-clearable-field">
+                    <input id="calendar-time-start-input" type="time" />
+                    <button type="button" class="calendar-field-clear" data-clear-field="calendar-time-start-input"
+                      aria-label="Clear start time">×</button>
+                  </span>
+                </label>
+                <label for="calendar-time-end-input">
+                  <span>End Time</span>
+                  <span class="calendar-clearable-field">
+                    <input id="calendar-time-end-input" type="time" />
+                    <button type="button" class="calendar-field-clear" data-clear-field="calendar-time-end-input"
+                      aria-label="Clear end time">×</button>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="calendar-filter-actions">
+            <button id="calendar-filter-apply" type="button">Apply Filters</button>
+            <button id="calendar-filter-clear" type="button">Clear All</button>
+            <span id="calendar-filter-status" aria-live="polite"></span>
+          </div>
+        </section>
+
+        <div class="timezone-controls">
+          <label class="timezone-toggle" for="use-local-time-checkbox">
+            <input id="use-local-time-checkbox" type="checkbox" checked />
+            <span>Use Local Time</span>
+          </label>
+          <label for="timezone-select">Timezone:</label>
+          <select id="timezone-select" aria-label="Select timezone for calendar display"></select>
+        </div>
+
+        <a href="#"
+          data-ics-template="https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/{city}/cc_events.ics"
+          class="download-button" target="_blank" rel="noopener noreferrer">
+          <i class="fas fa-calendar-alt" aria-hidden="true"></i> Add to Google Calendar
+        </a>
+      </header>
+
+      <div class="container">
+        <section id="calendar-section" class="calendar-container" aria-label="Baltimore Filtered Events List">
+          <div id="loading" aria-live="polite">
+            <i class="fas fa-spinner fa-spin"></i> Loading calendar events...
+          </div>
+          <div id="calendar"></div>
+        </section>
+      </div>
+    </section>
+
+    <script src="/js/calendarFilterUtils.js"></script>
+    <script src="/js/calendar.js"></script>
+  </main>
+
+  <our-footer></our-footer>
+  <our-slack-link></our-slack-link>
+  <calendar-legend></calendar-legend>
+</body>
+
+<script type="module" src="/js/reusableComponents.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+</html>
