@@ -46,7 +46,7 @@ function isHtmlNavigation(request) {
 function applyStaticCachePolicy(path, response) {
   const headers = new Headers(response.headers);
 
-  if (path.startsWith("/p/assets/")) {
+  if (path.startsWith("/p/assets/") || path.startsWith("/r8-rowhome/assets/")) {
     headers.set("cache-control", "public, max-age=31536000, immutable");
   } else if (
     /\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf|mp4|webm|mp3|wav)$/i.test(path)

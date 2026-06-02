@@ -191,6 +191,7 @@ verify_target() {
   check "/" "200"
   check "/p/" "200"
   check "/p/constituent/dashboard" "200"
+  check "/r8-rowhome/" "200"
 }
 
 DEV_URL=""

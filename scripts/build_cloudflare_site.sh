@@ -25,6 +25,7 @@ rsync -a \
   --exclude='.cloudflare/' \
   --exclude='portal/' \
   --exclude='portal_src/' \
+  --exclude='r8-rowhome/' \
   --exclude='cloudflare/' \
   --exclude='scripts/' \
   --exclude='usa/data/usajobs.json' \
@@ -70,6 +71,31 @@ echo "[cloudflare] syncing portal dist -> /p/"
 mkdir -p "$OUT_DIR/p"
 rsync -a --delete "$PORTAL_WEB_DIR/dist/" "$OUT_DIR/p/"
 
+echo "[cloudflare] building r8-rowhome for /r8-rowhome/"
+R8_ROWHOME_DIR="$ROOT_DIR/r8-rowhome"
+if [[ -d "$R8_ROWHOME_DIR" ]]; then
+  pushd "$R8_ROWHOME_DIR" >/dev/null
+  if [[ "$STRICT_TS" == "1" ]]; then
+    echo "[cloudflare] strict mode: running TypeScript + Vite build for r8-rowhome"
+    VITE_PUBLIC_BASE=/r8-rowhome/ npm run build
+  else
+    echo "[cloudflare] deploy mode: running Vite build for r8-rowhome"
+    VITE_PUBLIC_BASE=/r8-rowhome/ npx vite build
+  fi
+  popd >/dev/null
+
+  if [[ ! -f "$R8_ROWHOME_DIR/dist/index.html" ]]; then
+    echo "[cloudflare] error: expected r8-rowhome/dist/index.html after build" >&2
+    exit 1
+  fi
+
+  echo "[cloudflare] syncing r8-rowhome dist -> /r8-rowhome/"
+  mkdir -p "$OUT_DIR/r8-rowhome"
+  rsync -a --delete "$R8_ROWHOME_DIR/dist/" "$OUT_DIR/r8-rowhome/"
+else
+  echo "[cloudflare] warning: r8-rowhome directory not found, skipping"
+fi
+
 echo "[cloudflare] pruning files larger than ${MAX_ASSET_MB} MiB (Workers asset limit)"
 if find "$OUT_DIR" -type f -size +"${MAX_ASSET_MB}"M -print -quit | grep -q .; then
   if [[ "$VERBOSE_BUILD" == "1" ]]; then
@@ -111,6 +137,9 @@ cat > "$OUT_DIR/_headers" <<'EOF'
   Cache-Control: public, max-age=300
 
 /p/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/r8-rowhome/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
 /images/*

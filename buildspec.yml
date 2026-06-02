@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - cd r8-rowhome
+      - npm ci
+
+  build:
+    commands:
+      - VITE_PUBLIC_BASE=/r8-rowhome/ npx vite build
+
+artifacts:
+  base-directory: r8-rowhome/dist
+  files:
+    - '**/*'
