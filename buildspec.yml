@@ -8,17 +8,12 @@ phases:
       - node --version
       - npm --version
       - git submodule update --init --recursive
-      - pwd
-      - ls -la
-      - find . -maxdepth 4 -name 'package*.json' -print
       - cd r8-rowhome
-      - pwd
-      - ls -la
       - npm ci
 
   build:
     commands:
-      - VITE_PUBLIC_BASE=/r8-rowhome/ npx vite build
+      - npx vite build --base=/r8-rowhome/
       - cd ..
       - mkdir -p pipeline-output/source
       - mkdir -p pipeline-output/r8-rowhome
