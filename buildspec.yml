@@ -11,8 +11,13 @@ phases:
   build:
     commands:
       - VITE_PUBLIC_BASE=/r8-rowhome/ npx vite build
+      - cd ..
+      - mkdir -p pipeline-output/source
+      - mkdir -p pipeline-output/build/r8-rowhome
+      - rsync -a --exclude pipeline-output ./ pipeline-output/source/
+      - rsync -a r8-rowhome/dist/ pipeline-output/build/r8-rowhome/
 
 artifacts:
-  base-directory: r8-rowhome/dist
+  base-directory: pipeline-output
   files:
     - '**/*'
