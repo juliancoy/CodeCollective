@@ -418,6 +418,11 @@ sources = [
         "tags": ["Economic Development"],
     },
     {
+        "name": "Techstars AI Health Baltimore",
+        "url": "https://luma.com/calendar/cal-vtTwduv5AoHTdyg",
+        "tags": ["Health", "Tech Community", "AI", "Startup"],
+    },
+    {
         "name": "Code Collective",
         "url": "https://luma.com/codecollective",
         "group_name": "Code Collective",
