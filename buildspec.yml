@@ -5,9 +5,12 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
+      - node --version
+      - npm --version
+      - git submodule update --init --recursive
       - pwd
       - ls -la
-      - find . -maxdepth 3 -name 'package*.json' -print
+      - find . -maxdepth 4 -name 'package*.json' -print
       - cd r8-rowhome
       - pwd
       - ls -la
