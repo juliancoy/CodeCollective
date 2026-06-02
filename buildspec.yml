@@ -5,7 +5,12 @@ phases:
     runtime-versions:
       nodejs: 20
     commands:
+      - pwd
+      - ls -la
+      - find . -maxdepth 3 -name 'package*.json' -print
       - cd r8-rowhome
+      - pwd
+      - ls -la
       - npm ci
 
   build:
