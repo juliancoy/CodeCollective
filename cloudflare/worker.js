@@ -19,6 +19,7 @@ async function proxyRequest(request, targetOrigin, options = {}) {
   const targetUrl = buildTargetUrl(request.url, origin, options.stripPrefix || "");
   const headers = new Headers(request.headers);
   const requestUrl = new URL(request.url);
+  headers.delete("host");
   headers.set("x-forwarded-host", requestUrl.host);
   headers.set("x-forwarded-proto", requestUrl.protocol.replace(":", ""));
 
@@ -383,7 +384,7 @@ export default {
     }
 
     if (path.startsWith("/pidp")) {
-      return proxyRequest(request, env.PIDP_API_ORIGIN, { stripPrefix: "/pidp" });
+      return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN, { stripPrefix: "/pidp" });
     }
 
     const assetResponse = await env.ASSETS.fetch(request);

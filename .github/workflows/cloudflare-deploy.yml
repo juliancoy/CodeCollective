@@ -1,0 +1,189 @@
+name: Cloudflare Deploy
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/cloudflare-deploy.yml"
+      - "cloudflare/**"
+      - "css/**"
+      - "js/**"
+      - "images/**"
+      - "videos/**"
+      - "audio/**"
+      - "index.html"
+      - "deploy.sh"
+      - "scripts/build_cloudflare_site.sh"
+      - "wrangler.toml"
+      - "portal/web/**"
+      - "portal/pidp/serverless/**"
+      - "r8-rowhome/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/cloudflare-deploy.yml"
+      - "cloudflare/**"
+      - "css/**"
+      - "js/**"
+      - "images/**"
+      - "videos/**"
+      - "audio/**"
+      - "index.html"
+      - "deploy.sh"
+      - "scripts/build_cloudflare_site.sh"
+      - "wrangler.toml"
+      - "portal/web/**"
+      - "portal/pidp/serverless/**"
+      - "r8-rowhome/**"
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: "What to deploy"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - site
+          - pidp
+          - checks-only
+
+concurrency:
+  group: cloudflare-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  PROD_PIDP_API_ORIGIN: "https://id.codecollective.us"
+  PROD_PIDP_PROXY_ORIGIN: "https://pidp-codecollective.jcloiacon.workers.dev"
+
+jobs:
+  site-check:
+    name: Site Build Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install portal dependencies
+        working-directory: portal/web
+        run: npm ci
+
+      - name: Install r8-rowhome dependencies
+        working-directory: r8-rowhome
+        run: npm ci
+
+      - name: Build Cloudflare site bundle
+        env:
+          STRICT_TS: "1"
+          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+        run: ./scripts/build_cloudflare_site.sh
+
+  pidp-check:
+    name: PIdP Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install PIdP dependencies
+        working-directory: portal/pidp/serverless
+        run: npm ci
+
+      - name: Typecheck PIdP
+        working-directory: portal/pidp/serverless
+        run: npm run typecheck
+
+      - name: Test PIdP
+        working-directory: portal/pidp/serverless
+        run: npm test
+
+  site-deploy:
+    name: Deploy Site Worker
+    runs-on: ubuntu-latest
+    needs: site-check
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.deploy_target == 'all' || inputs.deploy_target == 'site'))
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install portal dependencies
+        working-directory: portal/web
+        run: npm ci
+
+      - name: Install r8-rowhome dependencies
+        working-directory: r8-rowhome
+        run: npm ci
+
+      - name: Deploy production site Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROD_GOVERNANCE_API_ORIGIN: ${{ secrets.PROD_GOVERNANCE_API_ORIGIN }}
+          PROD_PIDP_API_ORIGIN: ${{ env.PROD_PIDP_API_ORIGIN }}
+          PROD_PIDP_PROXY_ORIGIN: ${{ env.PROD_PIDP_PROXY_ORIGIN }}
+          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+        run: ./deploy.sh --target prod
+
+  pidp-deploy:
+    name: Deploy PIdP Worker
+    runs-on: ubuntu-latest
+    needs: pidp-check
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.deploy_target == 'all' || inputs.deploy_target == 'pidp'))
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install PIdP dependencies
+        working-directory: portal/pidp/serverless
+        run: npm ci
+
+      - name: Deploy PIdP Worker
+        working-directory: portal/pidp/serverless
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npm run deploy:serverless

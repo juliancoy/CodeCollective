@@ -76,8 +76,9 @@
       <a href="/projects.html">Projects</a>
       <a
         id="portal-login-button"
+        class="nav-login-button"
         href="/p/"
-        data-pidp-base="https://pidp.arkavo.org"
+        data-pidp-base="https://id.codecollective.us"
         aria-label="Log in to the portal"
       >Login</a>
     </div>
@@ -280,7 +281,7 @@
     const loginButton = document.getElementById("portal-login-button");
     if (!loginButton) return;
 
-    const pidpBase = loginButton.getAttribute("data-pidp-base") || "https://pidp.arkavo.org";
+    const pidpBase = loginButton.getAttribute("data-pidp-base") || "https://id.codecollective.us";
     const nextUrl = `${window.location.origin}/p/constituent/dashboard`;
     const loginUrl = `${pidpBase.replace(/\/+$/, "")}/auth/google/login?next=${encodeURIComponent(nextUrl)}`;
     loginButton.setAttribute("href", loginUrl);

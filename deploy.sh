@@ -12,9 +12,11 @@ PROD_WORKER_NAME="${PROD_WORKER_NAME:-codecollective-site}"
 DEV_WORKER_NAME="${DEV_WORKER_NAME:-codecollective-site-dev}"
 
 PROD_GOVERNANCE_API_ORIGIN="${PROD_GOVERNANCE_API_ORIGIN:-https://portal.arkavo.org}"
-PROD_PIDP_API_ORIGIN="${PROD_PIDP_API_ORIGIN:-https://pidp.arkavo.org}"
+PROD_PIDP_API_ORIGIN="${PROD_PIDP_API_ORIGIN:-https://id.codecollective.us}"
+PROD_PIDP_PROXY_ORIGIN="${PROD_PIDP_PROXY_ORIGIN:-https://pidp-codecollective.jcloiacon.workers.dev}"
 DEV_GOVERNANCE_API_ORIGIN="${DEV_GOVERNANCE_API_ORIGIN:-$PROD_GOVERNANCE_API_ORIGIN}"
 DEV_PIDP_API_ORIGIN="${DEV_PIDP_API_ORIGIN:-$PROD_PIDP_API_ORIGIN}"
+DEV_PIDP_PROXY_ORIGIN="${DEV_PIDP_PROXY_ORIGIN:-$PROD_PIDP_PROXY_ORIGIN}"
 
 PASSTHROUGH_ARGS=()
 
@@ -36,7 +38,8 @@ Examples:
   ./deploy.sh --target both
   ./deploy.sh --target dev
   ./deploy.sh --env-file .env.cloudflare
-  DEV_PIDP_API_ORIGIN=https://dev.pidp.arkavo.org ./deploy.sh --target dev
+  DEV_PIDP_API_ORIGIN=https://id.codecollective.us ./deploy.sh --target dev
+  DEV_PIDP_PROXY_ORIGIN=https://pidp-codecollective.jcloiacon.workers.dev ./deploy.sh --target dev
 EOF
 }
 
@@ -83,11 +86,6 @@ if [[ "$TARGET" != "prod" && "$TARGET" != "dev" && "$TARGET" != "both" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "[deploy] missing env file: $ENV_FILE" >&2
-  exit 1
-fi
-
 if ! command -v npx >/dev/null 2>&1; then
   echo "[deploy] npx not found; install Node.js/npm first" >&2
   exit 1
@@ -98,9 +96,17 @@ if ! command -v curl >/dev/null 2>&1; then
   exit 1
 fi
 
-set -a
-source "$ENV_FILE"
-set +a
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  source "$ENV_FILE"
+  set +a
+elif [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+  echo "[deploy] missing env file: $ENV_FILE" >&2
+  echo "[deploy] set CLOUDFLARE_API_TOKEN or pass --env-file <path>" >&2
+  exit 1
+else
+  echo "[deploy] env file not found; using exported Cloudflare environment"
+fi
 
 if [[ "$SKIP_BUILD" -eq 0 ]]; then
   echo "[deploy] building Cloudflare site bundle"
@@ -123,6 +129,7 @@ deploy_target() {
   local worker_name="$2"
   local governance_origin="$3"
   local pidp_origin="$4"
+  local pidp_proxy_origin="$5"
 
   echo "[deploy][$label] deploying worker: $worker_name" >&2
   local deploy_log
@@ -135,6 +142,7 @@ deploy_target() {
         --name "$worker_name" \
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
+        --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
         "${PASSTHROUGH_ARGS[@]}"
     ) 2>&1 | tee "$deploy_log" >&2
   else
@@ -144,6 +152,7 @@ deploy_target() {
         --name "$worker_name" \
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
+        --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
         "${PASSTHROUGH_ARGS[@]}"
     ) 2>&1 \
       | tee "$deploy_log" \
@@ -161,7 +170,7 @@ deploy_target() {
   fi
 
   local deployed_url
-  deployed_url="$(rg -o 'https://[A-Za-z0-9.-]+\\.workers\\.dev' "$deploy_log" | tail -n 1 || true)"
+  deployed_url="$(rg -o 'https://[A-Za-z0-9.-]+\.workers\.dev' "$deploy_log" | tail -n 1 || true)"
   rm -f "$deploy_log"
 
   if [[ -z "$deployed_url" ]]; then
@@ -198,12 +207,12 @@ DEV_URL=""
 PROD_URL=""
 
 if [[ "$TARGET" == "dev" || "$TARGET" == "both" ]]; then
-  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_PIDP_API_ORIGIN")"
+  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN")"
   echo "[deploy][dev] updated url: $DEV_URL"
 fi
 
 if [[ "$TARGET" == "prod" || "$TARGET" == "both" ]]; then
-  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_PIDP_API_ORIGIN")"
+  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN")"
   echo "[deploy][prod] updated url: $PROD_URL"
 fi
 
@@ -218,5 +227,9 @@ fi
 [[ -n "$PROD_URL" ]] && verify_target "prod" "$PROD_URL"
 
 echo "[deploy] complete"
-[[ -n "$DEV_URL" ]] && echo "[deploy] dev url:  $DEV_URL"
-[[ -n "$PROD_URL" ]] && echo "[deploy] prod url: $PROD_URL"
+if [[ -n "$DEV_URL" ]]; then
+  echo "[deploy] dev url:  $DEV_URL"
+fi
+if [[ -n "$PROD_URL" ]]; then
+  echo "[deploy] prod url: $PROD_URL"
+fi
