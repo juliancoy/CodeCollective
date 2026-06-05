@@ -154,7 +154,7 @@ jobs:
           PROD_PIDP_API_ORIGIN: ${{ env.PROD_PIDP_API_ORIGIN }}
           PROD_PIDP_PROXY_ORIGIN: ${{ env.PROD_PIDP_PROXY_ORIGIN }}
           VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
-        run: ./deploy.sh --target prod
+        run: ./deploy.sh --component site --target prod
 
   pidp-deploy:
     name: Deploy PIdP Worker
@@ -182,8 +182,21 @@ jobs:
         run: npm ci
 
       - name: Deploy PIdP Worker
-        working-directory: portal/pidp/serverless
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npm run deploy:serverless
+          PIDP_WORKER_NAME: ${{ vars.PIDP_WORKER_NAME }}
+          PIDP_APP_NAME: ${{ vars.PIDP_APP_NAME }}
+          PIDP_ENV: ${{ vars.PIDP_ENV }}
+          PIDP_ACCESS_TOKEN_EXPIRE_MINUTES: ${{ vars.PIDP_ACCESS_TOKEN_EXPIRE_MINUTES }}
+          PIDP_ALLOWED_ORIGINS: ${{ vars.PIDP_ALLOWED_ORIGINS }}
+          PIDP_ADMIN_EMAILS: ${{ vars.PIDP_ADMIN_EMAILS }}
+          PIDP_ADMIN_USER_IDS: ${{ vars.PIDP_ADMIN_USER_IDS }}
+          PIDP_PUBLIC_R2_BASE_URL: ${{ vars.PIDP_PUBLIC_R2_BASE_URL }}
+          PIDP_FRONTEND_REDIRECT_URL: ${{ vars.PIDP_FRONTEND_REDIRECT_URL }}
+          PIDP_GOOGLE_REDIRECT_URI: ${{ vars.PIDP_GOOGLE_REDIRECT_URI }}
+          PIDP_GITHUB_REDIRECT_URI: ${{ vars.PIDP_GITHUB_REDIRECT_URI }}
+          PIDP_D1_DATABASE_NAME: ${{ vars.PIDP_D1_DATABASE_NAME }}
+          PIDP_D1_DATABASE_ID: ${{ vars.PIDP_D1_DATABASE_ID }}
+          PIDP_R2_BUCKET_NAME: ${{ vars.PIDP_R2_BUCKET_NAME }}
+        run: ./deploy.sh --component pidp

@@ -400,12 +400,18 @@ b, strong, .bold-text {
 }
 
 .navbar a.nav-login-button {
-  margin-left: 0.35rem;
+  margin-left: auto;
   padding: 0.48rem 0.82rem;
   border: 1px solid rgba(255, 255, 255, 0.82);
   border-radius: 6px;
   background: #ffffff;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
   color: #002a61;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
   line-height: 1;
 }
 
@@ -484,6 +490,10 @@ button:focus {
 @media only screen and (max-width: 800px) {
   .navbar {
     line-height: initial;
+  }
+
+  .navbar a.nav-login-button {
+    margin-left: 0;
   }
 }.event-card {
     background-color: transparent;

@@ -72,11 +72,12 @@ PROD_GOVERNANCE_API_ORIGIN
 Emergency local deploy commands remain available:
 
 ```bash
-./deploy.sh --target prod
-
-cd portal/pidp/serverless
-npm run deploy:serverless
+./deploy.sh --component all --target prod
+./deploy.sh --component site --target prod
+./deploy.sh --component pidp
 ```
+
+The root deploy script generates a temporary production `portal/pidp/serverless/wrangler.jsonc` for local PIdP deployments, runs the serverless deployment helper, and restores the generic checked-in config afterward.
 
 ### Full Migration Target
 

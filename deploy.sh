@@ -6,10 +6,14 @@ ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env.cloudflare}"
 SKIP_BUILD=0
 NO_VERIFY=0
 TARGET="${TARGET:-both}"
+COMPONENT="${COMPONENT:-all}"
 VERBOSE=0
+SKIP_PIDP_MIGRATIONS=0
+DRY_RUN=0
 
 PROD_WORKER_NAME="${PROD_WORKER_NAME:-codecollective-site}"
 DEV_WORKER_NAME="${DEV_WORKER_NAME:-codecollective-site-dev}"
+PIDP_DIR="$ROOT_DIR/portal/pidp/serverless"
 
 PROD_GOVERNANCE_API_ORIGIN="${PROD_GOVERNANCE_API_ORIGIN:-https://portal.arkavo.org}"
 PROD_PIDP_API_ORIGIN="${PROD_PIDP_API_ORIGIN:-https://id.codecollective.us}"
@@ -17,6 +21,22 @@ PROD_PIDP_PROXY_ORIGIN="${PROD_PIDP_PROXY_ORIGIN:-https://pidp-codecollective.jc
 DEV_GOVERNANCE_API_ORIGIN="${DEV_GOVERNANCE_API_ORIGIN:-$PROD_GOVERNANCE_API_ORIGIN}"
 DEV_PIDP_API_ORIGIN="${DEV_PIDP_API_ORIGIN:-$PROD_PIDP_API_ORIGIN}"
 DEV_PIDP_PROXY_ORIGIN="${DEV_PIDP_PROXY_ORIGIN:-$PROD_PIDP_PROXY_ORIGIN}"
+
+PIDP_WORKER_NAME="${PIDP_WORKER_NAME:-pidp-codecollective}"
+PIDP_APP_NAME="${PIDP_APP_NAME:-Code Collective ID}"
+PIDP_ENV="${PIDP_ENV:-production}"
+PIDP_ACCESS_TOKEN_EXPIRE_MINUTES="${PIDP_ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
+PIDP_ALLOWED_ORIGINS="${PIDP_ALLOWED_ORIGINS:-https://codecollective.us,https://www.codecollective.us}"
+PIDP_ADMIN_EMAILS="${PIDP_ADMIN_EMAILS:-}"
+PIDP_ADMIN_USER_IDS="${PIDP_ADMIN_USER_IDS:-}"
+PIDP_PUBLIC_R2_BASE_URL="${PIDP_PUBLIC_R2_BASE_URL:-}"
+PIDP_FRONTEND_REDIRECT_URL="${PIDP_FRONTEND_REDIRECT_URL:-https://codecollective.us/p/auth/callback}"
+PIDP_GOOGLE_REDIRECT_URI="${PIDP_GOOGLE_REDIRECT_URI:-https://id.codecollective.us/auth/google/callback}"
+PIDP_GITHUB_REDIRECT_URI="${PIDP_GITHUB_REDIRECT_URI:-https://id.codecollective.us/auth/github/callback}"
+PIDP_D1_DATABASE_NAME="${PIDP_D1_DATABASE_NAME:-pidp}"
+PIDP_D1_DATABASE_ID="${PIDP_D1_DATABASE_ID:-582fc740-4275-482a-bec0-a161a0aa6623}"
+PIDP_R2_BUCKET_NAME="${PIDP_R2_BUCKET_NAME:-pidp-avatars}"
+PIDP_VERIFY_ORIGIN="${PIDP_VERIFY_ORIGIN:-https://id.codecollective.us}"
 
 PASSTHROUGH_ARGS=()
 
@@ -26,15 +46,22 @@ Usage: ./deploy.sh [options] [-- <wrangler args>]
 
 Options:
   --env-file <path>   Path to env file (default: ./.env.cloudflare)
+  --component <value>  all | site | pidp (default: all)
   --target <value>    prod | dev | both (default: both)
   --verbose           Print full build/deploy logs
   STRICT_TS=1         Optional env: run strict TypeScript+Vite build during deploy
   --skip-build        Skip build_cloudflare_site.sh
+  --skip-pidp-migrations
+                       Skip PIdP remote D1 migrations
+  --dry-run            Build and validate deploy commands without publishing
   --no-verify         Skip post-deploy smoke checks
   -h, --help          Show this help
 
 Examples:
   ./deploy.sh
+  ./deploy.sh --component all --target prod
+  ./deploy.sh --component site --target dev
+  ./deploy.sh --component pidp
   ./deploy.sh --target both
   ./deploy.sh --target dev
   ./deploy.sh --env-file .env.cloudflare
@@ -53,12 +80,24 @@ while (($#)); do
       TARGET="$2"
       shift 2
       ;;
+    --component)
+      COMPONENT="$2"
+      shift 2
+      ;;
     --verbose)
       VERBOSE=1
       shift
       ;;
     --skip-build)
       SKIP_BUILD=1
+      shift
+      ;;
+    --skip-pidp-migrations)
+      SKIP_PIDP_MIGRATIONS=1
+      shift
+      ;;
+    --dry-run)
+      DRY_RUN=1
       shift
       ;;
     --no-verify)
@@ -86,8 +125,18 @@ if [[ "$TARGET" != "prod" && "$TARGET" != "dev" && "$TARGET" != "both" ]]; then
   exit 1
 fi
 
+if [[ "$COMPONENT" != "all" && "$COMPONENT" != "site" && "$COMPONENT" != "pidp" ]]; then
+  echo "[deploy] invalid --component: $COMPONENT (expected all|site|pidp)" >&2
+  exit 1
+fi
+
 if ! command -v npx >/dev/null 2>&1; then
   echo "[deploy] npx not found; install Node.js/npm first" >&2
+  exit 1
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "[deploy] node not found; install Node.js first" >&2
   exit 1
 fi
 
@@ -108,7 +157,16 @@ else
   echo "[deploy] env file not found; using exported Cloudflare environment"
 fi
 
-if [[ "$SKIP_BUILD" -eq 0 ]]; then
+deploy_site=0
+deploy_pidp=0
+if [[ "$COMPONENT" == "all" || "$COMPONENT" == "site" ]]; then
+  deploy_site=1
+fi
+if [[ "$COMPONENT" == "all" || "$COMPONENT" == "pidp" ]]; then
+  deploy_pidp=1
+fi
+
+if [[ "$deploy_site" -eq 1 && "$SKIP_BUILD" -eq 0 ]]; then
   echo "[deploy] building Cloudflare site bundle"
   if [[ "$VERBOSE" -eq 1 ]]; then
     VERBOSE_BUILD=1 "$ROOT_DIR/scripts/build_cloudflare_site.sh"
@@ -117,13 +175,144 @@ if [[ "$SKIP_BUILD" -eq 0 ]]; then
   fi
 fi
 
-if [[ ! -f "$ROOT_DIR/.cloudflare/site/p/index.html" ]]; then
+if [[ "$deploy_site" -eq 1 && ! -f "$ROOT_DIR/.cloudflare/site/p/index.html" ]]; then
   echo "[deploy] portal entrypoint missing: .cloudflare/site/p/index.html" >&2
   echo "[deploy] deploy aborted" >&2
   exit 1
 fi
 
-echo "[deploy] deploying worker"
+write_pidp_config() {
+  local required=(
+    PIDP_WORKER_NAME
+    PIDP_APP_NAME
+    PIDP_ENV
+    PIDP_ALLOWED_ORIGINS
+    PIDP_FRONTEND_REDIRECT_URL
+    PIDP_D1_DATABASE_NAME
+    PIDP_D1_DATABASE_ID
+    PIDP_R2_BUCKET_NAME
+  )
+  local missing=()
+  for name in "${required[@]}"; do
+    if [[ -z "${!name:-}" ]]; then
+      missing+=("$name")
+    fi
+  done
+  if [[ "${#missing[@]}" -gt 0 ]]; then
+    echo "[deploy][pidp] missing required config: ${missing[*]}" >&2
+    exit 1
+  fi
+
+  export PIDP_WORKER_NAME
+  export PIDP_APP_NAME
+  export PIDP_ENV
+  export PIDP_ACCESS_TOKEN_EXPIRE_MINUTES
+  export PIDP_ALLOWED_ORIGINS
+  export PIDP_ADMIN_EMAILS
+  export PIDP_ADMIN_USER_IDS
+  export PIDP_PUBLIC_R2_BASE_URL
+  export PIDP_FRONTEND_REDIRECT_URL
+  export PIDP_GOOGLE_REDIRECT_URI
+  export PIDP_GITHUB_REDIRECT_URI
+  export PIDP_D1_DATABASE_NAME
+  export PIDP_D1_DATABASE_ID
+  export PIDP_R2_BUCKET_NAME
+
+  (
+    cd "$PIDP_DIR"
+    node <<'NODE'
+const fs = require("node:fs");
+
+const env = process.env;
+const config = {
+  "$schema": "node_modules/wrangler/config-schema.json",
+  name: env.PIDP_WORKER_NAME,
+  main: "src/index.ts",
+  compatibility_date: "2026-06-03",
+  workers_dev: true,
+  observability: { enabled: true },
+  vars: {
+    APP_NAME: env.PIDP_APP_NAME,
+    ENV: env.PIDP_ENV,
+    ACCESS_TOKEN_EXPIRE_MINUTES: env.PIDP_ACCESS_TOKEN_EXPIRE_MINUTES || "60",
+    ALLOWED_ORIGINS: env.PIDP_ALLOWED_ORIGINS,
+    ADMIN_EMAILS: env.PIDP_ADMIN_EMAILS || "",
+    ADMIN_USER_IDS: env.PIDP_ADMIN_USER_IDS || "",
+    PUBLIC_R2_BASE_URL: env.PIDP_PUBLIC_R2_BASE_URL || "",
+    FRONTEND_REDIRECT_URL: env.PIDP_FRONTEND_REDIRECT_URL,
+    GOOGLE_REDIRECT_URI: env.PIDP_GOOGLE_REDIRECT_URI || "",
+    GITHUB_REDIRECT_URI: env.PIDP_GITHUB_REDIRECT_URI || "",
+  },
+  d1_databases: [
+    {
+      binding: "DB",
+      database_name: env.PIDP_D1_DATABASE_NAME,
+      database_id: env.PIDP_D1_DATABASE_ID,
+    },
+  ],
+  r2_buckets: [
+    {
+      binding: "AVATARS",
+      bucket_name: env.PIDP_R2_BUCKET_NAME,
+    },
+  ],
+};
+
+fs.writeFileSync("wrangler.jsonc", `${JSON.stringify(config, null, 2)}\n`);
+NODE
+  )
+}
+
+deploy_pidp_worker() {
+  if [[ ! -d "$PIDP_DIR" ]]; then
+    echo "[deploy][pidp] missing directory: $PIDP_DIR" >&2
+    exit 1
+  fi
+
+  echo "[deploy][pidp] generating production Wrangler config"
+  local config_path="$PIDP_DIR/wrangler.jsonc"
+  local backup_path
+  backup_path="$(mktemp)"
+  cp "$config_path" "$backup_path"
+
+  local args=()
+  if [[ "$SKIP_PIDP_MIGRATIONS" -eq 1 ]]; then
+    args+=("--skip-migrations")
+  fi
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    if [[ "$SKIP_PIDP_MIGRATIONS" -eq 0 ]]; then
+      args+=("--skip-migrations")
+    fi
+    args+=("--skip-status")
+    args+=("--dry-run")
+  fi
+
+  echo "[deploy][pidp] deploying Worker: $PIDP_WORKER_NAME"
+  local status
+  set +e
+  write_pidp_config
+  status=$?
+  if [[ "$status" -eq 0 ]]; then
+    if [[ "${GITHUB_ACTIONS:-}" == "true" || "${PIDP_USE_API_TOKEN:-0}" == "1" ]]; then
+      (
+        cd "$PIDP_DIR"
+        npm run deploy:serverless -- "${args[@]}"
+      )
+    else
+      echo "[deploy][pidp] using local Wrangler login; set PIDP_USE_API_TOKEN=1 to force CLOUDFLARE_API_TOKEN"
+      (
+        cd "$PIDP_DIR"
+        env -u CLOUDFLARE_API_TOKEN npm run deploy:serverless -- "${args[@]}"
+      )
+    fi
+    status=$?
+  fi
+  set -e
+  cp "$backup_path" "$config_path"
+  rm -f "$backup_path"
+  return "$status"
+}
+
 deploy_target() {
   local label="$1"
   local worker_name="$2"
@@ -134,6 +323,10 @@ deploy_target() {
   echo "[deploy][$label] deploying worker: $worker_name" >&2
   local deploy_log
   deploy_log="$(mktemp)"
+  local wrangler_args=("${PASSTHROUGH_ARGS[@]}")
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    wrangler_args+=("--dry-run")
+  fi
 
   if [[ "$VERBOSE" -eq 1 ]]; then
     (
@@ -143,7 +336,7 @@ deploy_target() {
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
-        "${PASSTHROUGH_ARGS[@]}"
+        "${wrangler_args[@]}"
     ) 2>&1 | tee "$deploy_log" >&2
   else
     (
@@ -153,7 +346,7 @@ deploy_target() {
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
-        "${PASSTHROUGH_ARGS[@]}"
+        "${wrangler_args[@]}"
     ) 2>&1 \
       | tee "$deploy_log" \
       | awk '
@@ -206,27 +399,49 @@ verify_target() {
 DEV_URL=""
 PROD_URL=""
 
-if [[ "$TARGET" == "dev" || "$TARGET" == "both" ]]; then
+if [[ "$deploy_pidp" -eq 1 ]]; then
+  deploy_pidp_worker
+fi
+
+if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "dev" || "$TARGET" == "both" ) ]]; then
   DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN")"
   echo "[deploy][dev] updated url: $DEV_URL"
 fi
 
-if [[ "$TARGET" == "prod" || "$TARGET" == "both" ]]; then
+if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "prod" || "$TARGET" == "both" ) ]]; then
   PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN")"
   echo "[deploy][prod] updated url: $PROD_URL"
 fi
 
-if [[ "$NO_VERIFY" -eq 1 ]]; then
-  echo "[deploy] done (verification skipped)"
+if [[ "$NO_VERIFY" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    echo "[deploy] done (dry-run; verification skipped)"
+  else
+    echo "[deploy] done (verification skipped)"
+  fi
+  [[ "$deploy_pidp" -eq 1 ]] && echo "[deploy] pidp url: $PIDP_VERIFY_ORIGIN"
   [[ -n "$DEV_URL" ]] && echo "[deploy] dev url:  $DEV_URL"
   [[ -n "$PROD_URL" ]] && echo "[deploy] prod url: $PROD_URL"
   exit 0
+fi
+
+if [[ "$deploy_pidp" -eq 1 ]]; then
+  echo "[deploy][pidp] verifying $PIDP_VERIFY_ORIGIN"
+  pidp_code="$(curl -sS -o /dev/null -w '%{http_code}' "$PIDP_VERIFY_ORIGIN/health")"
+  if [[ "$pidp_code" != "200" ]]; then
+    echo "[deploy][pidp] verify failed: /health returned $pidp_code (expected 200)" >&2
+    exit 1
+  fi
+  echo "[deploy][pidp] ok: /health -> 200"
 fi
 
 [[ -n "$DEV_URL" ]] && verify_target "dev" "$DEV_URL"
 [[ -n "$PROD_URL" ]] && verify_target "prod" "$PROD_URL"
 
 echo "[deploy] complete"
+if [[ "$deploy_pidp" -eq 1 ]]; then
+  echo "[deploy] pidp url: $PIDP_VERIFY_ORIGIN"
+fi
 if [[ -n "$DEV_URL" ]]; then
   echo "[deploy] dev url:  $DEV_URL"
 fi
