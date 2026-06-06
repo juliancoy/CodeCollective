@@ -209,4 +209,4 @@ jobs:
           PIDP_D1_DATABASE_NAME: ${{ vars.PIDP_D1_DATABASE_NAME }}
           PIDP_D1_DATABASE_ID: ${{ vars.PIDP_D1_DATABASE_ID }}
           PIDP_R2_BUCKET_NAME: ${{ vars.PIDP_R2_BUCKET_NAME }}
-        run: ./deploy.sh --component pidp
+        run: ./deploy.sh --component pidp --skip-pidp-migrations

@@ -286,6 +286,9 @@ deploy_pidp_worker() {
     args+=("--skip-status")
     args+=("--dry-run")
   fi
+  if [[ "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    args+=("--skip-status")
+  fi
 
   echo "[deploy][pidp] deploying Worker: $PIDP_WORKER_NAME"
   local status
@@ -363,7 +366,7 @@ deploy_target() {
   fi
 
   local deployed_url
-  deployed_url="$(rg -o 'https://[A-Za-z0-9.-]+\.workers\.dev' "$deploy_log" | tail -n 1 || true)"
+  deployed_url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' "$deploy_log" | tail -n 1 || true)"
   rm -f "$deploy_log"
 
   if [[ -z "$deployed_url" ]]; then
