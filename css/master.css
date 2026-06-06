@@ -309,9 +309,6 @@ b, strong, .bold-text {
   height: auto;
   background-color: #002a61;
   color: #002a61;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   position: sticky;
   top: 0;
   z-index: 1200;
@@ -321,21 +318,20 @@ b, strong, .bold-text {
 
 /* Navbar container */
 .navbar {
-  padding: 0 2.85rem 0 0.75rem;
+  padding: 0.2rem 0.75rem;
   margin: 0 auto;
   background-color: #002a61;
   color: #002a61;
   border-bottom: solid 1px white;
-  overflow: hidden;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
   align-items: center;
-  display: flex;
   font-size: clamp(1rem, 2vw, 4.4rem);
   font-family: NectoMono;
   width: 100%;
   height: auto;
-  flex-wrap: nowrap;
-  gap: 0;
+  gap: 0.6rem;
+  overflow: visible;
 }
 
 /* Mobile */
@@ -345,8 +341,28 @@ b, strong, .bold-text {
   }
 }
 
+.nav-primary,
+.nav-actions {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
 
-.navbar a {
+.nav-primary {
+  grid-column: 2;
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+
+.nav-actions {
+  grid-column: 3;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.navbar a,
+.nav-primary a,
+.nav-actions a {
   --s: 0.1em;
   /* the thickness of the line */
   --c: #002a61;
@@ -376,31 +392,36 @@ b, strong, .bold-text {
 
 @media (max-width: 700px) {
   .navbar {
-    justify-content: flex-start;
-    flex-wrap: wrap;
     row-gap: 0.1rem;
-    padding: 0.2rem 2.45rem 0.2rem 0.45rem;
+    padding: 0.28rem 0.45rem;
   }
 
-  .navbar a {
+  .navbar a,
+  .nav-primary a,
+  .nav-actions a {
     padding: 0.55rem 0.62rem;
     font-size: 0.93rem;
   }
 }
 
-.navbar a:hover {
+.navbar a:hover,
+.nav-primary a:hover,
+.nav-actions a:hover {
   --_p: 100%;
 }
 
-.navbar.dark-mode a {
+.navbar.dark-mode a,
+.navbar.dark-mode .nav-primary a,
+.navbar.dark-mode .nav-actions a {
   --c: #ffffff;
   /* Set the color to white in dark mode */
   color: white;
   /* Set text color to white */
 }
 
-.navbar a.nav-login-button {
-  margin-left: auto;
+.navbar a.nav-login-button,
+.nav-actions a.nav-login-button {
+  margin-left: 0;
   padding: 0.48rem 0.82rem;
   border: 1px solid rgba(255, 255, 255, 0.82);
   border-radius: 6px;
@@ -415,59 +436,170 @@ b, strong, .bold-text {
   line-height: 1;
 }
 
-.navbar a.nav-login-button:hover {
+.navbar a.nav-login-button:hover,
+.nav-actions a.nav-login-button:hover {
   background: #f4f8ff;
   color: #002a61;
 }
 
-.navbar.dark-mode a.nav-login-button {
+.navbar.dark-mode a.nav-login-button,
+.navbar.dark-mode .nav-actions a.nav-login-button {
   color: #002a61;
 }
 
-.donate-shortcut {
-  position: absolute;
-  top: 50%;
-  right: 0.9rem;
-  transform: translateY(-50%);
+.navbar a.donate-shortcut,
+.nav-actions a.donate-shortcut {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 2.2rem;
   height: 2.2rem;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.78);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.06);
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
   box-shadow: 0 0 0 1px rgba(0, 42, 97, 0.18);
-  transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
-  z-index: 2;
+  line-height: 1;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.donate-shortcut:hover {
+.navbar a.donate-shortcut:hover,
+.nav-actions a.donate-shortcut:hover {
   background: rgba(255, 255, 255, 0.16);
   border-color: rgba(255, 255, 255, 0.98);
-  transform: translateY(-50%) scale(1.04);
 }
 
-.donate-shortcut svg {
+.navbar a.donate-shortcut svg,
+.nav-actions a.donate-shortcut svg {
+  display: block;
   width: 1.05rem;
   height: 1.05rem;
   fill: #e63946;
 }
 
+.login-modal[hidden] {
+  display: none;
+}
+
+.login-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.login-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 16, 38, 0.58);
+}
+
+.login-modal__panel {
+  position: relative;
+  width: min(100%, 24rem);
+  background: #ffffff;
+  color: #002a61;
+  border: 1px solid rgba(0, 42, 97, 0.22);
+  border-radius: 8px;
+  box-shadow: 0 24px 64px rgba(0, 16, 38, 0.24);
+  padding: 1rem;
+  outline: none;
+}
+
+.login-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.login-modal__header h2 {
+  margin: 0;
+  font-family: NectoMono, system-ui, sans-serif;
+  font-size: 1.25rem;
+  color: #002a61;
+}
+
+.login-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(0, 42, 97, 0.2);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #002a61;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.login-modal__options {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.login-modal__option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #002a61;
+  border-radius: 6px;
+  background: #002a61;
+  color: #ffffff;
+  font-family: NectoMono, system-ui, sans-serif;
+  text-align: center;
+  text-decoration: none;
+}
+
+.login-modal__option:hover {
+  background: #073b7d;
+}
+
+.login-modal__option--secondary {
+  background: #ffffff;
+  color: #002a61;
+}
+
+.login-modal__option--secondary:hover {
+  background: #f4f8ff;
+}
+
 @media (max-width: 700px) {
-  .donate-shortcut {
-    top: 0.6rem;
-    transform: none;
-    right: 0.45rem;
+  .navbar {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-primary {
+    grid-column: 1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    row-gap: 0.1rem;
+  }
+
+  .nav-actions {
+    grid-column: 1;
+    justify-content: flex-start;
+    gap: 0.45rem;
+  }
+
+  .navbar a.donate-shortcut,
+  .nav-actions a.donate-shortcut {
     width: 1.95rem;
     height: 1.95rem;
   }
 
-  .donate-shortcut:hover {
-    transform: scale(1.04);
-  }
-
-  .donate-shortcut svg {
+  .navbar a.donate-shortcut svg,
+  .nav-actions a.donate-shortcut svg {
     width: 0.92rem;
     height: 0.92rem;
   }
@@ -490,10 +622,6 @@ button:focus {
 @media only screen and (max-width: 800px) {
   .navbar {
     line-height: initial;
-  }
-
-  .navbar a.nav-login-button {
-    margin-left: 0;
   }
 }.event-card {
     background-color: transparent;

@@ -90,6 +90,16 @@ jobs:
           VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
         run: ./scripts/build_cloudflare_site.sh
 
+      - name: Smoke test shared nav login
+        run: |
+          python3 -m http.server 8765 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          npx --prefix portal/web playwright install chromium --with-deps
+          SMOKE_BASE_URL=http://127.0.0.1:8765 \
+            PLAYWRIGHT_CHROME_PATH=/usr/bin/google-chrome \
+            node scripts/smoke_nav_login.mjs
+
   pidp-check:
     name: PIdP Check
     runs-on: ubuntu-latest
