@@ -1,0 +1,175 @@
+name: Android
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/android.yml"
+      - "portal"
+      - "portal/web/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/android.yml"
+      - "portal"
+      - "portal/web/**"
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Build signed release artifacts"
+        required: true
+        default: false
+        type: boolean
+      deploy_static_update:
+        description: "Deploy the self-hosted APK/update manifest to Cloudflare"
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  JAVA_VERSION: "21"
+  PROD_PIDP_API_ORIGIN: "https://id.codecollective.us"
+  PROD_PIDP_PROXY_ORIGIN: "https://pidp-codecollective.jcloiacon.workers.dev"
+  PROD_ORG_API_ORIGIN: "https://org-codecollective.jcloiacon.workers.dev"
+
+jobs:
+  debug-build:
+    name: Debug APK Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: portal/web/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install portal dependencies
+        working-directory: portal/web
+        run: npm ci
+
+      - name: Build debug APK
+        working-directory: portal/web
+        env:
+          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+        run: npm run android:apk:debug
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: orgportal-debug-apk
+          path: portal/web/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  release-build:
+    name: Signed Release Build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            portal/web/package-lock.json
+            r8-rowhome/package-lock.json
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Validate signing secrets
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+
+      - name: Install portal dependencies
+        working-directory: portal/web
+        run: npm ci
+
+      - name: Build signed release APK and AAB
+        working-directory: portal/web
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+        run: npm run android:ci:release
+
+      - name: Stage self-hosted Android update files
+        working-directory: portal/web
+        run: npm run android:publish:static
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: orgportal-android-release
+          path: |
+            portal/web/android/app/build/outputs/apk/release/*.apk
+            portal/web/android/app/build/outputs/bundle/release/*.aab
+            portal/static/orgportal-android-release.apk
+            portal/static/mobile-update.json
+            portal/web/public/orgportal-android-release.apk
+            portal/web/public/mobile-update.json
+          if-no-files-found: error
+
+      - name: Install r8-rowhome dependencies
+        if: inputs.deploy_static_update
+        working-directory: r8-rowhome
+        run: npm ci
+
+      - name: Deploy self-hosted Android update to Cloudflare
+        if: inputs.deploy_static_update
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PROD_GOVERNANCE_API_ORIGIN: ${{ secrets.PROD_GOVERNANCE_API_ORIGIN }}
+          PROD_ORG_API_ORIGIN: ${{ env.PROD_ORG_API_ORIGIN }}
+          PROD_PIDP_API_ORIGIN: ${{ env.PROD_PIDP_API_ORIGIN }}
+          PROD_PIDP_PROXY_ORIGIN: ${{ env.PROD_PIDP_PROXY_ORIGIN }}
+          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+        run: ./deploy.sh --component site --target prod
