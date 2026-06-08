@@ -366,7 +366,7 @@ export default {
       return Response.redirect(url.toString(), 308);
     }
 
-    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || path.startsWith("/api/org") || path.startsWith("/api/chat") || path.startsWith("/pidp") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels"))) {
+    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || path.startsWith("/api/org") || path.startsWith("/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels"))) {
       return new Response(null, {
         status: 204,
         headers: {
@@ -415,6 +415,15 @@ export default {
 
     if (path.startsWith("/pidp")) {
       return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN, { stripPrefix: "/pidp" });
+    }
+
+    if (path.startsWith("/auth/avatar/upload")) {
+      return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN);
+    }
+
+    if (path === "/auth/callback") {
+      url.pathname = "/p/auth/callback";
+      return Response.redirect(url.toString(), 308);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
