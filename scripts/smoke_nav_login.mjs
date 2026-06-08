@@ -53,6 +53,11 @@ try {
     if (!result.href.startsWith("https://id.codecollective.us/app/login?")) {
       throw new Error(`${url}: unexpected login href ${result.href}`);
     }
+    const loginHref = new URL(result.href);
+    const loginNext = loginHref.searchParams.get("next") || "";
+    if (!loginNext.startsWith(`${baseUrl}/p/auth/callback?next=/chat`)) {
+      throw new Error(`${url}: login next should land in portal chat, got ${loginNext}`);
+    }
 
     await page.click("#portal-login-button");
     const modalResult = await page.evaluate(() => {
@@ -79,6 +84,17 @@ try {
     }
     if (!modalResult.passwordHref.startsWith("https://id.codecollective.us/app/login?")) {
       throw new Error(`${url}: unexpected password login href ${modalResult.passwordHref}`);
+    }
+    for (const [label, href] of Object.entries({
+      google: modalResult.googleHref,
+      github: modalResult.githubHref,
+      password: modalResult.passwordHref,
+    })) {
+      const parsed = new URL(href);
+      const next = parsed.searchParams.get("next") || "";
+      if (!next.startsWith(`${baseUrl}/p/auth/callback?next=/chat`)) {
+        throw new Error(`${url}: ${label} next should land in portal chat, got ${next}`);
+      }
     }
 
     console.log(`${url}: login nav ok`);

@@ -215,7 +215,7 @@ function configurePortalLogin() {
 
     loginButtons.forEach((loginButton) => {
         const pidpBase = loginButton.getAttribute('data-pidp-base') || 'https://id.codecollective.us';
-        const nextUrl = `${window.location.origin}/p/constituent/dashboard`;
+        const nextUrl = `${window.location.origin}/p/auth/callback?next=/chat`;
         const loginUrl = `${pidpBase.replace(/\/+$/, '')}/app/login?next=${encodeURIComponent(nextUrl)}`;
         loginButton.setAttribute('href', loginUrl);
         loginButton.setAttribute('aria-haspopup', 'dialog');
@@ -252,7 +252,7 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
     loginButton.dataset.portalAuthenticated = 'true';
     loginButton.classList.remove('nav-login-button');
     loginButton.classList.add('nav-account-link');
-    loginButton.href = '/p/constituent/dashboard';
+    loginButton.href = '/p/chat';
     loginButton.removeAttribute('aria-haspopup');
     loginButton.setAttribute('aria-label', `${displayName} account`);
     loginButton.title = displayName;
