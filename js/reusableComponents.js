@@ -211,9 +211,14 @@ function applyNavItemAttributes(link, item) {
 }
 
 function configurePortalLogin() {
-    const loginButtons = document.querySelectorAll('#portal-login-button, .nav-login-button[data-pidp-base]');
+    const loginButtons = document.querySelectorAll('.nav-login-button[data-pidp-base]');
 
     loginButtons.forEach((loginButton) => {
+        if (loginButton.dataset.portalAuthenticated === 'true' || loginButton.classList.contains('nav-account-link')) {
+            loginButton.href = '/p/id';
+            loginButton.removeAttribute('aria-haspopup');
+            return;
+        }
         const pidpBase = loginButton.getAttribute('data-pidp-base') || 'https://id.codecollective.us';
         const nextUrl = `${window.location.origin}/p/auth/callback?next=/id`;
         const loginUrl = `${pidpBase.replace(/\/+$/, '')}/app/login?next=${encodeURIComponent(nextUrl)}`;
@@ -346,6 +351,14 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
     loginButton.removeAttribute('aria-haspopup');
     loginButton.setAttribute('aria-label', `${displayName} ID page`);
     loginButton.title = displayName;
+    if (loginButton.dataset.portalAccountClickConfigured !== 'true') {
+        loginButton.dataset.portalAccountClickConfigured = 'true';
+        loginButton.addEventListener('click', (event) => {
+            if (loginButton.dataset.portalAuthenticated !== 'true') return;
+            event.preventDefault();
+            window.location.assign('/p/id');
+        });
+    }
 
     const avatar = document.createElement('span');
     avatar.className = 'nav-account-avatar';
@@ -365,7 +378,7 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
 }
 
 async function hydratePortalNavUser() {
-    const loginButtons = document.querySelectorAll('#portal-login-button, .nav-login-button[data-pidp-base]');
+    const loginButtons = document.querySelectorAll('.nav-login-button[data-pidp-base]');
     if (!loginButtons.length) return;
 
     const pidpBase = loginButtons[0].getAttribute('data-pidp-base') || 'https://id.codecollective.us';
