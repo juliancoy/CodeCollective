@@ -44,6 +44,18 @@ function isHtmlNavigation(request) {
   return accept.includes("text/html");
 }
 
+function looksLikeSpaRoute(path) {
+  const lastSegment = path.split("/").filter(Boolean).pop() || "";
+  return !lastSegment.includes(".");
+}
+
+function spaEntrypointRequest(url, request, pathname) {
+  return new Request(`${url.origin}${pathname}`, {
+    method: "GET",
+    headers: request.headers,
+  });
+}
+
 function applyStaticCachePolicy(path, response) {
   const headers = new Headers(response.headers);
 
@@ -344,7 +356,17 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || path.startsWith("/pidp") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels"))) {
+    if (path === "/favicon.ico") {
+      url.pathname = "/images/favicons/favicon.png";
+      return Response.redirect(url.toString(), 308);
+    }
+
+    if (path === "/R8-rowhome" || path.startsWith("/R8-rowhome/")) {
+      url.pathname = `/r8-rowhome${path.slice("/R8-rowhome".length)}`;
+      return Response.redirect(url.toString(), 308);
+    }
+
+    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || path.startsWith("/api/org") || path.startsWith("/api/chat") || path.startsWith("/pidp") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels"))) {
       return new Response(null, {
         status: 204,
         headers: {
@@ -356,7 +378,15 @@ export default {
     }
 
     if (path.startsWith("/api/governance")) {
-      return proxyRequest(request, env.GOVERNANCE_API_ORIGIN);
+      return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
+    }
+
+    if (path.startsWith("/api/org")) {
+      return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN, { stripPrefix: "/api/org" });
+    }
+
+    if (path.startsWith("/api/chat")) {
+      return proxyRequest(request, env.CHAT_API_ORIGIN, { stripPrefix: "/api/chat" });
     }
 
     if (path === "/api/jobs/meta") {
@@ -392,11 +422,16 @@ export default {
       return applyStaticCachePolicy(path, assetResponse);
     }
 
-    if ((path === "/p" || path.startsWith("/p/")) && isHtmlNavigation(request)) {
+    if ((path === "/p" || path.startsWith("/p/")) && (isHtmlNavigation(request) || looksLikeSpaRoute(path))) {
       // Request the directory entrypoint directly to avoid index.html -> /p/ redirects
       // that can interfere with hash-token deep links after auth callbacks.
-      const spaResponse = await env.ASSETS.fetch(new Request(`${url.origin}/p/`, request));
+      const spaResponse = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/p/"));
       return applyStaticCachePolicy("/p/index.html", spaResponse);
+    }
+
+    if ((path === "/r8-rowhome" || path.startsWith("/r8-rowhome/")) && (isHtmlNavigation(request) || looksLikeSpaRoute(path))) {
+      const spaResponse = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/r8-rowhome/"));
+      return applyStaticCachePolicy("/r8-rowhome/index.html", spaResponse);
     }
 
     return assetResponse;

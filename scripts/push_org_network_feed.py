@@ -12,6 +12,8 @@ from urllib.parse import urlparse
 import requests
 
 DEFAULT_CITIES = ("baltimore", "dc", "hawaii", "pittsburgh", "philadelphia", "virtual", "westvirginia")
+DEFAULT_ORG_CHUNK_SIZE = 40
+DEFAULT_EVENT_CHUNK_SIZE = 20
 
 
 def normalize_url(value: Any) -> Optional[str]:
@@ -229,7 +231,36 @@ def parse_args() -> argparse.Namespace:
         default=os.getenv("ORG_BACKEND_INGEST_TOKEN", "").strip(),
         help="Ingest token. Can also be set by ORG_BACKEND_INGEST_TOKEN.",
     )
+    parser.add_argument(
+        "--org-chunk-size",
+        type=int,
+        default=int(os.getenv("ORG_BACKEND_ORG_CHUNK_SIZE", str(DEFAULT_ORG_CHUNK_SIZE))),
+        help=f"Organizations per request (default: {DEFAULT_ORG_CHUNK_SIZE}).",
+    )
+    parser.add_argument(
+        "--event-chunk-size",
+        type=int,
+        default=int(os.getenv("ORG_BACKEND_EVENT_CHUNK_SIZE", str(DEFAULT_EVENT_CHUNK_SIZE))),
+        help=f"Events per request (default: {DEFAULT_EVENT_CHUNK_SIZE}).",
+    )
     return parser.parse_args()
+
+
+def chunks(items: List[Dict[str, Any]], size: int) -> Iterable[List[Dict[str, Any]]]:
+    safe_size = max(1, size)
+    for index in range(0, len(items), safe_size):
+        yield items[index : index + safe_size]
+
+
+def post_payload(url: str, token: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+    resp = requests.post(url, headers=headers, json=payload, timeout=120)
+    if not resp.ok:
+        raise RuntimeError(f"Ingest failed ({resp.status_code}): {resp.text}")
+    return resp.json()
 
 
 def main() -> int:
@@ -243,26 +274,52 @@ def main() -> int:
 
     repo_root = Path(args.repo_root).resolve()
     orgs, events = collect_orgs_and_events(repo_root, args.cities)
-    payload = {
-        "source": "genCalendar",
-        "run_id": os.getenv("GITHUB_RUN_ID"),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "organizations": orgs,
-        "events": events,
-    }
     print(f"Prepared payload with {len(orgs)} organizations and {len(events)} events.")
 
-    headers = {
-        "Authorization": f"Bearer {args.token}",
-        "Content-Type": "application/json",
-    }
-    resp = requests.post(args.url, headers=headers, json=payload, timeout=120)
-    if not resp.ok:
-        print(f"Ingest failed ({resp.status_code}): {resp.text}")
+    generated_at = datetime.now(timezone.utc).isoformat()
+    run_id = os.getenv("GITHUB_RUN_ID")
+    org_count = 0
+    event_count = 0
+
+    try:
+        for index, org_chunk in enumerate(chunks(orgs, args.org_chunk_size), start=1):
+            data = post_payload(
+                args.url,
+                args.token,
+                {
+                    "source": "genCalendar",
+                    "run_id": run_id,
+                    "generated_at": generated_at,
+                    "batch_type": "organizations",
+                    "batch_index": index,
+                    "organizations": org_chunk,
+                    "events": [],
+                },
+            )
+            org_count += int(data.get("organizations") or 0)
+            print(f"Imported org batch {index}: {data.get('organizations', 0)} organizations.")
+
+        for index, event_chunk in enumerate(chunks(events, args.event_chunk_size), start=1):
+            data = post_payload(
+                args.url,
+                args.token,
+                {
+                    "source": "genCalendar",
+                    "run_id": run_id,
+                    "generated_at": generated_at,
+                    "batch_type": "events",
+                    "batch_index": index,
+                    "organizations": [],
+                    "events": event_chunk,
+                },
+            )
+            event_count += int(data.get("events") or 0)
+            print(f"Imported event batch {index}: {data.get('events', 0)} events.")
+    except RuntimeError as exc:
+        print(str(exc))
         return 1
 
-    data = resp.json()
-    print(f"Ingest succeeded: {json.dumps(data, indent=2)}")
+    print(f"Ingest succeeded: {json.dumps({'ok': True, 'organizations': org_count, 'events': event_count}, indent=2)}")
     return 0
 
 

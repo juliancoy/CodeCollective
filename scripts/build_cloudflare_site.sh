@@ -53,13 +53,13 @@ rsync -a \
 
 echo "[cloudflare] building portal for /p/"
 pushd "$PORTAL_WEB_DIR" >/dev/null
-PORTAL_PIDP_BASE_URL="${VITE_PIDP_BASE_URL:-https://id.codecollective.us}"
+PORTAL_PIDP_BASE_URL="${VITE_PIDP_BASE_URL:-/pidp}"
 if [[ "$STRICT_TS" == "1" ]]; then
   echo "[cloudflare] strict mode: running TypeScript + Vite build"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" npm run build
+  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npm run build
 else
   echo "[cloudflare] deploy mode: running Vite build (TypeScript checks run separately in CI)"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" npx vite build
+  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npx vite build
 fi
 popd >/dev/null
 

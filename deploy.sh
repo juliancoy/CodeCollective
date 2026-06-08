@@ -14,11 +14,16 @@ DRY_RUN=0
 PROD_WORKER_NAME="${PROD_WORKER_NAME:-codecollective-site}"
 DEV_WORKER_NAME="${DEV_WORKER_NAME:-codecollective-site-dev}"
 PIDP_DIR="$ROOT_DIR/portal/pidp/serverless"
+ORG_WORKER_DIR="$ROOT_DIR/portal/org-worker"
 
-PROD_GOVERNANCE_API_ORIGIN="${PROD_GOVERNANCE_API_ORIGIN:-https://portal.arkavo.org}"
+ORG_WORKER_NAME="${ORG_WORKER_NAME:-org-codecollective}"
+ORG_VERIFY_ORIGIN="${ORG_VERIFY_ORIGIN:-https://org-codecollective.jcloiacon.workers.dev}"
+PROD_ORG_API_ORIGIN="${PROD_ORG_API_ORIGIN:-$ORG_VERIFY_ORIGIN}"
+PROD_GOVERNANCE_API_ORIGIN="${PROD_GOVERNANCE_API_ORIGIN:-$PROD_ORG_API_ORIGIN}"
 PROD_PIDP_API_ORIGIN="${PROD_PIDP_API_ORIGIN:-https://id.codecollective.us}"
 PROD_PIDP_PROXY_ORIGIN="${PROD_PIDP_PROXY_ORIGIN:-https://pidp-codecollective.jcloiacon.workers.dev}"
 DEV_GOVERNANCE_API_ORIGIN="${DEV_GOVERNANCE_API_ORIGIN:-$PROD_GOVERNANCE_API_ORIGIN}"
+DEV_ORG_API_ORIGIN="${DEV_ORG_API_ORIGIN:-$PROD_ORG_API_ORIGIN}"
 DEV_PIDP_API_ORIGIN="${DEV_PIDP_API_ORIGIN:-$PROD_PIDP_API_ORIGIN}"
 DEV_PIDP_PROXY_ORIGIN="${DEV_PIDP_PROXY_ORIGIN:-$PROD_PIDP_PROXY_ORIGIN}"
 
@@ -37,6 +42,13 @@ PIDP_D1_DATABASE_NAME="${PIDP_D1_DATABASE_NAME:-pidp}"
 PIDP_D1_DATABASE_ID="${PIDP_D1_DATABASE_ID:-582fc740-4275-482a-bec0-a161a0aa6623}"
 PIDP_R2_BUCKET_NAME="${PIDP_R2_BUCKET_NAME:-pidp-avatars}"
 PIDP_VERIFY_ORIGIN="${PIDP_VERIFY_ORIGIN:-https://id.codecollective.us}"
+ORG_PIDP_BASE_URL="${ORG_PIDP_BASE_URL:-https://id.codecollective.us}"
+ORG_PUBLIC_PORTAL_BASE_URL="${ORG_PUBLIC_PORTAL_BASE_URL:-https://codecollective.us/p}"
+ORG_ADMIN_EMAILS="${ORG_ADMIN_EMAILS:-$PIDP_ADMIN_EMAILS}"
+ORG_ADMIN_USER_IDS="${ORG_ADMIN_USER_IDS:-$PIDP_ADMIN_USER_IDS}"
+ORG_D1_DATABASE_NAME="${ORG_D1_DATABASE_NAME:-org}"
+ORG_D1_DATABASE_ID="${ORG_D1_DATABASE_ID:-a71a2306-3d82-44cb-a50c-d7fdffaacdc7}"
+SKIP_ORG_MIGRATIONS=0
 
 PASSTHROUGH_ARGS=()
 
@@ -46,13 +58,15 @@ Usage: ./deploy.sh [options] [-- <wrangler args>]
 
 Options:
   --env-file <path>   Path to env file (default: ./.env.cloudflare)
-  --component <value>  all | site | pidp (default: all)
+  --component <value>  all | site | pidp | org (default: all)
   --target <value>    prod | dev | both (default: both)
   --verbose           Print full build/deploy logs
   STRICT_TS=1         Optional env: run strict TypeScript+Vite build during deploy
   --skip-build        Skip build_cloudflare_site.sh
   --skip-pidp-migrations
                        Skip PIdP remote D1 migrations
+  --skip-org-migrations
+                       Skip org Worker remote D1 migrations
   --dry-run            Build and validate deploy commands without publishing
   --no-verify         Skip post-deploy smoke checks
   -h, --help          Show this help
@@ -62,6 +76,7 @@ Examples:
   ./deploy.sh --component all --target prod
   ./deploy.sh --component site --target dev
   ./deploy.sh --component pidp
+  ./deploy.sh --component org
   ./deploy.sh --target both
   ./deploy.sh --target dev
   ./deploy.sh --env-file .env.cloudflare
@@ -96,6 +111,10 @@ while (($#)); do
       SKIP_PIDP_MIGRATIONS=1
       shift
       ;;
+    --skip-org-migrations)
+      SKIP_ORG_MIGRATIONS=1
+      shift
+      ;;
     --dry-run)
       DRY_RUN=1
       shift
@@ -125,8 +144,8 @@ if [[ "$TARGET" != "prod" && "$TARGET" != "dev" && "$TARGET" != "both" ]]; then
   exit 1
 fi
 
-if [[ "$COMPONENT" != "all" && "$COMPONENT" != "site" && "$COMPONENT" != "pidp" ]]; then
-  echo "[deploy] invalid --component: $COMPONENT (expected all|site|pidp)" >&2
+if [[ "$COMPONENT" != "all" && "$COMPONENT" != "site" && "$COMPONENT" != "pidp" && "$COMPONENT" != "org" ]]; then
+  echo "[deploy] invalid --component: $COMPONENT (expected all|site|pidp|org)" >&2
   exit 1
 fi
 
@@ -159,11 +178,15 @@ fi
 
 deploy_site=0
 deploy_pidp=0
+deploy_org=0
 if [[ "$COMPONENT" == "all" || "$COMPONENT" == "site" ]]; then
   deploy_site=1
 fi
 if [[ "$COMPONENT" == "all" || "$COMPONENT" == "pidp" ]]; then
   deploy_pidp=1
+fi
+if [[ "$COMPONENT" == "all" || "$COMPONENT" == "org" ]]; then
+  deploy_org=1
 fi
 
 if [[ "$deploy_site" -eq 1 && "$SKIP_BUILD" -eq 0 ]]; then
@@ -316,12 +339,133 @@ deploy_pidp_worker() {
   return "$status"
 }
 
+write_org_config() {
+  local required=(
+    ORG_WORKER_NAME
+    ORG_PIDP_BASE_URL
+    ORG_PUBLIC_PORTAL_BASE_URL
+    ORG_D1_DATABASE_NAME
+    ORG_D1_DATABASE_ID
+  )
+  local missing=()
+  for name in "${required[@]}"; do
+    if [[ -z "${!name:-}" ]]; then
+      missing+=("$name")
+    fi
+  done
+  if [[ "${#missing[@]}" -gt 0 ]]; then
+    echo "[deploy][org] missing required config: ${missing[*]}" >&2
+    echo "[deploy][org] create D1 with: (cd portal/org-worker && npx wrangler d1 create org)" >&2
+    exit 1
+  fi
+
+  export ORG_WORKER_NAME
+  export ORG_PIDP_BASE_URL
+  export ORG_PUBLIC_PORTAL_BASE_URL
+  export ORG_ADMIN_EMAILS
+  export ORG_ADMIN_USER_IDS
+  export ORG_D1_DATABASE_NAME
+  export ORG_D1_DATABASE_ID
+
+  (
+    cd "$ORG_WORKER_DIR"
+    node <<'NODE'
+const fs = require("node:fs");
+
+const env = process.env;
+const config = {
+  "$schema": "node_modules/wrangler/config-schema.json",
+  name: env.ORG_WORKER_NAME,
+  main: "src/index.ts",
+  compatibility_date: "2026-06-07",
+  workers_dev: true,
+  observability: { enabled: true },
+  vars: {
+    PIDP_BASE_URL: env.ORG_PIDP_BASE_URL,
+    PUBLIC_PORTAL_BASE_URL: env.ORG_PUBLIC_PORTAL_BASE_URL,
+    ADMIN_EMAILS: env.ORG_ADMIN_EMAILS || "",
+    ADMIN_USER_IDS: env.ORG_ADMIN_USER_IDS || "",
+  },
+  d1_databases: [
+    {
+      binding: "DB",
+      database_name: env.ORG_D1_DATABASE_NAME,
+      database_id: env.ORG_D1_DATABASE_ID,
+    },
+  ],
+};
+
+fs.writeFileSync("wrangler.jsonc", `${JSON.stringify(config, null, 2)}\n`);
+NODE
+  )
+}
+
+deploy_org_worker() {
+  if [[ ! -d "$ORG_WORKER_DIR" ]]; then
+    echo "[deploy][org] missing directory: $ORG_WORKER_DIR" >&2
+    exit 1
+  fi
+
+  echo "[deploy][org] generating production Wrangler config"
+  local config_path="$ORG_WORKER_DIR/wrangler.jsonc"
+  local backup_path
+  backup_path="$(mktemp)"
+  cp "$config_path" "$backup_path"
+
+  local status
+  set +e
+  write_org_config
+  status=$?
+  if [[ "$status" -eq 0 ]]; then
+    (
+      cd "$ORG_WORKER_DIR"
+      npm run typecheck
+    )
+    status=$?
+  fi
+  if [[ "$status" -eq 0 && "$SKIP_ORG_MIGRATIONS" -eq 0 && "$DRY_RUN" -eq 0 ]]; then
+    (
+      cd "$ORG_WORKER_DIR"
+      if [[ "${GITHUB_ACTIONS:-}" == "true" || "${ORG_USE_API_TOKEN:-0}" == "1" ]]; then
+        npx wrangler d1 migrations apply "$ORG_D1_DATABASE_NAME" --remote
+      else
+        env -u CLOUDFLARE_API_TOKEN npx wrangler d1 migrations apply "$ORG_D1_DATABASE_NAME" --remote
+      fi
+    )
+    status=$?
+  fi
+  if [[ "$status" -eq 0 ]]; then
+    local wrangler_args=("${PASSTHROUGH_ARGS[@]}")
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      wrangler_args+=("--dry-run")
+    fi
+    if [[ "${GITHUB_ACTIONS:-}" == "true" || "${ORG_USE_API_TOKEN:-0}" == "1" ]]; then
+      (
+        cd "$ORG_WORKER_DIR"
+        npx wrangler deploy "${wrangler_args[@]}"
+      )
+    else
+      echo "[deploy][org] using local Wrangler login; set ORG_USE_API_TOKEN=1 to force CLOUDFLARE_API_TOKEN"
+      (
+        cd "$ORG_WORKER_DIR"
+        env -u CLOUDFLARE_API_TOKEN npx wrangler deploy "${wrangler_args[@]}"
+      )
+    fi
+    status=$?
+  fi
+  set -e
+  cp "$backup_path" "$config_path"
+  rm -f "$backup_path"
+  return "$status"
+}
+
 deploy_target() {
   local label="$1"
   local worker_name="$2"
   local governance_origin="$3"
-  local pidp_origin="$4"
-  local pidp_proxy_origin="$5"
+  local org_origin="$4"
+  local pidp_origin="$5"
+  local pidp_proxy_origin="$6"
 
   echo "[deploy][$label] deploying worker: $worker_name" >&2
   local deploy_log
@@ -337,6 +481,7 @@ deploy_target() {
       npx wrangler deploy \
         --name "$worker_name" \
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
+        --var "ORG_API_ORIGIN:$org_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
         "${wrangler_args[@]}"
@@ -347,6 +492,7 @@ deploy_target() {
       npx wrangler deploy \
         --name "$worker_name" \
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
+        --var "ORG_API_ORIGIN:$org_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
         "${wrangler_args[@]}"
@@ -406,13 +552,17 @@ if [[ "$deploy_pidp" -eq 1 ]]; then
   deploy_pidp_worker
 fi
 
+if [[ "$deploy_org" -eq 1 ]]; then
+  deploy_org_worker
+fi
+
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "dev" || "$TARGET" == "both" ) ]]; then
-  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN")"
+  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN")"
   echo "[deploy][dev] updated url: $DEV_URL"
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "prod" || "$TARGET" == "both" ) ]]; then
-  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN")"
+  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN")"
   echo "[deploy][prod] updated url: $PROD_URL"
 fi
 
@@ -423,6 +573,7 @@ if [[ "$NO_VERIFY" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
     echo "[deploy] done (verification skipped)"
   fi
   [[ "$deploy_pidp" -eq 1 ]] && echo "[deploy] pidp url: $PIDP_VERIFY_ORIGIN"
+  [[ "$deploy_org" -eq 1 ]] && echo "[deploy] org url:  $ORG_VERIFY_ORIGIN"
   [[ -n "$DEV_URL" ]] && echo "[deploy] dev url:  $DEV_URL"
   [[ -n "$PROD_URL" ]] && echo "[deploy] prod url: $PROD_URL"
   exit 0
@@ -438,12 +589,25 @@ if [[ "$deploy_pidp" -eq 1 ]]; then
   echo "[deploy][pidp] ok: /health -> 200"
 fi
 
+if [[ "$deploy_org" -eq 1 ]]; then
+  echo "[deploy][org] verifying $ORG_VERIFY_ORIGIN"
+  org_code="$(curl -sS -o /dev/null -w '%{http_code}' "$ORG_VERIFY_ORIGIN/health")"
+  if [[ "$org_code" != "200" ]]; then
+    echo "[deploy][org] verify failed: /health returned $org_code (expected 200)" >&2
+    exit 1
+  fi
+  echo "[deploy][org] ok: /health -> 200"
+fi
+
 [[ -n "$DEV_URL" ]] && verify_target "dev" "$DEV_URL"
 [[ -n "$PROD_URL" ]] && verify_target "prod" "$PROD_URL"
 
 echo "[deploy] complete"
 if [[ "$deploy_pidp" -eq 1 ]]; then
   echo "[deploy] pidp url: $PIDP_VERIFY_ORIGIN"
+fi
+if [[ "$deploy_org" -eq 1 ]]; then
+  echo "[deploy] org url:  $ORG_VERIFY_ORIGIN"
 fi
 if [[ -n "$DEV_URL" ]]; then
   echo "[deploy] dev url:  $DEV_URL"

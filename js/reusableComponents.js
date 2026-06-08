@@ -220,10 +220,88 @@ function configurePortalLogin() {
         loginButton.setAttribute('href', loginUrl);
         loginButton.setAttribute('aria-haspopup', 'dialog');
         loginButton.addEventListener('click', (event) => {
+            if (loginButton.dataset.portalAuthenticated === 'true') {
+                return;
+            }
             event.preventDefault();
             openLoginModal(pidpBase, nextUrl, loginButton);
         });
     });
+}
+
+function normalizePidpAssetUrl(pidpBase, rawUrl) {
+    if (!rawUrl) return null;
+    if (/^(data:|https?:\/\/)/i.test(rawUrl)) return rawUrl;
+    return `${pidpBase.replace(/\/+$/, '')}/${rawUrl.replace(/^\/+/, '')}`;
+}
+
+function userDisplayName(user) {
+    return (
+        user?.identity_data?.display_name?.trim() ||
+        user?.full_name?.trim() ||
+        user?.email ||
+        'Account'
+    );
+}
+
+function renderAuthenticatedNav(loginButton, user, pidpBase) {
+    const displayName = userDisplayName(user);
+    const avatarUrl = normalizePidpAssetUrl(pidpBase, user?.identity_data?.avatar_url || user?.avatar_url);
+    const firstInitial = displayName.slice(0, 1).toUpperCase();
+
+    loginButton.dataset.portalAuthenticated = 'true';
+    loginButton.classList.remove('nav-login-button');
+    loginButton.classList.add('nav-account-link');
+    loginButton.href = '/p/constituent/dashboard';
+    loginButton.removeAttribute('aria-haspopup');
+    loginButton.setAttribute('aria-label', `${displayName} account`);
+    loginButton.title = displayName;
+
+    const avatar = document.createElement('span');
+    avatar.className = 'nav-account-avatar';
+    avatar.setAttribute('aria-hidden', 'true');
+
+    if (avatarUrl) {
+        const image = document.createElement('img');
+        image.src = avatarUrl;
+        image.alt = '';
+        avatar.appendChild(image);
+    } else {
+        avatar.textContent = firstInitial;
+    }
+
+    loginButton.replaceChildren(avatar);
+}
+
+async function hydratePortalNavUser() {
+    const loginButtons = document.querySelectorAll('#portal-login-button, .nav-login-button[data-pidp-base]');
+    if (!loginButtons.length) return;
+
+    const pidpBase = loginButtons[0].getAttribute('data-pidp-base') || 'https://id.codecollective.us';
+    const base = pidpBase.replace(/\/+$/, '');
+
+    try {
+        const tokenResponse = await fetch(`${base}/auth/session-token`, {
+            credentials: 'include',
+        });
+        if (!tokenResponse.ok) return;
+
+        const tokenData = await tokenResponse.json();
+        if (!tokenData?.access_token) return;
+
+        const meResponse = await fetch(`${base}/auth/me`, {
+            credentials: 'include',
+            headers: {
+                Authorization: `Bearer ${tokenData.access_token}`,
+            },
+        });
+        if (!meResponse.ok) return;
+
+        const user = await meResponse.json();
+        loginButtons.forEach((loginButton) => renderAuthenticatedNav(loginButton, user, pidpBase));
+    } catch {
+        // Leave the login button unchanged when there is no readable PIdP session.
+    }
 }
 
 function loginUrl(pidpBase, path, nextUrl) {
@@ -370,5 +448,6 @@ customElements.define('calendar-legend', CalendarLegend)
 document.addEventListener('DOMContentLoaded', () => {
     normalizeMainNavs();
     configurePortalLogin();
+    hydratePortalNavUser();
     addDonateShortcut();
 });

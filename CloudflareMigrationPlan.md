@@ -18,10 +18,18 @@ The first production milestone is intentionally narrow: keep the current website
 - The root Worker serves:
   - legacy static site assets from `.cloudflare/site`
   - the portal SPA at `/p/`
-  - `/api/governance/*` proxied to `GOVERNANCE_API_ORIGIN`
+  - `/api/governance/*` proxied to the Cloudflare org Worker through `GOVERNANCE_API_ORIGIN`
+  - `/api/org/*` proxied to `ORG_API_ORIGIN` with the `/api/org` prefix stripped
   - `/pidp/*` proxied to `PIDP_API_ORIGIN` with the `/pidp` prefix stripped
   - jobs and vacants API data from R2 bindings
 - The portal is a submodule at `portal/`.
+- The portal codebase is effectively contained under `portal/`, but it is not one deployable service. Current service boundaries are:
+  - `portal/web/`: React/Vite frontend. This is already Cloudflare-migratable as static assets and has `portal/web/wrangler.toml`.
+  - `portal/pidp/serverless/`: Cloudflare-native PIdP implemented with Hono, Workers, D1, and R2.
+  - `portal/org-worker/`: Cloudflare-native org/contact/governance/ledger/UBI API implemented with Hono, Workers, and D1. This is the active `/api/org` target for Code Collective and the root `/api/governance` target.
+  - `portal/org-backend/`: Python FastAPI org/network API. This remains as legacy/reference code and is no longer the Code Collective production fallback.
+  - `portal/governance-backend/` and `portal/ubi/`: Python FastAPI services. These remain as legacy/reference code for behavior not yet reimplemented in Workers.
+  - `portal/nginx/`, `portal/certs/`, and Docker orchestration scripts: local/legacy edge and development glue that should become unnecessary once Cloudflare owns routing.
 - The serverless PIdP implementation exists at `portal/pidp/serverless/` and uses:
   - Cloudflare Workers
   - TypeScript and Hono
@@ -43,10 +51,14 @@ The first production milestone is intentionally narrow: keep the current website
 - The root Cloudflare Worker, when deployed for testing, sets:
   - `PIDP_API_ORIGIN=https://id.codecollective.us`
   - `PIDP_PROXY_ORIGIN=https://pidp-codecollective.jcloiacon.workers.dev` for the optional `/pidp/*` compatibility proxy
-  - `GOVERNANCE_API_ORIGIN=<current governance backend origin>`
+  - `GOVERNANCE_API_ORIGIN=https://org-codecollective.jcloiacon.workers.dev`
 - The public site can continue exposing `/pidp/*` as a compatibility proxy if needed, but new code should prefer the canonical `https://id.codecollective.us` identity origin.
 
 Current deployment note: the Worker is live at `https://id.codecollective.us`, with `https://pidp-codecollective.jcloiacon.workers.dev` retained as the fallback Worker URL.
+
+Current org deployment note: the Cloudflare-native org Worker is live at `https://org-codecollective.jcloiacon.workers.dev`, backed by D1 database `org` (`a71a2306-3d82-44cb-a50c-d7fdffaacdc7`). The root site Worker routes `/api/org/*` to that Worker with the `/api/org` prefix stripped.
+
+The current org Worker cutover owns contact/profile, admin-status, public org/event directory responses, calendar feed ingestion, governance motions/votes/comments, finance ledger read paths, UBI settings/eligibility, and explicit Cloudflare responses for remaining unsupported org API routes. Unimplemented org endpoints return `501` from the Cloudflare Worker instead of falling back to Arkavo. The Code Collective calendar feed has been imported into D1: 355 organizations and 1,805 events are available through `/api/org/api/network/orgs/public` and `/api/org/api/network/events/public`.
 
 ## CI/CD Deployment Scheme
 
@@ -64,10 +76,29 @@ Required GitHub repository or environment secrets:
 ```text
 CLOUDFLARE_API_TOKEN
 CLOUDFLARE_ACCOUNT_ID
-PROD_GOVERNANCE_API_ORIGIN
 ```
 
-`PROD_GOVERNANCE_API_ORIGIN` can be omitted only if the default `https://portal.arkavo.org` remains correct. PIdP OAuth secrets stay in Cloudflare Worker secrets and are not stored in GitHub Actions.
+`PROD_GOVERNANCE_API_ORIGIN` is optional and defaults to the Cloudflare org Worker. PIdP OAuth secrets stay in Cloudflare Worker secrets and are not stored in GitHub Actions.
+
+Current GitHub environment variable defaults used by `deploy.sh`:
+
+```text
+PIDP_WORKER_NAME=pidp-codecollective
+PIDP_D1_DATABASE_NAME=pidp
+PIDP_D1_DATABASE_ID=582fc740-4275-482a-bec0-a161a0aa6623
+PIDP_R2_BUCKET_NAME=pidp-avatars
+ORG_WORKER_NAME=org-codecollective
+ORG_VERIFY_ORIGIN=https://org-codecollective.jcloiacon.workers.dev
+ORG_D1_DATABASE_NAME=org
+ORG_D1_DATABASE_ID=a71a2306-3d82-44cb-a50c-d7fdffaacdc7
+```
+
+The org Worker also requires the Cloudflare Worker secret `ORG_INGEST_TOKEN` for `POST /api/network/ingest/calendar`. This secret is managed with Wrangler, not committed and not passed as a plain deploy variable:
+
+```bash
+cd portal/org-worker
+env -u CLOUDFLARE_API_TOKEN npx wrangler secret put ORG_INGEST_TOKEN
+```
 
 Emergency local deploy commands remain available:
 
@@ -85,8 +116,20 @@ The root deploy script generates a temporary production `portal/pidp/serverless/
 - Static site assets are built into `.cloudflare/site`.
 - Portal SPA is mounted at `/p/`.
 - Serverless PIdP remains at `id.codecollective.us`.
-- Governance backend remains separately hosted until it is explicitly migrated or replaced.
+- Governance is served by the Cloudflare org Worker. Legacy Python governance remains reference code only.
 - Large generated datasets are served through R2-backed Worker API routes, not as oversized static assets.
+
+### Portal Service Migration Target
+
+The portal should move to Cloudflare by service boundary, not as a single lift-and-shift:
+
+1. Keep `portal/web` on Cloudflare as static Worker assets mounted at `/p/`.
+2. Keep `portal/pidp/serverless` as the canonical Code Collective identity provider at `https://id.codecollective.us`.
+3. Keep `/api/org` on `portal/org-worker` for contact/profile/admin-status, public directories, governance, finance ledger read paths, UBI settings/eligibility, and explicit unavailable responses for unsupported routes.
+4. Continue replacing unsupported `501` surfaces with D1/R2-backed Worker implementations as those workflows are needed.
+5. Remove nginx/Docker edge assumptions after Cloudflare is the production router.
+
+Current auth boundary: the Code Collective frontend, root Worker, and Cloudflare org Worker use the Hono PIdP at `https://id.codecollective.us`.
 
 ## Phase 0: Readiness Audit
 
@@ -232,8 +275,8 @@ DEV_PIDP_API_ORIGIN=https://id.codecollective.us
 Keep:
 
 ```bash
-PROD_GOVERNANCE_API_ORIGIN=<current governance backend origin>
-DEV_GOVERNANCE_API_ORIGIN=<current dev governance backend origin>
+PROD_GOVERNANCE_API_ORIGIN=https://org-codecollective.jcloiacon.workers.dev
+DEV_GOVERNANCE_API_ORIGIN=https://org-codecollective.jcloiacon.workers.dev
 ```
 
 Deploy only to the dev Worker first:
@@ -472,7 +515,7 @@ After stable production operation:
 - Canonical PIdP host is `id.codecollective.us`.
 - Decide whether the first launch supports only new users or migrates existing users.
 - Decide whether OAuth is required for the first launch.
-- Confirm governance backend hosting remains outside Cloudflare for this migration.
+- Decide which current `501` Worker responses should be promoted to full D1/R2-backed implementations next.
 - Confirm whether `/p/` remains the long-term portal path on `codecollective.us`.
 - Confirm whether `www.codecollective.us` should redirect to apex or serve identical content; no `www` DNS record exists currently.
 
@@ -487,6 +530,14 @@ After stable production operation:
 - [x] PIdP Worker deployed.
 - [x] PIdP smoke checks pass.
 - [x] Root Worker dev deploy uses `PIDP_API_ORIGIN=https://id.codecollective.us`.
+- [x] Org D1 database created.
+- [x] Org Worker deployed.
+- [x] Root Worker production deploy uses `ORG_API_ORIGIN=https://org-codecollective.jcloiacon.workers.dev`.
+- [x] Org/event calendar feed imported into org D1.
+- [x] Root Worker production deploy routes `/api/governance` to the Cloudflare org Worker.
+- [x] Governance motions/votes/comments are backed by org D1.
+- [x] Finance ledger read paths and UBI settings/eligibility are backed by org D1.
+- [x] Org Worker no longer has a legacy Arkavo fallback binding.
 - [ ] Portal auth flow works against serverless PIdP.
 - [x] Root site Worker production deploy passes pre-cutover smoke checks.
 - [x] Apex Worker route `codecollective.us/*` is active.

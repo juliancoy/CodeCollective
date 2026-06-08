@@ -447,6 +447,50 @@ b, strong, .bold-text {
   color: #002a61;
 }
 
+.navbar a.nav-account-link,
+.nav-actions a.nav-account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  box-shadow: 0 0 0 1px rgba(0, 42, 97, 0.18);
+  overflow: hidden;
+  line-height: 1;
+}
+
+.navbar a.nav-account-link:hover,
+.nav-actions a.nav-account-link:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.nav-account-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #ffffff;
+  background: #002a61;
+  font-family: NectoMono;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.nav-account-avatar img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .navbar a.donate-shortcut,
 .nav-actions a.donate-shortcut {
   display: inline-flex;

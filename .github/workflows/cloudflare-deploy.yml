@@ -16,6 +16,7 @@ on:
       - "wrangler.toml"
       - "portal/web/**"
       - "portal/pidp/serverless/**"
+      - "portal/org-worker/**"
       - "r8-rowhome/**"
   push:
     branches:
@@ -34,6 +35,7 @@ on:
       - "wrangler.toml"
       - "portal/web/**"
       - "portal/pidp/serverless/**"
+      - "portal/org-worker/**"
       - "r8-rowhome/**"
   workflow_dispatch:
     inputs:
@@ -46,6 +48,7 @@ on:
           - all
           - site
           - pidp
+          - org
           - checks-only
 
 concurrency:
@@ -59,6 +62,7 @@ env:
   NODE_VERSION: "22"
   PROD_PIDP_API_ORIGIN: "https://id.codecollective.us"
   PROD_PIDP_PROXY_ORIGIN: "https://pidp-codecollective.jcloiacon.workers.dev"
+  PROD_ORG_API_ORIGIN: "https://org-codecollective.jcloiacon.workers.dev"
 
 jobs:
   site-check:
@@ -127,6 +131,33 @@ jobs:
         working-directory: portal/pidp/serverless
         run: npm test
 
+  org-check:
+    name: Org Worker Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install org Worker dependencies
+        working-directory: portal/org-worker
+        run: npm ci
+
+      - name: Typecheck org Worker
+        working-directory: portal/org-worker
+        run: npm run typecheck
+
+      - name: Test org Worker
+        working-directory: portal/org-worker
+        run: npm test
+
   site-deploy:
     name: Deploy Site Worker
     runs-on: ubuntu-latest
@@ -161,10 +192,50 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           PROD_GOVERNANCE_API_ORIGIN: ${{ secrets.PROD_GOVERNANCE_API_ORIGIN }}
+          PROD_ORG_API_ORIGIN: ${{ env.PROD_ORG_API_ORIGIN }}
           PROD_PIDP_API_ORIGIN: ${{ env.PROD_PIDP_API_ORIGIN }}
           PROD_PIDP_PROXY_ORIGIN: ${{ env.PROD_PIDP_PROXY_ORIGIN }}
           VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
         run: ./deploy.sh --component site --target prod
+
+  org-deploy:
+    name: Deploy Org Worker
+    runs-on: ubuntu-latest
+    needs: org-check
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' &&
+        (inputs.deploy_target == 'all' || inputs.deploy_target == 'org'))
+    environment: production
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install org Worker dependencies
+        working-directory: portal/org-worker
+        run: npm ci
+
+      - name: Deploy org Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ORG_WORKER_NAME: ${{ vars.ORG_WORKER_NAME }}
+          ORG_VERIFY_ORIGIN: ${{ vars.ORG_VERIFY_ORIGIN }}
+          ORG_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+          ORG_PUBLIC_PORTAL_BASE_URL: "https://codecollective.us/p"
+          ORG_ADMIN_EMAILS: ${{ vars.ORG_ADMIN_EMAILS }}
+          ORG_ADMIN_USER_IDS: ${{ vars.ORG_ADMIN_USER_IDS }}
+          ORG_D1_DATABASE_NAME: ${{ vars.ORG_D1_DATABASE_NAME }}
+          ORG_D1_DATABASE_ID: ${{ vars.ORG_D1_DATABASE_ID }}
+        run: ./deploy.sh --component org --skip-org-migrations
 
   pidp-deploy:
     name: Deploy PIdP Worker

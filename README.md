@@ -27,8 +27,8 @@ cp env.portal.example .env.portal
 
 Configure these repository secrets in `CodeCollective`:
 
-- `ORG_BACKEND_INGEST_URL` (example: `https://org.arkavo.org/api/network/ingest/calendar`)
-- `ORG_BACKEND_INGEST_TOKEN` (must match `ORG_INGEST_TOKEN` in the org-backend runtime)
+- `ORG_BACKEND_INGEST_URL` (example: `https://codecollective.us/api/org/api/network/ingest/calendar`)
+- `ORG_BACKEND_INGEST_TOKEN` (must match the Cloudflare org Worker `ORG_INGEST_TOKEN` secret)
 
 ## Contributing to the Project
 
