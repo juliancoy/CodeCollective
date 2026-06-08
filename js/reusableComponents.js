@@ -215,10 +215,14 @@ function configurePortalLogin() {
 
     loginButtons.forEach((loginButton) => {
         const pidpBase = loginButton.getAttribute('data-pidp-base') || 'https://id.codecollective.us';
-        const nextUrl = `${window.location.origin}/p/auth/callback?next=/chat`;
+        const nextUrl = `${window.location.origin}/p/auth/callback?next=/id`;
         const loginUrl = `${pidpBase.replace(/\/+$/, '')}/app/login?next=${encodeURIComponent(nextUrl)}`;
         loginButton.setAttribute('href', loginUrl);
         loginButton.setAttribute('aria-haspopup', 'dialog');
+        if (loginButton.dataset.portalLoginConfigured === 'true') {
+            return;
+        }
+        loginButton.dataset.portalLoginConfigured = 'true';
         loginButton.addEventListener('click', (event) => {
             if (loginButton.dataset.portalAuthenticated === 'true') {
                 return;
@@ -244,6 +248,92 @@ function userDisplayName(user) {
     );
 }
 
+function removeAccountMenus() {
+    document.querySelectorAll('.nav-account-menu').forEach((menu) => menu.remove());
+}
+
+function closeAccountMenus(exceptMenu = null) {
+    document.querySelectorAll('.nav-account-menu').forEach((menu) => {
+        if (menu === exceptMenu) return;
+        const button = menu.querySelector('.nav-account-menu-button');
+        const panel = menu.querySelector('.nav-account-menu-panel');
+        if (button && panel) {
+            button.setAttribute('aria-expanded', 'false');
+            panel.hidden = true;
+        }
+    });
+}
+
+async function logoutPortalSession(pidpBase) {
+    const base = pidpBase.replace(/\/+$/, '');
+    try {
+        await fetch(`${base}/auth/session/logout`, {
+            method: 'POST',
+            credentials: 'include',
+        });
+    } catch {
+        // The local UI should still return to the logged-out state if the network call fails.
+    }
+
+    removeAccountMenus();
+    document.querySelectorAll('.nav-account-link').forEach((accountLink) => {
+        accountLink.dataset.portalAuthenticated = 'false';
+        accountLink.classList.remove('nav-account-link');
+        accountLink.classList.add('nav-login-button');
+        accountLink.href = '/p/';
+        accountLink.textContent = 'Login';
+        accountLink.setAttribute('data-pidp-base', pidpBase);
+        accountLink.setAttribute('aria-label', 'Log in to the portal');
+        accountLink.removeAttribute('title');
+    });
+    configurePortalLogin();
+}
+
+function ensureAccountMenu(loginButton, user, pidpBase) {
+    const actions = loginButton.closest('.nav-actions') || loginButton.parentElement;
+    if (!actions) return;
+
+    const displayName = userDisplayName(user);
+    let menu = actions.querySelector('.nav-account-menu');
+    if (!menu) {
+        menu = document.createElement('div');
+        menu.className = 'nav-account-menu';
+        actions.insertBefore(menu, loginButton.nextSibling);
+    }
+
+    menu.innerHTML = `
+        <button
+            type="button"
+            class="nav-account-menu-button"
+            aria-label="Account menu"
+            aria-expanded="false"
+            aria-haspopup="menu"
+        >
+            <span aria-hidden="true">v</span>
+        </button>
+        <div class="nav-account-menu-panel" role="menu" hidden>
+            <a role="menuitem" href="/p/id">ID</a>
+            <a role="menuitem" href="/p/">Portal</a>
+            <button type="button" role="menuitem" class="nav-account-logout">Log out</button>
+        </div>
+    `;
+    menu.title = displayName;
+
+    const button = menu.querySelector('.nav-account-menu-button');
+    const panel = menu.querySelector('.nav-account-menu-panel');
+    button.addEventListener('click', (event) => {
+        event.preventDefault();
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+        closeAccountMenus(menu);
+        button.setAttribute('aria-expanded', String(!expanded));
+        panel.hidden = expanded;
+    });
+    menu.querySelector('.nav-account-logout').addEventListener('click', () => {
+        closeAccountMenus();
+        logoutPortalSession(pidpBase);
+    });
+}
+
 function renderAuthenticatedNav(loginButton, user, pidpBase) {
     const displayName = userDisplayName(user);
     const avatarUrl = normalizePidpAssetUrl(pidpBase, user?.identity_data?.avatar_url || user?.avatar_url);
@@ -252,9 +342,9 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
     loginButton.dataset.portalAuthenticated = 'true';
     loginButton.classList.remove('nav-login-button');
     loginButton.classList.add('nav-account-link');
-    loginButton.href = '/p/chat';
+    loginButton.href = '/p/id';
     loginButton.removeAttribute('aria-haspopup');
-    loginButton.setAttribute('aria-label', `${displayName} account`);
+    loginButton.setAttribute('aria-label', `${displayName} ID page`);
     loginButton.title = displayName;
 
     const avatar = document.createElement('span');
@@ -271,6 +361,7 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
     }
 
     loginButton.replaceChildren(avatar);
+    ensureAccountMenu(loginButton, user, pidpBase);
 }
 
 async function hydratePortalNavUser() {
@@ -450,4 +541,14 @@ document.addEventListener('DOMContentLoaded', () => {
     configurePortalLogin();
     hydratePortalNavUser();
     addDonateShortcut();
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('.nav-account-menu')) {
+            closeAccountMenus();
+        }
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeAccountMenus();
+        }
+    });
 });
