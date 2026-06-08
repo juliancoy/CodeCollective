@@ -391,6 +391,9 @@ const config = {
   compatibility_date: "2026-06-07",
   workers_dev: true,
   observability: { enabled: true },
+  triggers: {
+    crons: ["* * * * *"],
+  },
   vars: {
     PIDP_BASE_URL: env.ORG_PIDP_BASE_URL,
     PUBLIC_PORTAL_BASE_URL: env.ORG_PUBLIC_PORTAL_BASE_URL,

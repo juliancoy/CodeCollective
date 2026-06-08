@@ -58,7 +58,23 @@ Current deployment note: the Worker is live at `https://id.codecollective.us`, w
 
 Current org deployment note: the Cloudflare-native org Worker is live at `https://org-codecollective.jcloiacon.workers.dev`, backed by D1 database `org` (`a71a2306-3d82-44cb-a50c-d7fdffaacdc7`). The root site Worker routes `/api/org/*` to that Worker with the `/api/org` prefix stripped.
 
-The current org Worker cutover owns contact/profile, admin-status, public org/event directory responses, calendar feed ingestion, governance motions/votes/comments, finance ledger read paths, UBI settings/eligibility, and explicit Cloudflare responses for remaining unsupported org API routes. Unimplemented org endpoints return `501` from the Cloudflare Worker instead of falling back to Arkavo. The Code Collective calendar feed has been imported into D1: 355 organizations and 1,805 events are available through `/api/org/api/network/orgs/public` and `/api/org/api/network/events/public`.
+The current org Worker cutover owns contact/profile, admin-status, public org/event directory responses, calendar feed ingestion, governance motions/votes/comments, finance ledger read paths, UBI settings/eligibility, scheduled UBI accrual/payout execution, and explicit Cloudflare responses for remaining unsupported org API routes. Unimplemented org endpoints return `501` from the Cloudflare Worker instead of falling back to Arkavo. The Code Collective calendar feed has been imported into D1: 355 organizations and 1,805 events are available through `/api/org/api/network/orgs/public` and `/api/org/api/network/events/public`.
+
+### UBI Payout Runtime Migration
+
+UBI is not considered migrated when only `GET/PATCH /api/ubi/settings` and `GET /api/ubi/eligibility` exist. The production migration boundary must include the old `portal/ubi/` payout loop behavior:
+
+- Cloudflare Scheduled Worker trigger on `portal/org-worker`.
+- D1 `ledger_accounts.dena_balance` for high-precision accrual.
+- D1 `ubi_tick_state` for elapsed-time accounting.
+- D1 `ubi_tick_runs` for idempotent scheduled run records and operations auditability.
+- Accrual based on `ubi_runtime_settings.dena_annual`, `dena_precision`, and eligible `entity_types`.
+- Two-week administration cadence through `ubi_runtime_settings.interval_seconds = 1209600`.
+- Continuous high-precision accrual with whole-cent payouts into spendable ledger balances only when each account's `ubi_eligibility.next_payment_date` is due.
+- `UBI_PAYMENT` rows in `ledger_transactions`.
+- Admin-only `POST /api/ubi/tick` and `GET /api/ubi/tick-status` for smoke testing and incident response.
+
+The legacy Python `portal/ubi/` service remains reference code only after these Worker pieces are deployed and verified.
 
 ## CI/CD Deployment Scheme
 
@@ -125,7 +141,7 @@ The portal should move to Cloudflare by service boundary, not as a single lift-a
 
 1. Keep `portal/web` on Cloudflare as static Worker assets mounted at `/p/`.
 2. Keep `portal/pidp/serverless` as the canonical Code Collective identity provider at `https://id.codecollective.us`.
-3. Keep `/api/org` on `portal/org-worker` for contact/profile/admin-status, public directories, governance, finance ledger read paths, UBI settings/eligibility, and explicit unavailable responses for unsupported routes.
+3. Keep `/api/org` on `portal/org-worker` for contact/profile/admin-status, public directories, governance, finance ledger read paths, UBI settings/eligibility, scheduled UBI payout execution, and explicit unavailable responses for unsupported routes.
 4. Continue replacing unsupported `501` surfaces with D1/R2-backed Worker implementations as those workflows are needed.
 5. Remove nginx/Docker edge assumptions after Cloudflare is the production router.
 
