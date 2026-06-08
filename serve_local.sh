@@ -481,7 +481,7 @@ else
     -v "$ROOT_DIR:/site:ro"
     -e "SITE_ROOT=/site"
     -e "PORTAL_ORIGIN=http://$CONTAINER_NAME-portal:5173"
-    -e "R8_ROWHOME_ORIGIN=http://$CONTAINER_NAME-r8-rowhome:5173"
+    -e "R8_ROWHOME_ORIGIN=https://$CONTAINER_NAME-r8-rowhome:5173"
   )
 fi
 
