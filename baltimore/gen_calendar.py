@@ -426,6 +426,17 @@ def collect_events(city="baltimore", error_logger=None):
         log_error("Error fetching Mosaic Christian events", e, "https://mosaicchristian.org/events/", "baltimore.scrape_mosaicchristian")
 
     try:
+        scrape_sjbc = importlib.import_module("baltimore.scrape_sjbc")
+        new_events += apply_source_tags(
+                scrape_sjbc.scrape_events(),
+                "https://sjbc.org/events/",
+                ["Religion", "Education", "Community"],
+                org_image_url="https://sjbc.org/wp-content/uploads/2023/01/sjbc_logo.png",
+            )
+    except Exception as e:
+        log_error("Error fetching St John Baptist Church events", e, "https://sjbc.org/events/", "baltimore.scrape_sjbc")
+
+    try:
         scrape_calvaryec = importlib.import_module("baltimore.scrape_calvaryec")
         new_events += apply_source_tags(
                 scrape_calvaryec.scrape_events(),

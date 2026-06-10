@@ -233,6 +233,9 @@ def infer_source_kind(source_url):
     if host in {"bniajfi.org", "www.bniajfi.org"} and path.startswith("/currentprojects/baltimore-community-change-events/"):
         return "bniajfi_community_change_events"
 
+    if host in {"sjbc.org", "www.sjbc.org"} and path.rstrip("/") == "/events":
+        return "sjbc_events"
+
     if host in {"baltimorecancersupportgroup.org", "www.baltimorecancersupportgroup.org"}:
         if parse_qs(parsed.query).get("page_id") == ["53"]:
             return "web_events_page"
@@ -508,6 +511,10 @@ def fetch_events_from_source(source, city):
         "bniajfi_community_change_events": (
             "Fetching events from",
             lambda: scrape_bniajfi.scrape_bniajfi_community_change_events(source_url),
+        ),
+        "sjbc_events": (
+            "Fetching events from",
+            lambda: importlib.import_module("baltimore.scrape_sjbc").scrape_events(source_url),
         ),
     }
 

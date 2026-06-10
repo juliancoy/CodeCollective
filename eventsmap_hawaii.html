@@ -226,6 +226,31 @@
             color: var(--muted);
         }
 
+        .resource-notice {
+            background: #fff7ed;
+            border: 2px solid #fdba74;
+            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            color: #7c2d12;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .resource-notice[hidden] {
+            display: none;
+        }
+
+        .resource-notice strong {
+            display: block;
+            margin-bottom: 0.15rem;
+            color: #9a3412;
+        }
+
+        .resource-notice a {
+            color: #0d3d79;
+            font-weight: 700;
+        }
+
         #map {
             width: 100%;
             height: 100%;
@@ -498,6 +523,19 @@
                     City
                     <select id="city-select" class="city-select" aria-label="Select city for event map"></select>
                 </label>
+                <label class="control-inline" for="day-select">
+                    Day
+                    <select id="day-select" class="city-select" aria-label="Filter events by day">
+                        <option value="all">All days</option>
+                        <option value="0">Sunday</option>
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                    </select>
+                </label>
                 <label class="control-inline">
                     <input id="show-title-toggle" type="checkbox">
                     Show title
@@ -506,6 +544,11 @@
                 <button id="copy-some-button" class="action-button" type="button">Copy some</button>
             </div>
             <p id="list-meta" class="list-meta">Loading events with location data.</p>
+            <aside id="food-help-notice" class="resource-notice" hidden>
+                <strong>Free food distributions</strong>
+                We defer to the Food Help Line by Lemontree for current Baltimore pantry and meal distribution details:
+                <a href="https://www.foodhelpline.org/regions/baltimore" target="_blank" rel="noopener">open the Baltimore directory</a>.
+            </aside>
             <div id="location-cards" class="cards-grid"></div>
         </section>
         <section class="panel right-panel">
@@ -568,6 +611,7 @@
         const markersByEventKey = new Map();
         let fileGeocodeCache = {};
         let searchTerm = '';
+        let selectedDay = 'all';
         let showTitleLine = false;
         let activeHoverKey = '';
         const cityPathContext = resolveCityPath();
@@ -728,6 +772,7 @@
 
         function initializeCitySelector() {
             const citySelect = document.getElementById('city-select');
+            updateFoodHelpNotice();
             if (!citySelect || citySelect.dataset.bound) return;
             citySelect.innerHTML = '';
             CITY_OPTIONS.forEach(city => {
@@ -745,6 +790,12 @@
                 window.location.href = url.toString();
             });
             citySelect.dataset.bound = 'true';
+        }
+
+        function updateFoodHelpNotice() {
+            const notice = document.getElementById('food-help-notice');
+            if (!notice) return;
+            notice.hidden = cityPathContext.city !== 'baltimore';
         }
 
         function getMapStateKey() {
@@ -802,7 +853,7 @@
                 allEvents.splice(0, allEvents.length, ...(Array.isArray(events) ? events : []));
                 await plotEvents(allEvents);
                 bindUiControls();
-                renderCards(getFilteredEvents());
+                updateFilteredEventView();
                 initializeOverlayUi();
             } catch (error) {
                 console.error(error);
@@ -833,13 +884,23 @@
             const copySomeButton = document.getElementById('copy-some-button');
             const previewPanel = document.getElementById('hover-preview');
             const showTitleToggle = document.getElementById('show-title-toggle');
+            const daySelect = document.getElementById('day-select');
 
             if (!searchInput.dataset.bound) {
                 searchInput.addEventListener('input', event => {
                     searchTerm = event.target.value.trim().toLowerCase();
-                    renderCards(getFilteredEvents());
+                    updateFilteredEventView();
                 });
                 searchInput.dataset.bound = 'true';
+            }
+
+            if (daySelect && !daySelect.dataset.bound) {
+                daySelect.value = selectedDay;
+                daySelect.addEventListener('change', event => {
+                    selectedDay = event.target.value;
+                    updateFilteredEventView();
+                });
+                daySelect.dataset.bound = 'true';
             }
 
             if (!copyAllButton.dataset.bound) {
@@ -854,7 +915,7 @@
             if (!copySomeButton.dataset.bound) {
                 copySomeButton.addEventListener('click', async () => {
                     const listed = getFilteredEvents().slice(0, 5);
-                    const dropped = eventsWithoutCoords.slice(0, 5);
+                    const dropped = getFilteredEvents().filter(evt => !evt.coords).slice(0, 5);
                     const text = [
                         formatEventListForClipboard(listed, 'Listed events (5)'),
                         formatDroppedListForClipboard(dropped, 'Could not be displayed (5)')
@@ -874,7 +935,7 @@
             if (showTitleToggle && !showTitleToggle.dataset.bound) {
                 showTitleToggle.addEventListener('change', event => {
                     showTitleLine = Boolean(event.target.checked);
-                    renderCards(getFilteredEvents());
+                    updateFilteredEventView();
                     refreshMarkerPopups();
                 });
                 showTitleToggle.dataset.bound = 'true';
@@ -1686,19 +1747,41 @@
             });
         }
 
+        function updateFilteredEventView() {
+            const filteredEvents = getFilteredEvents();
+            renderCards(filteredEvents);
+            syncEventMarkersToFilters(filteredEvents);
+        }
+
         function getFilteredEvents() {
             const sorted = [...allEvents].sort((a, b) => {
                 const aTime = new Date(a.startDate || 0).getTime();
                 const bTime = new Date(b.startDate || 0).getTime();
                 return aTime - bTime;
             });
-            if (!searchTerm) {
-                return sorted;
+            return sorted.filter(evt => matchesSelectedDay(evt) && matchesSearchTerm(evt));
+        }
+
+        function matchesSelectedDay(evt) {
+            if (selectedDay === 'all') {
+                return true;
             }
-            return sorted.filter(matchesSearchTerm);
+            const dayIndex = getEventDayIndex(evt);
+            return dayIndex !== null && String(dayIndex) === selectedDay;
+        }
+
+        function getEventDayIndex(evt) {
+            const date = new Date(evt?.startDate || '');
+            if (Number.isNaN(date.getTime())) {
+                return null;
+            }
+            return date.getDay();
         }
 
         function matchesSearchTerm(evt) {
+            if (!searchTerm) {
+                return true;
+            }
             const haystack = [
                 evt.name,
                 evt.description,
@@ -1710,6 +1793,24 @@
                 ...(Array.isArray(evt.tags) ? evt.tags : [])
             ].filter(Boolean).join(' ').toLowerCase();
             return haystack.includes(searchTerm);
+        }
+
+        function syncEventMarkersToFilters(events) {
+            const visibleKeys = new Set(
+                events
+                    .filter(evt => evt.coords)
+                    .map(evt => getEventKey(evt))
+            );
+            markersByEventKey.forEach((marker, eventKey) => {
+                const shouldShow = visibleKeys.has(eventKey);
+                const isInLayer = eventsLayerGroup.hasLayer(marker);
+                if (shouldShow && !isInLayer) {
+                    eventsLayerGroup.addLayer(marker);
+                } else if (!shouldShow && isInLayer) {
+                    eventsLayerGroup.removeLayer(marker);
+                }
+            });
+            setEventsLayerVisibility(eventsVisible);
         }
 
         function formatDate(dateString) {

@@ -853,6 +853,12 @@ sources = [
         "tags": ["Education", "Community", "Belonging", "Purpose"],
     },
     {
+        "name": "St John Baptist Church",
+        "url": "https://sjbc.org/events/",
+        "orgImageUrl": "https://sjbc.org/wp-content/uploads/2023/01/sjbc_logo.png",
+        "tags": ["Religion", "Education", "Community"],
+    },
+    {
         "name": "Montgomery County Council Legislative Calendar",
         "url": "https://montgomerycountymd.legistar.com/Calendar.aspx",
         "tags": ["MarylandGov", "Politics", "Infrastructure", "Economic Development", "Purpose"],
