@@ -1494,6 +1494,9 @@ async def create_transaction(
     except asyncpg.exceptions.CheckViolationError:
         session.rollback()
         raise HTTPException(status_code=400, detail="Transaction failed: constraint violation")
+    except HTTPException:
+        session.rollback()
+        raise
     except Exception as e:
         session.rollback()
         logger.error(f"Transaction failed: {e}")
