@@ -1,0 +1,76 @@
+name: Security Regression
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/security-regression.yml"
+      - "eventslist.html"
+      - "portal_src/org-backend/**"
+      - "tests/security_regressions.test.cjs"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/security-regression.yml"
+      - "eventslist.html"
+      - "portal_src/org-backend/**"
+      - "tests/security_regressions.test.cjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security-regression:
+    name: Security Regression
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Compile org backend
+        run: python -m py_compile portal_src/org-backend/org.py
+
+      - name: Check events list script syntax
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class ScriptExtractor(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.in_script = False
+                  self.parts = []
+
+              def handle_starttag(self, tag, attrs):
+                  if tag == "script" and not dict(attrs).get("src"):
+                      self.in_script = True
+
+              def handle_endtag(self, tag):
+                  if tag == "script":
+                      self.in_script = False
+
+              def handle_data(self, data):
+                  if self.in_script:
+                      self.parts.append(data)
+
+          parser = ScriptExtractor()
+          parser.feed(Path("eventslist.html").read_text())
+          Path("/tmp/eventslist-script.js").write_text("\n".join(parser.parts))
+          PY
+          node --check /tmp/eventslist-script.js
+
+      - name: Run security regression checks
+        run: node --test tests/security_regressions.test.cjs
