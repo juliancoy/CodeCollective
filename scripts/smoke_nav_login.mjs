@@ -10,6 +10,7 @@ try {
 
 const baseUrl = process.env.SMOKE_BASE_URL || "https://codecollective.us";
 const executablePath = process.env.PLAYWRIGHT_CHROME_PATH || "/usr/bin/google-chrome";
+const expectedCallback = `${baseUrl}/p/auth/callback?next=/id`;
 const paths = (process.env.SMOKE_PATHS || "/,/platform.html,/calendar.html,/projects.html")
   .split(",")
   .map((path) => path.trim())
@@ -55,8 +56,8 @@ try {
     }
     const loginHref = new URL(result.href);
     const loginNext = loginHref.searchParams.get("next") || "";
-    if (!loginNext.startsWith(`${baseUrl}/p/auth/callback?next=/chat`)) {
-      throw new Error(`${url}: login next should land in portal chat, got ${loginNext}`);
+    if (!loginNext.startsWith(expectedCallback)) {
+      throw new Error(`${url}: login next should land in portal ID, got ${loginNext}`);
     }
 
     await page.click("#portal-login-button");
@@ -92,8 +93,8 @@ try {
     })) {
       const parsed = new URL(href);
       const next = parsed.searchParams.get("next") || "";
-      if (!next.startsWith(`${baseUrl}/p/auth/callback?next=/chat`)) {
-        throw new Error(`${url}: ${label} next should land in portal chat, got ${next}`);
+      if (!next.startsWith(expectedCallback)) {
+        throw new Error(`${url}: ${label} next should land in portal ID, got ${next}`);
       }
     }
 
