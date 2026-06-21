@@ -1180,14 +1180,16 @@ async def create_account(
     if account_data.entity_type in [EntityType.BUSINESS, EntityType.NONPROFIT]:
         tax_id = f"TX{hashlib.md5(account_data.email.encode()).hexdigest()[:10].upper()}"
     
-    # Create account
+    # Create account. Do not trust client-supplied funding fields on the
+    # public registration endpoint; balances may only change through
+    # authorized transaction flows.
     account = Account(
         id=uuid.uuid4(),
         entity_type=account_data.entity_type,
         name=account_data.name,
         email=account_data.email,
         address=account_data.address,
-        balance=account_data.initial_deposit,
+        balance=Decimal('0.00'),
         business_type=account_data.business_type,
         mission_statement=account_data.mission_statement,
         tax_id=tax_id
@@ -1204,17 +1206,6 @@ async def create_account(
             is_eligible=True
         )
         session.add(ubi)
-    
-    # Record initial deposit transaction
-    if account_data.initial_deposit > 0:
-        transaction = Transaction(
-            id=uuid.uuid4(),
-            to_account_id=account.id,
-            amount=account_data.initial_deposit,
-            transaction_type=TransactionType.PURCHASE,
-            description="Initial account deposit"
-        )
-        session.add(transaction)
     
     session.commit()
     session.refresh(account)
@@ -1434,8 +1425,13 @@ async def create_transaction(
         if not recipient:
             raise HTTPException(status_code=404, detail="Recipient account not found")
     
+    privileged_transaction_types = {TransactionType.UBI_PAYMENT, TransactionType.GRANT}
+    is_privileged_transaction = transaction_data.transaction_type in privileged_transaction_types
+    if is_privileged_transaction and not current_user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin authorization required for this transaction type")
+
     # Check balance for outgoing transactions
-    if transaction_data.transaction_type not in [TransactionType.UBI_PAYMENT, TransactionType.GRANT]:
+    if not is_privileged_transaction:
         if sender.balance < transaction_data.amount:
             raise HTTPException(status_code=400, detail="Insufficient funds")
     
@@ -1444,7 +1440,7 @@ async def create_transaction(
     
     try:
         # Update balances atomically
-        if transaction_data.transaction_type not in [TransactionType.UBI_PAYMENT, TransactionType.GRANT]:
+        if not is_privileged_transaction:
             await conn.execute("""
                 UPDATE accounts 
                 SET balance = balance - $1, updated_at = NOW()
