@@ -187,6 +187,12 @@ jobs:
         working-directory: r8-rowhome
         run: npm ci
 
+      - name: Build Cloudflare site bundle
+        env:
+          STRICT_TS: "1"
+          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+        run: ./scripts/build_cloudflare_site.sh
+
       - name: Deploy production site Worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -195,8 +201,7 @@ jobs:
           PROD_ORG_API_ORIGIN: ${{ env.PROD_ORG_API_ORIGIN }}
           PROD_PIDP_API_ORIGIN: ${{ env.PROD_PIDP_API_ORIGIN }}
           PROD_PIDP_PROXY_ORIGIN: ${{ env.PROD_PIDP_PROXY_ORIGIN }}
-          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
-        run: ./deploy.sh --component site --target prod
+        run: ./deploy.sh --component site --target prod --skip-build
 
   org-deploy:
     name: Deploy Org Worker
