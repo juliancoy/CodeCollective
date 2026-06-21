@@ -4,10 +4,14 @@ function trimTrailingSlash(value) {
 
 function buildTargetUrl(requestUrl, targetOrigin, stripPrefix = "") {
   const url = new URL(requestUrl);
-  const normalizedPath = stripPrefix && url.pathname.startsWith(stripPrefix)
+  const normalizedPath = stripPrefix && pathMatchesPrefix(url.pathname, stripPrefix)
     ? url.pathname.slice(stripPrefix.length) || "/"
     : url.pathname;
   return `${trimTrailingSlash(targetOrigin)}${normalizedPath}${url.search}`;
+}
+
+function pathMatchesPrefix(path, prefix) {
+  return path === prefix || path.startsWith(`${prefix}/`);
 }
 
 async function proxyRequest(request, targetOrigin, options = {}) {
@@ -366,7 +370,7 @@ export default {
       return Response.redirect(url.toString(), 308);
     }
 
-    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || path.startsWith("/api/org") || path.startsWith("/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels"))) {
+    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels"))) {
       return new Response(null, {
         status: 204,
         headers: {
@@ -381,11 +385,11 @@ export default {
       return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
     }
 
-    if (path.startsWith("/api/org")) {
+    if (pathMatchesPrefix(path, "/api/org")) {
       return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN, { stripPrefix: "/api/org" });
     }
 
-    if (path.startsWith("/api/chat")) {
+    if (pathMatchesPrefix(path, "/api/chat")) {
       return proxyRequest(request, env.CHAT_API_ORIGIN, { stripPrefix: "/api/chat" });
     }
 
