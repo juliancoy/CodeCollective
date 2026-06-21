@@ -1187,7 +1187,7 @@ async def create_account(
         name=account_data.name,
         email=account_data.email,
         address=account_data.address,
-        balance=account_data.initial_deposit,
+        balance=Decimal('0.00'),
         business_type=account_data.business_type,
         mission_statement=account_data.mission_statement,
         tax_id=tax_id
@@ -1204,17 +1204,6 @@ async def create_account(
             is_eligible=True
         )
         session.add(ubi)
-    
-    # Record initial deposit transaction
-    if account_data.initial_deposit > 0:
-        transaction = Transaction(
-            id=uuid.uuid4(),
-            to_account_id=account.id,
-            amount=account_data.initial_deposit,
-            transaction_type=TransactionType.PURCHASE,
-            description="Initial account deposit"
-        )
-        session.add(transaction)
     
     session.commit()
     session.refresh(account)
@@ -1434,22 +1423,31 @@ async def create_transaction(
         if not recipient:
             raise HTTPException(status_code=404, detail="Recipient account not found")
     
+    # Public transaction creation must not allow callers to mint funds via
+    # system-issued transaction types. Those flows are handled by dedicated
+    # server-side routines that do not debit a user account.
+    privileged_types = {TransactionType.UBI_PAYMENT, TransactionType.GRANT}
+    if transaction_data.transaction_type in privileged_types:
+        raise HTTPException(status_code=403, detail="Transaction type is not allowed")
+
     # Check balance for outgoing transactions
-    if transaction_data.transaction_type not in [TransactionType.UBI_PAYMENT, TransactionType.GRANT]:
-        if sender.balance < transaction_data.amount:
-            raise HTTPException(status_code=400, detail="Insufficient funds")
+    if sender.balance < transaction_data.amount:
+        raise HTTPException(status_code=400, detail="Insufficient funds")
     
     # Use database transaction with asyncpg for better concurrency
     transaction_id = uuid.uuid4()
     
     try:
-        # Update balances atomically
-        if transaction_data.transaction_type not in [TransactionType.UBI_PAYMENT, TransactionType.GRANT]:
-            await conn.execute("""
-                UPDATE accounts 
-                SET balance = balance - $1, updated_at = NOW()
-                WHERE id = $2 AND balance >= $1
-            """, float(transaction_data.amount), sender.id)
+        # Update balances atomically. asyncpg returns strings like "UPDATE 1";
+        # require the conditional debit to affect one row before crediting any
+        # recipient so concurrent requests cannot overdraw and over-credit.
+        debit_result = await conn.execute("""
+            UPDATE accounts
+            SET balance = balance - $1, updated_at = NOW()
+            WHERE id = $2 AND balance >= $1
+        """, float(transaction_data.amount), sender.id)
+        if debit_result != "UPDATE 1":
+            raise HTTPException(status_code=400, detail="Insufficient funds")
         
         if recipient:
             await conn.execute("""
@@ -1496,6 +1494,9 @@ async def create_transaction(
     except asyncpg.exceptions.CheckViolationError:
         session.rollback()
         raise HTTPException(status_code=400, detail="Transaction failed: constraint violation")
+    except HTTPException:
+        session.rollback()
+        raise
     except Exception as e:
         session.rollback()
         logger.error(f"Transaction failed: {e}")
