@@ -20,6 +20,15 @@ rsync -a \
   --exclude='.codexignore' \
   --exclude='.clineignore' \
   --exclude='.env*' \
+  --exclude='.npmrc' \
+  --exclude='*.pem' \
+  --exclude='*.key' \
+  --exclude='*.p12' \
+  --exclude='*.pfx' \
+  --exclude='id_rsa' \
+  --exclude='id_dsa' \
+  --exclude='id_ecdsa' \
+  --exclude='id_ed25519' \
   --exclude='**/.gitignore' \
   --exclude='.github/' \
   --exclude='.cloudflare/' \
