@@ -2225,22 +2225,25 @@ function createEventCard(event) {
     stripMarkdown(description).substring(0, maxDescLength) + '...' :
     stripMarkdown(description);
 
+  const imageUrl = safeUrl(getPreferredEventImage(event));
+  const locationText = event.location ? [
+    event.location.address
+  ].filter(Boolean).join(', ') : '';
+
   card.innerHTML = `
-    ${getPreferredEventImage(event) ?
-      `<div class="card-image" style="background-image: url(${getPreferredEventImage(event)})"></div>` :
+    ${imageUrl ?
+      '<div class="card-image"></div>' :
       '<div class="card-image-placeholder"><i class="fas fa-calendar-alt"></i></div>'
     }
-      <h3 class="card-title">${event.title}</h3>
+      <h3 class="card-title">${escapeHtml(event.title || '')}</h3>
       <div class="card-meta">
         <div class="card-time">
-          ${fullDate}, ${timeRange}
-        </div>${event.location ? `
+          ${escapeHtml(`${fullDate}, ${timeRange}`)}
+        </div>${locationText ? `
   <div class="card-location">
     <i class="fas fa-map-marker-alt"></i> 
     <span class="location-address">
-      ${[
-        event.location.address
-      ].filter(Boolean).join(', ')}
+      ${escapeHtml(locationText)}
     </span>
   </div>
 ` : ''}
@@ -2249,12 +2252,17 @@ function createEventCard(event) {
       </div>
       ${description ? `
         <div class="card-description">
-          <div class="card-description-short">${shortDesc}</div>
+          <div class="card-description-short">${escapeHtml(shortDesc)}</div>
           <div class="card-description-full markdown-content" style="display: none;"></div>
           ${needsMore ? '<button class="more-btn" onclick="toggleCardDescription(this)"><i class="fas fa-chevron-down"></i> More</button>' : ''}
         </div>
       ` : ''}
   `;
+
+  const cardImage = card.querySelector('.card-image');
+  if (cardImage && imageUrl) {
+    cardImage.style.backgroundImage = `url("${imageUrl.replace(/"/g, '%22')}")`;
+  }
 
   applyTagClasses(card, event.extendedProps?.tags);
   if (isExcludedFromActiveMap(event.extendedProps?.tags)) {
@@ -2269,7 +2277,7 @@ function createEventCard(event) {
     const fullDescContainer = card.querySelector('.card-description-full');
     if (fullDescContainer) {
       if (window.marked && typeof window.marked.parse === 'function') {
-        fullDescContainer.innerHTML = marked.parse(description);
+        fullDescContainer.innerHTML = sanitizeHtmlFragment(marked.parse(description));
       } else {
         fullDescContainer.textContent = description;
       }
@@ -2560,7 +2568,7 @@ function initializeCalendar(events) {
       if (isFeaturedSource(info.event.extendedProps?.source)) {
         titleEl.classList.add('source-codecollective-luma-title');
       }
-      titleEl.innerHTML = `${eventTime} ${info.event.title}`;
+      titleEl.textContent = `${eventTime} ${info.event.title || ''}`;
       applyTagClasses(titleEl, info.event.extendedProps?.tags);
       eventEl.appendChild(titleEl);
 

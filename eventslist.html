@@ -67,6 +67,28 @@
   <our-slack-link></our-slack-link>
 
   <script>
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function safeUrl(url) {
+      try {
+        const parsed = new URL(String(url || ''), window.location.origin);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          return parsed.href;
+        }
+      } catch (error) {
+        return '';
+      }
+      return '';
+    }
+
     // Load and display events grouped by day
     document.addEventListener('DOMContentLoaded', function() {
       fetch('upcoming_events.json')
@@ -159,30 +181,38 @@
       const endTime = event.endTime ? formatEventTime(new Date(event.endTime)) : '';
       const timeRange = endTime ? `${startTime} - ${endTime}` : startTime;
 
+      const imageUrl = safeUrl(event.imageUrl);
+      const eventUrl = safeUrl(event.url);
+      const eventName = escapeHtml(event.name || 'Untitled');
+      const locationText = event.location ? (event.location.name || event.location.address || '') : '';
+      const shortDescription = event.description
+        ? `${String(event.description).substring(0, 100)}${String(event.description).length > 100 ? '...' : ''}`
+        : '';
+
       card.innerHTML = `
         <div class="event-card-content">
           <div class="event-flex-container">
-            ${event.imageUrl ? `
+            ${imageUrl ? `
               <div class="event-image-container">
-                <img src="${event.imageUrl}" alt="${event.name}" class="event-image">
+                <img src="${escapeHtml(imageUrl)}" alt="${eventName}" class="event-image">
               </div>
             ` : ''}
             <div class="event-details">
-              <h3 class="event-title">${event.name}</h3>
-              <div class="event-time">${timeRange}</div>
-              ${event.location ? `
+              <h3 class="event-title">${eventName}</h3>
+              <div class="event-time">${escapeHtml(timeRange)}</div>
+              ${locationText ? `
                 <div class="event-location">
                   <i class="fas fa-map-marker-alt"></i> 
-                  ${event.location.name || event.location.address || ''}
+                  ${escapeHtml(locationText)}
                 </div>
               ` : ''}
-              ${event.description ? `
+              ${shortDescription ? `
                 <div class="event-description">
-                  ${event.description.substring(0, 100)}${event.description.length > 100 ? '...' : ''}
+                  ${escapeHtml(shortDescription)}
                 </div>
               ` : ''}
-              ${event.url ? `
-                <a href="${event.url}" target="_blank" rel="noopener noreferrer" class="event-link">
+              ${eventUrl ? `
+                <a href="${escapeHtml(eventUrl)}" target="_blank" rel="noopener noreferrer" class="event-link">
                   View Details <i class="fas fa-external-link-alt"></i>
                 </a>
               ` : ''}
