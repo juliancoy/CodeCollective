@@ -162,6 +162,13 @@ jobs:
         working-directory: r8-rowhome
         run: npm ci
 
+      - name: Build Cloudflare site bundle
+        if: inputs.deploy_static_update
+        env:
+          STRICT_TS: "1"
+          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
+        run: ./scripts/build_cloudflare_site.sh
+
       - name: Deploy self-hosted Android update to Cloudflare
         if: inputs.deploy_static_update
         env:
@@ -171,5 +178,4 @@ jobs:
           PROD_ORG_API_ORIGIN: ${{ env.PROD_ORG_API_ORIGIN }}
           PROD_PIDP_API_ORIGIN: ${{ env.PROD_PIDP_API_ORIGIN }}
           PROD_PIDP_PROXY_ORIGIN: ${{ env.PROD_PIDP_PROXY_ORIGIN }}
-          VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
-        run: ./deploy.sh --component site --target prod
+        run: ./deploy.sh --component site --target prod --skip-build
