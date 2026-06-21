@@ -519,6 +519,15 @@ class EditRequest(Base):
     )
     reviewer = relationship("Account", foreign_keys=[reviewed_by])
 
+# ============= AUTHORIZATION HELPERS =============
+
+def require_admin_user(current_user: dict) -> None:
+    """Require an authenticated organization administrator."""
+    if current_user.get("is_anonymous"):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if not current_user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
 # ============= PYDANTIC MODELS =============
 
 class AccountCreate(BaseModel):
@@ -1286,8 +1295,7 @@ async def list_accounts(
     limit: int = 500,
 ):
     """List accounts for directory/search views."""
-    if current_user.get("is_anonymous"):
-        raise HTTPException(status_code=401, detail="Authentication required")
+    require_admin_user(current_user)
 
     safe_limit = max(1, min(limit, 2000))
     query = session.query(Account)
@@ -1551,8 +1559,7 @@ async def get_recent_transactions(
     limit: int = 10,
 ):
     """Get most recent transactions across the org ledger."""
-    if current_user.get("is_anonymous"):
-        raise HTTPException(status_code=401, detail="Authentication required")
+    require_admin_user(current_user)
 
     safe_limit = max(1, min(limit, 100))
     txns = (
