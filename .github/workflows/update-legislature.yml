@@ -5,16 +5,23 @@ on:
     - cron: '0 0 * * *'  # Runs daily at 00:00 UTC
   workflow_dispatch:  # Allows manual trigger from the Actions tab
 
+permissions:
+  contents: write
+
+concurrency:
+  group: repository-data-updates
+  cancel-in-progress: false
+
 jobs:
   update_legislature:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -52,16 +59,18 @@ jobs:
           fi
 
       - name: Check for changes
+        id: changes
         run: |
-          if git diff --exit-code; then
+          if git diff --quiet; then
             echo "No repository changes detected"
-            exit 0
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
             echo "Changes detected"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Commit and push changes
-        if: always()
+        if: ${{ steps.changes.outputs.has_changes == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -73,5 +82,6 @@ jobs:
             data/maryland_bills_2026.json \
             data/maryland_bill_hearings_2026.json \
             data/maryland_bill_votes_2026.json
-          git commit -m "Update legislative data" || echo "No changes to commit"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+          git commit -m "Update legislative data"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:"${GITHUB_REF_NAME}"
