@@ -183,9 +183,8 @@
       const eventUrl = safeUrl(event.url);
       const eventName = escapeHtml(event.name || 'Untitled');
       const locationText = event.location ? (event.location.name || event.location.address || '') : '';
-      const rawDescription = String(event.description || '');
-      const shortDescription = rawDescription
-        ? `${rawDescription.substring(0, 100)}${rawDescription.length > 100 ? '...' : ''}`
+      const shortDescription = event.description
+        ? `${String(event.description).substring(0, 100)}${String(event.description).length > 100 ? '...' : ''}`
         : '';
 
       card.innerHTML = `

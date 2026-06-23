@@ -2257,6 +2257,11 @@ function createEventCard(event) {
       ` : ''}
   `;
 
+  const cardImage = card.querySelector('.card-image');
+  if (cardImage && imageUrl) {
+    cardImage.style.backgroundImage = `url("${imageUrl.replace(/"/g, '%22')}")`;
+  }
+
   applyTagClasses(card, event.extendedProps?.tags);
   if (isExcludedFromActiveMap(event.extendedProps?.tags)) {
     card.classList.add('excluded-from-map');
