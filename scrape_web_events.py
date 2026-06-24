@@ -1,6 +1,6 @@
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Set, Tuple
 from urllib.parse import urljoin, urlparse
 
@@ -105,6 +105,107 @@ def _extract_events_from_jsonld_payload(payload: Any, source_url: str) -> List[D
     return events
 
 
+def _normalize_wix_event(item: Dict[str, Any], source_url: str) -> Dict[str, Any] | None:
+    if not isinstance(item, dict):
+        return None
+
+    title = str(item.get("title") or "").strip()
+    scheduling = item.get("scheduling") or {}
+    config = scheduling.get("config") if isinstance(scheduling, dict) else {}
+    if not isinstance(config, dict):
+        config = {}
+
+    start = str(config.get("startDate") or "").strip()
+    if not title or not start:
+        return None
+
+    location_raw = item.get("location") or {}
+    location_name = ""
+    location_address = ""
+    location: Dict[str, Any] = {"name": "", "address": ""}
+    if isinstance(location_raw, dict):
+        location_name = str(location_raw.get("name") or "").strip()
+        location_address = str(location_raw.get("address") or "").strip()
+        full_address = location_raw.get("fullAddress") or {}
+        if isinstance(full_address, dict):
+            location.update(
+                {
+                    "city": full_address.get("city") or "",
+                    "state": full_address.get("subdivision") or "",
+                    "postalCode": full_address.get("postalCode") or "",
+                    "country": full_address.get("country") or "",
+                }
+            )
+            geocode = full_address.get("geocode") or {}
+            if isinstance(geocode, dict):
+                location["latitude"] = geocode.get("latitude")
+                location["longitude"] = geocode.get("longitude")
+    elif isinstance(location_raw, str):
+        location_name = location_raw.strip()
+
+    location["name"] = location_name
+    location["address"] = location_address
+
+    image_raw = item.get("mainImage") or {}
+    image_url = ""
+    if isinstance(image_raw, dict):
+        image_url = str(image_raw.get("url") or "").strip()
+    elif isinstance(image_raw, str):
+        image_url = image_raw.strip()
+
+    slug = str(item.get("slug") or "").strip()
+    event_url = urljoin(source_url, f"/event-details/{slug}") if slug else source_url
+
+    status_raw = item.get("status")
+    status = "CANCELLED" if str(status_raw).lower() in {"cancelled", "canceled", "2"} else "ACTIVE"
+
+    return {
+        "name": title,
+        "description": str(item.get("description") or item.get("about") or "").strip(),
+        "startDate": start,
+        "endTime": str(config.get("endDate") or "").strip(),
+        "url": event_url,
+        "status": status,
+        "location": location,
+        "imageUrl": image_url,
+        "source": source_url,
+    }
+
+
+def _extract_wix_events_from_payload(payload: Any, source_url: str) -> List[Dict[str, Any]]:
+    events: List[Dict[str, Any]] = []
+
+    def walk(value: Any) -> None:
+        if isinstance(value, dict):
+            evt = _normalize_wix_event(value, source_url)
+            if evt:
+                events.append(evt)
+                return
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(payload)
+    return events
+
+
+def _extract_wix_events(soup: BeautifulSoup, source_url: str) -> List[Dict[str, Any]]:
+    events: List[Dict[str, Any]] = []
+    for script in soup.find_all("script", attrs={"type": "application/json"}):
+        raw = script.string or script.get_text() or ""
+        raw = raw.strip()
+        if not raw or ("appsWarmupData" not in raw and "wix-warmup-data" not in str(script.get("id") or "")):
+            continue
+        try:
+            payload = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        events.extend(_extract_wix_events_from_payload(payload, source_url))
+    return events
+
+
 def _extract_simple_dated_events(soup: BeautifulSoup, source_url: str) -> List[Dict[str, Any]]:
     lines = [
         line.strip()
@@ -162,9 +263,17 @@ def _extract_simple_dated_events(soup: BeautifulSoup, source_url: str) -> List[D
 
 
 def _event_key(event: Dict[str, Any]) -> Tuple[str, str]:
+    start = str(event.get("startDate", "")).strip()
+    try:
+        parsed_start = parse_date(start)
+        if parsed_start.tzinfo is not None:
+            start = parsed_start.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+    except (TypeError, ValueError, OverflowError):
+        pass
+
     return (
         str(event.get("name", "")).strip().lower(),
-        str(event.get("startDate", "")).strip(),
+        start,
     )
 
 
@@ -243,6 +352,12 @@ def _extract_events_from_page(soup: BeautifulSoup, source_url: str) -> List[Dict
                 continue
             seen.add(key)
             events.append(evt)
+    for evt in _extract_wix_events(soup, source_url):
+        key = _event_key(evt)
+        if key in seen:
+            continue
+        seen.add(key)
+        events.append(evt)
     for evt in _extract_simple_dated_events(soup, source_url):
         key = _event_key(evt)
         if key in seen:

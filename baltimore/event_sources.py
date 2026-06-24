@@ -252,6 +252,11 @@ sources = [
         "url": "https://www.meetup.com/baltimore-black-techies-meetup/",
         "tags": ["Economic Development", "Tech Community", "Community Organizing"],
     },
+    {
+        "name": "Faith Based Tech Meetup",
+        "url": "https://www.meetup.com/faith-based-tech-meetup/",
+        "tags": ["Religion", "Tech Community"],
+    },
     # Eventbrite
     {
         "name": "Tential Tech Tuesday",
@@ -641,6 +646,11 @@ sources = [
         "name": "Parks and People Events",
         "url": "https://www.parksandpeople.org/events",
         "tags": ["Environment", "Safety", "Belonging", "Growth"],
+    },
+    {
+        "name": "Blyss Baltimore Upcoming Events",
+        "url": "https://www.blyssbaltimore.com/upcoming",
+        "tags": ["Culture", "Community", "Belonging"],
     },
     {
         "name": "Sheppard Pratt Events",
