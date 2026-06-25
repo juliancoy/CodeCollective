@@ -253,7 +253,7 @@ def infer_source_kind(source_url):
     )
     calendar_like_path = segment_calendar_like or any(
         marker in lower_path
-        for marker in ["/events", "/event", "/calendar", "eventcalendar", "whatson", "/schedule"]
+        for marker in ["/events", "/event", "/calendar", "eventcalendar", "whatson", "/schedule", "/upcoming"]
     )
     if calendar_like_path:
         return "web_events_page"
