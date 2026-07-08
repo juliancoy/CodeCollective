@@ -14,7 +14,7 @@ const communityMap = {
 const techOnlyMap = {
   id: 'tech_only',
   categories: [
-    { label: 'AI & ML', matches: ['AI'] },
+    { label: 'AI & ML', matches: ['AI', 'Technology'] },
     { label: 'General Tech', matches: [] },
   ],
 };
@@ -37,6 +37,31 @@ test('unmapped events are shown when excluded toggle is on', () => {
     showExcludedEvents: true,
   });
   assert.equal(matched, true);
+});
+
+test('fallback Other events are treated as excluded unless Other is selected or excluded events are shown', () => {
+  assert.equal(filterUtils.isExcludedFromActiveMap(['Unknown Tag'], communityMap), true);
+
+  assert.equal(filterUtils.eventMatchesTags({
+    tags: ['Unknown Tag'],
+    categoryMap: communityMap,
+    activeTagSlugs: new Set(['technology', 'culture']),
+    showExcludedEvents: false,
+  }), false);
+
+  assert.equal(filterUtils.eventMatchesTags({
+    tags: ['Unknown Tag'],
+    categoryMap: communityMap,
+    activeTagSlugs: new Set(['other']),
+    showExcludedEvents: false,
+  }), true);
+
+  assert.equal(filterUtils.eventMatchesTags({
+    tags: ['Unknown Tag'],
+    categoryMap: communityMap,
+    activeTagSlugs: new Set(['technology', 'culture']),
+    showExcludedEvents: true,
+  }), true);
 });
 
 test('mapped event matches selected legend category', () => {
@@ -66,6 +91,14 @@ test('tech_only map excludes non-tech dominant events', () => {
 
 test('tech_only map includes clear tech events', () => {
   const categories = filterUtils.getEffectiveMappedCategories(['AI'], techOnlyMap);
+  assert.ok(categories.length > 0);
+});
+
+test('tech_only map includes events tagged as technology even with environment tags', () => {
+  const categories = filterUtils.getEffectiveMappedCategories(
+    ['Water', 'Tech Community', 'Environment', 'Technology', 'Belonging'],
+    techOnlyMap
+  );
   assert.ok(categories.length > 0);
 });
 
