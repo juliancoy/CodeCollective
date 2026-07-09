@@ -97,33 +97,61 @@
         gap: 0.4rem;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 999px;
-        padding: 0.35rem 0.85rem;
-        font-weight: 600;
-      }
-      .city-btn {
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        background: transparent;
         color: var(--fg);
         border-radius: 999px;
-        padding: 0.35rem 0.9rem;
-        font-size: 0.95rem;
+        padding: 0.35rem 0.85rem;
+        font: inherit;
+        font-weight: 600;
         cursor: pointer;
         transition: background 0.15s ease, transform 0.1s ease;
       }
-      .city-btn:hover,
-      .city-btn:focus {
+      .city-chip:hover,
+      .city-chip:focus {
         background: rgba(255, 255, 255, 0.12);
       }
-      .city-btn:active {
+      .city-chip:focus {
+        outline: 2px solid rgba(255, 255, 255, 0.7);
+        outline-offset: 2px;
+      }
+      .city-chip:active {
         transform: translateY(1px);
+      }
+      .search-bar {
+        margin: 1rem 0 0.5rem;
+      }
+      .search-label {
+        display: block;
+        margin-bottom: 0.35rem;
+        font-weight: 600;
+      }
+      .search-input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.22);
+        color: var(--fg);
+        font: inherit;
+        padding: 0.55rem 0.8rem;
+      }
+      .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.72);
+      }
+      .search-input:focus {
+        outline: 2px solid rgba(255, 255, 255, 0.7);
+        outline-offset: 2px;
       }
       .date-head {
         margin: 2rem 0 1rem;
-        padding-top: 0.5rem;
+        padding: 0.5rem 1rem 0;
         border-top: 1px solid #ececec;
         font-size: 1.25rem;
         font-weight: 600;
+      }
+
+      .date-empty {
+        margin: 0.75rem 0;
+        padding: 0 1rem;
+        color: var(--muted);
       }
 
       .event {
@@ -328,8 +356,19 @@
         <div id="status" class="status" aria-live="polite">Loading events…</div>
       </header>
       <div class="city-bar">
-        <span class="city-chip">Showing <span id="currentCityLabel">Baltimore</span></span>
-        <button type="button" class="city-btn" id="openCityModal">Change city</button>
+        <button type="button" class="city-chip" id="openCityModal" aria-label="Change city">
+          Showing <span id="currentCityLabel">Baltimore</span>
+        </button>
+      </div>
+      <div class="search-bar">
+        <label class="search-label" for="eventSearch">Search events</label>
+        <input
+          class="search-input"
+          id="eventSearch"
+          type="search"
+          placeholder="Search by title, description, or location"
+          autocomplete="off"
+        />
       </div>
       <div class="view-switch">
         <a id="cardsViewLink" href="/calendar_cards.html">Switch to cards view</a>
@@ -385,17 +424,48 @@
         if (isNaN(d.getTime())) throw new Error(`Unparseable date: ${iso}`);
         return { date: d, normalized };
       }
-      function niceDateFromParts(isoLike) {
-        return isoLike.split("T")[0];
+      const viewerTimeZone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const dateKeyFormatter = new Intl.DateTimeFormat("en-CA", {
+        timeZone: viewerTimeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      function dateKeyInViewerTimeZone(date) {
+        const parts = Object.fromEntries(
+          dateKeyFormatter.formatToParts(date).map((part) => [part.type, part.value])
+        );
+        return `${parts.year}-${parts.month}-${parts.day}`;
+      }
+      function normalizedSearchTerm() {
+        const input = document.getElementById("eventSearch");
+        return (input?.value || "").trim().toLowerCase();
+      }
+      function eventLocationText(ev) {
+        if (!ev.location || typeof ev.location !== "object") return "";
+        return [ev.location.name, ev.location.address].filter(Boolean).join(" ");
+      }
+      function eventSearchText(ev) {
+        return [
+          ev.name,
+          ev.description,
+          eventLocationText(ev),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
       }
 
       const fmtDate = new Intl.DateTimeFormat("en-US", {
+        timeZone: viewerTimeZone,
         weekday: "long",
         month: "long",
         day: "numeric",
         year: "numeric",
       });
       const fmtTime = new Intl.DateTimeFormat("en-US", {
+        timeZone: viewerTimeZone,
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
@@ -698,16 +768,90 @@
         toggleBound = true;
       }
 
+      const eventsCacheByCity = new Map();
+
       /* ---------- Main render ---------- */
-      async function loadAndRender() {
+      function renderEvents(city, events) {
         const statusEl = document.getElementById("status");
         const main = document.getElementById("events");
+        const searchTerm = normalizedSearchTerm();
+        const searchedEvents = searchTerm
+          ? events.filter((ev) => eventSearchText(ev).includes(searchTerm))
+          : events;
+        const now = new Date();
+        const todayKey = dateKeyInViewerTimeZone(now);
+        const upcomingEvents = searchedEvents.filter(
+          (ev) => dateKeyInViewerTimeZone(ev._dt.date) >= todayKey
+        );
+        upcomingEvents.sort((a, b) => a._dt.date - b._dt.date);
+
+        const groups = new Map();
+        const order = [todayKey];
+        groups.set(todayKey, {
+          humanLabel: fmtDate.format(now),
+          items: [],
+        });
+        for (const ev of upcomingEvents) {
+          const key = dateKeyInViewerTimeZone(ev._dt.date);
+          if (!groups.has(key)) {
+            order.push(key);
+            groups.set(key, {
+              humanLabel: fmtDate.format(ev._dt.date),
+              items: [],
+            });
+          }
+          groups.get(key).items.push(ev);
+        }
+
+        if (upcomingEvents.length === 0) {
+          statusEl.textContent = searchTerm
+            ? `No matching upcoming events for ${getCityDisplayName(city)}.`
+            : "No upcoming events.";
+          main.innerHTML = `<h2 class="date-head">${fmtDate.format(
+            now
+          )}</h2><div class="date-empty">${
+            searchTerm ? "No matching events today." : "No events scheduled today."
+          }</div>`;
+          return;
+        }
+
+        const chunks = [];
+        let idx = 0;
+        for (const key of order) {
+          const group = groups.get(key);
+          chunks.push(`<h2 class="date-head">${group.humanLabel}</h2>`);
+          if (key === todayKey && group.items.length === 0) {
+            chunks.push(
+              `<div class="date-empty">${
+                searchTerm ? "No matching events today." : "No events scheduled today."
+              }</div>`
+            );
+            continue;
+          }
+          for (const ev of group.items) {
+            chunks.push(buildEventHTML(ev, ev._dt, idx++));
+          }
+        }
+        main.innerHTML = chunks.join("\n");
+        statusEl.textContent = `${upcomingEvents.length} event${
+          upcomingEvents.length === 1 ? "" : "s"
+        }${searchTerm ? " matching your search" : ""} loaded for ${getCityDisplayName(
+          city
+        )}.`;
+      }
+
+      async function loadAndRender() {
+        const statusEl = document.getElementById("status");
         try {
           const city = getCityFromUrl();
           updateCityLabel(city);
           populateCitySelect(city);
           syncCardsLink(city);
           syncCalendarLink(city);
+          if (eventsCacheByCity.has(city)) {
+            renderEvents(city, eventsCacheByCity.get(city));
+            return;
+          }
           const endpoint = `/${city}/upcoming_events.json`;
           const res = await fetch(endpoint, {
             cache: "no-store",
@@ -723,41 +867,8 @@
               events.push({ ...ev, _dt: parseDt(ev.startDate) });
             } catch {}
           }
-          events.sort((a, b) => a._dt.date - b._dt.date);
-
-          const groups = new Map();
-          const order = [];
-          for (const ev of events) {
-            const key = niceDateFromParts(ev._dt.normalized);
-            if (!groups.has(key)) {
-              order.push(key);
-              groups.set(key, {
-                humanLabel: fmtDate.format(ev._dt.date),
-                items: [],
-              });
-            }
-            groups.get(key).items.push(ev);
-          }
-
-          if (order.length === 0) {
-            statusEl.textContent = "No upcoming events.";
-            main.innerHTML = "";
-            return;
-          }
-
-          const chunks = [];
-          let idx = 0;
-          for (const key of order) {
-            const group = groups.get(key);
-            chunks.push(`<h2 class="date-head">${group.humanLabel}</h2>`);
-            for (const ev of group.items) {
-              chunks.push(buildEventHTML(ev, ev._dt, idx++));
-            }
-          }
-          main.innerHTML = chunks.join("\n");
-          statusEl.textContent = `${events.length} event${
-            events.length === 1 ? "" : "s"
-          } loaded for ${getCityDisplayName(city)}.`;
+          eventsCacheByCity.set(city, events);
+          renderEvents(city, events);
 
         } catch (err) {
           document.getElementById("events").innerHTML = "";
@@ -766,9 +877,23 @@
         }
       }
 
+      function bindSearchControls() {
+        const input = document.getElementById("eventSearch");
+        if (!input) return;
+        input.addEventListener("input", () => {
+          const city = getCityFromUrl();
+          if (eventsCacheByCity.has(city)) {
+            renderEvents(city, eventsCacheByCity.get(city));
+          } else {
+            loadAndRender();
+          }
+        });
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         bindToggleHandlers();
         bindCityModalControls();
+        bindSearchControls();
         loadAndRender();
       });
     </script>
