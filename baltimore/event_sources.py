@@ -456,6 +456,11 @@ sources = [
         "tags": ["Tech Skills", "AI"],
     },
     {
+        "name": "BioBuzz Networks",
+        "url": "https://api.lu.ma/user/profile/events-hosting?user_api_id=usr-nems27coeEnyBq5",
+        "tags": ["Health", "Science", "Business", "Startup", "Professional Networking"],
+    },
+    {
         "name": "Luma User d4s75dZyC9VOXAd",
         "url": "https://api.lu.ma/user/profile/events-hosting?user_api_id=usr-d4s75dZyC9VOXAd",
         "tags": ["Business"],

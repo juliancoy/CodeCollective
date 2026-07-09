@@ -18,6 +18,7 @@
       label: category.label,
       slug: slugifyTag(category.label),
       matchSlugs: new Set((category.matches || []).map(slugifyTag).filter(Boolean)),
+      isFallback: category.isFallback === true,
     };
   }
 
@@ -38,7 +39,11 @@
     }
 
     const otherCategory = getOtherCategory(categoryMap);
-    return otherCategory ? [otherCategory] : [];
+    return otherCategory ? [{ ...otherCategory, isFallback: true }] : [];
+  }
+
+  function hasOnlyFallbackCategories(categories) {
+    return Array.isArray(categories) && categories.length > 0 && categories.every((category) => category.isFallback === true);
   }
 
   function isTechOnlyEvent(tags) {
@@ -61,6 +66,7 @@
       'game-development',
       'ux',
       'product',
+      'technology',
       'crypto-and-web3',
       'makerspace',
       'robotics',
@@ -123,7 +129,8 @@
     if (categoryMap?.id === 'tech_only' && !isTechOnlyEvent(tags)) {
       return true;
     }
-    return getDirectMappedCategoriesForTags(tags, categoryMap).length === 0;
+    const mappedCategories = getDirectMappedCategoriesForTags(tags, categoryMap);
+    return mappedCategories.length === 0 || hasOnlyFallbackCategories(mappedCategories);
   }
 
   function eventMatchesTags(params) {
@@ -135,6 +142,9 @@
     const mappedCategories = getEffectiveMappedCategories(tags, categoryMap);
     if (mappedCategories.length === 0) {
       return showExcludedEvents;
+    }
+    if (hasOnlyFallbackCategories(mappedCategories)) {
+      return showExcludedEvents || mappedCategories.some((category) => activeTagSlugs?.has(category.slug));
     }
     if (!activeTagSlugs || activeTagSlugs.size === 0) return false;
     return mappedCategories.some((category) => activeTagSlugs.has(category.slug));
@@ -433,6 +443,7 @@
     normalizeMapCategory,
     getOtherCategory,
     getDirectMappedCategoriesForTags,
+    hasOnlyFallbackCategories,
     isTechOnlyEvent,
     getEffectiveMappedCategories,
     isExcludedFromActiveMap,

@@ -263,6 +263,14 @@ CUSTOM_SCRAPER_SOURCES = [
         "orgImageUrl": "https://www.google.com/s2/favicons?domain=baltimorecountymd.gov&sz=256",
         "tags": ["MarylandGov", "Economic Development", "Workforce"],
     },
+    {
+        "module": "baltimore.scrape_blackthorn",
+        "function": "scrape_events",
+        "url": "https://events.blackthorn.io/en/KbOkKk6/g/K6RWFzv502",
+        "group_name": "UpSurge Monthly",
+        "orgImageUrl": "https://www.google.com/s2/favicons?domain=upsurgebaltimore.com&sz=256",
+        "tags": ["Business", "Startup", "Tech Community", "Economic Development"],
+    },
 ]
 def merge_tags(*tag_lists):
     merged = []

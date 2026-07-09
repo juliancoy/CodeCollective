@@ -54,6 +54,7 @@ const LEGEND_TAG_COLORS_QUERY_PARAM = 'lc';
 const LEGEND_DAY_IMAGES_QUERY_PARAM = 'li';
 const LEGEND_CLICK_ACTION_QUERY_PARAM = 'la';
 const LEGEND_TAGS_SEPARATOR = '.';
+const LEGEND_NO_TAGS_VALUE = '__none__';
 const FEATURED_SOURCE_URLS = new Set([
   'https://luma.com/codecollective',
   'https://lu.ma/codecollective'
@@ -74,15 +75,20 @@ function parseBooleanQueryFlag(value) {
 }
 
 function parseCompactTagList(rawValue) {
+  if (rawValue === null) return null;
+  if (String(rawValue).trim() === LEGEND_NO_TAGS_VALUE) return [];
   if (!rawValue) return [];
   return String(rawValue)
     .split(LEGEND_TAGS_SEPARATOR)
     .map(value => value.trim())
+    .filter(value => value !== LEGEND_NO_TAGS_VALUE)
     .filter(Boolean);
 }
 
 function serializeCompactTagList(tags) {
-  return Array.isArray(tags) ? tags.filter(Boolean).join(LEGEND_TAGS_SEPARATOR) : '';
+  if (!Array.isArray(tags)) return '';
+  const values = tags.filter(Boolean);
+  return values.length > 0 ? values.join(LEGEND_TAGS_SEPARATOR) : LEGEND_NO_TAGS_VALUE;
 }
 
 function getLegendQueryStateFromUrl() {
@@ -630,7 +636,8 @@ function normalizeMapCategory(category) {
     color: category.color || '#475569',
     textColor: category.text_color || '#ffffff',
     slug: slugifyTag(category.label),
-    matchSlugs: new Set((category.matches || []).map(slugifyTag).filter(Boolean))
+    matchSlugs: new Set((category.matches || []).map(slugifyTag).filter(Boolean)),
+    isFallback: category.isFallback === true
   };
 }
 
@@ -655,7 +662,11 @@ function getDirectMappedCategoriesForTags(tags, categoryMap = activeCategoryMap)
   }
 
   const otherCategory = getOtherCategory(categoryMap);
-  return otherCategory ? [otherCategory] : [];
+  return otherCategory ? [{ ...otherCategory, isFallback: true }] : [];
+}
+
+function hasOnlyFallbackCategories(categories) {
+  return Array.isArray(categories) && categories.length > 0 && categories.every(category => category.isFallback === true);
 }
 
 function isTechOnlyEvent(tags) {
@@ -682,6 +693,7 @@ function isTechOnlyEvent(tags) {
     'game-development',
     'ux',
     'product',
+    'technology',
     'crypto-and-web3',
     'makerspace',
     'robotics',
@@ -771,14 +783,18 @@ function getLegendPrefs(categoryMap) {
     const stored = localStorage.getItem(LEGEND_PREFS_KEY);
     if (stored) {
       const parsed = JSON.parse(stored);
+      const storedMapId = parsed.mapId || defaults.mapId;
+      const selectedTags = storedMapId === defaults.mapId && Array.isArray(parsed.selectedTags)
+        ? parsed.selectedTags
+        : defaultTags;
       prefs = {
         hidden: Boolean(parsed.hidden),
         useTagColors: parsed.useTagColors !== false,
         showDayBackgrounds: parsed.showDayBackgrounds !== false,
         showExcludedEvents: parsed.showExcludedEvents === true,
         eventClickAction: parsed.eventClickAction || defaults.eventClickAction,
-        selectedTags: Array.isArray(parsed.selectedTags) ? parsed.selectedTags : defaultTags,
-        mapId: parsed.mapId || defaults.mapId
+        selectedTags,
+        mapId: storedMapId
       };
     }
   } catch (error) {
@@ -787,7 +803,7 @@ function getLegendPrefs(categoryMap) {
 
   const queryState = getLegendQueryStateFromUrl();
   if (queryState.mapId) prefs.mapId = queryState.mapId;
-  if (Array.isArray(queryState.selectedTags) && queryState.selectedTags.length > 0) prefs.selectedTags = queryState.selectedTags;
+  if (Array.isArray(queryState.selectedTags)) prefs.selectedTags = queryState.selectedTags;
   if (typeof queryState.hidden === 'boolean') prefs.hidden = queryState.hidden;
   if (typeof queryState.useTagColors === 'boolean') prefs.useTagColors = queryState.useTagColors;
   if (typeof queryState.showDayBackgrounds === 'boolean') prefs.showDayBackgrounds = queryState.showDayBackgrounds;
@@ -804,11 +820,8 @@ function getValidSelectedTags(selectedTags, categoryMap) {
       : []
   );
 
-  const validTags = Array.isArray(selectedTags)
-    ? selectedTags.filter(tag => availableTags.has(tag))
-    : [];
-
-  return validTags.length > 0 ? validTags : Array.from(availableTags);
+  if (!Array.isArray(selectedTags)) return Array.from(availableTags);
+  return selectedTags.filter(tag => availableTags.has(tag));
 }
 
 function saveLegendPrefs() {
@@ -1069,6 +1082,9 @@ function eventMatchesTags(tags) {
   const mappedCategories = getEffectiveMappedCategories(tags);
   if (mappedCategories.length === 0) {
     return showExcludedEvents;
+  }
+  if (hasOnlyFallbackCategories(mappedCategories)) {
+    return showExcludedEvents || mappedCategories.some(category => activeTagSlugs?.has(category.slug));
   }
   if (!activeTagSlugs || activeTagSlugs.size === 0) return false;
   return mappedCategories.some(category => activeTagSlugs.has(category.slug));
@@ -1672,7 +1688,8 @@ function isExcludedFromActiveMap(tags) {
   if (activeCategoryMap?.id === 'tech_only' && !isTechOnlyEvent(tags)) {
     return true;
   }
-  return getDirectMappedCategoriesForTags(tags).length === 0;
+  const mappedCategories = getDirectMappedCategoriesForTags(tags);
+  return mappedCategories.length === 0 || hasOnlyFallbackCategories(mappedCategories);
 }
 
 function getEventClickAction() {
