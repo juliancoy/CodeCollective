@@ -40,18 +40,22 @@
         color: var(--link);
       }
       .view-switch {
-        margin: 1rem 0;
+        margin: 0.7rem 0 0.9rem;
         display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
+        justify-content: stretch;
+        gap: 0.4rem;
       }
       .view-switch a {
+        flex: 1 1 0;
         border: 1px solid rgba(255, 255, 255, 0.7);
         border-radius: 999px;
-        padding: 0.35rem 0.9rem;
+        padding: 0.38rem 0.65rem;
         background: rgba(0, 0, 0, 0.2);
-        font-size: 0.95rem;
+        font-size: 0.92rem;
+        line-height: 1.2;
+        text-align: center;
         text-decoration: none;
+        text-shadow: none;
       }
       .view-switch a:hover,
       .view-switch a:focus {
@@ -60,7 +64,7 @@
       }
       .wrap {
         width: 100%;
-        padding: 1rem;
+        padding: 0.85rem 1rem 1rem;
       }
       @media (min-width: 900px) {
         .wrap {
@@ -70,18 +74,19 @@
         }
       }
       header.site {
-        margin-bottom: 1.25rem;
-        padding-bottom: 0.5rem;
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.15rem;
       }
       header.site h1 {
         margin: 0;
         font-weight: 600;
         letter-spacing: 0.2px;
-        font-size: 1.75rem;
+        font-size: clamp(1.75rem, 9vw, 2.15rem);
+        line-height: 1.05;
       }
       .status {
-        margin-top: 0.75rem;
-        font-size: 0.95rem;
+        margin-top: 0.45rem;
+        font-size: 0.92rem;
         color: var(--muted);
       }
       .city-bar {
@@ -89,21 +94,27 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 0.65rem;
-        margin: 1rem 0 0.5rem;
+        margin: 0.75rem 0 0.55rem;
       }
       .city-chip {
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.45rem;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.15);
         color: var(--fg);
         border-radius: 999px;
-        padding: 0.35rem 0.85rem;
+        padding: 0.38rem 0.8rem;
         font: inherit;
         font-weight: 600;
+        line-height: 1.1;
         cursor: pointer;
         transition: background 0.15s ease, transform 0.1s ease;
+      }
+      .city-chip::after {
+        content: "▾";
+        font-size: 0.8em;
+        opacity: 0.85;
       }
       .city-chip:hover,
       .city-chip:focus {
@@ -117,21 +128,29 @@
         transform: translateY(1px);
       }
       .search-bar {
-        margin: 1rem 0 0.5rem;
+        margin: 0.65rem 0 0.7rem;
       }
       .search-label {
-        display: block;
-        margin-bottom: 0.35rem;
-        font-weight: 600;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
       }
       .search-input {
         width: 100%;
         border: 1px solid rgba(255, 255, 255, 0.55);
-        border-radius: 12px;
+        border-radius: 999px;
         background: rgba(0, 0, 0, 0.22);
         color: var(--fg);
         font: inherit;
-        padding: 0.55rem 0.8rem;
+        min-height: 2.75rem;
+        padding: 0.5rem 1rem;
+        text-shadow: none;
       }
       .search-input::placeholder {
         color: rgba(255, 255, 255, 0.72);
@@ -141,10 +160,11 @@
         outline-offset: 2px;
       }
       .date-head {
-        margin: 2rem 0 1rem;
-        padding: 0.5rem 1rem 0;
+        margin: 1.25rem 0 0.65rem;
+        padding: 0.75rem 0 0;
         border-top: 1px solid #ececec;
-        font-size: 1.25rem;
+        font-size: 1.35rem;
+        line-height: 1.15;
         font-weight: 600;
       }
 
@@ -157,37 +177,33 @@
       .event {
         background: var(--card);
         border-radius: 14px;
-        padding: 0.75rem 1rem;
-        margin: 0.75rem 0;
+        padding: 0.75rem 0.85rem;
+        margin: 0.65rem 0;
         border: 1px solid #ececec;
       }
       .event-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      .event-meta {
-        display: inline-flex;
-        gap: 0.75rem;
-        min-width: 0;
-        flex: 1 1 auto;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.3rem 0.65rem;
+        align-items: start;
       }
       .event-time {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
         color: var(--muted);
         white-space: nowrap;
-        flex: 0 0 auto;
+        text-shadow: none;
       }
       .event-title {
         min-width: 0;
-        flex: 1 1 auto;
+        grid-column: 1 / -1;
       }
       .event-title a {
         color: var(--link);
         text-decoration: none;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1rem;
+        line-height: 1.25;
         word-break: break-word;
       }
       .event-title a:hover,
@@ -196,18 +212,22 @@
       }
       .event-title .nolink {
         font-weight: 600;
-        font-size: 1.05rem;
+        font-size: 1rem;
+        line-height: 1.25;
       }
 
       .toggle-btn {
-        flex: 0 0 auto;
         border: 1px solid var(--ring);
         background: #fff;
-        border-radius: 10px;
-        padding: 0.25rem 0.55rem;
+        color: #0c2147;
+        border-radius: 999px;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
         line-height: 1;
         font-size: 1rem;
         cursor: pointer;
+        text-shadow: none;
       }
       .toggle-btn:focus,
       .toggle-btn:active {
@@ -357,7 +377,7 @@
       </header>
       <div class="city-bar">
         <button type="button" class="city-chip" id="openCityModal" aria-label="Change city">
-          Showing <span id="currentCityLabel">Baltimore</span>
+          <span id="currentCityLabel">Baltimore</span>
         </button>
       </div>
       <div class="search-bar">
@@ -366,13 +386,13 @@
           class="search-input"
           id="eventSearch"
           type="search"
-          placeholder="Search by title, description, or location"
+          placeholder="Search events"
           autocomplete="off"
         />
       </div>
       <div class="view-switch">
-        <a id="cardsViewLink" href="/calendar_cards.html">Switch to cards view</a>
-        <a id="calendarViewLink" href="/calendar.html?view=calendar">Switch to calendar view</a>
+        <a id="cardsViewLink" href="/calendar_cards.html">Cards</a>
+        <a id="calendarViewLink" href="/calendar.html?view=calendar">Calendar</a>
       </div>
       <main id="events"></main>
     </div>
@@ -604,11 +624,9 @@
 
         return `<article class="event" data-event-index="${idx}">
     <div class="event-header">
-      <div class="event-meta">
-        <div class="event-time">${timeStr}</div>
-        <div class="event-title">${titleHTML}</div>
-      </div>
+      <div class="event-time">${timeStr}</div>
       <button class="toggle-btn" data-toggle="${bodyId}" aria-expanded="false" aria-controls="${bodyId}" aria-label="Show details">+</button>
+      <div class="event-title">${titleHTML}</div>
     </div>
     <div class="event-body" id="${bodyId}" hidden>
       <div class="event-desc">${descHTML}</div>
