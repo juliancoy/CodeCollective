@@ -23,6 +23,8 @@ sources = [
     {"url": "https://www.eventbrite.com/o/tech-turn-up-32326719035", "tags": ["Tech Community"]},
     {"url": "https://www.eventbrite.com/o/georgetown-ventures-61649666833", "tags": ["Business", "Startup"]},
     {"url": "https://www.eventbrite.com/o/georgetown-entrepreneurship-initiative-23347332259", "tags": ["Business", "Startup"]},
+    {"url": "https://dc9.club/events/", "group_name": "DC9 Nightclub", "tags": ["Culture", "Community"]},
+    {"url": "https://shotgun.live/en/venues/transmission", "group_name": "TRANSMISSION", "tags": ["Culture", "Community"]},
     {"url": "https://www.eventbrite.com/e/power-shift-a-der-showcase-tickets-1976198206032", "tags": ["Infrastructure"]},
     {"url": "https://www.eventbrite.com/e/healthy-homes-fair-2026-tickets-1975247546584", "tags": ["Infrastructure"]},
     {"url": "https://www.eventbrite.com/e/want-a-healthier-more-efficient-home-get-coached-tickets-1975244953829", "tags": ["Infrastructure"]},
