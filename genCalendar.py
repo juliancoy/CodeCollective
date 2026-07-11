@@ -224,6 +224,9 @@ def infer_source_kind(source_url):
     if "legistar.com" in host and ("calendar.aspx" in path.lower() or "view.ashx" in path.lower()):
         return "legistar"
 
+    if host == "shotgun.live" and "/venues/" in path.lower():
+        return "web_events_page"
+
     if host.endswith(".maryland.gov") and path.lower().startswith("/pages/"):
         return "web_events_page"
 
