@@ -40,18 +40,22 @@
         color: var(--link);
       }
       .view-switch {
-        margin: 1rem 0;
+        margin: 0.7rem 0 0.9rem;
         display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
+        justify-content: stretch;
+        gap: 0.4rem;
       }
       .view-switch a {
+        flex: 1 1 0;
         border: 1px solid rgba(255, 255, 255, 0.7);
         border-radius: 999px;
-        padding: 0.35rem 0.9rem;
+        padding: 0.38rem 0.65rem;
         background: rgba(0, 0, 0, 0.2);
-        font-size: 0.95rem;
+        font-size: 0.92rem;
+        line-height: 1.2;
+        text-align: center;
         text-decoration: none;
+        text-shadow: none;
       }
       .view-switch a:hover,
       .view-switch a:focus {
@@ -60,7 +64,7 @@
       }
       .wrap {
         width: 100%;
-        padding: 1rem;
+        padding: 0.85rem 1rem 1rem;
       }
       @media (min-width: 900px) {
         .wrap {
@@ -70,18 +74,19 @@
         }
       }
       header.site {
-        margin-bottom: 1.25rem;
-        padding-bottom: 0.5rem;
+        margin-bottom: 0.85rem;
+        padding-bottom: 0.15rem;
       }
       header.site h1 {
         margin: 0;
         font-weight: 600;
         letter-spacing: 0.2px;
-        font-size: 1.75rem;
+        font-size: clamp(1.75rem, 9vw, 2.15rem);
+        line-height: 1.05;
       }
       .status {
-        margin-top: 0.75rem;
-        font-size: 0.95rem;
+        margin-top: 0.45rem;
+        font-size: 0.92rem;
         color: var(--muted);
       }
       .city-bar {
@@ -89,77 +94,116 @@
         flex-wrap: wrap;
         align-items: center;
         gap: 0.65rem;
-        margin: 1rem 0 0.5rem;
+        margin: 0.75rem 0 0.55rem;
       }
       .city-chip {
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.45rem;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 999px;
-        padding: 0.35rem 0.85rem;
-        font-weight: 600;
-      }
-      .city-btn {
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        background: transparent;
         color: var(--fg);
         border-radius: 999px;
-        padding: 0.35rem 0.9rem;
-        font-size: 0.95rem;
+        padding: 0.38rem 0.8rem;
+        font: inherit;
+        font-weight: 600;
+        line-height: 1.1;
         cursor: pointer;
         transition: background 0.15s ease, transform 0.1s ease;
       }
-      .city-btn:hover,
-      .city-btn:focus {
+      .city-chip::after {
+        content: "▾";
+        font-size: 0.8em;
+        opacity: 0.85;
+      }
+      .city-chip:hover,
+      .city-chip:focus {
         background: rgba(255, 255, 255, 0.12);
       }
-      .city-btn:active {
+      .city-chip:focus {
+        outline: 2px solid rgba(255, 255, 255, 0.7);
+        outline-offset: 2px;
+      }
+      .city-chip:active {
         transform: translateY(1px);
       }
+      .search-bar {
+        margin: 0.65rem 0 0.7rem;
+      }
+      .search-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      .search-input {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.22);
+        color: var(--fg);
+        font: inherit;
+        min-height: 2.75rem;
+        padding: 0.5rem 1rem;
+        text-shadow: none;
+      }
+      .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.72);
+      }
+      .search-input:focus {
+        outline: 2px solid rgba(255, 255, 255, 0.7);
+        outline-offset: 2px;
+      }
       .date-head {
-        margin: 2rem 0 1rem;
-        padding-top: 0.5rem;
+        margin: 1.25rem 0 0.65rem;
+        padding: 0.75rem 0 0;
         border-top: 1px solid #ececec;
-        font-size: 1.25rem;
+        font-size: 1.35rem;
+        line-height: 1.15;
         font-weight: 600;
+      }
+
+      .date-empty {
+        margin: 0.75rem 0;
+        padding: 0 1rem;
+        color: var(--muted);
       }
 
       .event {
         background: var(--card);
         border-radius: 14px;
-        padding: 0.75rem 1rem;
-        margin: 0.75rem 0;
+        padding: 0.75rem 0.85rem;
+        margin: 0.65rem 0;
         border: 1px solid #ececec;
       }
       .event-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-      }
-      .event-meta {
-        display: inline-flex;
-        gap: 0.75rem;
-        min-width: 0;
-        flex: 1 1 auto;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.3rem 0.65rem;
+        align-items: start;
       }
       .event-time {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         font-weight: 600;
         color: var(--muted);
         white-space: nowrap;
-        flex: 0 0 auto;
+        text-shadow: none;
       }
       .event-title {
         min-width: 0;
-        flex: 1 1 auto;
+        grid-column: 1 / -1;
       }
       .event-title a {
         color: var(--link);
         text-decoration: none;
         font-weight: 700;
-        font-size: 1.05rem;
+        font-size: 1rem;
+        line-height: 1.25;
         word-break: break-word;
       }
       .event-title a:hover,
@@ -168,18 +212,22 @@
       }
       .event-title .nolink {
         font-weight: 600;
-        font-size: 1.05rem;
+        font-size: 1rem;
+        line-height: 1.25;
       }
 
       .toggle-btn {
-        flex: 0 0 auto;
         border: 1px solid var(--ring);
         background: #fff;
-        border-radius: 10px;
-        padding: 0.25rem 0.55rem;
+        color: #0c2147;
+        border-radius: 999px;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
         line-height: 1;
         font-size: 1rem;
         cursor: pointer;
+        text-shadow: none;
       }
       .toggle-btn:focus,
       .toggle-btn:active {
@@ -328,12 +376,23 @@
         <div id="status" class="status" aria-live="polite">Loading events…</div>
       </header>
       <div class="city-bar">
-        <span class="city-chip">Showing <span id="currentCityLabel">Baltimore</span></span>
-        <button type="button" class="city-btn" id="openCityModal">Change city</button>
+        <button type="button" class="city-chip" id="openCityModal" aria-label="Change city">
+          <span id="currentCityLabel">Baltimore</span>
+        </button>
+      </div>
+      <div class="search-bar">
+        <label class="search-label" for="eventSearch">Search events</label>
+        <input
+          class="search-input"
+          id="eventSearch"
+          type="search"
+          placeholder="Search events"
+          autocomplete="off"
+        />
       </div>
       <div class="view-switch">
-        <a id="cardsViewLink" href="/calendar_cards.html">Switch to cards view</a>
-        <a id="calendarViewLink" href="/calendar.html?view=calendar">Switch to calendar view</a>
+        <a id="cardsViewLink" href="/calendar_cards.html">Cards</a>
+        <a id="calendarViewLink" href="/calendar.html?view=calendar">Calendar</a>
       </div>
       <main id="events"></main>
     </div>
@@ -385,17 +444,48 @@
         if (isNaN(d.getTime())) throw new Error(`Unparseable date: ${iso}`);
         return { date: d, normalized };
       }
-      function niceDateFromParts(isoLike) {
-        return isoLike.split("T")[0];
+      const viewerTimeZone =
+        Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const dateKeyFormatter = new Intl.DateTimeFormat("en-CA", {
+        timeZone: viewerTimeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      function dateKeyInViewerTimeZone(date) {
+        const parts = Object.fromEntries(
+          dateKeyFormatter.formatToParts(date).map((part) => [part.type, part.value])
+        );
+        return `${parts.year}-${parts.month}-${parts.day}`;
+      }
+      function normalizedSearchTerm() {
+        const input = document.getElementById("eventSearch");
+        return (input?.value || "").trim().toLowerCase();
+      }
+      function eventLocationText(ev) {
+        if (!ev.location || typeof ev.location !== "object") return "";
+        return [ev.location.name, ev.location.address].filter(Boolean).join(" ");
+      }
+      function eventSearchText(ev) {
+        return [
+          ev.name,
+          ev.description,
+          eventLocationText(ev),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
       }
 
       const fmtDate = new Intl.DateTimeFormat("en-US", {
+        timeZone: viewerTimeZone,
         weekday: "long",
         month: "long",
         day: "numeric",
         year: "numeric",
       });
       const fmtTime = new Intl.DateTimeFormat("en-US", {
+        timeZone: viewerTimeZone,
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
@@ -534,11 +624,9 @@
 
         return `<article class="event" data-event-index="${idx}">
     <div class="event-header">
-      <div class="event-meta">
-        <div class="event-time">${timeStr}</div>
-        <div class="event-title">${titleHTML}</div>
-      </div>
+      <div class="event-time">${timeStr}</div>
       <button class="toggle-btn" data-toggle="${bodyId}" aria-expanded="false" aria-controls="${bodyId}" aria-label="Show details">+</button>
+      <div class="event-title">${titleHTML}</div>
     </div>
     <div class="event-body" id="${bodyId}" hidden>
       <div class="event-desc">${descHTML}</div>
@@ -698,16 +786,90 @@
         toggleBound = true;
       }
 
+      const eventsCacheByCity = new Map();
+
       /* ---------- Main render ---------- */
-      async function loadAndRender() {
+      function renderEvents(city, events) {
         const statusEl = document.getElementById("status");
         const main = document.getElementById("events");
+        const searchTerm = normalizedSearchTerm();
+        const searchedEvents = searchTerm
+          ? events.filter((ev) => eventSearchText(ev).includes(searchTerm))
+          : events;
+        const now = new Date();
+        const todayKey = dateKeyInViewerTimeZone(now);
+        const upcomingEvents = searchedEvents.filter(
+          (ev) => dateKeyInViewerTimeZone(ev._dt.date) >= todayKey
+        );
+        upcomingEvents.sort((a, b) => a._dt.date - b._dt.date);
+
+        const groups = new Map();
+        const order = [todayKey];
+        groups.set(todayKey, {
+          humanLabel: fmtDate.format(now),
+          items: [],
+        });
+        for (const ev of upcomingEvents) {
+          const key = dateKeyInViewerTimeZone(ev._dt.date);
+          if (!groups.has(key)) {
+            order.push(key);
+            groups.set(key, {
+              humanLabel: fmtDate.format(ev._dt.date),
+              items: [],
+            });
+          }
+          groups.get(key).items.push(ev);
+        }
+
+        if (upcomingEvents.length === 0) {
+          statusEl.textContent = searchTerm
+            ? `No matching upcoming events for ${getCityDisplayName(city)}.`
+            : "No upcoming events.";
+          main.innerHTML = `<h2 class="date-head">${fmtDate.format(
+            now
+          )}</h2><div class="date-empty">${
+            searchTerm ? "No matching events today." : "No events scheduled today."
+          }</div>`;
+          return;
+        }
+
+        const chunks = [];
+        let idx = 0;
+        for (const key of order) {
+          const group = groups.get(key);
+          chunks.push(`<h2 class="date-head">${group.humanLabel}</h2>`);
+          if (key === todayKey && group.items.length === 0) {
+            chunks.push(
+              `<div class="date-empty">${
+                searchTerm ? "No matching events today." : "No events scheduled today."
+              }</div>`
+            );
+            continue;
+          }
+          for (const ev of group.items) {
+            chunks.push(buildEventHTML(ev, ev._dt, idx++));
+          }
+        }
+        main.innerHTML = chunks.join("\n");
+        statusEl.textContent = `${upcomingEvents.length} event${
+          upcomingEvents.length === 1 ? "" : "s"
+        }${searchTerm ? " matching your search" : ""} loaded for ${getCityDisplayName(
+          city
+        )}.`;
+      }
+
+      async function loadAndRender() {
+        const statusEl = document.getElementById("status");
         try {
           const city = getCityFromUrl();
           updateCityLabel(city);
           populateCitySelect(city);
           syncCardsLink(city);
           syncCalendarLink(city);
+          if (eventsCacheByCity.has(city)) {
+            renderEvents(city, eventsCacheByCity.get(city));
+            return;
+          }
           const endpoint = `/${city}/upcoming_events.json`;
           const res = await fetch(endpoint, {
             cache: "no-store",
@@ -723,41 +885,8 @@
               events.push({ ...ev, _dt: parseDt(ev.startDate) });
             } catch {}
           }
-          events.sort((a, b) => a._dt.date - b._dt.date);
-
-          const groups = new Map();
-          const order = [];
-          for (const ev of events) {
-            const key = niceDateFromParts(ev._dt.normalized);
-            if (!groups.has(key)) {
-              order.push(key);
-              groups.set(key, {
-                humanLabel: fmtDate.format(ev._dt.date),
-                items: [],
-              });
-            }
-            groups.get(key).items.push(ev);
-          }
-
-          if (order.length === 0) {
-            statusEl.textContent = "No upcoming events.";
-            main.innerHTML = "";
-            return;
-          }
-
-          const chunks = [];
-          let idx = 0;
-          for (const key of order) {
-            const group = groups.get(key);
-            chunks.push(`<h2 class="date-head">${group.humanLabel}</h2>`);
-            for (const ev of group.items) {
-              chunks.push(buildEventHTML(ev, ev._dt, idx++));
-            }
-          }
-          main.innerHTML = chunks.join("\n");
-          statusEl.textContent = `${events.length} event${
-            events.length === 1 ? "" : "s"
-          } loaded for ${getCityDisplayName(city)}.`;
+          eventsCacheByCity.set(city, events);
+          renderEvents(city, events);
 
         } catch (err) {
           document.getElementById("events").innerHTML = "";
@@ -766,9 +895,23 @@
         }
       }
 
+      function bindSearchControls() {
+        const input = document.getElementById("eventSearch");
+        if (!input) return;
+        input.addEventListener("input", () => {
+          const city = getCityFromUrl();
+          if (eventsCacheByCity.has(city)) {
+            renderEvents(city, eventsCacheByCity.get(city));
+          } else {
+            loadAndRender();
+          }
+        });
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
         bindToggleHandlers();
         bindCityModalControls();
+        bindSearchControls();
         loadAndRender();
       });
     </script>
