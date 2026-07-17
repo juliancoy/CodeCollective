@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: repository-data-updates
@@ -55,3 +56,16 @@ jobs:
           git commit -m "Update calendar"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:"${GITHUB_REF_NAME}"
+
+      # Pushes authenticated with GITHUB_TOKEN intentionally do not start most
+      # other workflows. Dispatch the site deployment explicitly so freshly
+      # generated feeds do not remain newer than the production calendar.
+      - name: Deploy updated calendar to production
+        if: ${{ steps.changes.outputs.has_changes == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run cloudflare-deploy.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref "${GITHUB_REF_NAME}" \
+            --field deploy_target=site
