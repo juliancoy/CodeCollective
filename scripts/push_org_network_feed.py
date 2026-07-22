@@ -81,6 +81,13 @@ def normalize_tags(raw_tags: Any, city: str) -> List[str]:
     return sorted(set(out))
 
 
+def exclude_tags(tags: Iterable[str], raw_excluded_tags: Any) -> List[str]:
+    if not isinstance(raw_excluded_tags, list):
+        return sorted(set(tags))
+    excluded = {str(tag or "").strip().casefold() for tag in raw_excluded_tags}
+    return sorted({tag for tag in tags if tag.casefold() not in excluded})
+
+
 def render_location(raw: Any) -> Optional[str]:
     if isinstance(raw, str):
         text = raw.strip()
@@ -122,6 +129,7 @@ def build_ingest_key(event: Dict[str, Any]) -> str:
 def collect_orgs_and_events(repo_root: Path, cities: Iterable[str]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     orgs_by_key: Dict[str, Dict[str, Any]] = {}
     events_by_key: Dict[str, Dict[str, Any]] = {}
+    excluded_org_tags_by_key: Dict[str, List[str]] = {}
 
     for city in cities:
         city_dir = repo_root / city
@@ -134,18 +142,21 @@ def collect_orgs_and_events(repo_root: Path, cities: Iterable[str]) -> Tuple[Lis
             org_name = derive_org_name(source, source_url)
             org_image = normalize_url(source.get("orgImageUrl"))
             org_key = source_url or f"{city}:{org_name.lower()}"
+            excluded_org_tags = source.get("excluded_org_tags", [])
+            excluded_org_tags_by_key[org_key] = excluded_org_tags
+            source_tags = exclude_tags(normalize_tags(source.get("tags"), city), excluded_org_tags)
             if org_key not in orgs_by_key:
                 orgs_by_key[org_key] = {
                     "name": org_name,
                     "source_url": source_url,
                     "image_url": org_image,
-                    "tags": normalize_tags(source.get("tags"), city),
+                    "tags": source_tags,
                     "description": f"Ingested from CodeCollective {city} calendar sources",
                     "city": city,
                 }
             else:
-                merged = sorted(set(orgs_by_key[org_key].get("tags", []) + normalize_tags(source.get("tags"), city)))
-                orgs_by_key[org_key]["tags"] = merged
+                merged = orgs_by_key[org_key].get("tags", []) + source_tags
+                orgs_by_key[org_key]["tags"] = exclude_tags(merged, excluded_org_tags)
                 if org_name and not orgs_by_key[org_key].get("name"):
                     orgs_by_key[org_key]["name"] = org_name
                 if org_image and not orgs_by_key[org_key].get("image_url"):
@@ -188,18 +199,25 @@ def collect_orgs_and_events(repo_root: Path, cities: Iterable[str]) -> Tuple[Lis
 
             if host_org_source_url:
                 org_key = host_org_source_url
+                org_event_tags = exclude_tags(
+                    normalize_tags(raw.get("tags"), city),
+                    excluded_org_tags_by_key.get(org_key, []),
+                )
                 if org_key not in orgs_by_key:
                     orgs_by_key[org_key] = {
                         "name": host_org_name,
                         "source_url": host_org_source_url,
                         "image_url": host_org_image_url,
-                        "tags": normalize_tags(raw.get("tags"), city),
+                        "tags": org_event_tags,
                         "description": f"Inferred from CodeCollective {city} event feed",
                         "city": city,
                     }
                 else:
-                    merged = sorted(set(orgs_by_key[org_key].get("tags", []) + normalize_tags(raw.get("tags"), city)))
-                    orgs_by_key[org_key]["tags"] = merged
+                    merged = orgs_by_key[org_key].get("tags", []) + org_event_tags
+                    orgs_by_key[org_key]["tags"] = exclude_tags(
+                        merged,
+                        excluded_org_tags_by_key.get(org_key, []),
+                    )
                     if host_org_name and not orgs_by_key[org_key].get("name"):
                         orgs_by_key[org_key]["name"] = host_org_name
                     if host_org_image_url and not orgs_by_key[org_key].get("image_url"):
