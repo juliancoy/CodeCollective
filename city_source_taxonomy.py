@@ -125,6 +125,35 @@ _COMMUNITY_SECTOR_BY_TAG = {
 }
 
 
+def filter_excluded_org_tags(tags, excluded_org_tags):
+    """Remove organization-inherited tags for explicitly excluded sectors.
+
+    Exclusions may name either a concrete tag or a community-sector label.  A
+    sector exclusion also removes source tags that map to that sector so, for
+    example, excluding ``Environment`` removes both ``Environment`` and
+    ``Infrastructure`` before the source tags are inherited by every event.
+    Event-specific tags added by a scraper remain untouched.
+    """
+    if not isinstance(excluded_org_tags, list) or not excluded_org_tags:
+        return list(tags or [])
+
+    excluded = {
+        str(tag or "").strip().casefold()
+        for tag in excluded_org_tags
+        if str(tag or "").strip()
+    }
+    filtered = []
+    for tag in tags or []:
+        normalized_tag = str(tag or "").strip()
+        mapped_sector = _COMMUNITY_SECTOR_BY_TAG.get(normalized_tag, "")
+        if normalized_tag.casefold() in excluded:
+            continue
+        if mapped_sector.casefold() in excluded:
+            continue
+        filtered.append(tag)
+    return filtered
+
+
 def _append_community_sector_tags(source):
     tags = list(source.get("tags") or [])
     seen = set(tags)
@@ -158,3 +187,7 @@ def apply_city_source_taxonomy(sources):
     for source in sources:
         _append_community_sector_tags(source)
         _append_maslow_tags(source)
+        source["tags"] = filter_excluded_org_tags(
+            source.get("tags"),
+            source.get("excluded_org_tags"),
+        )
