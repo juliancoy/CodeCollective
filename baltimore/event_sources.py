@@ -860,6 +860,7 @@ sources = [
         "name": "Enoch Pratt Free Library Events",
         "url": "https://www.prattlibrary.org/events",
         "tags": ["MarylandGov", "Politics", "Community", "Infrastructure", "Purpose"],
+        "excluded_org_tags": ["Environment"],
     },
     {
         "name": "Thread Baltimore Upcoming Events",
