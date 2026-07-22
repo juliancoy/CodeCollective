@@ -20,6 +20,7 @@ from virtual.event_sources import sources as virtual_sources
 from westvirginia.event_sources import sources as westvirginia_sources
 
 ALLOWED_NON_SECTOR_TAGS = {
+    "MarylandGov",
     "Food",
     "Water",
     "Shelter",

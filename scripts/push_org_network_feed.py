@@ -4,12 +4,19 @@ import ast
 import hashlib
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from city_source_taxonomy import filter_excluded_org_tags
 
 DEFAULT_CITIES = ("baltimore", "dc", "hawaii", "pittsburgh", "philadelphia", "virtual", "westvirginia")
 DEFAULT_ORG_CHUNK_SIZE = 40
@@ -82,10 +89,7 @@ def normalize_tags(raw_tags: Any, city: str) -> List[str]:
 
 
 def exclude_tags(tags: Iterable[str], raw_excluded_tags: Any) -> List[str]:
-    if not isinstance(raw_excluded_tags, list):
-        return sorted(set(tags))
-    excluded = {str(tag or "").strip().casefold() for tag in raw_excluded_tags}
-    return sorted({tag for tag in tags if tag.casefold() not in excluded})
+    return sorted(set(filter_excluded_org_tags(tags, raw_excluded_tags)))
 
 
 def render_location(raw: Any) -> Optional[str]:
