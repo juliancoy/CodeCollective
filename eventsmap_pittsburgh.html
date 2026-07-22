@@ -311,6 +311,38 @@
             border: 1px solid rgba(15, 23, 42, 0.35);
             flex: 0 0 auto;
         }
+        .current-location-marker,
+        .shared-location-marker {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 3px solid #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35), 0 6px 16px rgba(15, 23, 42, 0.24);
+        }
+        .current-location-marker {
+            background: #2563eb;
+        }
+        .shared-location-marker {
+            background: #db2777;
+            box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.35), 0 6px 16px rgba(15, 23, 42, 0.24);
+        }
+        .legend-action-button {
+            width: 100%;
+            margin: 0.25rem 0 0.15rem;
+            border: 1px solid #0d3d79;
+            background: #ffffff;
+            color: #0d3d79;
+            border-radius: 999px;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.76rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .legend-action-button:hover,
+        .legend-action-button:focus-visible {
+            background: #e6f1ff;
+            outline: none;
+        }
         .map-legend label,
         .map-legend select {
             font-size: 0.78rem;
@@ -482,29 +514,157 @@
         }
 
         @media (max-width: 900px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            header {
+                padding: 0.85rem 1rem;
+            }
+
+            header h1 {
+                font-size: 1.45rem;
+                line-height: 1.2;
+            }
+
+            header p {
+                margin: 0.35rem 0 0;
+                font-size: 0.9rem;
+            }
+
             .page-container {
                 flex-direction: column;
+                min-height: auto;
+            }
+
+            .panel {
+                padding: 1rem;
             }
 
             .left-panel,
             .right-panel {
-                width: 100%;
+                width: auto;
             }
 
             .left-panel {
-                max-height: none;
+                max-height: 46dvh;
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                gap: 0.7rem;
+            }
+
+            .section-title {
+                font-size: 1.05rem;
+            }
+
+            .controls-row {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.55rem;
+                align-items: stretch;
+            }
+
+            .search-input {
+                grid-column: 1 / -1;
+                width: 100%;
+                box-sizing: border-box;
+                flex: none;
+            }
+
+            .control-inline,
+            .city-select,
+            .action-button {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .control-inline {
+                justify-content: space-between;
             }
 
             .cards-grid {
                 max-height: none;
+                overflow-y: visible;
+                padding-right: 0.1rem;
+            }
+
+            .location-card {
+                border-radius: 12px;
+                padding: 0.85rem;
+            }
+
+            .right-panel {
+                min-height: 56dvh;
             }
 
             #map {
-                min-height: 40vh;
+                height: 56dvh;
+                min-height: 380px;
+            }
+
+            .map-legend {
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 0.75rem;
+                max-width: none;
+                max-height: min(42vh, 320px);
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                padding: 0.6rem 0.7rem;
+            }
+
+            .legend-toggle-row,
+            .legend-key-row {
+                min-height: 28px;
+                font-size: 0.82rem;
+            }
+
+            .legend-action-button {
+                padding: 0.55rem 0.7rem;
+                font-size: 0.82rem;
             }
 
             .hover-preview-panel {
                 display: none;
+            }
+        }
+
+        @media (max-width: 600px) {
+            header p {
+                display: none;
+            }
+
+            .panel {
+                padding: 0.8rem;
+            }
+
+            .controls-row {
+                grid-template-columns: 1fr;
+            }
+
+            .left-panel {
+                max-height: 44dvh;
+            }
+
+            .list-meta {
+                font-size: 0.84rem;
+            }
+
+            .right-panel {
+                min-height: 54dvh;
+            }
+
+            #map {
+                height: 54dvh;
+                min-height: 340px;
+            }
+
+            .map-legend {
+                left: 0.5rem;
+                right: 0.5rem;
+                bottom: 0.5rem;
+                max-height: min(36vh, 280px);
+                border-radius: 10px;
             }
         }
     </style>
@@ -574,10 +734,13 @@
                 <div class="overlay-controls" id="overlay-controls">
                     <div class="legend-section-title">Visibility</div>
                     <label class="legend-toggle-row"><input id="events-toggle" type="checkbox" checked><span class="legend-swatch" style="background:#64748b"></span> Events</label>
-                    <label class="legend-toggle-row"><input id="vacant-lot-toggle" type="checkbox" checked><span class="legend-swatch" style="background:#f59e0b"></span> Vacant lots</label>
-                    <label class="legend-toggle-row"><input id="vacant-building-toggle" type="checkbox" checked><span class="legend-swatch" style="background:#ef4444"></span> Building notices</label>
-                    <label class="legend-toggle-row"><input id="realprop-vacind-toggle" type="checkbox"><span class="legend-swatch" style="background:#22c55e"></span> Realprop VACIND=Y</label>
-                    <div class="legend-key-row"><span class="legend-swatch" style="background:#60a5fa"></span> Parcel boundary</div>
+                    <label class="legend-toggle-row"><input id="current-location-toggle" type="checkbox"><span class="legend-swatch" style="background:#2563eb;border-radius:999px"></span> Current location</label>
+                    <button id="share-location-button" class="legend-action-button" type="button">Share location</button>
+                    <label class="legend-toggle-row"><input id="shared-location-toggle" type="checkbox"><span class="legend-swatch" style="background:#db2777;border-radius:999px"></span> Shared location</label>
+                    <label class="legend-toggle-row baltimore-layer-control"><input id="vacant-lot-toggle" type="checkbox" checked><span class="legend-swatch" style="background:#f59e0b"></span> Vacant lots</label>
+                    <label class="legend-toggle-row baltimore-layer-control"><input id="vacant-building-toggle" type="checkbox" checked><span class="legend-swatch" style="background:#ef4444"></span> Building notices</label>
+                    <label class="legend-toggle-row baltimore-layer-control"><input id="realprop-vacind-toggle" type="checkbox"><span class="legend-swatch" style="background:#22c55e"></span> Realprop VACIND=Y</label>
+                    <div class="legend-key-row baltimore-layer-control"><span class="legend-swatch" style="background:#60a5fa"></span> Parcel boundary</div>
                     <div id="overlay-status" class="list-meta"></div>
                 </div>
             </div>
@@ -712,6 +875,13 @@
         let vacantsParcelsLoaded = false;
         let realpropVacindLoaded = false;
         let eventsVisible = true;
+        let currentLocationVisible = false;
+        let currentLocationLayer = null;
+        let currentLocationWatchId = null;
+        let currentLocationHasFix = false;
+        let sharedLocationVisible = false;
+        let sharedLocationLayer = null;
+        let sharedLocationData = null;
         let vacantsMeta = null;
         let vacantsParcelsMeta = null;
         let vacantsApiUnavailable = false;
@@ -827,6 +997,8 @@
                     vacantLot: Boolean(document.getElementById('vacant-lot-toggle')?.checked),
                     vacantBuilding: Boolean(document.getElementById('vacant-building-toggle')?.checked),
                     realpropVacind: Boolean(document.getElementById('realprop-vacind-toggle')?.checked),
+                    currentLocation: Boolean(document.getElementById('current-location-toggle')?.checked),
+                    sharedLocation: Boolean(document.getElementById('shared-location-toggle')?.checked),
                 };
                 localStorage.setItem(getMapStateKey(), JSON.stringify({ viewport, selections }));
             } catch (error) {
@@ -960,31 +1132,55 @@
         function initializeOverlayUi() {
             const controls = document.getElementById('overlay-controls');
             const eventsToggle = document.getElementById('events-toggle');
+            const currentLocationToggle = document.getElementById('current-location-toggle');
+            const sharedLocationToggle = document.getElementById('shared-location-toggle');
+            const shareLocationButton = document.getElementById('share-location-button');
             const vacantLotToggle = document.getElementById('vacant-lot-toggle');
             const vacantBuildingToggle = document.getElementById('vacant-building-toggle');
             const realpropToggle = document.getElementById('realprop-vacind-toggle');
             const isBaltimore = cityPathContext.city === 'baltimore';
-            if (!controls || !eventsToggle || !vacantLotToggle || !vacantBuildingToggle || !realpropToggle) return;
-            if (!isBaltimore) {
-                controls.hidden = true;
-                return;
-            }
+            if (!controls || !eventsToggle || !currentLocationToggle || !sharedLocationToggle || !shareLocationButton || !vacantLotToggle || !vacantBuildingToggle || !realpropToggle) return;
+
+            document.querySelectorAll('.baltimore-layer-control').forEach(control => {
+                control.hidden = !isBaltimore;
+            });
+
+            sharedLocationData = parseSharedLocationFromUrl();
             const selections = restoredMapState?.selections || {};
             if (typeof selections.events === 'boolean') eventsToggle.checked = selections.events;
+            if (typeof selections.currentLocation === 'boolean') currentLocationToggle.checked = selections.currentLocation;
+            if (typeof selections.sharedLocation === 'boolean') {
+                sharedLocationToggle.checked = selections.sharedLocation && Boolean(sharedLocationData);
+            } else {
+                sharedLocationToggle.checked = Boolean(sharedLocationData);
+            }
             if (typeof selections.vacantLot === 'boolean') vacantLotToggle.checked = selections.vacantLot;
             if (typeof selections.vacantBuilding === 'boolean') vacantBuildingToggle.checked = selections.vacantBuilding;
             if (typeof selections.realpropVacind === 'boolean') realpropToggle.checked = selections.realpropVacind;
+            sharedLocationToggle.disabled = !sharedLocationData;
             eventsVisible = Boolean(eventsToggle.checked);
+            currentLocationVisible = Boolean(currentLocationToggle.checked);
+            sharedLocationVisible = Boolean(sharedLocationToggle.checked);
             setEventsLayerVisibility(eventsVisible);
+            setSharedLocationLayerVisibility(sharedLocationVisible, { persist: false, pan: Boolean(sharedLocationData) && !hasSavedViewport });
+            setCurrentLocationLayerVisibility(currentLocationVisible, { persist: false });
 
             const rerender = async () => {
+                if (!isBaltimore) {
+                    clearOverlayLayers();
+                    setOverlayStatus(layerStatusMessage());
+                    persistMapState();
+                    return;
+                }
+
                 const showVacantLots = Boolean(vacantLotToggle.checked);
                 const showVacantBuildings = Boolean(vacantBuildingToggle.checked);
                 const vacantsOn = showVacantLots || showVacantBuildings;
                 const realpropOn = Boolean(realpropToggle.checked);
                 if (!vacantsOn && !realpropOn) {
                     clearOverlayLayers();
-                    setOverlayStatus('No overlay layers selected.');
+                    setOverlayStatus(layerStatusMessage('No overlay layers selected.'));
+                    persistMapState();
                     return;
                 }
                 await loadAndRenderOverlays({
@@ -1004,10 +1200,30 @@
                 setEventsLayerVisibility(eventsVisible);
                 persistMapState();
             });
+            currentLocationToggle.addEventListener('change', () => {
+                currentLocationVisible = Boolean(currentLocationToggle.checked);
+                setCurrentLocationLayerVisibility(currentLocationVisible);
+                void rerender();
+            });
+            sharedLocationToggle.addEventListener('change', () => {
+                sharedLocationVisible = Boolean(sharedLocationToggle.checked);
+                setSharedLocationLayerVisibility(sharedLocationVisible);
+                void rerender();
+            });
+            shareLocationButton.addEventListener('click', () => {
+                shareCurrentLocationSnapshot(shareLocationButton, sharedLocationToggle).then(() => rerender());
+            });
 
             map.on('moveend', async () => {
+                if (!isBaltimore) {
+                    persistMapState();
+                    return;
+                }
                 const hasVacants = vacantLotToggle.checked || vacantBuildingToggle.checked;
-                if (!hasVacants && !realpropToggle.checked) return;
+                if (!hasVacants && !realpropToggle.checked) {
+                    persistMapState();
+                    return;
+                }
                 if (vacantsMoveTimer) {
                     window.clearTimeout(vacantsMoveTimer);
                 }
@@ -1017,6 +1233,291 @@
                 persistMapState();
             });
             void rerender();
+        }
+
+        function layerStatusMessage(fallback = '') {
+            const locationLayers = [];
+            if (currentLocationVisible) locationLayers.push('Current location');
+            if (sharedLocationVisible && sharedLocationData) locationLayers.push('Shared location');
+            if (locationLayers.length) {
+                return `${locationLayers.join(' and ')} layer${locationLayers.length === 1 ? '' : 's'} enabled.`;
+            }
+            return fallback || 'Property overlay layers are available on the Baltimore map.';
+        }
+
+        function coerceLocationParam(value) {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : null;
+        }
+
+        function parseSharedLocationFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const lat = coerceLocationParam(params.get('shared_lat'));
+            const lng = coerceLocationParam(params.get('shared_lng'));
+            if (lat === null || lng === null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                return null;
+            }
+            const accuracy = coerceLocationParam(params.get('shared_accuracy'));
+            const sharedAt = coerceLocationParam(params.get('shared_at'));
+            return {
+                lat,
+                lng,
+                accuracy: accuracy !== null && accuracy >= 0 ? accuracy : 0,
+                sharedAt: sharedAt !== null && sharedAt > 0 ? sharedAt : 0,
+            };
+        }
+
+        function sharedLocationIcon() {
+            return L.divIcon({
+                className: 'shared-location-layer-icon',
+                html: '<div class="shared-location-marker" aria-hidden="true"></div>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12],
+            });
+        }
+
+        function renderSharedLocationLayer(data, options = {}) {
+            if (!data || !Number.isFinite(data.lat) || !Number.isFinite(data.lng)) return;
+            const latLng = [data.lat, data.lng];
+            const accuracyMeters = Number.isFinite(data.accuracy) ? data.accuracy : 0;
+            const sharedAtText = data.sharedAt
+                ? `<br>Shared: ${escapeHtml(new Date(data.sharedAt).toLocaleString())}`
+                : '';
+
+            if (sharedLocationLayer) {
+                map.removeLayer(sharedLocationLayer);
+            }
+
+            const marker = L.marker(latLng, {
+                icon: sharedLocationIcon(),
+                keyboard: false,
+                zIndexOffset: 900,
+            }).bindPopup(`
+                <strong>Shared location</strong><br>
+                ${accuracyMeters > 0 ? `Accuracy: about ${Math.round(accuracyMeters)} m` : 'Location snapshot'}${sharedAtText}
+            `);
+            const layers = [marker];
+            if (accuracyMeters > 0) {
+                layers.push(L.circle(latLng, {
+                    radius: accuracyMeters,
+                    color: '#db2777',
+                    weight: 2,
+                    opacity: 0.8,
+                    fillColor: '#f472b6',
+                    fillOpacity: 0.14,
+                    interactive: false,
+                }));
+            }
+            sharedLocationLayer = L.layerGroup(layers).addTo(map);
+            if (options.pan) {
+                map.setView(latLng, Math.max(map.getZoom(), 14));
+            }
+        }
+
+        function clearSharedLocationLayer() {
+            if (sharedLocationLayer) {
+                map.removeLayer(sharedLocationLayer);
+                sharedLocationLayer = null;
+            }
+        }
+
+        function setSharedLocationLayerVisibility(visible, options = {}) {
+            sharedLocationVisible = Boolean(visible) && Boolean(sharedLocationData);
+            const toggle = document.getElementById('shared-location-toggle');
+            if (toggle) {
+                toggle.disabled = !sharedLocationData;
+                toggle.checked = sharedLocationVisible;
+            }
+            if (!sharedLocationVisible) {
+                clearSharedLocationLayer();
+                if (options.persist !== false) persistMapState();
+                return;
+            }
+            renderSharedLocationLayer(sharedLocationData, options);
+            setOverlayStatus(layerStatusMessage());
+            if (options.persist !== false) persistMapState();
+        }
+
+        function sharedLocationUrlForPosition(position) {
+            const { latitude, longitude, accuracy } = position.coords || {};
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+            const url = new URL(window.location.href);
+            url.searchParams.set('shared_lat', latitude.toFixed(6));
+            url.searchParams.set('shared_lng', longitude.toFixed(6));
+            if (Number.isFinite(accuracy) && accuracy >= 0) {
+                url.searchParams.set('shared_accuracy', String(Math.round(accuracy)));
+            } else {
+                url.searchParams.delete('shared_accuracy');
+            }
+            url.searchParams.set('shared_at', String(Date.now()));
+            return url;
+        }
+
+        async function copyShareUrl(url) {
+            if (!navigator.clipboard || !window.isSecureContext) return false;
+            try {
+                await navigator.clipboard.writeText(url.toString());
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        async function shareCurrentLocationSnapshot(button, sharedLocationToggle) {
+            if (!navigator.geolocation) {
+                setOverlayStatus('Current location is unavailable in this browser.');
+                return;
+            }
+            const originalText = button ? button.textContent : '';
+            if (button) {
+                button.disabled = true;
+                button.textContent = 'Sharing...';
+            }
+            setOverlayStatus('Waiting for current location permission.');
+
+            await new Promise(resolve => {
+                navigator.geolocation.getCurrentPosition(
+                    async position => {
+                        const url = sharedLocationUrlForPosition(position);
+                        if (!url) {
+                            setOverlayStatus('Current location could not be shared.');
+                            resolve();
+                            return;
+                        }
+                        window.history.replaceState({}, '', url.toString());
+                        sharedLocationData = parseSharedLocationFromUrl();
+                        sharedLocationVisible = true;
+                        if (sharedLocationToggle) {
+                            sharedLocationToggle.disabled = false;
+                            sharedLocationToggle.checked = true;
+                        }
+                        setSharedLocationLayerVisibility(true, { pan: true });
+                        const copied = await copyShareUrl(url);
+                        setOverlayStatus(copied ? 'Shared location link copied.' : 'Shared location link added to the address bar.');
+                        resolve();
+                    },
+                    error => {
+                        const reason = error && error.code === error.PERMISSION_DENIED
+                            ? 'Current location permission was denied.'
+                            : 'Current location could not be determined.';
+                        setOverlayStatus(reason);
+                        resolve();
+                    },
+                    { enableHighAccuracy: true, maximumAge: 30000, timeout: 12000 }
+                );
+            });
+
+            if (button) {
+                button.disabled = false;
+                button.textContent = originalText || 'Share location';
+            }
+        }
+
+        function currentLocationIcon() {
+            return L.divIcon({
+                className: 'current-location-layer-icon',
+                html: '<div class="current-location-marker" aria-hidden="true"></div>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12],
+            });
+        }
+
+        function renderCurrentLocationLayer(position) {
+            const { latitude, longitude, accuracy } = position.coords || {};
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+            const latLng = [latitude, longitude];
+            const accuracyMeters = Number.isFinite(accuracy) ? accuracy : 0;
+
+            if (currentLocationLayer) {
+                map.removeLayer(currentLocationLayer);
+            }
+
+            const marker = L.marker(latLng, {
+                icon: currentLocationIcon(),
+                keyboard: false,
+                zIndexOffset: 1000,
+            }).bindPopup(`
+                <strong>Current location</strong><br>
+                ${accuracyMeters > 0 ? `Accuracy: about ${Math.round(accuracyMeters)} m` : 'Location from this browser'}
+            `);
+            const layers = [marker];
+            if (accuracyMeters > 0) {
+                layers.push(L.circle(latLng, {
+                    radius: accuracyMeters,
+                    color: '#2563eb',
+                    weight: 2,
+                    opacity: 0.8,
+                    fillColor: '#60a5fa',
+                    fillOpacity: 0.16,
+                    interactive: false,
+                }));
+            }
+            currentLocationLayer = L.layerGroup(layers).addTo(map);
+            currentLocationHasFix = true;
+            setOverlayStatus('Current location layer enabled.');
+        }
+
+        function stopCurrentLocationWatch() {
+            if (currentLocationWatchId !== null && navigator.geolocation) {
+                navigator.geolocation.clearWatch(currentLocationWatchId);
+            }
+            currentLocationWatchId = null;
+        }
+
+        function clearCurrentLocationLayer() {
+            stopCurrentLocationWatch();
+            if (currentLocationLayer) {
+                map.removeLayer(currentLocationLayer);
+                currentLocationLayer = null;
+            }
+            currentLocationHasFix = false;
+        }
+
+        function setCurrentLocationLayerVisibility(visible, options = {}) {
+            currentLocationVisible = Boolean(visible);
+            if (!currentLocationVisible) {
+                clearCurrentLocationLayer();
+                if (options.persist !== false) persistMapState();
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                currentLocationVisible = false;
+                const toggle = document.getElementById('current-location-toggle');
+                if (toggle) toggle.checked = false;
+                setOverlayStatus('Current location is unavailable in this browser.');
+                if (options.persist !== false) persistMapState();
+                return;
+            }
+
+            setOverlayStatus(currentLocationHasFix ? 'Current location layer enabled.' : 'Waiting for current location permission.');
+            if (currentLocationWatchId !== null) {
+                if (options.persist !== false) persistMapState();
+                return;
+            }
+
+            currentLocationWatchId = navigator.geolocation.watchPosition(
+                position => {
+                    renderCurrentLocationLayer(position);
+                    if (options.persist !== false) persistMapState();
+                },
+                error => {
+                    currentLocationVisible = false;
+                    const toggle = document.getElementById('current-location-toggle');
+                    if (toggle) toggle.checked = false;
+                    clearCurrentLocationLayer();
+                    const reason = error && error.code === error.PERMISSION_DENIED
+                        ? 'Current location permission was denied.'
+                        : 'Current location could not be determined.';
+                    setOverlayStatus(reason);
+                    if (options.persist !== false) persistMapState();
+                },
+                { enableHighAccuracy: true, maximumAge: 30000, timeout: 12000 }
+            );
+
+            if (options.persist !== false) persistMapState();
         }
 
         function clearOverlayLayers() {
