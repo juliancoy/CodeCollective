@@ -3,6 +3,28 @@ name: Update Calendar
 on:
   schedule:
     - cron: '0 0 * * *'  # Runs daily at 00:00 UTC
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/update-calendar.yml"
+      - "requirements.txt"
+      - "genCalendar.py"
+      - "genSimpleCalendar.py"
+      - "calendar_*.py"
+      - "city_source_taxonomy.py"
+      - "events_map_generator.py"
+      - "geocode*.py"
+      - "scrape_*.py"
+      - "*/event_sources.py"
+      - "*/gen_calendar.py"
+      - "*/scrape_*.py"
+      - "*/manual_events.json"
+      - "scripts/validate_calendar_source_exclusions.py"
+      - "scripts/validate_source_*.py"
+      - "tests/calendar_filtering.test.cjs"
+      - "tests/test_calendar_*.py"
+      - "tests/test_city_source_taxonomy.py"
   workflow_dispatch:  # Allows manual trigger from the Actions tab
 
 permissions:
@@ -26,13 +48,29 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
 
+      - name: Run calendar regression tests
+        run: |
+          python -m pytest tests
+          node --test tests/calendar_filtering.test.cjs
+          python scripts/validate_source_tag_mappings.py
+          python scripts/validate_source_lens_minimums.py
+
       - name: Run genCalendar.py
         run: |
           python genCalendar.py
+
+      - name: Validate generated source exclusions
+        run: |
+          python scripts/validate_calendar_source_exclusions.py
 
       - name: Check for changes
         id: changes
