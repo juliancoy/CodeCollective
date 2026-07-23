@@ -1248,6 +1248,30 @@ def download_image(url, filename):
         return False
 
 
+def collect_west_virginia_events(error_logger=None):
+    source_url = "https://wvbusinesslink.com/?post_type=tribe_events&ical=1&eventDisplay=list"
+    try:
+        return scrape_ics.fetch_calendar_events(
+            ICS_URL=source_url,
+            imageURL="https://baltimoreindiegames.com/wp-content/uploads/2025/03/BIG_small.png",
+            eventUrl="https://baltimoreindiegames.com/events/",
+            city="westvirginia",
+            preface="",
+            recurring=False,
+        )
+    except Exception as e:
+        if error_logger:
+            error_logger(
+                "city_collect",
+                e,
+                source_url=source_url,
+                scraper="scrape_ics.fetch_calendar_events",
+            )
+        else:
+            print(f"Error fetching West Virginia BusinessLink events: {e}")
+        return []
+
+
 def main(city = "baltimore"):
     newEvents = []
     cache_path = os.path.join(city, "geocode_cache.json")
@@ -1307,15 +1331,7 @@ def main(city = "baltimore"):
         newEvents += baltimore_gen_calendar.collect_events(city, error_logger=error_logger)
 
     if city == "westvirginia":
-
-        newEvents += scrape_ics.fetch_calendar_events(
-            ICS_URL="https://wvbusinesslink.com/?post_type=tribe_events&ical=1&eventDisplay=list",
-            imageURL="https://baltimoreindiegames.com/wp-content/uploads/2025/03/BIG_small.png",
-            eventUrl="https://baltimoreindiegames.com/events/",
-            city="westvirginia",
-            preface="",
-            recurring=False
-        )
+        newEvents += collect_west_virginia_events(error_logger=error_logger)
 
     if city == "virtual":
         try:
