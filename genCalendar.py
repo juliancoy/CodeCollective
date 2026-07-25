@@ -12,6 +12,7 @@ import scrape_luma_user
 import scrape_mtc
 import scrape_gdg
 import scrape_partiful
+import scrape_timely
 import scrape_web_events
 import scrape_legistar
 import scrape_thread_helpcenter
@@ -76,6 +77,7 @@ SOURCE_KIND_CONCURRENCY = {
     "jotform": 3,
     "google_form": 3,
     "gdg": 3,
+    "timely": 2,
     "unknown": 2,
 }
 
@@ -444,7 +446,7 @@ def build_error_entry(city, stage, error, source_url=None, source_kind=None, scr
 
 def fetch_events_from_source(source, city):
     source_url = source.get("url", "")
-    source_kind = infer_source_kind(source_url)
+    source_kind = source.get("source_kind") or infer_source_kind(source_url)
     unmatched_sources = []
     error_entries = []
 
@@ -498,6 +500,10 @@ def fetch_events_from_source(source, city):
         "google_form": (
             "Fetching events from",
             lambda: scrape_gform.scrape(source_url),
+        ),
+        "timely": (
+            "Fetching events from",
+            lambda: scrape_timely.scrape(source.get("feed_url") or source_url),
         ),
         "web_events_page": (
             "Fetching events from",
@@ -589,7 +595,11 @@ def fetch_all_sources(sources, city, max_workers=6):
 
     grouped_sources = {}
     for index, source in enumerate(sources):
-        source_kind = infer_source_kind(source.get("url", "")) or "unknown"
+        source_kind = (
+            source.get("source_kind")
+            or infer_source_kind(source.get("url", ""))
+            or "unknown"
+        )
         grouped_sources.setdefault(source_kind, []).append((index, source))
 
     ordered_results = []
