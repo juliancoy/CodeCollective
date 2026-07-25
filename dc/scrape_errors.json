@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-07-23T22:50:04.041956-04:00",
+        "timestamp": "2026-07-24T22:48:30.229215-04:00",
         "city": "dc",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://dc9.club/events/",
@@ -10,7 +10,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 558, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 504, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://dc9.club/events/\n"
     },
     {
-        "timestamp": "2026-07-23T22:50:09.933965-04:00",
+        "timestamp": "2026-07-24T22:48:36.105330-04:00",
         "city": "dc",
         "stage": "source_fetch",
         "error": "429 Client Error: Too Many Requests for url: https://shotgun.live/en/venues/transmission",
@@ -20,51 +20,51 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 558, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 504, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 429 Client Error: Too Many Requests for url: https://shotgun.live/en/venues/transmission\n"
     },
     {
-        "timestamp": "2026-07-23T22:50:52.561090-04:00",
+        "timestamp": "2026-07-24T22:49:19.630827-04:00",
         "city": "dc",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f6354b24900>",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7f70847ca750>",
         "source_url": "https://www.dcwater.com/themes/custom/dcwater_theme/logo.svg",
         "context": {
             "event_name": "D.C. Retail Water and Sewer Rates Committee Meeting"
         },
         "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f6354b24900>\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f70847ca750>\n"
     },
     {
-        "timestamp": "2026-07-23T22:50:52.594148-04:00",
+        "timestamp": "2026-07-24T22:49:19.734721-04:00",
         "city": "dc",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f6354ae04f0>",
-        "source_url": "https://www.dcwater.com/themes/custom/dcwater_theme/logo.svg",
-        "context": {
-            "event_name": "Lead Free DC at the Girl Scouts Nation's Capital Festival at Franklin Park"
-        },
-        "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f6354ae04f0>\n"
-    },
-    {
-        "timestamp": "2026-07-23T22:50:52.626068-04:00",
-        "city": "dc",
-        "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f6340a37330>",
-        "source_url": "https://www.dcwater.com/themes/custom/dcwater_theme/logo.svg",
-        "context": {
-            "event_name": "Lead Free DC at the Girl Scouts Nation's Capital Festival at Franklin Park"
-        },
-        "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f6340a37330>\n"
-    },
-    {
-        "timestamp": "2026-07-23T22:50:52.729777-04:00",
-        "city": "dc",
-        "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f6340a351c0>",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7f70a84dfec0>",
         "source_url": "https://www.dcwater.com/themes/custom/dcwater_theme/logo.svg",
         "context": {
             "event_name": "International Colombian Festival"
         },
         "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f6340a351c0>\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f70a84dfec0>\n"
+    },
+    {
+        "timestamp": "2026-07-24T22:49:19.774948-04:00",
+        "city": "dc",
+        "stage": "image_download",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7f70847ca750>",
+        "source_url": "https://www.dcwater.com/themes/custom/dcwater_theme/logo.svg",
+        "context": {
+            "event_name": "Lead Free DC at AdMo Vibes Concert Series"
+        },
+        "error_type": "UnidentifiedImageError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f70847ca750>\n"
+    },
+    {
+        "timestamp": "2026-07-24T22:49:19.811667-04:00",
+        "city": "dc",
+        "stage": "image_download",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7f70a84dfec0>",
+        "source_url": "https://www.dcwater.com/themes/custom/dcwater_theme/logo.svg",
+        "context": {
+            "event_name": "Lead Free DC at the East River Family Strengthening Collaborative's 2026 Summer Family Affair 2.0"
+        },
+        "error_type": "UnidentifiedImageError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f70a84dfec0>\n"
     }
 ]
