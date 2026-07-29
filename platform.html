@@ -54,10 +54,30 @@
       box-shadow: none;
     }
 
-    .multiracial-principles h2,
     .multiracial-principles h3,
     .multiracial-principles p {
       text-align: left;
+    }
+
+    .multiracial-principles > summary {
+      cursor: pointer;
+      color: #ffffff;
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .multiracial-principles > summary::marker {
+      color: #9ddcff;
+    }
+
+    .multiracial-principles[open] > summary {
+      margin-bottom: 1.25rem;
+    }
+
+    .multiracial-principles > summary:hover,
+    .multiracial-principles > summary:focus-visible {
+      color: #d6f2ff;
     }
 
     .multiracial-kicker {
@@ -263,8 +283,80 @@
     <section id="main" class="longform dark-mode" style="padding: 0; margin: 0;">
       <section class="about-us" id="about-us" aria-label="About Code Collective">
 
-        <section id="multiracial-best-practices" class="multiracial-principles" aria-label="Multiracial Best Practices">
-          <h2>Multiracial Best Practices</h2>
+        <section id="platform-positions" class="longform dark-mode" aria-label="Platform Positions">
+          <h2>Green Industrial Policy</h2>
+
+          <h3>1. Economy</h3>
+          <p>We support a peaceful industrial policy designed to secure key verticals of production within the borders
+            of our polity, ensuring resilience and long-term stability.</p>
+
+          <h3>2. Finance</h3>
+          <p>We support a Universal Basic Income to facilitate the transition to a largely post-labor economy, while
+            providing reasonable accommodation and dignity for those who choose traditional employment.</p>
+
+          <h3>3. Military</h3>
+          <p>We believe the United States military has become too large a presence in civilian life and support
+            meaningful cost reductions. Security clearance systems should be reformed to preserve dignity and expand
+            access to non-sensitive employment.</p>
+
+          <h3>4. Labor</h3>
+          <p>We recognize a structural condition of surplus labor. Government and government-contracted employment
+            should be treated as entitlements. We oppose the offshoring of this class of employment and support its
+            domestic preservation.</p>
+
+          <h3>5. Environment</h3>
+          <p>We support the stewardship of nature, including forests, plains, mountains, and waterways. We advocate for
+            a green industrial base that integrates best environmental practices into production systems.</p>
+
+          <h3>6. Education</h3>
+          <p>We support a comprehensive rewrite of the public K–12 curriculum and a reevaluation of universities. We
+            encourage non-traditional educational ventures that deliver tangible value.</p>
+
+          <h3>7. Medicine</h3>
+          <p>We support sweeping reform of the healthcare system to improve accessibility, knowledge, and outcomes. This
+            includes restructuring financial incentives, and reducing and simplifying educational requirements.</p>
+
+          <h3>8. Automation</h3>
+          <p>We support the widespread automation of the mechanisms of state, including the distribution of funds and
+            risk pooling. We further support industrial automation beyond the constraints of obsolete labor structures.
+          </p>
+
+          <h3>9. AI</h3>
+          <p>We seek to engage at the highest levels of virtuous AI development, ensuring alignment with human wellbeing
+            and societal progress.</p>
+
+          <h3>10. Housing</h3>
+          <p>We support large-scale housing projects enabled by a restored domestic manufacturing base, including the
+            return of steel production. Housing should be produced at scale and aligned with industrial capacity.</p>
+
+          <h3>11. Energy</h3>
+          <p>We support a large-scale solar production initiative, leveraging silicon-based manufacturing alongside
+            broader industrial development. We further support the production of energy storage systems, including
+            batteries and water-potential storage mechanisms.</p>
+
+          <h3>12. Datacenters</h3>
+          <p>We demand that the specifications of datacenters be made publicly available. We further require that local
+            personnel are employed in their programming, operation, and maintenance.</p>
+
+          <h3>13. Democracy</h3>
+          <p>We support democratic governance through elected bodies and republican structures. We further support the
+            protection of this system from excessive external or foreign influence.</p>
+
+          <h3>14. Human Wellbeing</h3>
+          <p>Rather than inferring human wellbeing from metrics such as GDP, the DOW, the CPI, or combinations thereof,
+            we seek to measure human suffering directly in terms of Maslow's basic needs. The responsibility of
+            government is to ensure these needs are met, whether through provision or through appropriate deregulation.
+          </p>
+
+          <h3>15. Immigration</h3>
+          <p>We aim to establish sufficient agroindustrial surplus, housing abundance, and high-quality medical care to
+            support large-scale migration into our region. To prevent social fragmentation, policies will encourage
+            English language acquisition and rapid integration into the polity.</p>
+
+        </section>
+
+        <details id="multiracial-best-practices" class="multiracial-principles">
+          <summary>Multiracial Best Practices</summary>
           <p class="multiracial-lead">We hold that <em>pari passu</em>, together and on equal footing, diverse peoples can build a stable, just, and flourishing society when shared norms outweigh inherited divisions.</p>
 
           <h3>Principles</h3>
@@ -420,79 +512,7 @@
             <p>We respect identity, but we build on shared citizenship.</p>
             <p>That is, while there is value in difference, we place greater value on what binds us together.</p>
           </div>
-        </section>
-
-        <section id="platform-positions" class="longform dark-mode" aria-label="Platform Positions">
-          <h2>Green Industrial Policy</h2>
-
-          <h3>1. Economy</h3>
-          <p>We support a peaceful industrial policy designed to secure key verticals of production within the borders
-            of our polity, ensuring resilience and long-term stability.</p>
-
-          <h3>2. Finance</h3>
-          <p>We support a Universal Basic Income to facilitate the transition to a largely post-labor economy, while
-            providing reasonable accommodation and dignity for those who choose traditional employment.</p>
-
-          <h3>3. Military</h3>
-          <p>We believe the United States military has become too large a presence in civilian life and support
-            meaningful cost reductions. Security clearance systems should be reformed to preserve dignity and expand
-            access to non-sensitive employment.</p>
-
-          <h3>4. Labor</h3>
-          <p>We recognize a structural condition of surplus labor. Government and government-contracted employment
-            should be treated as entitlements. We oppose the offshoring of this class of employment and support its
-            domestic preservation.</p>
-
-          <h3>5. Environment</h3>
-          <p>We support the stewardship of nature, including forests, plains, mountains, and waterways. We advocate for
-            a green industrial base that integrates best environmental practices into production systems.</p>
-
-          <h3>6. Education</h3>
-          <p>We support a comprehensive rewrite of the public K–12 curriculum and a reevaluation of universities. We
-            encourage non-traditional educational ventures that deliver tangible value.</p>
-
-          <h3>7. Medicine</h3>
-          <p>We support sweeping reform of the healthcare system to improve accessibility, knowledge, and outcomes. This
-            includes restructuring financial incentives, and reducing and simplifying educational requirements.</p>
-
-          <h3>8. Automation</h3>
-          <p>We support the widespread automation of the mechanisms of state, including the distribution of funds and
-            risk pooling. We further support industrial automation beyond the constraints of obsolete labor structures.
-          </p>
-
-          <h3>9. AI</h3>
-          <p>We seek to engage at the highest levels of virtuous AI development, ensuring alignment with human wellbeing
-            and societal progress.</p>
-
-          <h3>10. Housing</h3>
-          <p>We support large-scale housing projects enabled by a restored domestic manufacturing base, including the
-            return of steel production. Housing should be produced at scale and aligned with industrial capacity.</p>
-
-          <h3>11. Energy</h3>
-          <p>We support a large-scale solar production initiative, leveraging silicon-based manufacturing alongside
-            broader industrial development. We further support the production of energy storage systems, including
-            batteries and water-potential storage mechanisms.</p>
-
-          <h3>12. Datacenters</h3>
-          <p>We demand that the specifications of datacenters be made publicly available. We further require that local
-            personnel are employed in their programming, operation, and maintenance.</p>
-
-          <h3>13. Democracy</h3>
-          <p>We support democratic governance through elected bodies and republican structures. We further support the
-            protection of this system from excessive external or foreign influence.</p>
-
-          <h3>14. Human Wellbeing</h3>
-          <p>Rather than inferring human wellbeing from metrics such as GDP, the DOW, the CPI, or combinations thereof,
-            we seek to measure human suffering directly in terms of Maslow's basic needs. The responsibility of
-            government is to ensure these needs are met, whether through provision or through appropriate deregulation.
-          </p>
-
-          <h3>15. Immigration</h3>
-          <p>We aim to establish sufficient agroindustrial surplus, housing abundance, and high-quality medical care to
-            support large-scale migration into our region. To prevent social fragmentation, policies will encourage
-            English language acquisition and rapid integration into the polity.</p>
-
-        </section>
+        </details>
         <h2>Economic Creed 2026</h2>
         <p>We believe that</p>
         <ul>
