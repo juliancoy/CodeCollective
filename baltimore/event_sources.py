@@ -652,8 +652,8 @@ sources = [
     {
         "name": "Young, Gifted & Green Events",
         "url": "https://www.younggiftedgreen.org/events/",
-        "feed_url": "https://www.younggiftedgreen.org/events/?ical=1",
-        "source_kind": "ics",
+        "feed_url": "https://www.younggiftedgreen.org/wp-json/tribe/events/v1/events?per_page=50",
+        "source_kind": "tribe_events",
         "tags": [
             "Environment",
             "Health",
