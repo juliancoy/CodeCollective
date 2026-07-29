@@ -650,6 +650,20 @@ sources = [
         "tags": ["Environment", "Water", "Safety", "Purpose"],
     },
     {
+        "name": "Young, Gifted & Green Events",
+        "url": "https://www.younggiftedgreen.org/events/",
+        "feed_url": "https://www.younggiftedgreen.org/events/?ical=1",
+        "source_kind": "ics",
+        "tags": [
+            "Environment",
+            "Health",
+            "Politics",
+            "Community Organizing",
+            "Safety",
+            "Purpose",
+        ],
+    },
+    {
         "name": "Waterfront Partnership Waterfront Week",
         "url": "https://www.waterfrontpartnership.org/waterfrontweek",
         "tags": ["Environment", "Water", "Belonging", "Purpose"],

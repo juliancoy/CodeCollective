@@ -77,6 +77,7 @@ SOURCE_KIND_CONCURRENCY = {
     "jotform": 3,
     "google_form": 3,
     "gdg": 3,
+    "ics": 2,
     "timely": 2,
     "unknown": 2,
 }
@@ -500,6 +501,17 @@ def fetch_events_from_source(source, city):
         "google_form": (
             "Fetching events from",
             lambda: scrape_gform.scrape(source_url),
+        ),
+        "ics": (
+            "Fetching calendar feed from",
+            lambda: scrape_ics.fetch_calendar_events(
+                ICS_URL=source.get("feed_url") or source_url,
+                city=city,
+                imageURL=source.get("orgImageUrl"),
+                eventUrl=source_url,
+                recurring=source.get("recurring", True),
+                preface=source.get("preface", ""),
+            ),
         ),
         "timely": (
             "Fetching events from",
