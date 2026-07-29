@@ -13,6 +13,7 @@ import scrape_mtc
 import scrape_gdg
 import scrape_partiful
 import scrape_timely
+import scrape_tribe
 import scrape_web_events
 import scrape_legistar
 import scrape_thread_helpcenter
@@ -77,8 +78,8 @@ SOURCE_KIND_CONCURRENCY = {
     "jotform": 3,
     "google_form": 3,
     "gdg": 3,
-    "ics": 2,
     "timely": 2,
+    "tribe_events": 2,
     "unknown": 2,
 }
 
@@ -502,20 +503,13 @@ def fetch_events_from_source(source, city):
             "Fetching events from",
             lambda: scrape_gform.scrape(source_url),
         ),
-        "ics": (
-            "Fetching calendar feed from",
-            lambda: scrape_ics.fetch_calendar_events(
-                ICS_URL=source.get("feed_url") or source_url,
-                city=city,
-                imageURL=source.get("orgImageUrl"),
-                eventUrl=source_url,
-                recurring=source.get("recurring", True),
-                preface=source.get("preface", ""),
-            ),
-        ),
         "timely": (
             "Fetching events from",
             lambda: scrape_timely.scrape(source.get("feed_url") or source_url),
+        ),
+        "tribe_events": (
+            "Fetching events from",
+            lambda: scrape_tribe.scrape(source.get("feed_url") or source_url),
         ),
         "web_events_page": (
             "Fetching events from",
