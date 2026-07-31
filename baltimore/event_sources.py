@@ -386,6 +386,11 @@ sources = [
         "url": "https://www.eventbrite.com/o/30286628672",
         "tags": ["Business", "Politics", "Economic Development"],
     },
+    {
+        "name": "Love Groove Festival",
+        "url": "https://www.eventbrite.com/o/121539186282",
+        "tags": ["Culture", "Community"],
+    },
     # Luma / others
     {
         "name": "Luma Event 2d1a4uwv",
