@@ -814,42 +814,47 @@ sources = [
     {
         "name": "Maryland Department of the Environment Events",
         "url": "https://mde.maryland.gov/Pages/default.aspx",
-        "tags": ["MarylandGov", "Politics", "Environment", "Water", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Environment", "Water", "Purpose"],
     },
     {
         "name": "Maryland Department of Natural Resources Events",
         "url": "https://dnr.maryland.gov/Pages/default.aspx",
-        "tags": ["MarylandGov", "Politics", "Environment", "Water", "Community"],
+        "tags": ["Government", "MarylandGov", "Politics", "Environment", "Water", "Community"],
     },
     {
         "name": "Maryland Department of Planning Events",
         "url": "https://planning.maryland.gov/Pages/default.aspx",
-        "tags": ["MarylandGov", "Politics", "Economic Development", "Infrastructure", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Economic Development", "Infrastructure", "Purpose"],
     },
     {
         "name": "Maryland Department of Housing and Community Development Events",
         "url": "https://dhcd.maryland.gov/Pages/default.aspx",
-        "tags": ["MarylandGov", "Politics", "Shelter", "Community", "Safety"],
+        "tags": ["Government", "MarylandGov", "Politics", "Shelter", "Community", "Safety"],
     },
     {
         "name": "Maryland Commission on Civil Rights Events",
         "url": "https://mccr.maryland.gov/Pages/Events.aspx",
-        "tags": ["MarylandGov", "Politics", "Community Organizing", "Belonging", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Community Organizing", "Belonging", "Purpose"],
+    },
+    {
+        "name": "Maryland Active Data Calendar",
+        "url": "https://www.doit.state.md.us/ActiveDataCalendar/CalendarNOW.aspx",
+        "tags": ["Government", "MarylandGov", "Politics", "Community", "Purpose"],
     },
     {
         "name": "Baltimore City Council Legislative Calendar",
         "url": "https://baltimore.legistar.com/Calendar.aspx",
-        "tags": ["MarylandGov", "Politics", "Community", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Community", "Purpose"],
     },
     {
         "name": "Harford County Government Calendar",
         "url": "https://www.harfordcountymd.gov/calendar.aspx",
-        "tags": ["MarylandGov", "Politics", "Community", "Education", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Community", "Education", "Purpose"],
     },
     {
         "name": "Howard County Government Workforce Events Calendar",
         "url": "https://www.howardcountymd.gov/workforce-development/events-calendar",
-        "tags": ["MarylandGov", "Community", "Education", "Belonging", "Growth"],
+        "tags": ["Government", "MarylandGov", "Community", "Education", "Belonging", "Growth"],
     },
     {
         "name": "Inner Arbor Trust Events",
@@ -859,12 +864,12 @@ sources = [
     {
         "name": "Prince George's Parks Events",
         "url": "https://www.pgparks.com/events",
-        "tags": ["MarylandGov", "Politics", "Community", "Economic Development", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Community", "Economic Development", "Purpose"],
     },
     {
         "name": "Enoch Pratt Free Library Events",
         "url": "https://www.prattlibrary.org/events",
-        "tags": ["MarylandGov", "Politics", "Community", "Infrastructure", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Community", "Infrastructure", "Purpose"],
         "excluded_org_tags": ["Environment"],
     },
     {
@@ -882,7 +887,7 @@ sources = [
     {
         "name": "Montgomery County Council Legislative Calendar",
         "url": "https://montgomerycountymd.legistar.com/Calendar.aspx",
-        "tags": ["MarylandGov", "Politics", "Infrastructure", "Economic Development", "Purpose"],
+        "tags": ["Government", "MarylandGov", "Politics", "Infrastructure", "Economic Development", "Purpose"],
     },
     {
         "name": "Greater Baltimore Urban League",
