@@ -262,6 +262,37 @@
             gap: 10px;
             justify-content: center;
         }
+
+        .lens-section {
+            margin-bottom: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .lens-button {
+            padding: 9px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            background-color: #e7eef8;
+            color: var(--secondary-color);
+            font-weight: 600;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .lens-button:hover {
+            background-color: #d9e6f8;
+            transform: translateY(-2px);
+        }
+
+        .lens-button.active {
+            background-color: var(--secondary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
         
         .filter-button {
             padding: 8px 16px;
@@ -379,6 +410,10 @@
             </button>
         </div>
 
+        <div class="lens-section" id="lens-buttons">
+            <!-- Lens buttons will be added here -->
+        </div>
+
         <div class="filter-section" id="filter-buttons">
             <!-- Group filter buttons will be added here -->
         </div>
@@ -411,18 +446,27 @@
         let allEvents = [];
         let filteredEvents = [];
         let eventGroups = new Set();
+        let libraryLocations = new Set();
+        let lensDefinitions = [];
         let calendar;
         let currentView = 'dayGridMonth';
+        let activeLens = 'groups';
+        let activeFilter = 'all';
         
         // Fetch and parse event data
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('upcoming_events.json')
-                .then(response => response.json())
-                .then(events => {
+            Promise.all([
+                fetch('upcoming_events.json').then(response => response.json()),
+                fetch('calendar_lenses.json').then(response => response.json())
+            ])
+                .then(([events, lensConfig]) => {
+                    lensDefinitions = Array.isArray(lensConfig?.lenses) ? lensConfig.lenses : [];
+                    activeLens = lensConfig?.defaultLens || lensDefinitions[0]?.key || 'groups';
                     allEvents = processEvents(events);
                     filteredEvents = [...allEvents]; // Make a copy for filtering
                     initializeCalendar(allEvents);
-                    setupFilters(allEvents);
+                    setupLenses();
+                    renderFilters();
                     setupViewSelectors();
                     document.getElementById('loading').style.display = 'none';
                 })
@@ -438,9 +482,13 @@
                 // Extract group name from URL if exists, otherwise use default
                 const urlParts = event.url ? event.url.split('/') : [];
                 const groupName = urlParts.length > 3 ? urlParts[3] : 'Unknown Group';
+                const libraryLocation = getLibraryLocationName(event);
                 
                 // Add group to the global set
                 eventGroups.add(groupName);
+                if (libraryLocation) {
+                    libraryLocations.add(libraryLocation);
+                }
                 
                 // Return the event in FullCalendar format
                 return {
@@ -453,13 +501,42 @@
                     url: event.url,
                     imageUrl: event.imageUrl,
                     extendedProps: {
-                        group: groupName
+                        group: groupName,
+                        libraryLocation: libraryLocation
                     },
                     backgroundColor: getGroupColor(groupName),
                     borderColor: getGroupColor(groupName),
                     textColor: getTextColor(getGroupColor(groupName))
                 };
             });
+        }
+
+        function setupLenses() {
+            const lensContainer = document.getElementById('lens-buttons');
+            lensContainer.innerHTML = '';
+
+            lensDefinitions.forEach(lens => {
+                const button = document.createElement('button');
+                button.className = `lens-button${lens.key === activeLens ? ' active' : ''}`;
+                button.dataset.lens = lens.key;
+                button.innerHTML = `<i class="${lens.icon}"></i> ${lens.label}`;
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.lens-button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+
+                    this.classList.add('active');
+                    activeLens = lens.key;
+                    activeFilter = 'all';
+                    renderFilters();
+                    applyActiveFilter();
+                });
+                lensContainer.appendChild(button);
+            });
+        }
+
+        function getActiveLensDefinition() {
+            return lensDefinitions.find(lens => lens.key === activeLens) || lensDefinitions[0] || null;
         }
 
         // Initialize the FullCalendar
@@ -542,52 +619,58 @@
         }
 
         // Set up the filter buttons
-        function setupFilters(events) {
+        function renderFilters() {
             const filterContainer = document.getElementById('filter-buttons');
+            filterContainer.innerHTML = '';
+            const activeLensDef = getActiveLensDefinition();
+            const isLibraryLens = activeLensDef?.filterType === 'library_location';
             
-            // Add "All Groups" button
             const allButton = document.createElement('button');
-            allButton.innerHTML = '<i class="fas fa-globe"></i> All Groups';
+            allButton.innerHTML = `<i class="${activeLensDef?.allIcon || 'fas fa-globe'}"></i> ${activeLensDef?.allLabel || 'All'}`;
             allButton.className = 'filter-button active';
-            allButton.dataset.group = 'all';
+            allButton.dataset.filter = 'all';
             filterContainer.appendChild(allButton);
             
-            // Add a button for each group
-            eventGroups.forEach(group => {
+            const filterValues = isLibraryLens
+                ? Array.from(libraryLocations).sort((a, b) => a.localeCompare(b))
+                : Array.from(eventGroups).sort((a, b) => a.localeCompare(b));
+
+            filterValues.forEach(value => {
                 const button = document.createElement('button');
-                button.innerHTML = `<i class="fas fa-users"></i> ${formatGroupName(group)}`;
+                button.innerHTML = isLibraryLens
+                    ? `<i class="${activeLensDef?.itemIcon || 'fas fa-map-marker-alt'}"></i> ${value}`
+                    : `<i class="${activeLensDef?.itemIcon || 'fas fa-users'}"></i> ${formatGroupName(value)}`;
                 button.className = 'filter-button';
-                button.dataset.group = group;
-                button.style.backgroundColor = getLighterColor(getGroupColor(group));
-                button.style.color = getTextColor(getLighterColor(getGroupColor(group)));
+                button.dataset.filter = value;
+                button.style.backgroundColor = getLighterColor(getGroupColor(value));
+                button.style.color = getTextColor(getLighterColor(getGroupColor(value)));
                 filterContainer.appendChild(button);
             });
             
-            // Add click event to filter buttons
             document.querySelectorAll('.filter-button').forEach(button => {
                 button.addEventListener('click', function() {
-                    // Remove active class from all buttons
                     document.querySelectorAll('.filter-button').forEach(btn => {
                         btn.classList.remove('active');
                     });
                     
-                    // Add active class to clicked button
                     this.classList.add('active');
-                    
-                    // Filter events
-                    const group = this.dataset.group;
-                    filterEventsByGroup(group);
+                    activeFilter = this.dataset.filter;
+                    applyActiveFilter();
                 });
             });
         }
 
-        // Filter events by group
-        function filterEventsByGroup(group) {
-            if (group === 'all') {
+        function applyActiveFilter() {
+            const activeLensDef = getActiveLensDefinition();
+            if (activeFilter === 'all') {
                 filteredEvents = [...allEvents];
+            } else if (activeLensDef?.filterType === 'library_location') {
+                filteredEvents = allEvents.filter(event =>
+                    event.extendedProps.libraryLocation === activeFilter
+                );
             } else {
                 filteredEvents = allEvents.filter(event => 
-                    event.extendedProps.group === group
+                    event.extendedProps.group === activeFilter
                 );
             }
             
@@ -621,12 +704,16 @@
         // Show event details popup
         function showEventPopup(event) {
             document.getElementById('popup-title').textContent = event.title;
+            const activeLensDef = getActiveLensDefinition();
             
             // Set group info
             const groupEl = document.getElementById('popup-group');
-            groupEl.textContent = formatGroupName(event.extendedProps.group);
-            groupEl.style.backgroundColor = getLighterColor(getGroupColor(event.extendedProps.group));
-            groupEl.style.color = getTextColor(getLighterColor(getGroupColor(event.extendedProps.group)));
+            const badgeName = activeLensDef?.filterType === 'library_location' && event.extendedProps.libraryLocation
+                ? event.extendedProps.libraryLocation
+                : formatGroupName(event.extendedProps.group);
+            groupEl.textContent = badgeName;
+            groupEl.style.backgroundColor = getLighterColor(getGroupColor(badgeName));
+            groupEl.style.color = getTextColor(getLighterColor(getGroupColor(badgeName)));
             
             // Set date/time info
             const dateTimeEl = document.getElementById('popup-datetime');
@@ -775,6 +862,84 @@
                 .split(' ')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ');
+        }
+
+        function getLocationName(location) {
+            if (!location) return '';
+            if (typeof location === 'string') return location.trim();
+            if (typeof location === 'object') {
+                return (location.name || location.address || '').trim();
+            }
+            return '';
+        }
+
+        function isLibraryEvent(event) {
+            const searchText = [
+                event.source_group,
+                event.org_name,
+                event.orgName,
+                event.source,
+                event.source_url,
+                event.url,
+                getLocationName(event.location)
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase();
+
+            return searchText.includes('prattlibrary') ||
+                searchText.includes('pratt library') ||
+                searchText.includes('free library') ||
+                searchText.includes('village learning place');
+        }
+
+        function getLibraryLocationName(event) {
+            if (!isLibraryEvent(event)) {
+                return '';
+            }
+
+            const rawName = getLocationName(event.location);
+            if (!rawName) {
+                return '';
+            }
+
+            const normalized = rawName.toLowerCase();
+            const aliases = {
+                'central library': 'Central Library',
+                'enoch pratt free library - central library': 'Central Library',
+                'enoch pratt free library central branch': 'Central Library',
+                'southeast anchor': 'Southeast Anchor',
+                'waverly': 'Waverly',
+                'northwood': 'Northwood',
+                'orleans street': 'Orleans Street',
+                'govans': 'Govans',
+                'herring run': 'Herring Run',
+                'hampden': 'Hampden',
+                'edmondson avenue': 'Edmondson Avenue',
+                'roland park': 'Roland Park',
+                'brooklyn': 'Brooklyn',
+                'cherry hill': 'Cherry Hill',
+                'walbrook': 'Walbrook',
+                'pennsylvania avenue': 'Pennsylvania Avenue',
+                'johnston square': 'Johnston Square',
+                'light street': 'Light Street',
+                'hamilton': 'Hamilton',
+                'village learning place': 'Village Learning Place'
+            };
+
+            if (aliases[normalized]) {
+                return aliases[normalized];
+            }
+
+            if (normalized.includes('village learning place')) {
+                return 'Village Learning Place';
+            }
+
+            if (normalized.includes('central')) {
+                return 'Central Library';
+            }
+
+            return rawName;
         }
         
         // Close popup when clicking outside the content
