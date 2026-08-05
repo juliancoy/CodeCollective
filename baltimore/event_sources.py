@@ -461,6 +461,11 @@ sources = [
         "tags": ["Health", "Science", "Business", "Startup", "Professional Networking"],
     },
     {
+        "name": "Bio-Trac Workshop Calendar",
+        "url": "https://biotrac.com/",
+        "tags": ["Health", "Science", "Business", "Education"],
+    },
+    {
         "name": "Luma User d4s75dZyC9VOXAd",
         "url": "https://api.lu.ma/user/profile/events-hosting?user_api_id=usr-d4s75dZyC9VOXAd",
         "tags": ["Business"],
