@@ -165,6 +165,17 @@ const STANDARD_NAV_LINKS = [
     },
 ];
 
+const PROJECT_NAV_LINKS = [
+    { href: '/datacenters.html', label: 'Data Centers & Energy' },
+    { href: '/newsletter/', label: 'Newsletter Archive' },
+    { href: '/mdbills.html', label: 'Maryland Bills Tracker' },
+    { href: '/balticonomy/', label: 'Balticonomy' },
+    { href: '/baltimore/testimony/', label: 'Baltimore Testimony Tracker' },
+    { href: '/usa/', label: 'USAJOBS Tracker' },
+    { href: '/eventsmap.html?city=baltimore', label: 'Event Map' },
+    { href: '/r8-rowhome/', label: 'R8 Rowhome' },
+];
+
 const NAV_ACTION_LABELS = new Set(['login']);
 
 function createDonateShortcut() {
@@ -435,9 +446,68 @@ function normalizeMainNavs() {
         const donate = sourceNodes.find((node) => node.classList?.contains('donate-shortcut')) || createDonateShortcut();
 
         primary.replaceChildren(...primaryLinks, ...extraNodes);
+        decorateProjectsDropdown(primary);
         actions.replaceChildren(...actionLinks, donate);
         navbar.replaceChildren(primary, actions);
     });
+}
+
+function decorateProjectsDropdown(primary) {
+    const projectLink = Array.from(primary.children).find((node) => (
+        node.matches?.('a[href="/projects.html"]') || node.textContent?.trim().toLowerCase() === 'projects'
+    ));
+    if (!projectLink) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'nav-projects';
+    projectLink.classList.add('nav-projects-trigger');
+    projectLink.setAttribute('aria-haspopup', 'true');
+    projectLink.setAttribute('aria-expanded', 'false');
+
+    const menu = document.createElement('div');
+    menu.className = 'nav-projects-menu';
+    menu.setAttribute('aria-label', 'Code Collective projects');
+    PROJECT_NAV_LINKS.forEach((item) => {
+        const link = document.createElement('a');
+        link.href = item.href;
+        link.textContent = item.label;
+        menu.appendChild(link);
+    });
+
+    const setOpen = (open) => {
+        wrapper.classList.toggle('is-open', open);
+        projectLink.setAttribute('aria-expanded', String(open));
+    };
+    wrapper.addEventListener('mouseenter', () => setOpen(true));
+    wrapper.addEventListener('mouseleave', () => setOpen(false));
+    wrapper.addEventListener('focusin', () => setOpen(true));
+    wrapper.addEventListener('focusout', (event) => {
+        if (!wrapper.contains(event.relatedTarget)) setOpen(false);
+    });
+    wrapper.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            setOpen(false);
+            projectLink.focus();
+        }
+    });
+    projectLink.addEventListener('click', (event) => {
+        const usesTouchNavigation = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+        if (!usesTouchNavigation) return;
+        if (wrapper.dataset.touchActivated !== 'true') {
+            event.preventDefault();
+            wrapper.dataset.touchActivated = 'true';
+            setOpen(true);
+        }
+    });
+    document.addEventListener('pointerdown', (event) => {
+        if (!wrapper.contains(event.target)) {
+            delete wrapper.dataset.touchActivated;
+            setOpen(false);
+        }
+    });
+
+    projectLink.replaceWith(wrapper);
+    wrapper.append(projectLink, menu);
 }
 
 function addDonateShortcut() {

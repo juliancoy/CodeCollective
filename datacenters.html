@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maryland Data Center and Energy Map | Code Collective</title>
+  <meta name="description" content="A source-traceable map of Maryland data centers, power plants, generation, and residential electricity costs.">
+  <link rel="canonical" href="https://codecollective.us/datacenters.html">
+  <link rel="icon" href="/images/favicons/favicon.png">
+  <link rel="stylesheet" href="/css/master.css?v=20260807-project-menu">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260807">
+</head>
+<body id="body" class="datacenter-page">
+  <our-header></our-header>
+
+  <main class="dc-shell">
+    <header class="dc-hero">
+      <p class="dc-kicker">Public infrastructure ledger</p>
+      <h1>Maryland Data Centers and Energy</h1>
+      <p>Facility claims are kept separate from verified facts. Unknown values stay visibly unknown, and every populated field points back to a public source.</p>
+      <div class="dc-downloads" aria-label="Download map data">
+        <a href="/datacenters/data/datacenters.json">Data centers JSON</a>
+        <a href="/datacenters/data/power-plants.json">Power plants JSON</a>
+        <a href="/datacenters/data/residential-electricity-rates.json">Residential rates JSON</a>
+        <a href="/datacenters/data/sources.json">Source register JSON</a>
+      </div>
+    </header>
+
+    <section class="dc-summary" aria-label="Dataset summary">
+      <article><strong id="datacenter-count">—</strong><span>documented data-center campuses</span></article>
+      <article><strong id="plant-count">—</strong><span>EIA power plants</span></article>
+      <article><strong id="generation-total">—</strong><span>2024 plant generation</span></article>
+      <article><strong id="residential-rate">—</strong><span>2024 Maryland residential average</span></article>
+    </section>
+
+    <section class="dc-workspace" aria-label="Interactive data-center and energy map">
+      <aside class="dc-controls">
+        <label for="map-search">Find a facility or county</label>
+        <input id="map-search" type="search" placeholder="Search name, operator, county…">
+        <label for="status-filter">Data-center status</label>
+        <select id="status-filter">
+          <option value="all">All statuses</option>
+          <option value="operating">Operating</option>
+          <option value="development">Permitted / developing</option>
+          <option value="proposal">Planned / proposed</option>
+        </select>
+        <label for="sentiment-filter">Public sentiment</label>
+        <select id="sentiment-filter">
+          <option value="all">All ratings</option>
+          <option value="opposed">Documented opposition</option>
+          <option value="mixed">Mixed / unclear</option>
+          <option value="unknown">Insufficient evidence</option>
+        </select>
+        <fieldset>
+          <legend>Map layers</legend>
+          <label><input id="show-datacenters" type="checkbox" checked> Data centers</label>
+          <label><input id="show-plants" type="checkbox" checked> Power plants</label>
+        </fieldset>
+        <p class="dc-legend"><span class="dc-dot dc-dot--center"></span> Data center <span class="dc-dot dc-dot--plant"></span> Power plant</p>
+        <div id="result-list" class="dc-result-list" aria-live="polite"></div>
+      </aside>
+      <div id="datacenter-map" role="region" aria-label="Map of Maryland data centers and power plants"></div>
+      <aside id="record-detail" class="dc-detail" aria-live="polite">
+        <h2>Select a marker</h2>
+        <p>Choose a data center or power plant to inspect its measurements and sources.</p>
+      </aside>
+    </section>
+
+    <section class="dc-methodology">
+      <h2>Method and limits</h2>
+      <p>Data centers are represented as one flat JSON array. The inventory combines government-verified state and permitted facilities, operator-documented commercial facilities, and named proposals. Each record says what kind of evidence establishes its status. Missing energy, UPS, employment, investment, or tax-benefit values remain unknown rather than becoming zero.</p>
+      <p>Public sentiment is an evidence rating, not opinion polling: <strong>-2</strong> means strong, sustained, site-specific opposition; <strong>-1</strong> documented opposition; <strong>0</strong> mixed or unclear evidence; <strong>+1/+2</strong> documented or strong support. A facility receives no score when the record is insufficient. Formal hearings, enacted restrictions, petitions, organizational letters, and attributable reporting outweigh unsourced social-media comments.</p>
+      <p>Power-plant capacity and locations come from final 2024 Form EIA-860 records. Production is annual net generation reported in final 2024 Form EIA-923 records. The residential price is EIA’s statewide annual average, not a household quote.</p>
+      <p class="dc-warning">Backup-generator megawatts describe emergency nameplate capacity. They must never be presented as data-center grid demand, consumption, or production.</p>
+    </section>
+
+    <section class="dc-sources" aria-labelledby="sources-title">
+      <h2 id="sources-title">Source register</h2>
+      <div id="source-list"></div>
+    </section>
+  </main>
+
+  <our-footer></our-footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script type="module" src="/js/reusableComponents.js?v=20260807-project-menu"></script>
+  <script src="/datacenters/js/datacenters.js?v=20260807" defer></script>
+</body>
+</html>
