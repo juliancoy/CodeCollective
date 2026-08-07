@@ -5,9 +5,9 @@ const filterUtils = require('../js/calendarFilterUtils.js');
 const communityMap = {
   id: 'community_sectors',
   categories: [
-    { label: 'Technology', matches: ['Tech Skills', 'AI'] },
-    { label: 'Culture', matches: ['Culture', 'Community'] },
-    { label: 'Other', matches: [] },
+    { label: 'Technology', color: '#2563eb', text_color: '#ffffff', matches: ['Tech Skills', 'AI'] },
+    { label: 'Culture', color: '#7c3aed', text_color: '#ffffff', matches: ['Culture', 'Community'] },
+    { label: 'Other', color: '#6b7280', text_color: '#ffffff', matches: [] },
   ],
 };
 
@@ -82,6 +82,82 @@ test('no selected legend categories means no mapped events are shown', () => {
     showExcludedEvents: false,
   });
   assert.equal(matched, false);
+});
+
+test('individual Tags lens collects unique tags and reuses event tag colors', () => {
+  const tagMap = filterUtils.buildIndividualTagsMap([
+    { tags: ['AI', 'Community'] },
+    { tags: ['AI', '  New Topic  ', ''] },
+  ], communityMap);
+
+  assert.equal(tagMap.id, 'tags');
+  assert.equal(tagMap.label, 'Tags');
+  assert.equal(tagMap.individualTags, true);
+  assert.deepEqual(tagMap.categories.map((category) => category.label), ['AI', 'Community', 'New Topic']);
+  assert.equal(tagMap.categories.find((category) => category.label === 'AI').color, '#2563eb');
+  assert.equal(tagMap.categories.find((category) => category.label === 'Community').color, '#7c3aed');
+  assert.equal(tagMap.categories.find((category) => category.label === 'New Topic').color, '#6b7280');
+  assert.deepEqual(tagMap.categories.find((category) => category.label === 'AI').matches, ['AI']);
+});
+
+test('individual Tags lens preserves the configured readable text color', () => {
+  const tagMap = filterUtils.buildIndividualTagsMap([
+    { tags: ['Economics', 'Finance'] },
+  ], {
+    categories: [
+      { label: 'Economics', color: '#ffffff', text_color: '#000000', matches: ['Economics'] },
+      { label: 'Finance', color: '#facc15', text_color: '#111827', matches: ['Finance'] },
+    ],
+  });
+
+  assert.deepEqual(
+    tagMap.categories.map(({ label, color, text_color }) => ({ label, color, text_color })),
+    [
+      { label: 'Economics', color: '#ffffff', text_color: '#000000' },
+      { label: 'Finance', color: '#facc15', text_color: '#111827' },
+    ]
+  );
+});
+
+test('individual Tags lens expects upstream-normalized tags', () => {
+  const tagMap = filterUtils.buildIndividualTagsMap([
+    { tags: ['Crypto', 'Web3'] },
+  ], {
+    categories: [
+      { label: 'Finance', color: '#facc15', text_color: '#111827', matches: ['Crypto', 'Web3'] },
+    ],
+  });
+
+  assert.deepEqual(
+    tagMap.categories.map(({ label, color, text_color, matches }) => ({ label, color, text_color, matches })),
+    [
+      { label: 'Crypto', color: '#facc15', text_color: '#111827', matches: ['Crypto'] },
+      { label: 'Web3', color: '#facc15', text_color: '#111827', matches: ['Web3'] },
+    ]
+  );
+  assert.equal(filterUtils.eventMatchesTags({
+    tags: ['Crypto', 'Web3'],
+    categoryMap: tagMap,
+    activeTagSlugs: new Set(['crypto']),
+  }), true);
+});
+
+test('individual Tags lens filters by an exact selected event tag', () => {
+  const tagMap = filterUtils.buildIndividualTagsMap([
+    { tags: ['AI', 'Community'] },
+    { tags: ['Culture'] },
+  ], communityMap);
+
+  assert.equal(filterUtils.eventMatchesTags({
+    tags: ['AI', 'Community'],
+    categoryMap: tagMap,
+    activeTagSlugs: new Set(['ai']),
+  }), true);
+  assert.equal(filterUtils.eventMatchesTags({
+    tags: ['Culture'],
+    categoryMap: tagMap,
+    activeTagSlugs: new Set(['ai']),
+  }), false);
 });
 
 test('tech_only map excludes non-tech dominant events', () => {

@@ -848,10 +848,15 @@ function buildLegendItem(category, isChecked) {
   if (activeCategoryMap?.id === 'maslow_needs') {
     item.classList.add('legend-card');
   }
+  if (activeCategoryMap?.individualTags) {
+    item.classList.add('legend-tag-chip');
+    item.style.setProperty('--tag-chip-bg', category.color);
+    item.style.setProperty('--tag-chip-fg', category.textColor);
+  }
   item.innerHTML = `
-    <input type="checkbox" data-tag="${category.slug}" ${isChecked ? 'checked' : ''} />
-    <span class="legend-swatch" style="background-color: ${category.color}; color: ${category.textColor};"></span>
-    <span class="legend-text">${category.label}</span>
+    <input type="checkbox" data-tag="${escapeAttr(category.slug)}" ${isChecked ? 'checked' : ''} />
+    <span class="legend-swatch" style="background-color: ${escapeAttr(category.color)}; color: ${escapeAttr(category.textColor)};"></span>
+    <span class="legend-text">${escapeHtml(category.label)}</span>
   `;
   return item;
 }
@@ -958,7 +963,16 @@ function buildLegend(categoryMap, options = {}) {
     list = buildMaslowLegendList(normalizedCategories, activeTagSlugs);
   } else {
     list = document.createElement('div');
-    list.className = 'legend-list';
+    list.className = activeCategoryMap.individualTags ? 'legend-list legend-tag-list' : 'legend-list';
+    if (activeCategoryMap.individualTags) {
+      const search = document.createElement('label');
+      search.className = 'legend-tag-search';
+      search.innerHTML = `
+        <span class="legend-text">Search tags</span>
+        <input id="legend-tag-search-input" type="search" placeholder="Find a tag..." autocomplete="off" />
+      `;
+      legendItems.appendChild(search);
+    }
     normalizedCategories.forEach(category => {
       const isChecked = activeTagSlugs.size === 0 ? true : activeTagSlugs.has(category.slug);
       list.appendChild(buildLegendItem(category, isChecked));
@@ -966,6 +980,17 @@ function buildLegend(categoryMap, options = {}) {
   }
 
   legendItems.appendChild(list);
+
+  const tagSearchInput = document.getElementById('legend-tag-search-input');
+  if (tagSearchInput) {
+    tagSearchInput.addEventListener('input', () => {
+      const query = normalizeSearchText(tagSearchInput.value);
+      list.querySelectorAll('.legend-tag-chip').forEach(item => {
+        const label = normalizeSearchText(item.querySelector('.legend-text')?.textContent);
+        item.hidden = Boolean(query) && !label.includes(query);
+      });
+    });
+  }
 
   legendItems.onchange = event => {
     if (event.target.matches('#legend-map-select')) {
@@ -1981,6 +2006,10 @@ document.addEventListener('DOMContentLoaded', function () {
       geocodeLookupCache = geocodeCache || {};
       rawEvents = Array.isArray(events) ? events : [];
       allEvents = processEvents(rawEvents);
+      if (filterUtils?.buildIndividualTagsMap) {
+        const colorMap = getCategoryMapById(mapConfig.default_map) || mapConfig.maps[0];
+        categoryMapConfig.maps.push(filterUtils.buildIndividualTagsMap(rawEvents, colorMap));
+      }
 
       // Extract all unique event image URLs
       const eventImageUrls = allEvents
