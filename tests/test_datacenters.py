@@ -95,3 +95,92 @@ def test_projects_page_and_shared_dropdown_have_the_same_order():
     nav_links = re.findall(r"href: '([^']+)'", block.group(1))
     assert page_links == nav_links
     assert nav_links[0] == "/datacenters.html"
+
+
+def test_datacenter_page_preserves_explorer_hierarchy_and_quiet_defaults():
+    page = (ROOT / "datacenters.html").read_text()
+    assert 'class="dc-overview"' in page
+    assert 'class="dc-explorer"' in page
+    assert 'class="dc-workspace"' in page
+    assert 'class="dc-controls"' in page
+    assert 'class="dc-map-panel"' in page
+    assert 'class="dc-detail"' in page
+    disclosures = re.findall(r'<details class="[^"]*\bdc-disclosure\b[^"]*"[^>]*>', page)
+    assert len(disclosures) == 2
+    assert all(" open" not in disclosure for disclosure in disclosures)
+    assert 'id="show-datacenters" type="checkbox" checked' in page
+    assert 'id="show-plants" type="checkbox" checked' not in page
+    assert 'id="show-enviroscreen" type="checkbox" checked' not in page
+    assert 'id="show-parcels" type="checkbox" checked' not in page
+    assert "maplibre-gl@5.24.0" in page
+    assert "leaflet" not in page.lower()
+    assert 'id="map-theme"' in page
+    for theme in ("collective", "dark", "fiord", "positron", "bright", "liberty"):
+        assert f'<option value="{theme}">' in page
+
+
+def test_collective_map_theme_scales_road_widths_by_zoom():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "function roadWidth(semantic)" in script
+    assert "setPaint(layer, 'line-width', roadWidth(semantic))" in script
+    assert "['interpolate', ['exponential', 1.25], ['zoom']" in script
+    assert "function roadOpacity(semantic)" in script
+
+
+def test_power_plant_images_have_complete_provenance_and_fallback_coverage():
+    plants = load("power-plants.json")
+    images = load("power-plant-images.json")
+    plant_ids = {plant["id"] for plant in plants}
+    required = {
+        "plant_id", "local_path", "source_page_url", "creator",
+        "license", "image_kind", "alt",
+    }
+    assert len({image["plant_id"] for image in images}) == len(images)
+    for image in images:
+        assert set(image) == required
+        assert image["plant_id"] in plant_ids
+        assert image["image_kind"] == "verified_site_photograph"
+        assert image["source_page_url"].startswith("https://commons.wikimedia.org/")
+        path = ROOT / image["local_path"].lstrip("/")
+        assert path.is_file()
+        assert path.stat().st_size > 10_000
+
+    fallback = ROOT / "datacenters/images/power-plants/fallback/energy-infrastructure-illustration.webp"
+    assert fallback.is_file()
+    assert fallback.stat().st_size > 10_000
+    assert all(plant["latitude"] is not None and plant["longitude"] is not None for plant in plants)
+
+
+def test_power_plant_markers_preview_on_hover_and_keyboard_focus():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "element.addEventListener('pointerenter'" in script
+    assert "element.addEventListener('focus'" in script
+    assert "USGSImageryOnly/MapServer" in script
+    assert "Coordinate-specific aerial context" in script
+    assert "Generated fallback illustration" in script
+
+
+def test_mde_enviroscreen_is_lazy_and_uses_the_official_score_classes():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "mdgeodata.md.gov/imap/rest/services/Environment/MD_EnviroScreen/FeatureServer/0" in script
+    assert "function addEnviroScreenLayers(map, data)" in script
+    assert "if (!enviroScreenData)" in script
+    assert "'#01856f', 25" in script
+    assert "'#81ccbf', 50" in script
+    assert "'#dec17e', 75" in script
+    assert "'#a6601b'" in script
+
+
+def test_mdp_sdat_parcels_are_zoom_gated_and_hover_queried():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "PlanningCadastre/MD_ParcelBoundaries/MapServer" in script
+    assert "const PARCEL_MIN_ZOOM = 13" in script
+    assert "function loadParcelBoundaries(map)" in script
+    assert "geometryType: 'esriGeometryEnvelope'" in script
+    assert "map.on('moveend', () => loadParcelBoundaries(map))" in script
+    assert "type: 'line'" in script
+    assert "function scheduleParcelLookup(map, lngLat)" in script
+    assert "spatialRel: 'esriSpatialRelIntersects'" in script
+    assert "resultRecordCount: '1'" in script
+    assert "function renderParcelDetail(properties)" in script
+    assert "function renderEnviroScreenDetail(properties)" in script
