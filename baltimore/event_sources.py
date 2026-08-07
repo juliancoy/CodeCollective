@@ -467,8 +467,9 @@ sources = [
     },
     {
         "name": "Bio-Trac Workshop Calendar",
-        "url": "https://biotrac.com/",
-        "tags": ["Health", "Science", "Business", "Education"],
+        "url": "https://biotrac.com/calendar/",
+        "source_kind": "biotrac",
+        "tags": ["Health", "Science", "Business", "Education", "Tech Skills"],
     },
     {
         "name": "Luma User d4s75dZyC9VOXAd",

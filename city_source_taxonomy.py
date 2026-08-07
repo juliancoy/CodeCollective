@@ -1,28 +1,58 @@
+def split_compound_tag(tag):
+    normalized = str(tag or "").strip()
+    if not normalized:
+        return []
+    if "&" not in normalized:
+        return [normalized]
+    return [part.strip() for part in normalized.split("&") if part.strip()]
+
+
+def normalize_tags(tags):
+    normalized = []
+    seen = set()
+    for tag in tags or []:
+        for part in split_compound_tag(tag):
+            if part in seen:
+                continue
+            seen.add(part)
+            normalized.append(part)
+    return normalized
+
+
 _MASLOW_BY_TAG = {
     "Food": ["Food"],
     "Water": ["Water"],
     "Water & Environment": ["Water"],
+    "Environment": ["Water"],
     "Housing": ["Shelter", "Safety"],
     "Shelter + Habitat": ["Shelter"],
     "Clothing": ["Clothing"],
     "Survival & Health": ["Health"],
+    "Survival": ["Health"],
     "Wellness": ["Health"],
     "Health": ["Health"],
     "Health & Wellness": ["Health"],
     "Safety & Stability": ["Safety"],
+    "Safety": ["Safety"],
+    "Stability": ["Safety"],
     "Infrastructure": ["Safety"],
     "Finance": ["Safety"],
     "Climate & Energy": ["Safety"],
     "Climate": ["Safety"],
     "Energy": ["Safety"],
     "Belonging & Culture": ["Belonging"],
+    "Belonging": ["Belonging"],
     "Culture": ["Belonging"],
     "Community": ["Belonging"],
     "Religion": ["Belonging"],
     "Community Organizing": ["Belonging", "Purpose"],
     "Tech Community": ["Belonging"],
     "Code Collective & Partners": ["Belonging"],
+    "Code Collective": ["Belonging"],
+    "Partners": ["Belonging"],
     "Esteem & Opportunity": ["Esteem"],
+    "Esteem": ["Esteem"],
+    "Opportunity": ["Esteem"],
     "Economic Development": ["Esteem"],
     "Economics": ["Esteem"],
     "Business": ["Esteem"],
@@ -31,6 +61,8 @@ _MASLOW_BY_TAG = {
     "Career Growth": ["Esteem"],
     "Professional Networking": ["Esteem"],
     "Growth & Creativity": ["Growth"],
+    "Growth": ["Growth"],
+    "Creativity": ["Growth"],
     "Tech Skills": ["Growth"],
     "Education": ["Growth"],
     "Science": ["Growth"],
@@ -41,6 +73,8 @@ _MASLOW_BY_TAG = {
     "Data Science": ["Growth"],
     "Cybersecurity": ["Growth"],
     "Cloud & Platform": ["Growth"],
+    "Cloud": ["Growth"],
+    "Platform": ["Growth"],
     "DevOps": ["Growth"],
     "Software Development": ["Growth"],
     "Web Development": ["Growth"],
@@ -54,11 +88,17 @@ _MASLOW_BY_TAG = {
     "Open Source": ["Growth"],
     "Robotics": ["Growth"],
     "Purpose & Service": ["Purpose"],
+    "Purpose": ["Purpose"],
+    "Service": ["Purpose"],
     "Politics": ["Purpose"],
     "Faith & Spirituality": ["Purpose"],
+    "Faith": ["Purpose"],
+    "Spirituality": ["Purpose"],
     "Civic Tech": ["Purpose"],
     "Policy": ["Purpose"],
     "Crypto & Web3": ["Safety"],
+    "Crypto": ["Safety"],
+    "Web3": ["Safety"],
 }
 
 _MASLOW_DEFAULT = "Belonging"
@@ -67,10 +107,14 @@ _COMMUNITY_SECTOR_BY_TAG = {
     "Technology": "Technology",
     "Tech Skills": "Technology",
     "Growth & Creativity": "Technology",
+    "Growth": "Technology",
+    "Creativity": "Technology",
     "AI": "Technology",
     "Data Science": "Technology",
     "Cybersecurity": "Technology",
     "Cloud & Platform": "Technology",
+    "Cloud": "Technology",
+    "Platform": "Technology",
     "DevOps": "Technology",
     "Software Development": "Technology",
     "Web Development": "Technology",
@@ -95,30 +139,45 @@ _COMMUNITY_SECTOR_BY_TAG = {
     "Economics": "Economics",
     "Economic Development": "Economics",
     "Esteem & Opportunity": "Economics",
+    "Esteem": "Economics",
+    "Opportunity": "Economics",
     "Finance": "Finance",
     "Crypto & Web3": "Finance",
+    "Crypto": "Finance",
+    "Web3": "Finance",
     "Health": "Health",
     "Wellness": "Health",
     "Health & Wellness": "Health",
     "Survival & Health": "Health",
+    "Survival": "Health",
     "Politics": "Politics",
     "Civic Tech": "Politics",
     "Policy": "Politics",
     "Purpose & Service": "Politics",
+    "Purpose": "Politics",
+    "Service": "Politics",
     "Culture": "Culture",
     "Belonging & Culture": "Culture",
+    "Belonging": "Culture",
     "Community": "Culture",
     "Community Organizing": "Culture",
     "Code Collective & Partners": "Culture",
+    "Code Collective": "Culture",
+    "Partners": "Culture",
     "Religion": "Faith",
     "Faith & Spirituality": "Faith",
+    "Faith": "Faith",
+    "Spirituality": "Faith",
     "Water": "Environment",
     "Water & Environment": "Environment",
+    "Environment": "Environment",
     "Climate": "Environment",
     "Climate & Energy": "Environment",
     "Energy": "Environment",
     "Infrastructure": "Environment",
     "Safety & Stability": "Environment",
+    "Safety": "Environment",
+    "Stability": "Environment",
     "Makerspace": "Makerspace",
     "Robotics": "Makerspace",
     "Other": "Other",
@@ -185,6 +244,7 @@ def _append_maslow_tags(source):
 
 def apply_city_source_taxonomy(sources):
     for source in sources:
+        source["tags"] = normalize_tags(source.get("tags"))
         _append_community_sector_tags(source)
         _append_maslow_tags(source)
         source["tags"] = filter_excluded_org_tags(

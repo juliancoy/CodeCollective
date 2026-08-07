@@ -150,6 +150,43 @@
     return mappedCategories.some((category) => activeTagSlugs.has(category.slug));
   }
 
+  function buildIndividualTagsMap(events, colorMap) {
+    const sourceCategories = Array.isArray(colorMap?.categories) ? colorMap.categories : [];
+    const fallback = sourceCategories.find((category) => slugifyTag(category.label) === 'other')
+      || colorMap?.other
+      || {};
+    const tagLabels = Array.from(new Set(
+      (Array.isArray(events) ? events : []).flatMap((event) => {
+        const tags = Array.isArray(event?.tags)
+          ? event.tags
+          : (Array.isArray(event?.extendedProps?.tags) ? event.extendedProps.tags : []);
+        return tags.map((tag) => String(tag || '').trim()).filter(Boolean);
+      })
+    ));
+
+    const categories = tagLabels
+      .sort((left, right) => left.localeCompare(right, undefined, { sensitivity: 'base' }))
+      .map((label) => {
+        const visual = sourceCategories.find((category) => (
+          Array.isArray(category.matches)
+          && category.matches.some((match) => slugifyTag(match) === slugifyTag(label))
+        )) || fallback;
+        return {
+          label,
+          color: visual.color || '#6b7280',
+          text_color: visual.text_color || '#ffffff',
+          matches: [label],
+        };
+      });
+
+    return {
+      id: 'tags',
+      label: 'Tags',
+      individualTags: true,
+      categories,
+    };
+  }
+
   function toFiniteNumber(value) {
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
@@ -448,6 +485,7 @@
     getEffectiveMappedCategories,
     isExcludedFromActiveMap,
     eventMatchesTags,
+    buildIndividualTagsMap,
     getLocationCoordinates,
     isUsableProximityLocation,
     distanceMiles,

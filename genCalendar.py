@@ -14,6 +14,7 @@ import scrape_gdg
 import scrape_partiful
 import scrape_timely
 import scrape_tribe
+import scrape_biotrac
 import scrape_web_events
 import scrape_legistar
 import scrape_thread_helpcenter
@@ -50,6 +51,7 @@ from geocode_cache import (
 import unicodedata
 from urllib.parse import parse_qs, urlparse
 from city_determinant import determine_event_city
+from city_source_taxonomy import normalize_tags
 
 # Define the timezone for EST
 est_timezone = pytz.timezone("America/New_York")
@@ -80,6 +82,7 @@ SOURCE_KIND_CONCURRENCY = {
     "gdg": 3,
     "timely": 2,
     "tribe_events": 2,
+    "biotrac": 1,
     "unknown": 2,
 }
 
@@ -101,9 +104,7 @@ def merge_tags(*tag_lists):
     seen = set()
 
     for tag_list in tag_lists:
-        if not tag_list:
-            continue
-        for tag in tag_list:
+        for tag in normalize_tags(tag_list):
             if not tag or tag in seen:
                 continue
             seen.add(tag)
@@ -130,7 +131,7 @@ def normalize_source_entry(entry, legacy_kind=None):
             or normalized.get("image_url")
             or _fallback_org_image_url(normalized.get("url"))
         )
-        normalized["tags"] = list(normalized.get("tags") or [])
+        normalized["tags"] = normalize_tags(normalized.get("tags") or [])
         return normalized
 
     if legacy_kind == "Luma Users" and isinstance(entry, str) and not entry.startswith("http"):
@@ -510,6 +511,10 @@ def fetch_events_from_source(source, city):
         "tribe_events": (
             "Fetching events from",
             lambda: scrape_tribe.scrape(source.get("feed_url") or source_url),
+        ),
+        "biotrac": (
+            "Fetching events from",
+            lambda: scrape_biotrac.scrape(source_url),
         ),
         "web_events_page": (
             "Fetching events from",
@@ -994,7 +999,7 @@ def is_code_collective_event(event):
     ]
     tag_candidates = event.get("tags", []) or []
 
-    if any(tag == "Code Collective & Partners" for tag in tag_candidates):
+    if "Code Collective" in tag_candidates and "Partners" in tag_candidates:
         return True
 
     return any("codecollective" in normalize_event_text(candidate) for candidate in candidates)

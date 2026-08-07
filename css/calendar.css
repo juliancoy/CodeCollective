@@ -1974,6 +1974,77 @@ h1 {
     gap: 8px 14px;
 }
 
+.legend-tag-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-tag-search input {
+    min-width: 0;
+    flex: 1;
+    background: rgba(15, 23, 42, 0.85);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    padding: 7px 12px;
+}
+
+.legend-tag-search input:focus {
+    outline: 2px solid #ffe600;
+    outline-offset: 2px;
+}
+
+.legend-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: min(42vh, 360px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.legend-item.legend-tag-chip {
+    position: relative;
+    border-radius: 999px;
+    padding: 6px 11px;
+    background: var(--tag-chip-bg, #6b7280);
+    color: var(--tag-chip-fg, #ffffff);
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    transition: opacity 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.legend-item.legend-tag-chip:hover {
+    transform: translateY(-1px);
+}
+
+.legend-tag-chip input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.legend-tag-chip .legend-swatch {
+    display: none;
+}
+
+.legend-tag-chip .legend-text {
+    color: inherit;
+    font-weight: 700;
+}
+
+.legend-item.legend-tag-chip:has(input:not(:checked)) {
+    opacity: 0.42;
+    filter: grayscale(0.7);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+.legend-item.legend-tag-chip:has(input:focus-visible) {
+    outline: 2px solid #ffe600;
+    outline-offset: 2px;
+}
+
 .legend-list.maslow-hierarchy {
     display: flex;
     flex-direction: column;
