@@ -47,6 +47,7 @@ rsync -a \
   --exclude='baltimore/data/vacants.geojson.gz' \
   --exclude='baltimore/data/publish/' \
   --exclude='node_modules/' \
+  --exclude='.pytest_cache/' \
   --exclude='__pycache__/' \
   --exclude='*.sqlite' \
   --exclude='*.sqlite-shm' \
