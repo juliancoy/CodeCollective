@@ -51,6 +51,9 @@ ORG_ADMIN_EMAILS="${ORG_ADMIN_EMAILS:-$PIDP_ADMIN_EMAILS}"
 ORG_ADMIN_USER_IDS="${ORG_ADMIN_USER_IDS:-$PIDP_ADMIN_USER_IDS}"
 ORG_D1_DATABASE_NAME="${ORG_D1_DATABASE_NAME:-org}"
 ORG_D1_DATABASE_ID="${ORG_D1_DATABASE_ID:-a71a2306-3d82-44cb-a50c-d7fdffaacdc7}"
+ORG_SCAN_IMAGES_BUCKET_NAME="${ORG_SCAN_IMAGES_BUCKET_NAME:-org-scan-images}"
+ORG_PUSH_QUEUE_NAME="${ORG_PUSH_QUEUE_NAME:-org-web-push}"
+ORG_PUSH_DEAD_LETTER_QUEUE_NAME="${ORG_PUSH_DEAD_LETTER_QUEUE_NAME:-org-web-push-dead-letter}"
 SKIP_ORG_MIGRATIONS=0
 
 PASSTHROUGH_ARGS=()
@@ -377,6 +380,9 @@ write_org_config() {
   export ORG_ADMIN_USER_IDS
   export ORG_D1_DATABASE_NAME
   export ORG_D1_DATABASE_ID
+  export ORG_SCAN_IMAGES_BUCKET_NAME
+  export ORG_PUSH_QUEUE_NAME
+  export ORG_PUSH_DEAD_LETTER_QUEUE_NAME
 
   (
     cd "$ORG_WORKER_DIR"
@@ -389,6 +395,7 @@ const config = {
   name: env.ORG_WORKER_NAME,
   main: "src/index.ts",
   compatibility_date: "2026-06-07",
+  compatibility_flags: ["nodejs_compat"],
   workers_dev: true,
   observability: { enabled: true },
   triggers: {
@@ -407,6 +414,29 @@ const config = {
       database_id: env.ORG_D1_DATABASE_ID,
     },
   ],
+  r2_buckets: [
+    {
+      binding: "SCAN_IMAGES",
+      bucket_name: env.ORG_SCAN_IMAGES_BUCKET_NAME,
+    },
+  ],
+  queues: {
+    producers: [
+      {
+        binding: "PUSH_QUEUE",
+        queue: env.ORG_PUSH_QUEUE_NAME,
+      },
+    ],
+    consumers: [
+      {
+        queue: env.ORG_PUSH_QUEUE_NAME,
+        max_batch_size: 10,
+        max_batch_timeout: 5,
+        max_retries: 3,
+        dead_letter_queue: env.ORG_PUSH_DEAD_LETTER_QUEUE_NAME,
+      },
+    ],
+  },
 };
 
 fs.writeFileSync("wrangler.jsonc", `${JSON.stringify(config, null, 2)}\n`);
@@ -611,6 +641,12 @@ if [[ "$deploy_org" -eq 1 ]]; then
     exit 1
   fi
   echo "[deploy][org] ok: /health -> 200"
+  if ! curl --fail --silent --show-error "$ORG_VERIFY_ORIGIN/api/network/orgs/public?limit=1" \
+    | node -e 'let body = ""; process.stdin.on("data", chunk => body += chunk); process.stdin.on("end", () => { const data = JSON.parse(body); if (!Array.isArray(data)) throw new Error("expected a JSON array"); });'; then
+    echo "[deploy][org] verify failed: public organization directory is unavailable" >&2
+    exit 1
+  fi
+  echo "[deploy][org] ok: /api/network/orgs/public?limit=1 -> JSON array"
 fi
 
 [[ -n "$DEV_URL" ]] && verify_target "dev" "$DEV_URL"

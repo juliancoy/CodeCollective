@@ -264,7 +264,7 @@ jobs:
           ORG_ADMIN_USER_IDS: ${{ vars.ORG_ADMIN_USER_IDS }}
           ORG_D1_DATABASE_NAME: ${{ vars.ORG_D1_DATABASE_NAME }}
           ORG_D1_DATABASE_ID: ${{ vars.ORG_D1_DATABASE_ID }}
-        run: ./deploy.sh --component org --skip-org-migrations
+        run: ./deploy.sh --component org
 
   pidp-deploy:
     name: Deploy PIdP Worker
