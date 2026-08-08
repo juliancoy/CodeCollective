@@ -3,7 +3,6 @@
     datacenters: '/datacenters/data/datacenters.json',
     plants: '/datacenters/data/power-plants.json',
     plantImages: '/datacenters/data/power-plant-images.json',
-    rates: '/datacenters/data/residential-electricity-rates.json',
     sources: '/datacenters/data/sources.json',
   };
   const PLANT_IMAGE_FALLBACK = '/datacenters/images/power-plants/fallback/energy-infrastructure-illustration.webp';
@@ -37,6 +36,29 @@
     bright: 'https://tiles.openfreemap.org/styles/bright',
     liberty: 'https://tiles.openfreemap.org/styles/liberty',
   };
+  const ENERGY_SOURCES = {
+    SUN: { label: 'Solar', light: '#69c7ff', color: '#167fc1', dark: '#064a7d' },
+    BIT: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
+    SUB: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
+    LIG: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
+    WC: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
+    RC: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
+    NG: { label: 'Natural gas', light: '#c58a62', color: '#865033', dark: '#4a281b' },
+    PG: { label: 'Propane gas', light: '#c58a62', color: '#865033', dark: '#4a281b' },
+    DFO: { label: 'Oil / diesel', light: '#ffb454', color: '#c76522', dark: '#743010' },
+    RFO: { label: 'Oil / diesel', light: '#ffb454', color: '#c76522', dark: '#743010' },
+    WAT: { label: 'Hydroelectric', light: '#70ebef', color: '#16a5b5', dark: '#075f74' },
+    WND: { label: 'Wind', light: '#95e59b', color: '#3caa62', dark: '#17633b' },
+    NUC: { label: 'Nuclear', light: '#d2a5ff', color: '#8754bd', dark: '#4d267b' },
+    MWH: { label: 'Battery storage', light: '#d7b4ff', color: '#8d65ca', dark: '#4c317e' },
+    LFG: { label: 'Landfill gas', light: '#b7cf70', color: '#718e39', dark: '#3d5520' },
+    MSW: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
+    MSB: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
+    MSN: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
+    OBG: { label: 'Biomass', light: '#d0c779', color: '#8b8436', dark: '#514c1e' },
+    WDS: { label: 'Biomass', light: '#d0c779', color: '#8b8436', dark: '#514c1e' },
+    UNKNOWN: { label: 'Undisclosed', light: '#aab9c5', color: '#657887', dark: '#344550' },
+  };
 
   const escapeHtml = (value) => String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -52,6 +74,46 @@
   const number = (value, digits = 0) => Number(value).toLocaleString('en-US', {
     maximumFractionDigits: digits,
   });
+
+  function markerSourceCodes(record) {
+    if (record.record_type === 'power_plant') {
+      const codes = record.generation_fuel_codes?.length
+        ? record.generation_fuel_codes
+        : record.energy_source_codes;
+      return [...new Set(codes?.filter((code) => ENERGY_SOURCES[code]) || [])];
+    }
+
+    const codes = [];
+    const onSite = String(record.on_site_generation_technology || '').toLowerCase();
+    const gas = String(record.on_site_natural_gas_power_plant || '').toLowerCase();
+    const backup = String(record.backup_generation_fuel || '').toLowerCase();
+    if (onSite.includes('battery')) codes.push('MWH');
+    if (gas.includes('natural gas') && !/not identified|not disclosed/.test(gas)) codes.push('NG');
+    if (/diesel|fuel oil/.test(backup)) codes.push('DFO');
+    return [...new Set(codes)];
+  }
+
+  function markerGradient(sourceCodes) {
+    const sources = (sourceCodes.length ? sourceCodes : ['UNKNOWN'])
+      .map((code) => ENERGY_SOURCES[code])
+      .filter((source, index, all) => all.findIndex((candidate) => candidate.label === source.label) === index);
+    const highlight = 'radial-gradient(circle at 30% 22%, rgba(255,255,255,.78) 0 7%, rgba(255,255,255,.2) 22%, transparent 48%)';
+    if (sources.length === 1) {
+      const source = sources[0];
+      return `${highlight}, linear-gradient(145deg, ${source.light} 0%, ${source.color} 48%, ${source.dark} 100%)`;
+    }
+    const stops = sources.flatMap((source, index) => {
+      const start = (index / sources.length) * 100;
+      const end = ((index + 1) / sources.length) * 100;
+      return `${source.color} ${start}% ${end}%`;
+    }).join(', ');
+    return `${highlight}, conic-gradient(from -35deg, ${stops})`;
+  }
+
+  function markerSourceLabel(sourceCodes) {
+    const codes = sourceCodes.length ? sourceCodes : ['UNKNOWN'];
+    return [...new Set(codes.map((code) => ENERGY_SOURCES[code].label))].join(' + ');
+  }
   let selectedRecordId = null;
   let plantImageById = new Map();
   let enviroScreenData = null;
@@ -100,16 +162,20 @@
     allRecords.forEach((record) => {
       if (!Number.isFinite(record.latitude) || !Number.isFinite(record.longitude)) return;
       const isCenter = record.record_type === 'data_center';
+      const sourceCodes = markerSourceCodes(record);
+      const sourceLabel = markerSourceLabel(sourceCodes);
       const element = document.createElement('button');
       element.type = 'button';
       element.className = `dc-map-marker dc-map-marker--${isCenter ? 'center' : 'plant'}`;
       element.setAttribute('aria-label', record.name);
-      element.title = record.name;
+      element.title = `${record.name} · ${sourceLabel}`;
+      element.dataset.energySources = sourceCodes.length ? sourceCodes.join(' ') : 'UNKNOWN';
+      element.style.setProperty('--marker-source-gradient', markerGradient(sourceCodes));
       element.innerHTML = `<span class="dc-map-icon dc-map-icon--${isCenter ? 'center' : 'plant'}"></span>`;
       element.addEventListener('click', () => selectRecord(record, sourceById));
       element.addEventListener('pointerenter', () => selectRecord(record, sourceById));
       element.addEventListener('focus', () => selectRecord(record, sourceById));
-      const popupText = `${record.name}${isCenter ? '' : ` · ${number(record.nameplate_capacity_mw, 1)} MW`}`;
+      const popupText = `${record.name} · ${sourceLabel}${isCenter ? '' : ` · ${number(record.nameplate_capacity_mw, 1)} MW`}`;
       const marker = new maplibregl.Marker({ element, anchor: 'center' })
         .setLngLat([record.longitude, record.latitude])
         .setPopup(new maplibregl.Popup({ offset: 16, closeButton: false }).setText(popupText))
@@ -117,8 +183,7 @@
       markerById.set(record.id, marker);
     });
 
-    document.getElementById('show-datacenters').addEventListener('change', () => renderResults(allRecords, markerById, map));
-    document.getElementById('show-plants').addEventListener('change', () => renderResults(allRecords, markerById, map));
+    document.getElementById('type-filter').addEventListener('change', () => renderResults(allRecords, markerById, map));
     document.getElementById('show-enviroscreen').addEventListener('change', (event) => {
       setEnviroScreenVisibility(map, event.target.checked);
     });
@@ -127,14 +192,8 @@
     });
     document.getElementById('map-search').addEventListener('input', () => renderResults(allRecords, markerById, map));
     document.getElementById('status-filter').addEventListener('change', () => renderResults(allRecords, markerById, map));
+    document.getElementById('energy-filter').addEventListener('change', () => renderResults(allRecords, markerById, map));
     document.getElementById('sentiment-filter').addEventListener('change', () => renderResults(allRecords, markerById, map));
-
-    document.getElementById('datacenter-count').textContent = number(data.datacenters.length);
-    document.getElementById('plant-count').textContent = number(data.plants.length);
-    const generation = data.plants.reduce((sum, plant) => sum + (plant.net_generation_mwh || 0), 0);
-    document.getElementById('generation-total').textContent = `${number(generation / 1_000_000, 2)} million MWh`;
-    const rate = data.rates[0];
-    document.getElementById('residential-rate').textContent = rate ? `${rate.average_price_cents_per_kwh}¢/kWh` : 'Unknown';
 
     renderResults(allRecords, markerById, map);
     renderSources(data.sources);
@@ -562,16 +621,39 @@
   }
 
   function visibleType(record) {
-    return record.record_type === 'data_center'
-      ? document.getElementById('show-datacenters').checked
-      : document.getElementById('show-plants').checked;
+    const typeFilter = document.getElementById('type-filter').value;
+    return typeFilter === 'all' || record.record_type === typeFilter;
+  }
+
+  function lifecycleStage(record) {
+    if (record.record_type === 'power_plant') return 'operating';
+    const status = record.status.toLowerCase();
+    if (status === 'operating') return 'operating';
+    if (/paused|blocked|prohibition|cancel/.test(status)) return 'paused';
+    if (/permit|development|construction/.test(status)) return 'development';
+    if (/proposed|concept|planned/.test(status)) return 'proposal';
+    return 'other';
+  }
+
+  function matchesEnergySource(record, energyFilter) {
+    if (energyFilter === 'all') return true;
+    const codes = markerSourceCodes(record);
+    if (energyFilter === 'UNKNOWN') return codes.length === 0;
+    const families = {
+      BIT: ['BIT', 'SUB', 'LIG', 'WC', 'RC'],
+      NG: ['NG', 'PG'],
+      DFO: ['DFO', 'RFO'],
+      WASTE: ['LFG', 'MSW', 'MSB', 'MSN', 'OBG', 'WDS'],
+    };
+    return (families[energyFilter] || [energyFilter]).some((code) => codes.includes(code));
   }
 
   function renderResults(records, markerById, map) {
     const query = document.getElementById('map-search').value.trim().toLowerCase();
     const statusFilter = document.getElementById('status-filter').value;
+    const energyFilter = document.getElementById('energy-filter').value;
     const sentimentFilter = document.getElementById('sentiment-filter').value;
-    const matches = records.filter((record) => matchesFilters(record, query, statusFilter, sentimentFilter));
+    const matches = records.filter((record) => matchesFilters(record, query, statusFilter, energyFilter, sentimentFilter));
     records.forEach((record) => {
       const marker = markerById.get(record.id);
       if (!marker) return;
@@ -588,7 +670,7 @@
       button.type = 'button';
       button.dataset.recordId = record.id;
       button.classList.toggle('is-selected', record.id === selectedRecordId);
-      button.innerHTML = `<strong>${escapeHtml(record.name)}</strong><small>${escapeHtml(record.record_type === 'data_center' ? record.status : `${record.primary_technology || 'Power plant'} · ${number(record.nameplate_capacity_mw || 0, 1)} MW`)}</small>`;
+      button.innerHTML = `<strong>${escapeHtml(record.name)}</strong><small>${escapeHtml(record.record_type === 'data_center' ? record.status : `Existing · ${record.primary_technology || 'Power plant'} · ${number(record.nameplate_capacity_mw || 0, 1)} MW`)}</small>`;
       button.addEventListener('click', () => {
         const marker = markerById.get(record.id);
         if (marker) {
@@ -608,20 +690,15 @@
     });
   }
 
-  function matchesFilters(record, query, statusFilter, sentimentFilter) {
+  function matchesFilters(record, query, statusFilter, energyFilter, sentimentFilter) {
       if (!visibleType(record)) return false;
-      if (record.record_type === 'data_center' && statusFilter !== 'all') {
-        const status = record.status.toLowerCase();
-        const statusMatches = statusFilter === 'operating'
-          ? status === 'operating'
-          : statusFilter === 'development'
-            ? status.includes('permit') || status.includes('development') || status.includes('construction')
-            : status.includes('proposed') || status.includes('concept') || status.includes('planned');
-        if (!statusMatches) return false;
-      }
-      if (record.record_type === 'data_center' && sentimentFilter !== 'all') {
+      if (statusFilter !== 'all' && lifecycleStage(record) !== statusFilter) return false;
+      if (!matchesEnergySource(record, energyFilter)) return false;
+      if (sentimentFilter !== 'all') {
+        if (record.record_type !== 'data_center') return false;
         const score = record.public_sentiment_score;
         if (sentimentFilter === 'opposed' && !(score < 0)) return false;
+        if (sentimentFilter === 'supportive' && !(score > 0)) return false;
         if (sentimentFilter === 'mixed' && score !== 0) return false;
         if (sentimentFilter === 'unknown' && score !== null) return false;
       }

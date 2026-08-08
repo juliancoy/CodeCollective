@@ -97,9 +97,12 @@ def test_projects_page_and_shared_dropdown_have_the_same_order():
     assert nav_links[0] == "/datacenters.html"
 
 
-def test_datacenter_page_preserves_explorer_hierarchy_and_quiet_defaults():
+def test_datacenter_page_is_map_first_with_compact_filter_hierarchy():
     page = (ROOT / "datacenters.html").read_text()
-    assert 'class="dc-overview"' in page
+    assert 'class="dc-hero"' not in page
+    assert 'class="dc-overview"' not in page
+    assert 'class="dc-map-intro"' in page
+    assert 'class="dc-filter-bar"' in page
     assert 'class="dc-explorer"' in page
     assert 'class="dc-workspace"' in page
     assert 'class="dc-controls"' in page
@@ -108,8 +111,11 @@ def test_datacenter_page_preserves_explorer_hierarchy_and_quiet_defaults():
     disclosures = re.findall(r'<details class="[^"]*\bdc-disclosure\b[^"]*"[^>]*>', page)
     assert len(disclosures) == 2
     assert all(" open" not in disclosure for disclosure in disclosures)
-    assert 'id="show-datacenters" type="checkbox" checked' in page
-    assert 'id="show-plants" type="checkbox" checked' not in page
+    assert '<option value="data_center">Data centers</option>' in page
+    assert '<option value="power_plant">Power plants</option>' in page
+    assert '<option value="all">All infrastructure</option>' in page
+    assert 'id="show-datacenters"' not in page
+    assert 'id="show-plants"' not in page
     assert 'id="show-enviroscreen" type="checkbox" checked' not in page
     assert 'id="show-parcels" type="checkbox" checked' not in page
     assert "maplibre-gl@5.24.0" in page
@@ -158,6 +164,42 @@ def test_power_plant_markers_preview_on_hover_and_keyboard_focus():
     assert "USGSImageryOnly/MapServer" in script
     assert "Coordinate-specific aerial context" in script
     assert "Generated fallback illustration" in script
+
+
+def test_map_markers_encode_documented_energy_sources_with_gradients():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+    plant_codes = {
+        code
+        for plant in load("power-plants.json")
+        for code in (plant["generation_fuel_codes"] or plant["energy_source_codes"])
+    }
+
+    assert "function markerSourceCodes(record)" in script
+    assert "function markerGradient(sourceCodes)" in script
+    assert "conic-gradient(from -35deg" in script
+    assert "linear-gradient(145deg" in script
+    assert "element.style.setProperty('--marker-source-gradient'" in script
+    assert all(f"{code}: {{" in script for code in plant_codes)
+    assert "onSite.includes('battery')" in script
+    assert "/diesel|fuel oil/.test(backup)" in script
+    assert "Energy color key" in page
+    assert "Data-center colors describe documented on-site or backup generation" in page
+    assert "background: var(--marker-source-gradient" in styles
+
+
+def test_facility_filters_cover_type_lifecycle_energy_and_public_response():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    for filter_id in ("map-search", "type-filter", "status-filter", "energy-filter", "sentiment-filter"):
+        assert f'id="{filter_id}"' in page
+    for stage in ("operating", "development", "proposal", "paused"):
+        assert f'<option value="{stage}">' in page
+    assert "function lifecycleStage(record)" in script
+    assert "if (record.record_type === 'power_plant') return 'operating'" in script
+    assert "function matchesEnergySource(record, energyFilter)" in script
+    assert "if (sentimentFilter === 'supportive'" in script
 
 
 def test_mde_enviroscreen_is_lazy_and_uses_the_official_score_classes():

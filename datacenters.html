@@ -9,7 +9,7 @@
   <link rel="icon" href="/images/favicons/favicon.png">
   <link rel="stylesheet" href="/css/master.css?v=20260807-project-menu">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260807-parcels">
+  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260808-map-first">
 </head>
 <body id="body" class="datacenter-page">
   <video id="bg-video" autoplay loop muted playsinline poster="/images/general_encircled_banner.webp">
@@ -20,69 +20,90 @@
   <our-header></our-header>
 
   <main class="dc-shell">
-    <header class="dc-hero">
-      <p class="dc-kicker">Public infrastructure ledger</p>
-      <h1>Maryland Data Centers and Energy</h1>
-      <p>Facility claims are kept separate from verified facts. Unknown values stay visibly unknown, and every populated field points back to a public source.</p>
-      <div class="dc-downloads" aria-label="Download map data">
-        <a href="/datacenters/data/datacenters.json">Data centers JSON</a>
-        <a href="/datacenters/data/power-plants.json">Power plants JSON</a>
-        <a href="/datacenters/data/residential-electricity-rates.json">Residential rates JSON</a>
-        <a href="/datacenters/data/sources.json">Source register JSON</a>
+    <header class="dc-map-intro">
+      <div>
+        <p class="dc-kicker">Public infrastructure ledger</p>
+        <h1>Maryland Data Centers and Energy</h1>
       </div>
+      <p>Map documented facilities, lifecycle stages, energy sources, permits, and public evidence.</p>
     </header>
 
-    <section class="dc-overview" aria-labelledby="overview-title">
-      <header class="dc-section-heading dc-section-heading--compact">
-        <p class="dc-eyebrow">At a glance</p>
-        <h2 id="overview-title">Statewide snapshot</h2>
-      </header>
-      <div class="dc-summary">
-        <article><strong id="datacenter-count">—</strong><span>documented data-center campuses</span></article>
-        <article><strong id="plant-count">—</strong><span>EIA power plants</span></article>
-        <article><strong id="generation-total">—</strong><span>2024 plant generation</span></article>
-        <article><strong id="residential-rate">—</strong><span>2024 Maryland residential average</span></article>
-      </div>
-    </section>
-
-    <section class="dc-explorer" aria-labelledby="explorer-title">
-      <header class="dc-section-heading">
-        <p class="dc-eyebrow">Interactive explorer</p>
-        <h2 id="explorer-title">Find a site. Inspect the evidence.</h2>
-        <p>Filter the published inventory, locate a facility, then review its operating profile and source trail.</p>
-      </header>
-      <div class="dc-workspace">
-        <aside class="dc-controls" aria-labelledby="filters-title">
-          <header class="dc-pane-heading">
-            <p class="dc-eyebrow">Browse</p>
-            <h3 id="filters-title">Filter records</h3>
-          </header>
-          <div class="dc-control-group">
-            <label for="map-search">Facility, operator, or county</label>
-            <input id="map-search" type="search" placeholder="Search Maryland…">
-            <label for="status-filter">Project status</label>
-            <select id="status-filter">
-              <option value="all">All statuses</option>
-              <option value="operating">Operating</option>
-              <option value="development">Permitted / developing</option>
-              <option value="proposal">Planned / proposed</option>
-            </select>
-            <label for="sentiment-filter">Public sentiment</label>
-            <select id="sentiment-filter">
-              <option value="all">All ratings</option>
-              <option value="opposed">Documented opposition</option>
-              <option value="mixed">Mixed / unclear</option>
-              <option value="unknown">Insufficient evidence</option>
-            </select>
-          </div>
+    <section class="dc-explorer" aria-label="Infrastructure map explorer">
+      <div class="dc-filter-bar" role="search" aria-label="Filter infrastructure records">
+        <label class="dc-filter-field dc-filter-field--search" for="map-search">Search
+          <input id="map-search" type="search" placeholder="Facility, operator, county…">
+        </label>
+        <label class="dc-filter-field" for="type-filter">Facility type
+          <select id="type-filter">
+            <option value="data_center">Data centers</option>
+            <option value="power_plant">Power plants</option>
+            <option value="all">All infrastructure</option>
+          </select>
+        </label>
+        <label class="dc-filter-field" for="status-filter">Lifecycle
+          <select id="status-filter">
+            <option value="all">All lifecycle stages</option>
+            <option value="operating">Existing / operating</option>
+            <option value="development">Permitted / developing</option>
+            <option value="proposal">Proposed / planned</option>
+            <option value="paused">Paused / blocked</option>
+          </select>
+        </label>
+        <label class="dc-filter-field" for="energy-filter">Energy source
+          <select id="energy-filter">
+            <option value="all">All energy sources</option>
+            <option value="SUN">Solar</option>
+            <option value="BIT">Coal</option>
+            <option value="NG">Natural gas / propane</option>
+            <option value="DFO">Oil / diesel</option>
+            <option value="WND">Wind</option>
+            <option value="WAT">Hydroelectric</option>
+            <option value="NUC">Nuclear</option>
+            <option value="MWH">Battery storage</option>
+            <option value="WASTE">Waste / biomass</option>
+            <option value="UNKNOWN">Undisclosed</option>
+          </select>
+        </label>
+        <label class="dc-filter-field" for="sentiment-filter">Public response
+          <select id="sentiment-filter">
+            <option value="all">All public-response evidence</option>
+            <option value="opposed">Documented opposition</option>
+            <option value="supportive">Documented support</option>
+            <option value="mixed">Mixed / unclear</option>
+            <option value="unknown">Insufficient evidence</option>
+          </select>
+        </label>
+        <details class="dc-filter-menu">
+          <summary>Map layers</summary>
           <fieldset class="dc-layer-control">
-            <legend>Visible layers</legend>
-            <label><input id="show-datacenters" type="checkbox" checked> Data centers</label>
-            <label><input id="show-plants" type="checkbox"> Power plants</label>
+            <legend>Reference overlays</legend>
             <label><input id="show-enviroscreen" type="checkbox"> MDE EnviroScreen EJ score</label>
             <label><input id="show-parcels" type="checkbox"> MDP/SDAT property boundaries</label>
           </fieldset>
-          <p class="dc-legend"><span class="dc-dot dc-dot--center"></span> Data center <span class="dc-dot dc-dot--plant"></span> Power plant</p>
+        </details>
+        <details class="dc-filter-menu dc-energy-key">
+          <summary>Energy color key</summary>
+          <div>
+            <span><i class="dc-energy-swatch dc-energy-swatch--solar"></i>Solar</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--coal"></i>Coal</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--gas"></i>Natural gas</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--oil"></i>Oil / diesel</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--wind"></i>Wind</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--hydro"></i>Hydroelectric</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--nuclear"></i>Nuclear</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--storage"></i>Battery storage</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--waste"></i>Waste / biomass</span>
+            <span><i class="dc-energy-swatch dc-energy-swatch--unknown"></i>Undisclosed</span>
+          </div>
+          <p>Mixed-source plants use segmented markers. Data-center colors describe documented on-site or backup generation, not grid supply.</p>
+        </details>
+      </div>
+      <div class="dc-workspace">
+        <aside class="dc-controls" aria-labelledby="filters-title">
+          <header class="dc-pane-heading">
+            <p class="dc-eyebrow">Inventory</p>
+            <h3 id="filters-title">Matching records</h3>
+          </header>
           <div id="enviroscreen-legend" class="dc-enviroscreen-legend" hidden>
             <strong>MDEnviroScreen EJ score</strong>
             <div aria-label="Environmental justice score legend">
@@ -100,10 +121,6 @@
             <p>Hover a parcel for an official property-record lookup. Boundaries are not surveys.</p>
             <a href="https://planning.maryland.gov/MSDC/Pages/91_property_mapping/md-property-view.aspx" target="_blank" rel="noopener noreferrer">Maryland Property View documentation</a>
           </div>
-          <div class="dc-results-heading">
-            <p class="dc-eyebrow">Inventory</p>
-            <h3>Matching records</h3>
-          </div>
           <div id="result-list" class="dc-result-list" aria-live="polite"></div>
         </aside>
 
@@ -114,7 +131,6 @@
               <h3 id="map-title">Infrastructure map</h3>
             </div>
             <div class="dc-map-heading-tools">
-              <p>Data centers appear first. Enable power plants for statewide generation context.</p>
               <label for="map-theme">Map theme
                 <select id="map-theme">
                   <option value="collective">Code Collective</option>
@@ -162,6 +178,12 @@
           <span class="dc-disclosure-action" aria-hidden="true">+</span>
         </summary>
         <div class="dc-disclosure-body">
+          <div class="dc-downloads" aria-label="Download map data">
+            <a href="/datacenters/data/datacenters.json">Data centers JSON</a>
+            <a href="/datacenters/data/power-plants.json">Power plants JSON</a>
+            <a href="/datacenters/data/residential-electricity-rates.json">Residential rates JSON</a>
+            <a href="/datacenters/data/sources.json">Source register JSON</a>
+          </div>
           <p class="dc-source-intro">Primary government records, regulatory filings, operator specifications, and clearly labeled reporting used by the published facility records.</p>
           <div id="source-list"></div>
         </div>
@@ -172,6 +194,6 @@
   <our-footer></our-footer>
   <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
   <script type="module" src="/js/reusableComponents.js?v=20260807-project-menu"></script>
-  <script src="/datacenters/js/datacenters.js?v=20260807-parcels" defer></script>
+  <script src="/datacenters/js/datacenters.js?v=20260808-map-first" defer></script>
 </body>
 </html>
