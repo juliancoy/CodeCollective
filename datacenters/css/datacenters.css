@@ -1721,7 +1721,31 @@ body.datacenter-page::before {
   cursor: pointer;
 }
 
-.maplibregl-marker.dc-map-marker--center { z-index: 2; }
+.maplibregl-marker.dc-map-marker--center {
+  z-index: 2;
+  isolation: isolate;
+  overflow: visible;
+}
+
+.dc-map-marker--center::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--marker-size, 22px) * var(--marker-glow-scale, 1));
+  height: calc(var(--marker-size, 22px) * var(--marker-glow-scale, 1));
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    var(--marker-glow-color, transparent) 0 8%,
+    color-mix(in srgb, var(--marker-glow-color, transparent) 58%, transparent) 34%,
+    color-mix(in srgb, var(--marker-glow-color, transparent) 20%, transparent) 58%,
+    transparent 76%);
+  opacity: var(--marker-glow-opacity, 0);
+  filter: blur(calc(var(--marker-size, 22px) * .1));
+  transform: translate3d(-50%, -50%, 0);
+  pointer-events: none;
+}
 .maplibregl-marker.dc-map-marker--plant {
   z-index: 40;
   width: 44px;
@@ -1747,6 +1771,7 @@ body.datacenter-page::before {
   display: grid;
   place-items: center;
   position: relative;
+  z-index: 1;
   overflow: hidden;
   width: var(--marker-size, 22px);
   height: var(--marker-size, 22px);

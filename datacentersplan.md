@@ -375,7 +375,7 @@ Before publishing any refresh:
 7. Confirm the source panel never labels an estimate as reported.
 8. Confirm emergency-generator capacity is described as backup capacity everywhere.
 9. Check desktop hover, keyboard navigation, narrow mobile layout, and screen-reader labels.
-10. Build through `STRICT_TS=1 VITE_PIDP_BASE_URL=https://id.codecollective.us ./scripts/build_cloudflare_site.sh` and confirm the build output contains the HTML, JSON, JavaScript, CSS, and PDFs.
+10. Build through `STRICT_TS=1 VITE_PIDP_BASE_URL=https://id.codecollective.us ./cloudflare/scripts/build_cloudflare_site.sh` and confirm the build output contains the HTML, JSON, JavaScript, CSS, and PDFs.
 11. After deployment, verify `/datacenters.html`, all four JSON endpoints, and one archived PDF return HTTP 200 from `https://codecollective.us`.
 
 ## 19. Definition of done for the statewide version

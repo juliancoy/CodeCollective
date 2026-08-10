@@ -13,7 +13,7 @@ The first production milestone is intentionally narrow: keep the current website
 - Root Cloudflare deployment already exists:
   - `wrangler.toml`
   - `cloudflare/worker.js`
-  - `scripts/build_cloudflare_site.sh`
+  - `cloudflare/scripts/build_cloudflare_site.sh`
   - `deploy.sh`
 - The root Worker serves:
   - legacy static site assets from `.cloudflare/site`
@@ -388,7 +388,7 @@ Confirm any cookie-based flows use:
 From repo root:
 
 ```bash
-./scripts/build_cloudflare_site.sh
+./cloudflare/scripts/build_cloudflare_site.sh
 ```
 
 This writes:

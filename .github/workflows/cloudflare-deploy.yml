@@ -24,7 +24,7 @@ on:
       - "index.html"
       - "simplecalendar.html"
       - "deploy.sh"
-      - "scripts/build_cloudflare_site.sh"
+      - "cloudflare/scripts/build_cloudflare_site.sh"
       - "wrangler.toml"
       - "portal/web/**"
       - "portal/pidp/serverless/**"
@@ -55,7 +55,7 @@ on:
       - "index.html"
       - "simplecalendar.html"
       - "deploy.sh"
-      - "scripts/build_cloudflare_site.sh"
+      - "cloudflare/scripts/build_cloudflare_site.sh"
       - "wrangler.toml"
       - "portal/web/**"
       - "portal/pidp/serverless/**"
@@ -116,7 +116,7 @@ jobs:
         env:
           STRICT_TS: "1"
           VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
-        run: ./scripts/build_cloudflare_site.sh
+        run: ./cloudflare/scripts/build_cloudflare_site.sh
 
       - name: Smoke test shared nav login
         run: |
@@ -126,7 +126,7 @@ jobs:
           npx --prefix portal/web playwright install chromium --with-deps
           SMOKE_BASE_URL=http://127.0.0.1:8765 \
             PLAYWRIGHT_CHROME_PATH=/usr/bin/google-chrome \
-            node scripts/smoke_nav_login.mjs
+            node portal/web/scripts/smoke_nav_login.mjs
 
   pidp-check:
     name: PIdP Check
@@ -215,7 +215,7 @@ jobs:
         env:
           STRICT_TS: "1"
           VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
-        run: ./scripts/build_cloudflare_site.sh
+        run: ./cloudflare/scripts/build_cloudflare_site.sh
 
       - name: Deploy production site Worker
         env:

@@ -488,6 +488,25 @@ def test_collective_map_theme_scales_road_widths_by_zoom():
     assert "function roadOpacity(semantic)" in script
 
 
+def test_neon_streets_default_to_i95_and_restore_the_regular_road_map_when_disabled():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+
+    assert 'id="show-neon-streets" type="checkbox" checked' in page
+    assert 'id="hover-neon-streets" type="checkbox" checked' in page
+    assert 'data-layer-config="neon-streets"' in page
+    assert "neonStreets: { scope: 'i95' }" in script
+    assert "['==', ['get', 'network'], 'us-interstate'], ['==', ['get', 'ref'], '95']" in script
+    assert "id: NEON_STREET_GLOW_LAYER_ID" in script
+    assert "'line-blur': ['interpolate'" in script
+    assert "id: NEON_STREET_CORE_LAYER_ID" in script
+    assert "id: NEON_STREET_LABEL_LAYER_ID" in script
+    assert "streetBaseVisible && !enabled ? 'visible' : 'none'" in script
+    assert "['i95', 'I-95 only']" in script
+    assert "['all', 'All streets']" in script
+    assert "neonStreets: { ...layerFilters.neonStreets }" in script
+
+
 def test_street_and_imagery_base_layers_are_independent_persisted_controls():
     page = (ROOT / "datacenters.html").read_text()
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
@@ -633,6 +652,19 @@ def test_hover_tag_bubbles_split_slashes_and_the_word_and():
     assert ".flatMap((tag) => splitTagLabel(tag.label)" in script
 
 
+def test_hover_arbitration_selects_one_target_by_rendered_layer_z_order():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+
+    assert "function topMapHoverTarget(map, point, sourceById)" in script
+    assert "const zByLayer = new Map(layers.map((layer, index) => [layer.id, index]))" in script
+    assert "candidates.sort((left, right) => right.z - left.z)" in script
+    assert "return candidates[0] || null" in script
+    assert "powerPlantBoltLayer?.setHoveredRecord(target?.kind === 'power-plant' ? target.record : null)" in script
+    assert "if (target.kind !== 'parcel') clearParcelHighlight(map)" in script
+    assert "window.__lastHoverArbitration" in script
+    assert "if (overlayHoverOwner) return" in script
+
+
 def test_inspector_tags_filter_records_and_render_removable_header_chips():
     page = (ROOT / "datacenters.html").read_text()
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
@@ -731,11 +763,15 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert "attribute float a_hover" in script
     assert "float glowAlpha = mix(0.38, 0.92, v_hover);" in script
     assert "setHoveredRecord(record)" in script
-    assert "setHoveredRecord(plantHover)" in script
+    assert "setHoveredRecord(target?.kind === 'power-plant' ? target.record : null)" in script
     assert "function createLightningBoltTextureCanvas" not in script
     assert "function ensurePowerPlantBoltLayer(map)" in script
     assert "map.addLayer(powerPlantBoltLayer);" in script
     assert "powerPlantBoltLayer?.setRecords" in script
+    assert ".sort((left, right) => left.size - right.size" in script
+    assert "gl.disable(gl.DEPTH_TEST)" in script
+    assert "entry.size > best.size" in script
+    assert "topmostSize: state.entries.at(-1)?.size || 0" in script
 
 
 def test_generated_lightning_bolt_gltf_has_consistent_face_winding():
@@ -815,7 +851,9 @@ def test_facility_filters_cover_type_lifecycle_energy_and_public_response():
     assert "if (sentimentFilter === 'supportive'" in script
     assert "fieldMarkup('Icon color uses', 'colorBy'" in script
     assert "fieldMarkup('Icon outline uses', 'outlineBy'" in script
+    assert "fieldMarkup('Icon glow uses', 'glowBy'" in script
     assert "datacenterIconColor" in script
+    assert "datacenterIconGlow" in script
     assert "plantIconOutline" in script
     assert "function filterLayerCards(query)" in script
     assert "indexedText.includes(normalized)" in script
@@ -873,7 +911,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260809-mobile" in page
+    assert "20260810-datacenter-glow" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -897,6 +935,18 @@ def test_optional_maryland_grid_layers_use_official_live_services():
     assert "SMECO_2024_CIRCUITS_101024/FeatureServer/1" in script
     assert "function remoteService(config, zoom)" in script
     assert "const service = remoteService(config, zoom)" in script
+
+
+def test_bge_polygon_layers_follow_their_published_renderer_fields_and_outlines():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "id: 'bge-generation-hosting'" in script
+    assert "Sum_Hosting_Capacity_Remaining_kW" in script
+    assert "lineColor: '#343434'" in script
+    assert "id: 'bge-load-capacity'" in script
+    assert "Max_FEEDER_AVAIL_CAP_MW_MIN" in script
+    assert "lineColor: '#6e6e6e'" in script
+    assert "lineWidth: ['interpolate', ['linear'], ['zoom'], 7, 0.4, 14, 0.8]" in script
+    assert "Sum_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027'" not in script
 
 
 def test_compact_layer_cards_preview_in_the_shared_inspector():
@@ -1021,8 +1071,11 @@ def test_power_import_export_layer_is_optional_persisted_hoverable_and_clickable
 
     assert "Power imports / exports" in script
     assert "staticDataUrl: '/datacenters/data/power-interchanges.json'" in script
-    assert "pointSymbol: 'interchange'" in script
-    assert "'text-field': '⇄'" in script
+    assert "pointSymbol: 'interchange-arrow'" in script
+    assert "defaultSizeBy: 'statewide_average_net_import_mw'" in script
+    assert "'text-field': '➤'" in script
+    assert "['get', 'axis_rotation_degrees']" in script
+    assert "'net import'], 0, 180" in script
     assert "78 border corridors / 107 line crossings" in script
     assert "2024 statewide net import" in script
     assert "findRemoteHoverFeature(map, event.point, false)" in script
@@ -1117,19 +1170,46 @@ def test_point_layer_gears_scale_markers_by_numeric_attributes():
     styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
 
     assert "function numericPointScaleOptions(records, configuredFields = [])" in script
+    assert "function dataCenterPointScaleOptions(records)" in script
     assert "function pointScaleFactors(records, field)" in script
     assert "Math.log1p(value)" in script
     assert "if (rawValue === null || rawValue === undefined || rawValue === '') return null" in script
+    assert "if (!values.length)" in script
+    assert "records.forEach((record) => factors.set(record, .55))" in script
     assert "factors.set(record, .65 +" in script
     assert "fieldMarkup('Icon size uses', 'sizeBy'" in script
     assert "2024 net generation / output (MWh)" in script
     assert "nameplate_capacity_mw: 'Nameplate capacity (MW)'" in script
-    assert "reported_power_capacity_mw: 'Reported power capacity (MW)'" in script
+    assert "reported_grid_demand_mw: 'Net draw · reported grid demand (MW)'" in script
+    assert "reported_power_capacity_mw: 'Total draw · published power envelope (MW)'" in script
+    assert "Net draw · reported grid demand (${reportedCount('reported_grid_demand_mw')} public values)" in script
+    assert "Total draw · published power envelope (${reportedCount('reported_power_capacity_mw')} public values)" in script
+    assert "dataCenterPointScaleOptions(records)" in script
+    assert "Icons with undisclosed values use the smallest size" in script
     assert "size: 36 * sizeFactors.get(record)" in script
     assert "minimumSize: state.entries.length" in script
     assert "maximumSize: state.entries.length" in script
     assert "--marker-size" in script
     assert "width: var(--marker-size, 22px)" in styles
+
+
+def test_data_center_glow_is_an_independent_contestation_encoding_and_exports_to_png():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+
+    assert "function dataCenterGlow(record, glowBy)" in script
+    assert "record.contestation_score >= 4" in script
+    assert "record.contestation_score === 3" in script
+    assert "record.contestation_score === 0" in script
+    assert "color: '#ff263f'" in script
+    assert "color: '#ffffff'" in script
+    assert "glowBy: 'contestation'" in script
+    assert "element.dataset.glow = glow.kind" in script
+    assert "marker.dataset.exportGlowColor" in script
+    assert "context.createRadialGradient" in script
+    assert ".dc-map-marker--center::before" in styles
+    assert "var(--marker-glow-color, transparent)" in styles
+    assert "var(--marker-glow-opacity, 0)" in styles
 
 
 def test_live_point_layers_offer_attribute_scaling_without_adding_it_to_lines_or_polygons():

@@ -198,9 +198,9 @@ fi
 if [[ "$deploy_site" -eq 1 && "$SKIP_BUILD" -eq 0 ]]; then
   echo "[deploy] building Cloudflare site bundle"
   if [[ "$VERBOSE" -eq 1 ]]; then
-    VERBOSE_BUILD=1 "$ROOT_DIR/scripts/build_cloudflare_site.sh"
+    VERBOSE_BUILD=1 "$ROOT_DIR/cloudflare/scripts/build_cloudflare_site.sh"
   else
-    "$ROOT_DIR/scripts/build_cloudflare_site.sh"
+    "$ROOT_DIR/cloudflare/scripts/build_cloudflare_site.sh"
   fi
 fi
 

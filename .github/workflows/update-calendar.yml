@@ -20,8 +20,8 @@ on:
       - "*/gen_calendar.py"
       - "*/scrape_*.py"
       - "*/manual_events.json"
-      - "scripts/validate_calendar_source_exclusions.py"
-      - "scripts/validate_source_*.py"
+      - "tests/calendar/validate_calendar_source_exclusions.py"
+      - "tests/calendar/validate_source_*.py"
       - "tests/calendar_filtering.test.cjs"
       - "tests/test_calendar_*.py"
       - "tests/test_city_source_taxonomy.py"
@@ -61,8 +61,8 @@ jobs:
         run: |
           python -m pytest tests
           node --test tests/calendar_filtering.test.cjs
-          python scripts/validate_source_tag_mappings.py
-          python scripts/validate_source_lens_minimums.py
+          python tests/calendar/validate_source_tag_mappings.py
+          python tests/calendar/validate_source_lens_minimums.py
 
       - name: Run genCalendar.py
         run: |
@@ -70,7 +70,7 @@ jobs:
 
       - name: Validate generated source exclusions
         run: |
-          python scripts/validate_calendar_source_exclusions.py
+          python tests/calendar/validate_calendar_source_exclusions.py
 
       - name: Check for changes
         id: changes

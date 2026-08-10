@@ -5,6 +5,9 @@
     sources: '/datacenters/data/sources.json',
   };
   const POWER_PLANT_WEBGL_LAYER_ID = 'power-plant-bolt-webgl';
+  const NEON_STREET_GLOW_LAYER_ID = 'neon-streets-glow';
+  const NEON_STREET_CORE_LAYER_ID = 'neon-streets-core';
+  const NEON_STREET_LABEL_LAYER_ID = 'neon-streets-label';
   const MAP_FALLBACK_BACKGROUND_LAYER_ID = 'codecollective-map-background';
   const PLANT_IMAGE_FALLBACK = '/datacenters/images/power-plants/fallback/energy-infrastructure-illustration.webp';
   const USGS_IMAGERY_SOURCE = 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer';
@@ -163,6 +166,15 @@
       sourceLabel: 'Published EIA-derived power-plant inventory',
       statusId: 'power-plant-layer-count',
       statusSuffix: ' documented facilities',
+    },
+    'neon-streets': {
+      id: 'neon-streets',
+      name: 'Neon streets',
+      description: 'GPU-rendered OpenFreeMap road overlay, filtered to I-95 by default.',
+      category: 'Road network',
+      sourceUrl: 'https://openfreemap.org/',
+      sourceLabel: 'OpenFreeMap / OpenStreetMap',
+      statusId: 'neon-streets-status',
     },
     enviroscreen: {
       id: 'enviroscreen',
@@ -557,12 +569,13 @@
       sourceLabel: 'Derived official Maryland transmission-crossing inventory',
       attribution: 'HIFLD, Maryland iMAP, EIA, PJM',
       geometry: 'point',
-      pointSymbol: 'interchange',
+      pointSymbol: 'interchange-arrow',
       color: '#69d2ff',
       focus: { center: [-76.75, 39.05], zoom: 7.2 },
       minZoom: 0,
       statusOffText: 'Off · 78 border corridors / 107 line crossings',
       scaleFields: [['line_count', 'Co-located line count'], ['statewide_average_net_import_mw', 'Statewide average net import (MW)']],
+      defaultSizeBy: 'statewide_average_net_import_mw',
       titleFields: ['name', 'crossing_id'],
       facts: [
         ['Crossing ID', 'crossing_id'],
@@ -637,7 +650,10 @@
       geometry: 'polygon',
       color: '#65c466',
       fillColor: ['step', ['coalesce', ['get', 'Sum_Hosting_Capacity_Remaining_kW'], 0], '#d73027', 250, '#f46d43', 3000, '#fee08b', 6000, '#a6d96a', 9000, '#1a9850'],
-      fillOpacity: .48,
+      fillOpacity: .56,
+      lineColor: '#343434',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, 0.4, 14, 0.8],
+      lineOpacity: .72,
       focus: { center: [-76.65, 39.25], zoom: 8.6 },
       minZoom: 7,
       maxFeatures: 1000,
@@ -659,8 +675,11 @@
       attribution: 'BGE',
       geometry: 'polygon',
       color: '#00b4d8',
-      fillColor: ['step', ['coalesce', ['get', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027', .25, '#f46d43', 1, '#fee08b', 2, '#a6d96a', 4, '#1a9850'],
-      fillOpacity: .48,
+      fillColor: ['step', ['coalesce', ['get', 'Max_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027', .77, '#f46d43', 1.83, '#f5f500', 2.93, '#94f700', 4.21, '#00f500'],
+      fillOpacity: .56,
+      lineColor: '#6e6e6e',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, 0.4, 14, 0.8],
+      lineOpacity: .72,
       focus: { center: [-76.65, 39.25], zoom: 8.6 },
       minZoom: 7,
       maxFeatures: 1000,
@@ -1095,8 +1114,8 @@
     nameplate_capacity_mw: 'Nameplate capacity (MW)',
     net_generation_mwh: '2024 net generation / output (MWh)',
     reported_annual_energy_mwh: 'Reported annual energy (MWh)',
-    reported_grid_demand_mw: 'Reported grid demand (MW)',
-    reported_power_capacity_mw: 'Reported power capacity (MW)',
+    reported_grid_demand_mw: 'Net draw · reported grid demand (MW)',
+    reported_power_capacity_mw: 'Total draw · published power envelope (MW)',
     ups_capacity_mw: 'UPS power capacity (MW)',
     ups_energy_mwh: 'UPS energy capacity (MWh)',
   };
@@ -1121,6 +1140,17 @@
     return [['none', 'Uniform size'], ...[...fields.entries()].sort((a, b) => a[1].localeCompare(b[1]))];
   }
 
+  function dataCenterPointScaleOptions(records) {
+    const reportedCount = (field) => records.filter((record) => {
+      const value = record[field];
+      return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+    }).length;
+    return numericPointScaleOptions(records, [
+      ['reported_grid_demand_mw', `Net draw · reported grid demand (${reportedCount('reported_grid_demand_mw')} public values)`],
+      ['reported_power_capacity_mw', `Total draw · published power envelope (${reportedCount('reported_power_capacity_mw')} public values)`],
+    ]);
+  }
+
   function pointScaleFactors(records, field) {
     const factors = new Map(records.map((record) => [record, 1]));
     if (!field || field === 'none') return factors;
@@ -1133,7 +1163,10 @@
     const values = records
       .map(numericValue)
       .filter((value) => value !== null);
-    if (!values.length) return factors;
+    if (!values.length) {
+      records.forEach((record) => factors.set(record, .55));
+      return factors;
+    }
     const nonnegative = Math.min(...values) >= 0;
     const transform = (value) => nonnegative ? Math.log1p(value) : value;
     const transformed = values.map(transform);
@@ -1444,6 +1477,10 @@
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        const depthTestEnabled = gl.isEnabled(gl.DEPTH_TEST);
+        const depthWriteEnabled = gl.getParameter(gl.DEPTH_WRITEMASK);
+        gl.disable(gl.DEPTH_TEST);
+        gl.depthMask(false);
         gl.enable(gl.CULL_FACE);
         gl.frontFace(gl.CCW);
         gl.cullFace(gl.BACK);
@@ -1455,6 +1492,8 @@
         gl.uniform1f(state.uniforms.scale, 1.0);
         drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
         gl.disable(gl.CULL_FACE);
+        gl.depthMask(depthWriteEnabled);
+        if (depthTestEnabled) gl.enable(gl.DEPTH_TEST);
         state.renderCount += 1;
         state.lastGlError = gl.getError();
         map.triggerRepaint();
@@ -1483,7 +1522,7 @@
             phase: (index * 2.399963229728653) % (Math.PI * 2),
             size: 36 * sizeFactors.get(record),
           };
-        });
+        }).sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
         state.dirty = true;
         map.triggerRepaint();
       },
@@ -1508,6 +1547,9 @@
           sizeBy: layerFilters.powerPlants.sizeBy,
           minimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
           maximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
+          drawOrderAscending: state.entries.every((entry, index) => index === 0 || state.entries[index - 1].size <= entry.size),
+          topmostRecordId: state.entries.at(-1)?.record.id || null,
+          topmostSize: state.entries.at(-1)?.size || 0,
         };
       },
       getExportEntries() {
@@ -1528,7 +1570,9 @@
           const dy = projected.y - point.y;
           const distance = Math.hypot(dx, dy);
           if (distance > entry.size && !(Math.abs(dx) <= entry.size * .67 && Math.abs(dy) <= entry.size)) return;
-          if (!best || distance < best.distance) best = { record, distance };
+          if (!best || entry.size > best.size || (entry.size === best.size && distance < best.distance)) {
+            best = { record, distance, size: entry.size };
+          }
         });
         return best?.record || null;
       },
@@ -1545,11 +1589,35 @@
   function applyMarkerAppearance(record, element) {
     const colorBy = layerFilters.datacenters.colorBy;
     const outlineBy = layerFilters.datacenters.outlineBy;
+    const glow = dataCenterGlow(record, layerFilters.datacenters.glowBy);
     element.style.setProperty('--marker-icon-fill', iconFillForRecord(record, colorBy));
     const outline = outlineColorForRecord(record, outlineBy);
     element.style.setProperty('--marker-outline-color', outline);
+    element.style.setProperty('--marker-glow-color', glow.color);
+    element.style.setProperty('--marker-glow-opacity', String(glow.opacity));
+    element.style.setProperty('--marker-glow-scale', String(glow.scale));
+    element.dataset.glow = glow.kind;
     element.dataset.exportColors = JSON.stringify(stylePaletteForRecord(record, colorBy).map((entry) => entry.color));
     element.dataset.exportOutline = outline;
+    element.dataset.exportGlowColor = glow.color;
+    element.dataset.exportGlowOpacity = String(glow.opacity);
+    element.dataset.exportGlowScale = String(glow.scale);
+  }
+
+  function dataCenterGlow(record, glowBy) {
+    if (glowBy !== 'contestation' || !Number.isInteger(record.contestation_score)) {
+      return { kind: 'none', color: 'transparent', opacity: 0, scale: 1 };
+    }
+    if (record.contestation_score >= 4) {
+      return { kind: 'contested', color: '#ff263f', opacity: 1, scale: 4.2 };
+    }
+    if (record.contestation_score === 3) {
+      return { kind: 'contested', color: '#ff4b5f', opacity: .68, scale: 3.5 };
+    }
+    if (record.contestation_score === 0) {
+      return { kind: 'quiet', color: '#ffffff', opacity: .72, scale: 3.2 };
+    }
+    return { kind: 'none', color: 'transparent', opacity: 0, scale: 1 };
   }
 
   let enviroScreenData = null;
@@ -1570,10 +1638,12 @@
   let tagFilterMode = 'and';
   let inspectorHoverKey = null;
   let inspectorPinnedKey = null;
+  let overlayHoverOwner = null;
   let streetStyleLayerIds = [];
   const layerFilters = {
-    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', sizeBy: 'none' },
+    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', sizeBy: 'none' },
     powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', sizeBy: 'none' },
+    neonStreets: { scope: 'i95' },
     enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
     parcels: { text: '' },
   };
@@ -1613,6 +1683,10 @@
       ['lifecycle', 'Lifecycle stage'],
       ['sentiment', 'Public response'],
       ['energy', 'Energy profile'],
+    ],
+    datacenterIconGlow: [
+      ['contestation', 'Contestation · red / quiet white'],
+      ['none', 'No glow'],
     ],
     plantIconColor: [
       ['energy', 'Fuel / energy profile'],
@@ -1736,6 +1810,7 @@
     document.getElementById('layer-search').value = layerSearch;
     if (state.filters?.datacenters) Object.assign(layerFilters.datacenters, state.filters.datacenters);
     if (state.filters?.powerPlants) Object.assign(layerFilters.powerPlants, state.filters.powerPlants);
+    if (state.filters?.neonStreets) Object.assign(layerFilters.neonStreets, state.filters.neonStreets);
     if (state.filters?.enviroscreen) Object.assign(layerFilters.enviroscreen, state.filters.enviroscreen);
     if (state.filters?.parcels) Object.assign(layerFilters.parcels, state.filters.parcels);
     layerCustomColors.clear();
@@ -1753,7 +1828,7 @@
       remoteState.enabled = document.getElementById(`show-${config.id}`).checked;
       const savedFilter = state.filters?.remote?.[config.id] || {};
       remoteState.text = String(savedFilter.text || '').trim().toLowerCase();
-      remoteState.sizeBy = String(savedFilter.sizeBy || 'none');
+      remoteState.sizeBy = String(savedFilter.sizeBy || config.defaultSizeBy || 'none');
       remoteState.colorTheme = String(savedFilter.colorTheme || 'default');
     });
   }
@@ -1811,6 +1886,7 @@
       filters: {
         datacenters: { ...layerFilters.datacenters },
         powerPlants: { ...layerFilters.powerPlants },
+        neonStreets: { ...layerFilters.neonStreets },
         enviroscreen: { ...layerFilters.enviroscreen },
         parcels: { ...layerFilters.parcels },
         remote: remoteFilters,
@@ -1935,7 +2011,110 @@
         },
       }, firstStreetLayer);
     });
+    applyNeonStreetLayer(map);
     map.triggerRepaint();
+  }
+
+  function neonStreetFilter(scope = layerFilters.neonStreets.scope) {
+    const lineGeometry = ['match', ['geometry-type'], ['LineString', 'MultiLineString'], true, false];
+    const roadClass = ['get', 'class'];
+    let scopeFilter;
+    if (scope === 'all') {
+      scopeFilter = ['match', roadClass, ['motorway', 'trunk', 'primary', 'secondary', 'tertiary', 'minor', 'street', 'street_limited', 'service'], true, false];
+    } else if (scope === 'major') {
+      scopeFilter = ['match', roadClass, ['motorway', 'trunk', 'primary'], true, false];
+    } else if (scope === 'interstates') {
+      scopeFilter = ['==', ['get', 'network'], 'us-interstate'];
+    } else {
+      scopeFilter = ['all', ['==', ['get', 'network'], 'us-interstate'], ['==', ['get', 'ref'], '95']];
+    }
+    return ['all', lineGeometry, scopeFilter];
+  }
+
+  function isStreetStyleRoadLayer(layer) {
+    return layer.source === 'openmaptiles'
+      && (layer['source-layer'] === 'transportation' || layer['source-layer'] === 'transportation_name');
+  }
+
+  function applyNeonStreetLayer(map) {
+    const enabled = document.getElementById('show-neon-streets')?.checked ?? false;
+    const streetBaseVisible = activeBaseLayerId() === 'street-map';
+    const styleLayersById = new Map(map.getStyle().layers.map((layer) => [layer.id, layer]));
+    streetStyleLayerIds.forEach((layerId) => {
+      const layer = styleLayersById.get(layerId);
+      if (!layer || !isStreetStyleRoadLayer(layer)) return;
+      map.setLayoutProperty(layerId, 'visibility', streetBaseVisible && !enabled ? 'visible' : 'none');
+    });
+    if (!map.getSource('openmaptiles')) return;
+
+    const firstLabel = map.getStyle().layers.find((layer) => layer.type === 'symbol' && streetStyleLayerIds.includes(layer.id))?.id;
+    const color = layerCustomColors.get('neon-streets') || '#00eaff';
+    const filter = neonStreetFilter();
+    if (!map.getLayer(NEON_STREET_GLOW_LAYER_ID)) {
+      map.addLayer({
+        id: NEON_STREET_GLOW_LAYER_ID,
+        type: 'line',
+        source: 'openmaptiles',
+        'source-layer': 'transportation_name',
+        filter,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': color,
+          'line-width': ['interpolate', ['exponential', 1.35], ['zoom'], 5, 3, 9, 5, 13, 10, 17, 22],
+          'line-blur': ['interpolate', ['linear'], ['zoom'], 5, 2, 12, 4, 17, 8],
+          'line-opacity': .72,
+        },
+      }, firstLabel);
+    }
+    if (!map.getLayer(NEON_STREET_CORE_LAYER_ID)) {
+      map.addLayer({
+        id: NEON_STREET_CORE_LAYER_ID,
+        type: 'line',
+        source: 'openmaptiles',
+        'source-layer': 'transportation_name',
+        filter,
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#e8ffff',
+          'line-width': ['interpolate', ['exponential', 1.3], ['zoom'], 5, .8, 9, 1.15, 13, 2.2, 17, 5],
+          'line-opacity': .98,
+        },
+      }, firstLabel);
+    }
+    if (!map.getLayer(NEON_STREET_LABEL_LAYER_ID)) {
+      map.addLayer({
+        id: NEON_STREET_LABEL_LAYER_ID,
+        type: 'symbol',
+        source: 'openmaptiles',
+        'source-layer': 'transportation_name',
+        filter: neonStreetFilter(),
+        minzoom: 6,
+        layout: {
+          'symbol-placement': 'line',
+          'symbol-spacing': 520,
+          'text-field': ['case', ['==', ['get', 'network'], 'us-interstate'], ['concat', 'I-', ['get', 'ref']], ['coalesce', ['get', 'ref'], ['get', 'name']]],
+          'text-font': ['Noto Sans Bold'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 6, 10, 13, 13, 17, 16],
+          'text-keep-upright': true,
+        },
+        paint: {
+          'text-color': '#f2ffff',
+          'text-halo-color': color,
+          'text-halo-width': 2.4,
+          'text-halo-blur': 1.2,
+        },
+      }, firstLabel);
+    }
+    [NEON_STREET_GLOW_LAYER_ID, NEON_STREET_CORE_LAYER_ID, NEON_STREET_LABEL_LAYER_ID].forEach((layerId) => {
+      map.setFilter(layerId, filter);
+      map.setLayoutProperty(layerId, 'visibility', enabled ? 'visible' : 'none');
+    });
+    map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-color', color);
+    map.setPaintProperty(NEON_STREET_LABEL_LAYER_ID, 'text-halo-color', color);
+    const labels = { i95: 'I-95', interstates: 'All interstates', major: 'Major roads', all: 'All streets' };
+    document.getElementById('neon-streets-status').textContent = enabled
+      ? `${labels[layerFilters.neonStreets.scope] || labels.i95} · neon route overlay`
+      : 'Off · OpenFreeMap road overlay';
   }
 
   function drawExportDataCenterMarkers(map, context, scaleX, scaleY) {
@@ -1958,6 +2137,23 @@
 
       context.save();
       context.translate(x, y);
+      const glowColor = /^#[0-9a-f]{6}$/i.test(marker.dataset.exportGlowColor || '')
+        ? marker.dataset.exportGlowColor
+        : null;
+      const glowOpacity = Math.max(0, Math.min(1, Number(marker.dataset.exportGlowOpacity) || 0));
+      const glowScale = Math.max(1, Number(marker.dataset.exportGlowScale) || 1);
+      if (glowColor && glowOpacity > 0) {
+        const rgb = hexToRgb(glowColor);
+        const radius = size * glowScale / 2;
+        const glow = context.createRadialGradient(0, 0, size * .12, 0, 0, radius);
+        glow.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${glowOpacity})`);
+        glow.addColorStop(.28, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${glowOpacity * .5})`);
+        glow.addColorStop(1, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0)`);
+        context.fillStyle = glow;
+        context.beginPath();
+        context.arc(0, 0, radius, 0, Math.PI * 2);
+        context.fill();
+      }
       context.shadowColor = 'rgba(0, 0, 0, .72)';
       context.shadowBlur = size * .2;
       context.shadowOffsetY = size * .08;
@@ -2243,9 +2439,17 @@
         pinRecord(record, sourceById);
       });
       element.addEventListener('pointerenter', () => {
+        overlayHoverOwner = 'data-center';
+        powerPlantBoltLayer?.setHoveredRecord(null);
+        clearTimeout(parcelHoverTimer);
+        parcelHoverAbort?.abort();
+        clearParcelHighlight(map);
         if (document.getElementById('hover-datacenters').checked) selectHoveredRecord(record, sourceById);
       });
-      element.addEventListener('pointerleave', clearInspectorHover);
+      element.addEventListener('pointerleave', () => {
+        overlayHoverOwner = null;
+        clearInspectorHover();
+      });
       element.addEventListener('focus', () => selectHoveredRecord(record, sourceById));
       element.addEventListener('blur', clearInspectorHover);
       const marker = new maplibregl.Marker({
@@ -2264,6 +2468,10 @@
     setupLayerCardPreviews();
     document.getElementById('show-datacenters').addEventListener('change', () => renderResults(allRecords, markerById));
     document.getElementById('show-power-plants').addEventListener('change', () => renderResults(allRecords, markerById));
+    document.getElementById('show-neon-streets').addEventListener('change', () => {
+      applyNeonStreetLayer(map);
+      persistUiState(map);
+    });
     document.getElementById('show-enviroscreen').addEventListener('change', (event) => {
       setEnviroScreenVisibility(map, event.target.checked);
     });
@@ -2293,10 +2501,14 @@
     filterLayerCards(layerSearch);
     renderSources(data.sources);
     map.on('mousemove', (event) => handleMapHover(map, event, sourceById));
+    window.__resolveDatacenterHoverTargets = (point) => {
+      topMapHoverTarget(map, new maplibregl.Point(point.x, point.y), sourceById);
+      return window.__lastHoverArbitration;
+    };
     map.on('click', (event) => handleMapClick(map, event, sourceById));
     map.getCanvas().addEventListener('mouseleave', () => {
       powerPlantBoltLayer?.setHoveredRecord(null);
-      clearInspectorHover();
+      if (!overlayHoverOwner) clearInspectorHover();
     });
     map.on('moveend', () => {
       loadParcelBoundaries(map);
@@ -2371,7 +2583,7 @@
       </div>`).join('');
 
     REMOTE_LAYERS.forEach((config) => {
-      remoteLayerStates.set(config.id, { enabled: false, data: null, filteredData: null, abort: null, requestKey: '', text: '', sizeBy: 'none', colorTheme: 'default' });
+      remoteLayerStates.set(config.id, { enabled: false, data: null, filteredData: null, abort: null, requestKey: '', text: '', sizeBy: config.defaultSizeBy || 'none', colorTheme: 'default' });
       layerPreviewSearchIndex.set(config.id, [
         config.name,
         config.description,
@@ -2522,6 +2734,7 @@
     esriBuildingsEnabled = toggle.checked;
     const status = document.getElementById(`status-${ESRI_BUILDINGS.id}`);
     if (!esriBuildingsEnabled) {
+      if (overlayHoverOwner === 'esri-building') overlayHoverOwner = null;
       esriBuildingsOverlay?.setProps({ layers: [] });
       status.textContent = 'Off · live Esri scene service';
       return;
@@ -2552,9 +2765,15 @@
         },
         onHover: (info) => {
           if (!info.object || !document.getElementById(`hover-${ESRI_BUILDINGS.id}`).checked) {
+            if (overlayHoverOwner === 'esri-building') overlayHoverOwner = null;
             clearInspectorHover('esri-building:');
             return;
           }
+          overlayHoverOwner = 'esri-building';
+          powerPlantBoltLayer?.setHoveredRecord(null);
+          clearTimeout(parcelHoverTimer);
+          parcelHoverAbort?.abort();
+          clearParcelHighlight(map);
           map.getCanvas().style.cursor = 'pointer';
           const objectId = info.object.id ?? info.object.attributes?.OBJECTID ?? info.index;
           renderHoveredInspector(`esri-building:${objectId}`, () => renderEsriBuildingDetail(info));
@@ -2624,18 +2843,21 @@
     if (config.geometry === 'point') {
       const layerId = `${sourceId}-point`;
       if (!map.getLayer(layerId)) {
-        map.addLayer(config.pointSymbol === 'interchange' ? {
+        map.addLayer(config.pointSymbol === 'interchange-arrow' ? {
           id: layerId,
           type: 'symbol',
           source: sourceId,
           layout: {
-            'text-field': '⇄',
+            'text-field': '➤',
             'text-size': ['interpolate', ['linear'], ['zoom'],
               5, ['*', 15, ['coalesce', ['get', '_dcPointScale'], 1]],
               9, ['*', 22, ['coalesce', ['get', '_dcPointScale'], 1]],
               14, ['*', 30, ['coalesce', ['get', '_dcPointScale'], 1]]],
-            'text-rotate': ['coalesce', ['get', 'axis_rotation_degrees'], 0],
+            'text-rotate': ['+',
+              ['coalesce', ['get', 'axis_rotation_degrees'], 0],
+              ['case', ['==', ['downcase', ['coalesce', ['get', 'statewide_flow_direction'], '']], 'net import'], 0, 180]],
             'text-rotation-alignment': 'map',
+            'text-pitch-alignment': 'map',
             'text-allow-overlap': true,
             'text-ignore-placement': true,
           },
@@ -2658,7 +2880,7 @@
           },
         }, firstLabel);
       }
-      map.setPaintProperty(layerId, config.pointSymbol === 'interchange' ? 'text-color' : 'circle-color', remoteLayerColor(config));
+      map.setPaintProperty(layerId, config.pointSymbol === 'interchange-arrow' ? 'text-color' : 'circle-color', remoteLayerColor(config));
     } else if (config.geometry === 'line') {
       const lineId = `${sourceId}-line`;
       if (!map.getLayer(lineId)) {
@@ -2880,6 +3102,7 @@
   const CORE_LAYER_DEFAULT_COLORS = {
     datacenters: '#c76522',
     'power-plants': '#167fc1',
+    'neon-streets': '#00eaff',
     enviroscreen: '#01856f',
     parcels: '#79cff1',
   };
@@ -2911,6 +3134,7 @@
     if (!activeLayerContext) return;
     const { map, records, markerById } = activeLayerContext;
     if (layerId === 'datacenters' || layerId === 'power-plants') renderResults(records, markerById);
+    if (layerId === 'neon-streets') applyNeonStreetLayer(map);
     if (layerId === 'enviroscreen' && map.getLayer(ENVIROSCREEN_FILL_ID)) {
       addEnviroScreenLayers(map, enviroScreenData || { type: 'FeatureCollection', features: [] });
     }
@@ -3026,7 +3250,8 @@
         + fieldMarkup('Power scale', 'powerScale', filters.powerScale, FILTER_OPTIONS.powerScale, 'Uses reported grid demand when available; otherwise a published capacity envelope is labeled as a proxy. Backup generation is excluded.')
         + fieldMarkup('Icon color uses', 'colorBy', filters.colorBy, FILTER_OPTIONS.datacenterIconColor)
         + fieldMarkup('Icon outline uses', 'outlineBy', filters.outlineBy, FILTER_OPTIONS.datacenterIconOutline)
-        + fieldMarkup('Icon size uses', 'sizeBy', filters.sizeBy, numericPointScaleOptions(records), 'Numeric values are normalized to a bounded screen-space size.');
+        + fieldMarkup('Icon glow uses', 'glowBy', filters.glowBy, FILTER_OPTIONS.datacenterIconGlow, 'Strongly contested facilities glow red; facilities with no documented contestation glow white. Intermediate and unknown scores do not glow.')
+        + fieldMarkup('Icon size uses', 'sizeBy', filters.sizeBy, dataCenterPointScaleOptions(records), 'Net draw uses published normal grid demand. Total draw uses the best published facility, critical-power, protected-power, or utility-feed envelope; it is capacity, not measured consumption. Icons with undisclosed values use the smallest size.');
     } else if (layerId === 'power-plants') {
       title = 'Power plant layer filters';
       const records = activeLayerContext.records.filter((record) => record.record_type === 'power_plant');
@@ -3035,6 +3260,14 @@
         + fieldMarkup('Icon color uses', 'colorBy', layerFilters.powerPlants.colorBy, FILTER_OPTIONS.plantIconColor)
         + fieldMarkup('Icon outline uses', 'outlineBy', layerFilters.powerPlants.outlineBy, FILTER_OPTIONS.plantIconOutline)
         + fieldMarkup('Icon size uses', 'sizeBy', layerFilters.powerPlants.sizeBy, numericPointScaleOptions(records), 'Choose 2024 net generation / output to scale bolts by reported production.');
+    } else if (layerId === 'neon-streets') {
+      title = 'Neon streets layer filters';
+      body.innerHTML = fieldMarkup('Roads shown', 'scope', layerFilters.neonStreets.scope, [
+        ['i95', 'I-95 only'],
+        ['interstates', 'All interstates'],
+        ['major', 'Interstates and major roads'],
+        ['all', 'All streets'],
+      ], 'I-95 is the default. Broader modes reuse the same vector tiles without downloading a second road dataset.');
     } else if (layerId === 'enviroscreen') {
       title = 'EnviroScreen layer filters';
       const filters = layerFilters.enviroscreen;
@@ -3082,6 +3315,7 @@
         powerScale: String(formData.get('powerScale') || 'all'),
         colorBy: String(formData.get('colorBy') || 'energy'),
         outlineBy: String(formData.get('outlineBy') || 'lifecycle'),
+        glowBy: String(formData.get('glowBy') || 'contestation'),
         sizeBy: String(formData.get('sizeBy') || 'none'),
       };
     } else if (activeLayerConfigId === 'power-plants') {
@@ -3092,6 +3326,9 @@
         outlineBy: String(formData.get('outlineBy') || 'technology'),
         sizeBy: String(formData.get('sizeBy') || 'none'),
       };
+    } else if (activeLayerConfigId === 'neon-streets') {
+      const scope = String(formData.get('scope') || 'i95');
+      layerFilters.neonStreets.scope = ['i95', 'interstates', 'major', 'all'].includes(scope) ? scope : 'i95';
     } else if (activeLayerConfigId === 'enviroscreen') {
       layerFilters.enviroscreen = {
         text: String(formData.get('text') || '').trim().toLowerCase(),
@@ -3113,9 +3350,11 @@
 
   function resetActiveLayerFilter() {
     if (activeLayerConfigId === 'datacenters') {
-      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', sizeBy: 'none' };
+      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', sizeBy: 'none' };
     } else if (activeLayerConfigId === 'power-plants') {
       layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', sizeBy: 'none' };
+    } else if (activeLayerConfigId === 'neon-streets') {
+      layerFilters.neonStreets = { scope: 'i95' };
     } else if (activeLayerConfigId === 'enviroscreen') {
       layerFilters.enviroscreen = { text: '', scoreBand: 'all', community: 'all' };
     } else if (activeLayerConfigId === 'parcels') {
@@ -3134,6 +3373,7 @@
     if (!activeLayerContext) return;
     const { map, records, markerById } = activeLayerContext;
     renderResults(records, markerById);
+    applyNeonStreetLayer(map);
     if (enviroScreenData && map.getSource(ENVIROSCREEN_SOURCE_ID)) applyEnviroScreenFilter(map);
     if (map.getSource(PARCEL_SOURCE_ID)) applyParcelFilter(map);
     REMOTE_LAYERS.forEach((config) => {
@@ -3488,52 +3728,23 @@
   }
 
   function handleMapHover(map, event, sourceById) {
-    const plantHover = document.getElementById('show-power-plants').checked
-      ? powerPlantBoltLayer?.hitTest(event.point)
-      : null;
-    powerPlantBoltLayer?.setHoveredRecord(plantHover);
-    if (plantHover) {
+    if (overlayHoverOwner === 'data-center') overlayHoverOwner = null;
+    if (overlayHoverOwner) return;
+    const target = topMapHoverTarget(map, event.point, sourceById);
+    powerPlantBoltLayer?.setHoveredRecord(target?.kind === 'power-plant' ? target.record : null);
+    if (target) {
       clearTimeout(parcelHoverTimer);
       parcelHoverAbort?.abort();
+      if (target.kind !== 'parcel') clearParcelHighlight(map);
       map.getCanvas().style.cursor = 'pointer';
-      if (document.getElementById('hover-power-plants').checked) selectHoveredRecord(plantHover, sourceById);
+      renderHoveredInspector(target.key, target.render);
       return;
     }
     const parcelEnabled = document.getElementById('show-parcels').checked
       && document.getElementById('hover-parcels').checked
       && map.getZoom() >= PARCEL_MIN_ZOOM;
-    const enviroFeature = document.getElementById('hover-enviroscreen').checked && map.getLayer(ENVIROSCREEN_FILL_ID)
-      ? map.queryRenderedFeatures(event.point, { layers: [ENVIROSCREEN_FILL_ID] })[0]
-      : null;
-    const remoteHover = findRemoteHoverFeature(map, event.point);
-
-    if (remoteHover) {
-      clearTimeout(parcelHoverTimer);
-      parcelHoverAbort?.abort();
-      map.getCanvas().style.cursor = 'pointer';
-      renderHoveredInspector(remoteFeatureKey(remoteHover), () => {
-        renderRemoteLayerDetail(remoteHover.config, remoteHover.feature.properties);
-      });
-      return;
-    }
-    if (enviroFeature) {
-      clearTimeout(parcelHoverTimer);
-      parcelHoverAbort?.abort();
-      map.getCanvas().style.cursor = 'pointer';
-      renderHoveredInspector(`enviroscreen:${enviroFeature.properties.GEOID20 || 'unknown'}`, () => {
-        renderEnviroScreenDetail(enviroFeature.properties);
-      });
-      return;
-    }
     if (parcelEnabled) {
       map.getCanvas().style.cursor = 'pointer';
-      const insideCurrentParcel = map.getLayer(PARCEL_HOVER_FILL_ID)
-        && map.queryRenderedFeatures(event.point, { layers: [PARCEL_HOVER_FILL_ID] }).length > 0;
-      if (insideCurrentParcel && hoveredParcel) {
-        const properties = hoveredParcel.features[0].properties;
-        renderHoveredInspector(`parcel:${properties.ACCTID || 'unknown'}`, () => renderParcelDetail(properties));
-        return;
-      }
       scheduleParcelLookup(map, event.lngLat);
       return;
     }
@@ -3542,6 +3753,82 @@
     parcelHoverAbort?.abort();
     map.getCanvas().style.cursor = '';
     clearInspectorHover();
+  }
+
+  function topMapHoverTarget(map, point, sourceById) {
+    const layers = map.getStyle().layers;
+    const zByLayer = new Map(layers.map((layer, index) => [layer.id, index]));
+    const candidates = [];
+    if (
+      document.getElementById('show-power-plants').checked
+      && document.getElementById('hover-power-plants').checked
+    ) {
+      const record = powerPlantBoltLayer?.hitTest(point);
+      if (record) {
+        candidates.push({
+          kind: 'power-plant',
+          key: `record:${record.id}`,
+          record,
+          z: zByLayer.get(POWER_PLANT_WEBGL_LAYER_ID) ?? -1,
+          render: () => selectRecord(record, sourceById),
+        });
+      }
+    }
+
+    const layerTargets = new Map();
+    if (
+      document.getElementById('show-neon-streets').checked
+      && document.getElementById('hover-neon-streets').checked
+      && map.getLayer(NEON_STREET_CORE_LAYER_ID)
+    ) {
+      layerTargets.set(NEON_STREET_CORE_LAYER_ID, (feature) => ({
+        kind: 'neon-street',
+        key: neonStreetKey(feature),
+        render: () => renderNeonStreetDetail(feature.properties),
+      }));
+    }
+    if (document.getElementById('hover-enviroscreen').checked && map.getLayer(ENVIROSCREEN_FILL_ID)) {
+      layerTargets.set(ENVIROSCREEN_FILL_ID, (feature) => ({
+        kind: 'enviroscreen',
+        key: `enviroscreen:${feature.properties.GEOID20 || 'unknown'}`,
+        render: () => renderEnviroScreenDetail(feature.properties),
+      }));
+    }
+    REMOTE_LAYERS.forEach((config) => {
+      if (!remoteLayerStates.get(config.id)?.enabled || !document.getElementById(`hover-${config.id}`).checked) return;
+      remoteRenderLayerIds(config).forEach((layerId) => {
+        if (!map.getLayer(layerId)) return;
+        layerTargets.set(layerId, (feature) => ({
+          kind: 'remote',
+          key: remoteFeatureKey({ feature, config }),
+          render: () => renderRemoteLayerDetail(config, feature.properties),
+        }));
+      });
+    });
+    if (hoveredParcel && map.getLayer(PARCEL_HOVER_FILL_ID)) {
+      layerTargets.set(PARCEL_HOVER_FILL_ID, () => {
+        const properties = hoveredParcel.features[0].properties;
+        return {
+          kind: 'parcel',
+          key: `parcel:${properties.ACCTID || 'unknown'}`,
+          render: () => renderParcelDetail(properties),
+        };
+      });
+    }
+
+    const layerIds = [...layerTargets.keys()];
+    if (layerIds.length) {
+      map.queryRenderedFeatures(point, { layers: layerIds }).forEach((feature) => {
+        const target = layerTargets.get(feature.layer.id)?.(feature);
+        if (target) candidates.push({ ...target, z: zByLayer.get(feature.layer.id) ?? -1 });
+      });
+    }
+    candidates.sort((left, right) => right.z - left.z);
+    window.__lastHoverArbitration = {
+      candidates: candidates.map(({ key, kind, z }) => ({ key, kind, z })),
+      chosen: candidates.length ? { key: candidates[0].key, kind: candidates[0].kind, z: candidates[0].z } : null,
+    };
+    return candidates[0] || null;
   }
 
   function handleMapClick(map, event, sourceById) {
@@ -3554,6 +3841,13 @@
       pinRecord(plantHit, sourceById);
       return;
     }
+    const neonStreet = document.getElementById('show-neon-streets').checked && map.getLayer(NEON_STREET_CORE_LAYER_ID)
+      ? map.queryRenderedFeatures(event.point, { layers: [NEON_STREET_CORE_LAYER_ID] })[0]
+      : null;
+    if (neonStreet) {
+      pinInspector(neonStreetKey(neonStreet), () => renderNeonStreetDetail(neonStreet.properties));
+      return;
+    }
     const remoteHit = findRemoteHoverFeature(map, event.point, false);
     if (remoteHit) {
       clearTimeout(parcelHoverTimer);
@@ -3562,6 +3856,27 @@
         renderRemoteLayerDetail(remoteHit.config, remoteHit.feature.properties);
       });
     }
+  }
+
+  function neonStreetKey(feature) {
+    const properties = feature.properties || {};
+    return `neon-street:${feature.id ?? properties.ref ?? properties.name ?? 'road'}`;
+  }
+
+  function renderNeonStreetDetail(properties) {
+    const route = properties.ref || properties.name || 'Road segment';
+    const detail = prepareInspectorDetail();
+    detail.innerHTML = `
+      <h2>${escapeHtml(route)}</h2>
+      <p class="dc-type">Neon streets · OpenFreeMap road network</p>
+      ${renderFactGroup('Road', [
+        ['Route reference', known(properties.ref)],
+        ['Name', known(properties.name)],
+        ['Road class', known(properties.class)],
+        ['Surface', known(properties.surface)],
+        ['Bridge / tunnel', known(properties.brunnel)],
+      ])}
+      <div class="dc-record-sources"><strong>Source</strong><ul><li><a href="https://openfreemap.org/" target="_blank" rel="noopener noreferrer">OpenFreeMap / OpenStreetMap</a></li></ul></div>`;
   }
 
   function remoteFeatureKey(hit) {

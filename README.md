@@ -12,7 +12,7 @@ using GitHub pages
 - Use:
 
 ```bash
-./scripts/deploy_portal.sh
+./portal/scripts/deploy_portal.sh
 ```
 
 Optional env file for portal deploy settings:
