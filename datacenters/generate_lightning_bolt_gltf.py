@@ -218,6 +218,7 @@ def build_gltf(
     uvs: list[float],
     indices: list[int],
     placements: dict[str, list[float]],
+    outline_2d: list[Vec2],
 ) -> dict:
     buffer = bytearray()
     buffer_views = []
@@ -313,6 +314,9 @@ def build_gltf(
         "meshes": [
             {
                 "name": "LightningBoltMesh",
+                "extras": {
+                    "outline2d": [[point.x, point.y] for point in outline_2d],
+                },
                 "primitives": [
                     {
                         "attributes": {
@@ -354,12 +358,13 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    outline = build_lightning_outline(args.width, args.height)
     positions, normals, uvs, indices, placements = build_mesh(
         width=args.width,
         height=args.height,
         thickness=args.thickness,
     )
-    gltf = build_gltf(positions, normals, uvs, indices, placements)
+    gltf = build_gltf(positions, normals, uvs, indices, placements, outline)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(gltf, indent=2) + "\n", encoding="utf-8")
     print(
