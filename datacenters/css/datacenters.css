@@ -631,11 +631,76 @@ body.datacenter-page::before {
   transition: border-color 120ms ease, background 120ms ease;
 }
 
+.dc-layer-option[draggable="true"] { cursor: grab; }
+
+.dc-layer-option[draggable="true"]:active { cursor: grabbing; }
+
+.dc-layer-option.is-layer-dragging {
+  opacity: .46;
+  border-style: dashed;
+}
+
+.dc-layer-option.is-layer-drop-target {
+  border-color: var(--dc-yellow);
+  box-shadow: inset 0 0 0 1px var(--dc-yellow), 0 0 16px rgba(243, 201, 105, .22);
+}
+
+.dc-layer-option.is-layer-selected-order {
+  background:
+    linear-gradient(90deg, rgba(243, 201, 105, .13), rgba(135, 206, 235, .06)),
+    rgba(255, 255, 255, .055);
+}
+
+.dc-layer-option.is-layer-selected-order .dc-layer-name strong::before {
+  content: "↕ ";
+  color: var(--dc-yellow);
+}
+
+.dc-layer-selected-section {
+  margin: .45rem 0 .65rem;
+  padding-bottom: .35rem;
+  border-bottom: 1px solid rgba(135, 206, 235, .2);
+}
+
+.dc-layer-selected-list {
+  min-height: .35rem;
+}
+
 .dc-layer-option:hover,
 .dc-layer-option:focus-within {
   border-color: var(--dc-sky);
   background: rgba(135, 206, 235, .11);
 }
+
+.dc-layer-option.is-source-hovered,
+.dc-layer-option.is-source-pinned {
+  position: relative;
+  border-color: color-mix(in srgb, var(--dc-sky) 84%, white);
+  background:
+    linear-gradient(90deg, rgba(135, 206, 235, .2), rgba(135, 206, 235, .06)),
+    rgba(255, 255, 255, .065);
+  box-shadow: inset 3px 0 0 var(--dc-sky), 0 0 0 1px rgba(135, 206, 235, .18);
+}
+
+.dc-layer-option.is-source-pinned {
+  border-color: var(--dc-white);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, .2), rgba(135, 206, 235, .08)),
+    rgba(255, 255, 255, .08);
+  box-shadow: inset 3px 0 0 var(--dc-white), 0 0 0 1px rgba(255, 255, 255, .28), 0 0 18px rgba(135, 206, 235, .14);
+}
+
+.dc-layer-option.is-source-hovered .dc-layer-name strong::after,
+.dc-layer-option.is-source-pinned .dc-layer-name strong::after {
+  margin-left: .35rem;
+  color: var(--dc-sky);
+  font-size: .5rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.dc-layer-option.is-source-hovered .dc-layer-name strong::after { content: "hovered"; }
+.dc-layer-option.is-source-pinned .dc-layer-name strong::after { content: "pinned"; color: var(--dc-white); }
 
 .dc-layer-toprow {
   display: grid;
@@ -694,6 +759,19 @@ body.datacenter-page::before {
 }
 
 .dc-layer-locate { font-size: .8rem; }
+
+.dc-layer-zoom {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  padding: 0 .38rem;
+  border: 1px solid rgba(135, 206, 235, .28);
+  border-radius: .3rem;
+  color: var(--dc-sky);
+  background: color-mix(in srgb, var(--dc-navy-deep) 76%, transparent);
+  font: 700 .55rem NectoMono, ui-monospace, monospace;
+  white-space: nowrap;
+}
 
 .dc-layer-visibility {
   display: grid;
@@ -1719,6 +1797,7 @@ body.datacenter-page::before {
   border: 0;
   background: transparent;
   cursor: pointer;
+  pointer-events: none;
 }
 
 .maplibregl-marker.dc-map-marker--center {
@@ -1737,15 +1816,20 @@ body.datacenter-page::before {
   height: calc(var(--marker-size, 22px) * var(--marker-glow-scale, 1));
   border-radius: 50%;
   background: radial-gradient(circle,
-    var(--marker-glow-color, transparent) 0 8%,
-    color-mix(in srgb, var(--marker-glow-color, transparent) 58%, transparent) 34%,
-    color-mix(in srgb, var(--marker-glow-color, transparent) 20%, transparent) 58%,
-    transparent 76%);
+    var(--marker-glow-color, transparent) 0 16%,
+    color-mix(in srgb, var(--marker-glow-color, transparent) 82%, transparent) 32%,
+    color-mix(in srgb, var(--marker-glow-edge-color, var(--marker-glow-color, transparent)) 52%, transparent) 52%,
+    color-mix(in srgb, var(--marker-glow-edge-color, var(--marker-glow-color, transparent)) 18%, transparent) 70%,
+    transparent 82%);
   opacity: var(--marker-glow-opacity, 0);
-  filter: blur(calc(var(--marker-size, 22px) * .1));
+  filter: blur(calc(var(--marker-size, 22px) * .025 * var(--marker-glow-blur, 1)));
+  box-shadow:
+    0 0 0 calc(var(--marker-size, 22px) * var(--marker-glow-ring-width, .045)) color-mix(in srgb, var(--marker-glow-edge-color, var(--marker-glow-color, transparent)) var(--marker-glow-edge-opacity, 0%), transparent),
+    0 0 calc(var(--marker-size, 22px) * var(--marker-glow-edge-spread, .24)) color-mix(in srgb, var(--marker-glow-edge-color, var(--marker-glow-color, transparent)) var(--marker-glow-edge-soft-opacity, 0%), transparent);
   transform: translate3d(-50%, -50%, 0);
   pointer-events: none;
 }
+
 .maplibregl-marker.dc-map-marker--plant {
   z-index: 40;
   width: 44px;
@@ -1761,7 +1845,7 @@ body.datacenter-page::before {
   outline-offset: 3px;
 }
 
-.dc-map-marker:hover .dc-map-icon,
+.dc-map-marker.is-map-hovered .dc-map-icon,
 .dc-map-marker:focus-visible .dc-map-icon {
   box-shadow: 0 0 0 3px var(--dc-white), 0 2px 10px rgba(0, 0, 0, .75);
   transform: scale(1.18);
@@ -1890,6 +1974,28 @@ body.datacenter-page::before {
 .dc-modal-header h3 { margin: .15rem 0 0; font: 700 1rem Mattone, Arial, sans-serif; }
 .dc-modal-close { width: 2rem; height: 2rem; border-radius: 50%; font-size: 1.15rem !important; }
 .dc-modal-body { display: grid; gap: .75rem; padding: 1rem; }
+
+.dc-modal-fieldset {
+  display: grid;
+  gap: .6rem;
+  margin: 0;
+  padding: .75rem;
+  border: 1px solid var(--dc-line);
+  border-radius: .65rem;
+  background: color-mix(in srgb, var(--dc-navy-raised) 45%, transparent);
+}
+
+.dc-modal-fieldset legend {
+  padding: 0 .35rem;
+  color: var(--dc-white);
+  font: 700 .72rem Mattone, Arial, sans-serif;
+}
+
+.dc-modal-two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+}
 
 .dc-modal-field {
   display: grid;

@@ -9,7 +9,7 @@
   <link rel="icon" href="/images/favicons/favicon.png">
   <link rel="stylesheet" href="/css/master.css?v=20260807-project-menu">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260810-datacenter-glow">
+  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260810-layer-zoom-ranges">
 </head>
 <body id="body" class="datacenter-page">
   <video id="bg-video" autoplay loop muted playsinline poster="/images/general_encircled_banner.webp">
@@ -84,6 +84,11 @@
                 <span><strong>USGS Imagery Only</strong><small>The National Map orthoimagery</small></span>
               </label>
             </div>
+            <div id="selected-layer-order-section" class="dc-layer-selected-section" hidden>
+              <div class="dc-layer-section-title">Selected layer order · top draws last</div>
+              <p class="dc-layer-service-note">Drag selected layers here to set rendering and hover priority.</p>
+              <div id="selected-layer-controls" class="dc-layer-selected-list" aria-label="Selected layer render order"></div>
+            </div>
             <div class="dc-layer-section-title">Infrastructure and analysis</div>
             <div class="dc-layer-option" data-layer-preview="datacenters">
               <div class="dc-layer-toprow">
@@ -91,6 +96,7 @@
                 <span class="dc-layer-controls-row">
                   <span id="datacenter-layer-count" class="dc-layer-count" aria-label="Data center count">—</span>
                   <button class="dc-layer-color" type="button" data-layer-color="datacenters" aria-label="Change Data centers color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--center" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="datacenters">z 0–18</span>
                   <label class="dc-layer-toggle"><input id="show-datacenters" type="checkbox" checked> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-datacenters" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="datacenters" aria-label="Configure data center layer">⚙</button>
@@ -103,6 +109,7 @@
                 <span class="dc-layer-controls-row">
                   <span id="power-plant-layer-count" class="dc-layer-count" aria-label="Power plant count">—</span>
                   <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change Power plants color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="power-plants">z 0–18</span>
                   <label class="dc-layer-toggle"><input id="show-power-plants" type="checkbox"> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-power-plants" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure power plant layer">⚙</button>
@@ -114,6 +121,7 @@
                 <span class="dc-layer-name"><strong>Neon streets</strong><small>OpenFreeMap roads · I-95 by default</small></span>
                 <span class="dc-layer-controls-row">
                   <button class="dc-layer-color" type="button" data-layer-color="neon-streets" aria-label="Change Neon streets color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--street" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="neon-streets">z 0–18</span>
                   <label class="dc-layer-toggle"><input id="show-neon-streets" type="checkbox" checked> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-neon-streets" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="neon-streets" aria-label="Configure Neon streets layer">⚙</button>
@@ -126,6 +134,7 @@
                 <span class="dc-layer-name"><strong>MDE EnviroScreen</strong><small>Environmental justice scores by tract</small></span>
                 <span class="dc-layer-controls-row">
                   <button class="dc-layer-color" type="button" data-layer-color="enviroscreen" aria-label="Change MDE EnviroScreen color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--environment" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="enviroscreen">z 0–18</span>
                   <label class="dc-layer-toggle"><input id="show-enviroscreen" type="checkbox"> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-enviroscreen" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="enviroscreen" aria-label="Configure EnviroScreen layer">⚙</button>
@@ -137,6 +146,7 @@
                 <span class="dc-layer-name"><strong>MDP / SDAT parcels</strong><small>Property boundaries and record lookup</small></span>
                 <span class="dc-layer-controls-row">
                   <button class="dc-layer-color" type="button" data-layer-color="parcels" aria-label="Change MDP / SDAT parcels color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--parcel" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="parcels">z 13–18</span>
                   <label class="dc-layer-toggle"><input id="show-parcels" type="checkbox"> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-parcels" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="parcels" aria-label="Configure parcels layer">⚙</button>
@@ -212,8 +222,8 @@
         <div class="dc-disclosure-body">
           <p>Data centers are represented as one flat JSON array. The inventory combines government-verified state and permitted facilities, operator-documented commercial facilities, and named proposals. Each record says what kind of evidence establishes its status. Hardware and workflow notes are source-backed when operators or institutions publish them and explicitly labeled as inference when the public record only supports a likely use pattern. Missing energy, UPS, employment, investment, or tax-benefit values remain unknown rather than becoming zero.</p>
           <p>Public sentiment is an evidence rating, not opinion polling: <strong>-2</strong> means strong, sustained, site-specific opposition; <strong>-1</strong> documented opposition; <strong>0</strong> mixed or unclear evidence; <strong>+1/+2</strong> documented or strong support. A facility receives no score when the record is insufficient. Formal hearings, enacted restrictions, petitions, organizational letters, and attributable reporting outweigh unsourced social-media comments.</p>
-          <p>Power-plant capacity and locations come from final 2024 Form EIA-860 records. Production is annual net generation reported in final 2024 Form EIA-923 records. The residential price is EIA’s statewide annual average, not a household quote.</p>
-          <p>Import/export icons mark public HIFLD transmission lines that cross the official Maryland iMAP state boundary. Nearby circuits are grouped within 120 meters for legibility. The physical lines can carry power in either direction; EIA publishes Maryland’s statewide annual net interstate trade, while actual direction and megawatts for each mapped circuit are not public. The layer therefore never assigns the statewide net flow to an individual line.</p>
+          <p>Power-plant capacity and locations come from final 2024 Form EIA-860 records. Production is annual net generation reported in final 2024 Form EIA-923 records. The residential price is EIA’s statewide annual average, not a household quote. County residential power estimates allocate that statewide EIA residential total by ACS occupied housing units; they are planning context, not utility-metered county load.</p>
+          <p>Import/export icons mark public HIFLD transmission lines that cross the official Maryland iMAP state boundary. Nearby circuits are grouped within 120 meters for legibility. The physical lines can carry power in either direction; EIA publishes Maryland’s statewide annual net interstate trade, while actual direction and megawatts for each mapped circuit are not public. The layer scales arrows using an explicitly labeled estimated allocation of statewide average net import, weighted by voltage proxy and co-located circuit count; this is a planning guess, not a metered line-flow value.</p>
           <p class="dc-warning">Backup-generator megawatts describe emergency nameplate capacity. They must never be presented as data-center grid demand, consumption, or production.</p>
         </div>
       </details>
@@ -226,6 +236,7 @@
           <div class="dc-downloads" aria-label="Download map data">
             <a href="/datacenters/data/infrastructure.json">Infrastructure JSON</a>
             <a href="/datacenters/data/power-interchanges.json">Power interchange JSON</a>
+            <a href="/datacenters/data/power-estimates.json">Power estimates JSON</a>
             <a href="/datacenters/data/residential-electricity-rates.json">Residential rates JSON</a>
             <a href="/datacenters/data/sources.json">Source register JSON</a>
           </div>
@@ -282,6 +293,6 @@
   <script src="https://unpkg.com/deck.gl@9.2.11/dist.min.js"></script>
   <script src="https://unpkg.com/@loaders.gl/i3s@4.3.4/dist/dist.min.js"></script>
   <script type="module" src="/js/reusableComponents.js?v=20260807-project-menu"></script>
-  <script src="/datacenters/js/datacenters.js?v=20260810-datacenter-glow" defer></script>
+  <script src="/datacenters/js/datacenters.js?v=20260810-layer-zoom-ranges" defer></script>
 </body>
 </html>

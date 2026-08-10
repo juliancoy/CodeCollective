@@ -19,7 +19,7 @@ The following rules are mandatory:
 2. Use `null`, plus an entry in `not_disclosed_fields`, when a value is unavailable. Never convert “not found” into zero or “no.”
 3. Every nontrivial populated field must be supported by one or more IDs in `source_ids`.
 4. A permit application describes what was proposed; an issued permit describes what was authorized; neither proves that equipment was built or is operating. Preserve those distinctions in `status` and `notes`.
-5. Never use backup-generator nameplate capacity as data-center load, annual energy consumption, or production.
+5. Never use backup-generator nameplate capacity as reported data-center load, annual energy consumption, or production. It may only inform a separately labeled estimate with a basis and confidence label.
 6. Corporate sustainability claims, corporate-wide employment, and corporate-wide energy use must not be presented as facility-specific facts.
 7. Prefer final government datasets over preliminary or early-release datasets. If only preliminary data exist, label the record and the UI visibly.
 8. Do not silently estimate. Directly reported and estimated values require separate fields, methods, and confidence labels.
@@ -93,13 +93,15 @@ reported_grid_demand_mw, reported_annual_energy_mwh, reported_pue,
 power_scale_class, power_scale_label, power_scale_mw,
 power_scale_value_kind, power_scale_detail, power_scale_tag,
 power_scale_source_ids,
+estimated_power_draw_mw, estimated_power_draw_basis,
+estimated_power_draw_confidence, estimated_power_draw_source_ids,
 estimated_grid_demand_mw, estimated_annual_energy_mwh,
 estimate_method, estimate_confidence
 ```
 
 Add the four estimate fields before publishing any estimates. Keep reported and estimated numbers distinct in the UI.
 
-Power-scale classifications use normal reported grid demand first. When demand is unavailable, a published facility, critical-power, protected-power, or utility-feed capacity may provide an explicitly labeled upper-envelope proxy. Never classify normal draw from backup-generator nameplate capacity.
+Power-scale classifications use normal reported grid demand first. When demand is unavailable, use `estimated_power_draw_mw` and label it as estimated grid demand. Published facility, critical-power, protected-power, utility-feed capacity, or backup-generator nameplate may inform that estimate only when the basis, source IDs, and confidence are stored on the record. Never present a backup-generator-derived estimate as measured operating load.
 
 ```text
 sub-megawatt: under 1 MW
