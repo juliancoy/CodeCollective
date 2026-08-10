@@ -949,6 +949,11 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert "if (state.antialiasSamples > 1) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE)" in script
     assert "antialiasSamples: state.antialiasSamples" in script
     assert "outline: rgbToHex(entry.outline)" in script
+    assert "const cullFaceEnabled = gl.isEnabled(gl.CULL_FACE)" in script
+    assert "gl.enable(gl.CULL_FACE);" in script
+    assert "gl.cullFace(gl.BACK);" in script
+    assert "gl.frontFace(gl.CCW);" in script
+    assert "if (!cullFaceEnabled) gl.disable(gl.CULL_FACE);" in script
     assert "setHoveredRecord(record)" in script
     assert "setHoveredRecord(target?.kind === 'power-plant' ? target.record : null)" in script
     assert "function createLightningBoltTextureCanvas" not in script
