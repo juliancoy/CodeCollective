@@ -9,7 +9,7 @@
   <link rel="icon" href="/images/favicons/favicon.png">
   <link rel="stylesheet" href="/css/master.css?v=20260807-project-menu">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260808-map-first">
+  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260809-mobile">
 </head>
 <body id="body" class="datacenter-page">
   <video id="bg-video" autoplay loop muted playsinline poster="/images/general_encircled_banner.webp">
@@ -25,85 +25,116 @@
         <p class="dc-kicker">Public infrastructure ledger</p>
         <h1>Maryland Data Centers and Energy</h1>
       </div>
-      <p>Map documented facilities, lifecycle stages, energy sources, permits, and public evidence.</p>
+      <section id="active-tag-filters" class="dc-active-tag-filters" aria-label="Active tag filters" aria-live="polite">
+        <div class="dc-active-tag-heading">
+          <span>Tag filters</span>
+          <div class="dc-active-tag-actions">
+            <div id="tag-filter-mode" class="dc-tag-filter-mode" role="group" aria-label="Combine selected tags">
+              <button type="button" data-tag-filter-mode="and" aria-label="Match all selected tags" aria-pressed="true">AND</button>
+              <button type="button" data-tag-filter-mode="or" aria-label="Match any selected tag" aria-pressed="false">OR</button>
+            </div>
+            <button id="clear-tag-filters" type="button" hidden>Clear all</button>
+          </div>
+        </div>
+        <div id="active-tag-filter-list" class="dc-active-tag-filter-list">
+          <span class="dc-active-tag-empty">Click a tag in the inspector to filter the map.</span>
+        </div>
+      </section>
     </header>
 
     <section class="dc-explorer" aria-label="Infrastructure map explorer">
-      <div class="dc-filter-bar" role="search" aria-label="Filter infrastructure records">
-        <label class="dc-filter-field dc-filter-field--search" for="map-search">Search
-          <input id="map-search" type="search" placeholder="Facility, operator, county…">
-        </label>
-        <label class="dc-filter-field" for="type-filter">Facility type
-          <select id="type-filter">
-            <option value="data_center">Data centers</option>
-            <option value="power_plant">Power plants</option>
-            <option value="all">All infrastructure</option>
-          </select>
-        </label>
-        <label class="dc-filter-field" for="status-filter">Lifecycle
-          <select id="status-filter">
-            <option value="all">All lifecycle stages</option>
-            <option value="operating">Existing / operating</option>
-            <option value="development">Permitted / developing</option>
-            <option value="proposal">Proposed / planned</option>
-            <option value="paused">Paused / blocked</option>
-          </select>
-        </label>
-        <label class="dc-filter-field" for="energy-filter">Energy source
-          <select id="energy-filter">
-            <option value="all">All energy sources</option>
-            <option value="SUN">Solar</option>
-            <option value="BIT">Coal</option>
-            <option value="NG">Natural gas / propane</option>
-            <option value="DFO">Oil / diesel</option>
-            <option value="WND">Wind</option>
-            <option value="WAT">Hydroelectric</option>
-            <option value="NUC">Nuclear</option>
-            <option value="MWH">Battery storage</option>
-            <option value="WASTE">Waste / biomass</option>
-            <option value="UNKNOWN">Undisclosed</option>
-          </select>
-        </label>
-        <label class="dc-filter-field" for="sentiment-filter">Public response
-          <select id="sentiment-filter">
-            <option value="all">All public-response evidence</option>
-            <option value="opposed">Documented opposition</option>
-            <option value="supportive">Documented support</option>
-            <option value="mixed">Mixed / unclear</option>
-            <option value="unknown">Insufficient evidence</option>
-          </select>
-        </label>
-        <details class="dc-filter-menu">
-          <summary>Map layers</summary>
-          <fieldset class="dc-layer-control">
-            <legend>Reference overlays</legend>
-            <label><input id="show-enviroscreen" type="checkbox"> MDE EnviroScreen EJ score</label>
-            <label><input id="show-parcels" type="checkbox"> MDP/SDAT property boundaries</label>
-          </fieldset>
-        </details>
-        <details class="dc-filter-menu dc-energy-key">
-          <summary>Energy color key</summary>
-          <div>
-            <span><i class="dc-energy-swatch dc-energy-swatch--solar"></i>Solar</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--coal"></i>Coal</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--gas"></i>Natural gas</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--oil"></i>Oil / diesel</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--wind"></i>Wind</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--hydro"></i>Hydroelectric</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--nuclear"></i>Nuclear</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--storage"></i>Battery storage</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--waste"></i>Waste / biomass</span>
-            <span><i class="dc-energy-swatch dc-energy-swatch--unknown"></i>Undisclosed</span>
-          </div>
-          <p>Mixed-source plants use segmented markers. Data-center colors describe documented on-site or backup generation, not grid supply.</p>
-        </details>
-      </div>
       <div class="dc-workspace">
         <aside class="dc-controls" aria-labelledby="filters-title">
           <header class="dc-pane-heading">
-            <p class="dc-eyebrow">Inventory</p>
-            <h3 id="filters-title">Matching records</h3>
+            <p class="dc-eyebrow">Map</p>
+            <h3 id="filters-title">Layers</h3>
           </header>
+          <label class="dc-filter-field dc-layer-search" for="layer-search">Search layers
+            <input id="layer-search" type="search" placeholder="Zoning, imagery, power…">
+          </label>
+          <p id="layer-search-empty" class="dc-layer-search-empty" hidden>No layers match this search.</p>
+          <fieldset class="dc-layer-control">
+            <legend>Visible map layers</legend>
+            <div class="dc-layer-section-title dc-layer-section-title--first">Base map · choose one</div>
+            <div class="dc-layer-option" data-layer-preview="street-map">
+              <label class="dc-layer-visibility">
+                <input id="show-street-map" class="dc-base-layer-toggle" type="checkbox" checked>
+                <i class="dc-layer-symbol dc-layer-symbol--street" aria-hidden="true"></i>
+                <span><strong>Street map</strong><small>Roads, labels, land, and water</small></span>
+              </label>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="md-six-inch-imagery">
+              <label class="dc-layer-visibility">
+                <input id="show-md-six-inch-imagery" class="dc-base-layer-toggle" type="checkbox">
+                <i class="dc-layer-symbol dc-layer-symbol--md-imagery" aria-hidden="true"></i>
+                <span><strong>Maryland six-inch imagery</strong><small>2023–2025 statewide aerials</small></span>
+              </label>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="esri-world-imagery">
+              <label class="dc-layer-visibility">
+                <input id="show-esri-world-imagery" class="dc-base-layer-toggle" type="checkbox">
+                <i class="dc-layer-symbol dc-layer-symbol--satellite" aria-hidden="true"></i>
+                <span><strong>Esri World Imagery</strong><small>Global satellite and aerial imagery</small></span>
+              </label>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="usgs-imagery">
+              <label class="dc-layer-visibility">
+                <input id="show-usgs-imagery" class="dc-base-layer-toggle" type="checkbox">
+                <i class="dc-layer-symbol dc-layer-symbol--usgs" aria-hidden="true"></i>
+                <span><strong>USGS Imagery Only</strong><small>The National Map orthoimagery</small></span>
+              </label>
+            </div>
+            <div class="dc-layer-section-title">Infrastructure and analysis</div>
+            <div class="dc-layer-option" data-layer-preview="datacenters">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>Data centers</strong><small>Campuses, facilities, and proposals</small></span>
+                <span class="dc-layer-controls-row">
+                  <span id="datacenter-layer-count" class="dc-layer-count" aria-label="Data center count">—</span>
+                  <button class="dc-layer-color" type="button" data-layer-color="datacenters" aria-label="Change Data centers color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--center" aria-hidden="true"></i></button>
+                  <label class="dc-layer-toggle"><input id="show-datacenters" type="checkbox" checked> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-datacenters" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="datacenters" aria-label="Configure data center layer">⚙</button>
+                </span>
+              </div>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="power-plants">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>Power plants</strong><small>EIA generation facilities</small></span>
+                <span class="dc-layer-controls-row">
+                  <span id="power-plant-layer-count" class="dc-layer-count" aria-label="Power plant count">—</span>
+                  <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change Power plants color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
+                  <label class="dc-layer-toggle"><input id="show-power-plants" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-power-plants" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure power plant layer">⚙</button>
+                </span>
+              </div>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="enviroscreen">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>MDE EnviroScreen</strong><small>Environmental justice scores by tract</small></span>
+                <span class="dc-layer-controls-row">
+                  <button class="dc-layer-color" type="button" data-layer-color="enviroscreen" aria-label="Change MDE EnviroScreen color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--environment" aria-hidden="true"></i></button>
+                  <label class="dc-layer-toggle"><input id="show-enviroscreen" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-enviroscreen" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="enviroscreen" aria-label="Configure EnviroScreen layer">⚙</button>
+                </span>
+              </div>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="parcels">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>MDP / SDAT parcels</strong><small>Property boundaries and record lookup</small></span>
+                <span class="dc-layer-controls-row">
+                  <button class="dc-layer-color" type="button" data-layer-color="parcels" aria-label="Change MDP / SDAT parcels color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--parcel" aria-hidden="true"></i></button>
+                  <label class="dc-layer-toggle"><input id="show-parcels" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-parcels" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="parcels" aria-label="Configure parcels layer">⚙</button>
+                </span>
+              </div>
+            </div>
+            <div class="dc-layer-section-title">WorldSim3 and official data services</div>
+            <p class="dc-layer-service-note">Zoning follows WorldSim3's state and local sources. Large official layers are queried only for the current view; the compact, reproducible power-interchange crossing inventory is stored locally.</p>
+            <div id="remote-layer-controls"></div>
+          </fieldset>
           <div id="enviroscreen-legend" class="dc-enviroscreen-legend" hidden>
             <strong>MDEnviroScreen EJ score</strong>
             <div aria-label="Environmental justice score legend">
@@ -121,16 +152,20 @@
             <p>Hover a parcel for an official property-record lookup. Boundaries are not surveys.</p>
             <a href="https://planning.maryland.gov/MSDC/Pages/91_property_mapping/md-property-view.aspx" target="_blank" rel="noopener noreferrer">Maryland Property View documentation</a>
           </div>
-          <div id="result-list" class="dc-result-list" aria-live="polite"></div>
         </aside>
 
         <section class="dc-map-panel" aria-labelledby="map-title">
           <header class="dc-pane-heading">
-            <div>
+            <div class="dc-map-title-editor">
               <p class="dc-eyebrow">Geography</p>
-              <h3 id="map-title">Infrastructure map</h3>
+              <h3 id="map-title" class="dc-visually-hidden">Infrastructure map</h3>
+              <label for="map-title-input" class="dc-visually-hidden">Map title</label>
+              <input id="map-title-input" type="text" value="Infrastructure map" maxlength="120" spellcheck="true">
+              <label class="dc-map-title-toggle"><input id="show-map-title" type="checkbox"> Render title on map</label>
             </div>
             <div class="dc-map-heading-tools">
+              <button id="download-map-png" class="dc-map-download" type="button" aria-describedby="map-download-status">Download PNG</button>
+              <span id="map-download-status" class="dc-visually-hidden" aria-live="polite"></span>
               <label for="map-theme">Map theme
                 <select id="map-theme">
                   <option value="collective">Code Collective</option>
@@ -146,14 +181,11 @@
           <div id="datacenter-map" role="region" aria-label="Map of Maryland data centers and power plants"></div>
         </section>
 
-        <aside class="dc-detail" aria-labelledby="profile-title">
-          <header class="dc-pane-heading">
-            <p class="dc-eyebrow">Evidence</p>
-            <h3 id="profile-title">Selected record</h3>
-          </header>
+        <aside class="dc-detail" aria-label="Map feature inspector">
+          <button id="close-record-detail" class="dc-inspector-close" type="button" aria-label="Close pinned map feature" title="Close pinned map feature" hidden>&times;</button>
           <div id="record-detail" aria-live="polite">
-            <h2>No record selected</h2>
-            <p>Choose a marker or inventory result to inspect its energy, permits, financing, opposition, and sources.</p>
+            <h2>Hover a map icon</h2>
+            <p>Move over a visible icon or map feature to see what it represents.</p>
           </div>
         </aside>
       </div>
@@ -166,9 +198,10 @@
           <span class="dc-disclosure-action" aria-hidden="true">+</span>
         </summary>
         <div class="dc-disclosure-body">
-          <p>Data centers are represented as one flat JSON array. The inventory combines government-verified state and permitted facilities, operator-documented commercial facilities, and named proposals. Each record says what kind of evidence establishes its status. Missing energy, UPS, employment, investment, or tax-benefit values remain unknown rather than becoming zero.</p>
+          <p>Data centers are represented as one flat JSON array. The inventory combines government-verified state and permitted facilities, operator-documented commercial facilities, and named proposals. Each record says what kind of evidence establishes its status. Hardware and workflow notes are source-backed when operators or institutions publish them and explicitly labeled as inference when the public record only supports a likely use pattern. Missing energy, UPS, employment, investment, or tax-benefit values remain unknown rather than becoming zero.</p>
           <p>Public sentiment is an evidence rating, not opinion polling: <strong>-2</strong> means strong, sustained, site-specific opposition; <strong>-1</strong> documented opposition; <strong>0</strong> mixed or unclear evidence; <strong>+1/+2</strong> documented or strong support. A facility receives no score when the record is insufficient. Formal hearings, enacted restrictions, petitions, organizational letters, and attributable reporting outweigh unsourced social-media comments.</p>
           <p>Power-plant capacity and locations come from final 2024 Form EIA-860 records. Production is annual net generation reported in final 2024 Form EIA-923 records. The residential price is EIA’s statewide annual average, not a household quote.</p>
+          <p>Import/export icons mark public HIFLD transmission lines that cross the official Maryland iMAP state boundary. Nearby circuits are grouped within 120 meters for legibility. The physical lines can carry power in either direction; EIA publishes Maryland’s statewide annual net interstate trade, while actual direction and megawatts for each mapped circuit are not public. The layer therefore never assigns the statewide net flow to an individual line.</p>
           <p class="dc-warning">Backup-generator megawatts describe emergency nameplate capacity. They must never be presented as data-center grid demand, consumption, or production.</p>
         </div>
       </details>
@@ -179,8 +212,8 @@
         </summary>
         <div class="dc-disclosure-body">
           <div class="dc-downloads" aria-label="Download map data">
-            <a href="/datacenters/data/datacenters.json">Data centers JSON</a>
-            <a href="/datacenters/data/power-plants.json">Power plants JSON</a>
+            <a href="/datacenters/data/infrastructure.json">Infrastructure JSON</a>
+            <a href="/datacenters/data/power-interchanges.json">Power interchange JSON</a>
             <a href="/datacenters/data/residential-electricity-rates.json">Residential rates JSON</a>
             <a href="/datacenters/data/sources.json">Source register JSON</a>
           </div>
@@ -192,8 +225,51 @@
   </main>
 
   <our-footer></our-footer>
+  <dialog id="layer-filter-modal" class="dc-modal">
+    <form id="layer-filter-form" class="dc-modal-card" method="dialog">
+      <header class="dc-modal-header">
+        <div>
+          <p class="dc-eyebrow">Layer settings</p>
+          <h3 id="layer-filter-title">Layer filters</h3>
+        </div>
+        <button id="close-layer-filter-modal" class="dc-modal-close" type="submit" value="cancel" aria-label="Close layer settings">×</button>
+      </header>
+      <div id="layer-filter-body" class="dc-modal-body"></div>
+      <footer class="dc-modal-footer">
+        <button id="reset-layer-filter" class="dc-modal-secondary" type="button">Reset this layer</button>
+        <button class="dc-modal-primary" type="submit" value="apply">Apply</button>
+      </footer>
+    </form>
+  </dialog>
+  <dialog id="layer-color-modal" class="dc-modal">
+    <form id="layer-color-form" class="dc-modal-card dc-color-modal-card" method="dialog">
+      <header class="dc-modal-header">
+        <div>
+          <p class="dc-eyebrow">Layer appearance</p>
+          <h3 id="layer-color-title">Choose layer color</h3>
+        </div>
+        <button class="dc-modal-close" type="submit" value="cancel" aria-label="Close color picker">×</button>
+      </header>
+      <div class="dc-modal-body dc-color-modal-body">
+        <label class="dc-color-picker-field" for="layer-color-input">Color
+          <input id="layer-color-input" name="color" type="color" value="#72b7d2">
+        </label>
+        <output id="layer-color-value" for="layer-color-input">#72B7D2</output>
+        <p id="layer-color-help" class="dc-modal-note">The selected color is applied immediately after you confirm.</p>
+      </div>
+      <footer class="dc-modal-footer">
+        <button id="reset-layer-color" class="dc-modal-secondary" type="button">Use source colors</button>
+        <span class="dc-modal-footer-actions">
+          <button class="dc-modal-secondary" type="submit" value="cancel">Cancel</button>
+          <button class="dc-modal-primary" type="submit" value="apply">Apply color</button>
+        </span>
+      </footer>
+    </form>
+  </dialog>
   <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/deck.gl@9.2.11/dist.min.js"></script>
+  <script src="https://unpkg.com/@loaders.gl/i3s@4.3.4/dist/dist.min.js"></script>
   <script type="module" src="/js/reusableComponents.js?v=20260807-project-menu"></script>
-  <script src="/datacenters/js/datacenters.js?v=20260808-map-first" defer></script>
+  <script src="/datacenters/js/datacenters.js?v=20260809-mobile" defer></script>
 </body>
 </html>
