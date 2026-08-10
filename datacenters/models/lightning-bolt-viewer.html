@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lightning Bolt glTF Viewer</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255, 215, 96, .22), rgba(255, 215, 96, 0) 24%),
+        linear-gradient(180deg, #0d1b2a 0%, #08111b 100%);
+      font-family: monospace;
+      color: #f6f8fb;
+    }
+
+    model-viewer {
+      width: 100vw;
+      height: 100vh;
+      --poster-color: transparent;
+      background: transparent;
+    }
+
+    .hud {
+      position: fixed;
+      inset: 1rem auto auto 1rem;
+      padding: .6rem .8rem;
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: .7rem;
+      background: rgba(8, 15, 24, .7);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
+      z-index: 2;
+    }
+
+    .hud strong {
+      display: block;
+      margin-bottom: .25rem;
+      font-size: 1rem;
+    }
+
+    .hud small {
+      display: block;
+      opacity: .8;
+      line-height: 1.4;
+    }
+  </style>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+<body>
+  <div class="hud">
+    <strong>Lightning Bolt</strong>
+    <small>Standalone glTF inspection</small>
+    <small>Auto-rotate enabled</small>
+  </div>
+  <model-viewer
+    id="viewer"
+    src="/datacenters/models/lightning-bolt.gltf"
+    alt="3D lightning bolt"
+    camera-controls
+    auto-rotate
+    rotation-per-second="18deg"
+    exposure="1.2"
+    shadow-intensity="0"
+    environment-image="neutral"
+    tone-mapping="commerce"
+    min-camera-orbit="auto auto 115%"
+    max-camera-orbit="auto auto 115%"
+    camera-orbit="32deg 78deg 115%"
+    field-of-view="30deg"
+    interaction-prompt="none">
+  </model-viewer>
+</body>
+</html>
