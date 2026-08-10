@@ -15,6 +15,8 @@ import time
 
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.actions.wheel_input import ScrollOrigin
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -54,7 +56,14 @@ def wait_for_map_ready(driver: webdriver.Remote) -> None:
         )
     )
     WebDriverWait(driver, 60).until(
-        lambda d: d.find_element(By.ID, "show-parcels").is_enabled()
+        lambda d: d.execute_script(
+            """
+            return window.__codeCollectiveDatacenterUiReady === true
+              && !!window.__codeCollectiveDatacenterMap
+              && document.querySelectorAll('.dc-map-marker--center').length > 0
+              && !!document.querySelector('[data-layer-config="datacenters"]');
+            """
+        )
     )
 
 
@@ -201,6 +210,7 @@ def verify_neon_streets(driver: webdriver.Remote, screenshot_dir: pathlib.Path) 
         }
         document.querySelector('[data-layer-config="neon-streets"]').click();
         document.querySelector('#layer-filter-form [name="scope"]').value = 'i95';
+        document.querySelector('#layer-filter-form [name="lineWidth"]').value = '2';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         const map = window.__codeCollectiveDatacenterMap;
         map.jumpTo({center: [-76.61, 39.30], zoom: 10.5});
@@ -225,7 +235,10 @@ def verify_neon_streets(driver: webdriver.Remote, screenshot_dir: pathlib.Path) 
               regularRoadLayers: regularRoadLayers.map((layer) => layer.id),
               glowColor: map.getPaintProperty('neon-streets-glow', 'line-color'),
               glowBlur: map.getPaintProperty('neon-streets-glow', 'line-blur'),
+              glowWidth: map.getPaintProperty('neon-streets-glow', 'line-width'),
+              coreWidth: map.getPaintProperty('neon-streets-core', 'line-width'),
               queryScope: JSON.parse(new URL(location.href).searchParams.get('filters')).neonStreets.scope,
+              queryWidth: JSON.parse(new URL(location.href).searchParams.get('filters')).neonStreets.lineWidth,
               status: document.getElementById('neon-streets-status').textContent.trim()
             };
             """
@@ -237,6 +250,8 @@ def verify_neon_streets(driver: webdriver.Remote, screenshot_dir: pathlib.Path) 
         raise AssertionError(f"ordinary streets remained visible beneath the default neon overlay: {i95}")
     if i95["glowColor"] != "#00eaff" or not isinstance(i95["glowBlur"], list):
         raise AssertionError(f"neon glow paint was not active: {i95}")
+    if i95["queryWidth"] != 2 or i95["glowWidth"][-1] != 44 or i95["coreWidth"][-1] != 10:
+        raise AssertionError(f"neon line width did not scale both line passes: {i95}")
     screenshot = save_screenshot(driver, screenshot_dir, "datacenters-neon-i95.png")
 
     set_checkbox(driver, "show-enviroscreen", True)
@@ -323,6 +338,7 @@ def verify_neon_streets(driver: webdriver.Remote, screenshot_dir: pathlib.Path) 
         """
         document.querySelector('[data-layer-config="neon-streets"]').click();
         document.querySelector('#layer-filter-form [name="scope"]').value = 'i95';
+        document.querySelector('#layer-filter-form [name="lineWidth"]').value = '1';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         """
     )
@@ -333,6 +349,91 @@ def verify_neon_streets(driver: webdriver.Remote, screenshot_dir: pathlib.Path) 
         "all_streets": all_streets,
         "screenshot": str(screenshot),
     }
+
+
+def verify_line_width_controls(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    line_layers = [
+        "neon-streets",
+        "md-waterbodies-streams",
+        "md-imap-transmission-lines",
+        "pepco-generation-hosting",
+        "pepco-load-capacity",
+        "delmarva-generation-hosting",
+        "delmarva-load-capacity",
+        "smeco-generation-hosting",
+        "electric-transmission-lines",
+    ]
+    controls = {}
+    for layer_id in line_layers:
+        driver.find_element(By.CSS_SELECTOR, f'[data-layer-config="{layer_id}"]').click()
+        fields = driver.find_elements(By.CSS_SELECTOR, '#layer-filter-form [name="lineWidth"]')
+        if len(fields) != 1:
+            raise AssertionError(f"{layer_id} gear exposed {len(fields)} line-width controls")
+        field = fields[0]
+        controls[layer_id] = {
+            "tag": field.tag_name.lower(),
+            "min": field.get_attribute("min"),
+            "max": field.get_attribute("max"),
+            "step": field.get_attribute("step"),
+            "value": field.get_attribute("value"),
+            "options": [option.get_attribute("value") for option in field.find_elements(By.TAG_NAME, "option")],
+        }
+        driver.find_element(By.CSS_SELECTOR, '#layer-filter-form button[value="cancel"]').click()
+    invalid = {
+        layer_id: control for layer_id, control in controls.items()
+        if (layer_id == "neon-streets" and control != {"tag": "input", "min": "0.25", "max": "5", "step": "0.25", "value": "1", "options": []})
+        or (layer_id != "neon-streets" and (control["tag"] != "select" or control["options"] != ["0.5", "1", "2", "3", "5"] or control["value"] != "1"))
+    }
+    if invalid:
+        raise AssertionError(f"line-layer gears did not expose consistent width controls: {invalid}")
+
+    set_checkbox(driver, "show-neon-streets", True)
+    driver.execute_script(
+        """
+        document.querySelector('[data-layer-config="neon-streets"]').click();
+        document.querySelector('#layer-filter-form [name="lineWidth"]').value = '2';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        document.querySelector('[data-layer-config="neon-streets"]').click();
+        """
+    )
+    neon = driver.execute_script(
+        """
+        return {
+          control: Number(document.querySelector('#layer-filter-form [name="lineWidth"]').value),
+          query: JSON.parse(new URL(location.href).searchParams.get('filters')).neonStreets.lineWidth,
+        };
+        """
+    )
+    if neon != {"control": 2, "query": 2}:
+        raise AssertionError(f"neon width multiplier was not shown and persisted: {neon}")
+
+    transmission = driver.execute_script(
+        """
+        document.querySelector('#layer-filter-form button[value="cancel"]').click();
+        document.querySelector('[data-layer-config="electric-transmission-lines"]').click();
+        document.querySelector('#layer-filter-form [name="lineWidth"]').value = '3';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        document.querySelector('[data-layer-config="electric-transmission-lines"]').click();
+        return {
+          control: Number(document.querySelector('#layer-filter-form [name="lineWidth"]').value),
+          query: JSON.parse(new URL(location.href).searchParams.get('filters')).remote['electric-transmission-lines'].lineWidth,
+        };
+        """
+    )
+    if transmission != {"control": 3, "query": 3}:
+        raise AssertionError(f"remote line width multiplier was not shown and persisted: {transmission}")
+    screenshot = save_screenshot(driver, screenshot_dir, "datacenters-line-width-controls.png")
+
+    driver.execute_script(
+        """
+        document.querySelector('#layer-filter-form [name="lineWidth"]').value = '1';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        document.querySelector('[data-layer-config="neon-streets"]').click();
+        document.querySelector('#layer-filter-form [name="lineWidth"]').value = '1';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        """
+    )
+    return {"controls": controls, "neon": neon, "transmission": transmission, "screenshot": str(screenshot)}
 
 
 def verify_layer_search(driver: webdriver.Remote) -> dict:
@@ -563,6 +664,16 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
         raise AssertionError(f"WebGL lightning mesh is empty: {diagnostics}")
     if diagnostics["lastGlError"] != 0:
         raise AssertionError(f"WebGL lightning draw failed: {diagnostics}")
+    if diagnostics["antialiasMode"] != "subpixel-jitter" or diagnostics["antialiasPasses"] != 8:
+        raise AssertionError(f"WebGL lightning antialiasing was not active: {diagnostics}")
+    if abs(diagnostics["antialiasJitterPixels"] - .65) > .001:
+        raise AssertionError(f"WebGL lightning jitter radius was wrong: {diagnostics}")
+    if abs(diagnostics.get("outlineScale", 0) - 1.04) > .01 or diagnostics.get("outlineAlpha", 0) < .9:
+        raise AssertionError(f"WebGL lightning outline default was not compact and readable: {diagnostics}")
+    if diagnostics.get("outlineIndexCount", 0) < 120:
+        raise AssertionError(f"WebGL lightning planar outline mesh was not generated: {diagnostics}")
+    if diagnostics["antialiasSamples"] > 1 and not diagnostics["alphaToCoverage"]:
+        raise AssertionError(f"multisampled WebGL context did not enable alpha-to-coverage: {diagnostics}")
     if dom_markers:
         raise AssertionError(f"found {dom_markers} non-WebGL power-plant markers")
 
@@ -572,9 +683,14 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
         """
         const select = document.querySelector('#layer-filter-form [name="sizeBy"]');
         const options = [...select.options].map((option) => ({value: option.value, label: option.textContent.trim()}));
-        select.value = 'net_generation_mwh';
+        const fill = document.querySelector('#layer-filter-form [name="fillBy"]');
+        const fillOptions = [...fill.options].map((option) => ({value: option.value, label: option.textContent.trim()}));
+        const outline = document.querySelector('#layer-filter-form [name="outlineScale"]');
+        const outlineValue = outline.value;
+        outline.value = '1.14';
+        select.value = 'planning_sustained_output_mw';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
-        return options;
+        return {options, fillOptions, outlineValue};
         """
     )
     scaled_diagnostics = WebDriverWait(driver, 10).until(
@@ -582,21 +698,53 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
             """
             const layer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
             const diagnostics = layer?.implementation?.getDiagnostics?.();
-            return diagnostics?.sizeBy === 'net_generation_mwh' ? diagnostics : null;
+            return diagnostics?.sizeBy === 'planning_sustained_output_mw' ? diagnostics : null;
             """
         )
     )
     if scaled_diagnostics["maximumSize"] <= scaled_diagnostics["minimumSize"]:
         raise AssertionError(f"power output scaling did not vary WebGL bolt sizes: {scaled_diagnostics}")
+    if scaled_diagnostics["minimumSize"] > 8:
+        raise AssertionError(f"power output scaling kept low-output bolts too large: {scaled_diagnostics}")
+    if scaled_diagnostics["maximumSize"] < 80:
+        raise AssertionError(f"power output scaling did not give high-output plants enough screen weight: {scaled_diagnostics}")
     if not scaled_diagnostics["drawOrderAscending"] or scaled_diagnostics["topmostSize"] != scaled_diagnostics["maximumSize"]:
         raise AssertionError(f"larger WebGL bolts were not assigned the highest draw order: {scaled_diagnostics}")
-    if not any(option["value"] == "net_generation_mwh" for option in scaling_options):
-        raise AssertionError(f"power output was absent from point scaling options: {scaling_options}")
+    if scaling_options["outlineValue"] != "1.04" or abs(scaled_diagnostics.get("outlineScale", 0) - 1.14) > .01:
+        raise AssertionError(f"WebGL lightning outline scale was not adjustable from the gear menu: {scaling_options} {scaled_diagnostics}")
+    if not any(option["value"] == "planning_sustained_output_mw" for option in scaling_options["options"]):
+        raise AssertionError(f"annual-average planning output was absent from point scaling options: {scaling_options}")
+    if any(option["value"] == "net_generation_mwh" for option in scaling_options["options"]):
+        raise AssertionError(f"raw 2024 generation field should no longer appear in point scaling options: {scaling_options}")
+    if {option["value"] for option in scaling_options["fillOptions"]} != {"none", "resource-adjusted-utilization", "custom"}:
+        raise AssertionError(f"bolt fill options were incomplete: {scaling_options['fillOptions']}")
+    driver.execute_script(
+        """
+        document.querySelector('[data-layer-config="power-plants"]').click();
+        document.querySelector('#layer-filter-form [name="fillBy"]').value = 'custom';
+        document.querySelector('#layer-filter-form [name="fillFraction"]').value = '0.25';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        """
+    )
+    custom_fill = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const layer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
+            const diagnostics = layer?.implementation?.getDiagnostics?.();
+            if (diagnostics?.fillBy !== 'custom') return null;
+            const fills = [...new Set(layer.implementation.getExportEntries().map((entry) => entry.fillFraction))];
+            return fills.length === 1 && Math.abs(fills[0] - 0.25) < 0.01 ? {diagnostics, fills} : null;
+            """
+        )
+    )
     driver.execute_script(
         """
         document.querySelector('[data-layer-config="power-plants"]').click();
         const select = document.querySelector('#layer-filter-form [name="sizeBy"]');
         select.value = 'none';
+        document.querySelector('#layer-filter-form [name="fillBy"]').value = 'none';
+        document.querySelector('#layer-filter-form [name="fillFraction"]').value = '1';
+        document.querySelector('#layer-filter-form [name="outlineScale"]').value = '1.04';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         """
     )
@@ -645,7 +793,7 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
     hovered_tags = hovered_inspector["tags"]
     if hovered_icon_title != "IGS Solar I - BWI2" or not {"Power", "Solar"} <= set(hovered_tags):
         raise AssertionError(f"unexpected hovered power icon: title={hovered_icon_title!r}, tags={hovered_tags!r}")
-    if {"label": "2024 net generation", "value": "2,546 MWh"} not in hovered_inspector["energy"]:
+    if {"label": "Average generation", "value": "2,546 MWh"} not in hovered_inspector["energy"]:
         raise AssertionError(f"power generation was not prominent in the inspector: {hovered_inspector['energy']!r}")
     tag_filter_modes = driver.execute_script(
         """
@@ -829,7 +977,8 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
     return {
         "diagnostics": diagnostics,
         "dom_plant_markers": dom_markers,
-        "output_scaling": {"options": scaling_options, "diagnostics": scaled_diagnostics},
+        "output_scaling": {"options": scaling_options["options"], "fillOptions": scaling_options["fillOptions"], "diagnostics": scaled_diagnostics},
+        "custom_fill": custom_fill,
         "hovered_record_id": hovered_record_id,
         "hovered_icon_title": hovered_icon_title,
         "hovered_tags": hovered_tags,
@@ -977,27 +1126,27 @@ def verify_layer_color_controls(driver: webdriver.Remote, screenshot_dir: pathli
 
 def verify_data_center_power_scale(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     marker = driver.find_element(By.CSS_SELECTOR, '.dc-map-marker--center[aria-label="Cogent Elkridge"]')
-    driver.execute_script(
-        "arguments[0].dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }))", marker
-    )
+    ActionChains(driver).move_to_element(marker).pause(.4).perform()
     WebDriverWait(driver, 10).until(
         lambda d: any(
-            tag.text.startswith("Power envelope:")
+            tag.text.startswith("Estimated draw:")
             for tag in d.find_elements(By.CSS_SELECTOR, ".dc-hover-tag")
         )
     )
     detail = driver.find_element(By.ID, "record-detail").text
-    if "Power class\nMedium" not in detail or "not measured operating draw" not in detail:
-        raise AssertionError("Cogent power class did not expose its capacity-proxy limitation")
+    if "Estimated draw: 5 to under 20 MW" not in detail:
+        raise AssertionError("Cogent power class did not expose its estimated draw")
+    if "partial-utilization proxy" not in detail and "5 MW" not in detail:
+        raise AssertionError("Cogent estimated-draw basis was not exposed")
     energy = driver.find_element(By.CSS_SELECTOR, "#record-detail .dc-energy-summary").text.replace("\n", " ")
-    if "REQUIRED GRID POWER NOT PUBLICLY DISCLOSED 7.5 MW published capacity envelope" not in energy:
+    if "REQUIRED GRID POWER 5 MW medium estimate; 7.5 MW published capacity envelope" not in energy:
         raise AssertionError(f"Cogent required power was not presented honestly near the top: {energy!r}")
     if "NORMAL ON-SITE GENERATION NOT PUBLICLY DISCLOSED" not in energy:
         raise AssertionError(f"Cogent on-site generation disclosure was missing: {energy!r}")
     energy_screenshot = save_screenshot(driver, screenshot_dir, "datacenters-energy-requirement-summary.png")
     power_tag = next(
         tag for tag in driver.find_elements(By.CSS_SELECTOR, ".dc-hover-tag")
-        if tag.text.startswith("Power envelope:")
+        if tag.text.startswith("Estimated draw:")
     )
     tag_label = power_tag.text
     power_tag.click()
@@ -1033,9 +1182,11 @@ def verify_data_center_draw_scaling(driver: webdriver.Remote, screenshot_dir: pa
         "return [...document.querySelector('select[name=sizeBy]').options].map(option => ({value: option.value, label: option.textContent.trim()}));"
     )
     by_value = {option["value"]: option["label"] for option in options}
+    if "Estimated power draw" not in by_value.get("estimated_power_draw_mw", ""):
+        raise AssertionError(f"estimated-draw size mode was missing: {options}")
     if "Net draw · reported grid demand" not in by_value.get("reported_grid_demand_mw", ""):
         raise AssertionError(f"net-draw size mode was missing: {options}")
-    if "Total draw · published power envelope" not in by_value.get("reported_power_capacity_mw", ""):
+    if "Total draw · published envelope or projected demand" not in by_value.get("reported_power_capacity_mw", ""):
         raise AssertionError(f"total-draw size mode was missing: {options}")
 
     driver.execute_script(
@@ -1046,25 +1197,211 @@ def verify_data_center_draw_scaling(driver: webdriver.Remote, screenshot_dir: pa
             """
             const markers = [...document.querySelectorAll('.dc-map-marker--center')];
             const sizes = Object.fromEntries(markers.map((marker) => [marker.getAttribute('aria-label'), parseFloat(marker.style.getPropertyValue('--marker-size'))]));
-            return sizes['AiNET CyberNAP'] > sizes['Aligned Data Centers IAD04'] ? sizes : null;
+            return sizes['Aligned Data Centers IAD04'] > sizes['AiNET CyberNAP'] ? sizes : null;
             """
         )
     )
     screenshot = save_screenshot(driver, screenshot_dir, "datacenters-total-draw-icon-scaling.png")
 
     driver.execute_script(
-        "document.querySelector('[data-layer-config=\"datacenters\"]').click(); const select = document.querySelector('select[name=sizeBy]'); select.value = 'reported_grid_demand_mw'; document.querySelector('#layer-filter-form .dc-modal-primary').click();"
+        "document.querySelector('[data-layer-config=\"datacenters\"]').click(); const select = document.querySelector('select[name=sizeBy]'); select.value = 'estimated_power_draw_mw'; document.querySelector('#layer-filter-form .dc-modal-primary').click();"
     )
-    net_draw_sizes = driver.execute_script(
-        "return [...new Set([...document.querySelectorAll('.dc-map-marker--center')].map(marker => parseFloat(marker.style.getPropertyValue('--marker-size'))))];"
+    estimated_draw = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const markers = [...document.querySelectorAll('.dc-map-marker--center')];
+            const sizes = Object.fromEntries(markers.map((marker) => [marker.getAttribute('aria-label'), parseFloat(marker.style.getPropertyValue('--marker-size'))]));
+            return sizes['Aligned Data Centers IAD04'] > sizes['DataBank BWI1'] ? sizes : null;
+            """
+        )
     )
-    if len(net_draw_sizes) != 1 or abs(net_draw_sizes[0] - 12.1) > .1:
-        raise AssertionError(f"undisclosed net draw did not use the smallest marker size: {net_draw_sizes}")
 
     driver.execute_script(
         "document.querySelector('[data-layer-config=\"datacenters\"]').click(); const select = document.querySelector('select[name=sizeBy]'); select.value = 'none'; document.querySelector('#layer-filter-form .dc-modal-primary').click();"
     )
-    return {"options": options, "total_draw_sizes": total_draw, "net_draw_sizes": net_draw_sizes, "screenshot": str(screenshot)}
+    return {"options": options, "total_draw_sizes": total_draw, "estimated_draw_sizes": estimated_draw, "screenshot": str(screenshot)}
+
+
+def verify_projected_data_center_demand(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    form_result = driver.execute_script(
+        """
+        document.querySelector('[data-layer-config="datacenters"]').click();
+        const sizeOptions = [...document.querySelector('#layer-filter-form [name="sizeBy"]').options]
+          .map((option) => ({value: option.value, label: option.textContent.trim()}));
+        const status = document.querySelector('#layer-filter-form [name="status"]');
+        const size = document.querySelector('#layer-filter-form [name="sizeBy"]');
+        status.value = 'unbuilt';
+        size.value = 'projected_power_demand_mw';
+        const selected = {status: status.value, sizeBy: size.value};
+        return {sizeOptions, selected};
+        """
+    )
+    options = form_result["sizeOptions"]
+    projected_option = next(
+        (option for option in options if option["value"] == "projected_power_demand_mw"), None
+    )
+    if not projected_option or "6 projects" not in projected_option["label"]:
+        raise AssertionError(f"projected-demand size option was missing or miscounted: {options}")
+
+    state = {"status": "unbuilt", "sizeBy": "projected_power_demand_mw"}
+    if form_result["selected"] != state:
+        raise AssertionError(f"projected-demand form did not apply: {form_result}")
+    driver.find_element(By.CSS_SELECTOR, '#layer-filter-form .dc-modal-primary').click()
+    WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const filters = JSON.parse(new URL(location.href).searchParams.get('filters')).datacenters;
+            return filters.status === 'unbuilt' && filters.sizeBy === 'projected_power_demand_mw';
+            """
+        )
+    )
+
+    markers = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const visible = [...document.querySelectorAll('.dc-map-marker--center:not([hidden])')];
+            if (visible.length !== 6) return null;
+            return Object.fromEntries(visible.map((marker) => [marker.getAttribute('aria-label'), {
+              size: Number.parseFloat(marker.style.getPropertyValue('--marker-size')),
+              label: getComputedStyle(marker, '::after').content,
+            }]));
+            """
+        )
+    )
+    if any(value["label"] not in ("none", "normal", "\"\"") for value in markers.values()):
+        raise AssertionError(f"projected-demand text remained on the map: {markers}")
+    if markers["Atmosphere Data Centers Dickerson proposal"]["size"] <= markers["Johns Hopkins Bayview research data center"]["size"]:
+        raise AssertionError(f"projected-demand scaling did not reflect MW: {markers}")
+
+    aligned = driver.find_element(By.CSS_SELECTOR, '.dc-map-marker--center[aria-label="Aligned Data Centers IAD04"]')
+    ActionChains(driver).move_to_element(aligned).pause(.4).perform()
+    inspector = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            r"""
+            const summary = document.querySelector('#record-detail .dc-energy-summary');
+            const text = summary?.textContent.replace(/\s+/g, ' ').trim() || '';
+            return text.includes('Projected grid demand') && text.includes('300 MW')
+              ? {title: document.querySelector('#record-detail h2').textContent.trim(), text}
+              : null;
+            """
+        )
+    )
+    final_state = driver.execute_script(
+        """
+        const filters = JSON.parse(new URL(location.href).searchParams.get('filters')).datacenters;
+        return {status: filters.status, sizeBy: filters.sizeBy};
+        """
+    )
+    if final_state != state:
+        raise AssertionError(f"projected-demand map state changed after hover: {state} -> {final_state}")
+    screenshot = save_screenshot(driver, screenshot_dir, "datacenters-unbuilt-projected-demand.png")
+    return {"options": options, "markers": markers, "inspector": inspector, "state": state, "screenshot": str(screenshot)}
+
+
+def verify_map_gestures_over_data_center(driver: webdriver.Remote) -> dict:
+    marker = driver.find_element(By.CSS_SELECTOR, '.dc-map-marker--center[aria-label="Aligned Data Centers IAD04"]')
+    ActionChains(driver).move_to_element(marker).pause(.2).perform()
+    WebDriverWait(driver, 10).until(
+        lambda d: d.find_element(By.CSS_SELECTOR, "#record-detail h2").text == "Aligned Data Centers IAD04"
+    )
+    before = driver.execute_script(
+        "const map = window.__codeCollectiveDatacenterMap; return {center: map.getCenter().toArray(), zoom: map.getZoom()};"
+    )
+    ActionChains(driver).move_to_element(marker).click_and_hold().pause(.2).move_by_offset(100, 0).release().perform()
+    after_drag = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            const state = {center: map.getCenter().toArray(), zoom: map.getZoom()};
+            return Math.abs(state.center[0] - arguments[0][0]) > 0.00001 ? state : null;
+            """,
+            before["center"],
+        )
+    )
+    marker = driver.find_element(By.CSS_SELECTOR, '.dc-map-marker--center[aria-label="Aligned Data Centers IAD04"]')
+    ActionChains(driver).scroll_from_origin(ScrollOrigin.from_element(marker), 0, -500).perform()
+    after_zoom = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            const state = {center: map.getCenter().toArray(), zoom: map.getZoom()};
+            return state.zoom > arguments[0] + 0.01 ? state : null;
+            """,
+            after_drag["zoom"],
+        )
+    )
+    return {"marker": marker.get_attribute("aria-label"), "before": before, "after_drag": after_drag, "after_zoom": after_zoom}
+
+
+def verify_layer_order_controls(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    driver.execute_script(
+        """
+        ['show-datacenters', 'show-power-plants', 'show-neon-streets'].forEach((id) => {
+          const input = document.getElementById(id);
+          if (input && !input.checked) input.click();
+        });
+        """
+    )
+    WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            return [...document.querySelectorAll('#selected-layer-controls .dc-layer-option')]
+              .map((card) => card.dataset.layerPreview)
+              .filter(Boolean);
+            """
+        )[:3] == ["datacenters", "power-plants", "neon-streets"]
+    )
+    WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            return !!map?.isStyleLoaded?.() && !!map.getStyle()?.layers;
+            """
+        )
+    )
+    order_before = driver.execute_script(
+        """
+        return {
+          selected: [...document.querySelectorAll('#selected-layer-controls .dc-layer-option')]
+            .map((card) => card.dataset.layerPreview),
+          style: window.__codeCollectiveDatacenterMap.getStyle().layers
+            .map((layer) => layer.id)
+            .filter((id) => ['power-plant-bolt-webgl', 'neon-streets-core'].includes(id)),
+          url: new URL(location.href).searchParams.get('order')
+        };
+        """
+    )
+    driver.execute_script(
+        """
+        const dragged = document.querySelector('[data-layer-preview="neon-streets"]');
+        const target = document.querySelector('[data-layer-preview="datacenters"]');
+        const data = new DataTransfer();
+        dragged.dispatchEvent(new DragEvent('dragstart', {bubbles: true, dataTransfer: data}));
+        target.dispatchEvent(new DragEvent('dragover', {bubbles: true, cancelable: true, dataTransfer: data}));
+        target.dispatchEvent(new DragEvent('drop', {bubbles: true, cancelable: true, dataTransfer: data}));
+        dragged.dispatchEvent(new DragEvent('dragend', {bubbles: true, dataTransfer: data}));
+        """
+    )
+    order_after = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const selected = [...document.querySelectorAll('#selected-layer-controls .dc-layer-option')]
+              .map((card) => card.dataset.layerPreview);
+            if (selected[0] !== 'neon-streets') return null;
+            const params = new URL(location.href).searchParams;
+            const style = window.__codeCollectiveDatacenterMap.getStyle().layers
+              .map((layer) => layer.id)
+              .filter((id) => ['power-plant-bolt-webgl', 'neon-streets-core'].includes(id));
+            return {selected, url: params.get('order'), style};
+            """
+        )
+    )
+    if not order_after["url"].startswith("neon-streets,"):
+        raise AssertionError(f"layer order was not persisted in the query string: {order_after}")
+    if order_after["style"] and order_after["style"][-1] != "neon-streets-core":
+        raise AssertionError(f"top selected layer did not draw above lower selected layers: {order_after}")
+    screenshot = save_screenshot(driver, screenshot_dir, "datacenters-layer-order-controls.png")
+    return {"before": order_before, "after": order_after, "screenshot": str(screenshot)}
 
 
 def verify_data_center_glow(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
@@ -1073,6 +1410,8 @@ def verify_data_center_glow(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
         document.querySelector('[data-layer-config="datacenters"]').click();
         const select = document.querySelector('#layer-filter-form [name="glowBy"]');
         select.value = 'contestation';
+        document.querySelector('#layer-filter-form [name="glowDistance"]').value = '1';
+        document.querySelector('#layer-filter-form [name="glowBlur"]').value = '1';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         """
     )
@@ -1084,16 +1423,24 @@ def verify_data_center_glow(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
           const glow = getComputedStyle(marker, '::before');
           return {
             kind: marker.dataset.glow,
+            iconFill: style.getPropertyValue('--marker-icon-fill').trim(),
+            outline: style.getPropertyValue('--marker-outline-color').trim(),
             color: style.getPropertyValue('--marker-glow-color').trim(),
+            edgeColor: style.getPropertyValue('--marker-glow-edge-color').trim(),
+            edgeOpacity: style.getPropertyValue('--marker-glow-edge-opacity').trim(),
+            ringWidth: Number(style.getPropertyValue('--marker-glow-ring-width')),
             opacity: Number(style.getPropertyValue('--marker-glow-opacity')),
             scale: Number(style.getPropertyValue('--marker-glow-scale')),
+            blurScale: Number(style.getPropertyValue('--marker-glow-blur')),
             fieldWidth: parseFloat(glow.width),
             markerWidth: parseFloat(style.width),
             fieldOpacity: Number(glow.opacity),
+            filter: glow.filter,
           };
         };
         return {
           contested: inspect('Amazon Data Services BWI-150 through BWI-153'),
+          plannedUncontested: inspect('1500 Woodlawn Drive data center proposal'),
           quiet: inspect('Cogent Elkridge'),
           intermediate: inspect('AiNET Beltsville Data Center'),
           query: JSON.parse(new URL(location.href).searchParams.get('filters')).datacenters.glowBy,
@@ -1102,14 +1449,67 @@ def verify_data_center_glow(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
     )
     if appearance["contested"]["kind"] != "contested" or appearance["contested"]["color"] != "#ff263f":
         raise AssertionError(f"contested facility did not receive a red glow: {appearance}")
+    if appearance["plannedUncontested"]["kind"] != "planned-uncontested" or appearance["plannedUncontested"]["color"] != "#fff15f":
+        raise AssertionError(f"planned uncontested facility did not receive a yellow glow: {appearance}")
+    if "#fff15f" not in appearance["plannedUncontested"]["iconFill"] or appearance["plannedUncontested"]["outline"] != "#9a5e00":
+        raise AssertionError(f"planned uncontested facility icon was not yellow: {appearance}")
+    if appearance["plannedUncontested"]["edgeColor"] != "#ffb000" or appearance["plannedUncontested"]["edgeOpacity"] != "100%":
+        raise AssertionError(f"planned uncontested yellow glow did not receive a visible amber edge: {appearance}")
+    if appearance["plannedUncontested"]["ringWidth"] < 0.1:
+        raise AssertionError(f"planned uncontested yellow glow ring was too thin to read: {appearance}")
     if appearance["quiet"]["kind"] != "quiet" or appearance["quiet"]["color"] != "#ffffff":
         raise AssertionError(f"quiet facility did not receive a white glow: {appearance}")
+    if appearance["quiet"]["edgeColor"] != "#32dfff" or appearance["quiet"]["edgeOpacity"] != "100%":
+        raise AssertionError(f"quiet white glow did not receive a visible blue edge: {appearance}")
+    if appearance["quiet"]["ringWidth"] < 0.1:
+        raise AssertionError(f"quiet white glow ring was too thin to read: {appearance}")
     if appearance["intermediate"]["kind"] != "none" or appearance["intermediate"]["opacity"] != 0:
         raise AssertionError(f"intermediate facility received a misleading glow: {appearance}")
-    if appearance["contested"]["fieldWidth"] < appearance["contested"]["markerWidth"] * 4:
-        raise AssertionError(f"contestation glow did not radiate beyond the marker: {appearance}")
+    contested_ratio = appearance["contested"]["fieldWidth"] / appearance["contested"]["markerWidth"]
+    quiet_ratio = appearance["quiet"]["fieldWidth"] / appearance["quiet"]["markerWidth"]
+    planned_uncontested_ratio = appearance["plannedUncontested"]["fieldWidth"] / appearance["plannedUncontested"]["markerWidth"]
+    if not 1.8 <= contested_ratio <= 2.3:
+        raise AssertionError(f"contestation glow was not tightened to the intended radius: {appearance}")
+    if not 1.8 <= quiet_ratio <= 2.3:
+        raise AssertionError(f"quiet glow was not tightened to the intended radius: {appearance}")
+    if not 1.8 <= planned_uncontested_ratio <= 2.3:
+        raise AssertionError(f"planned uncontested glow was not tightened to the intended radius: {appearance}")
+    if appearance["contested"]["blurScale"] != 1 or "0.55px" not in appearance["contested"]["filter"]:
+        raise AssertionError(f"default glow blur was not tightened: {appearance}")
     if appearance["query"] != "contestation":
         raise AssertionError(f"glow selection was not persisted in query state: {appearance}")
+
+    adjusted = driver.execute_script(
+        """
+        document.querySelector('[data-layer-config="datacenters"]').click();
+        document.querySelector('#layer-filter-form [name="glowDistance"]').value = '0.5';
+        document.querySelector('#layer-filter-form [name="glowBlur"]').value = '0.25';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        return true;
+        """
+    )
+    adjusted = WebDriverWait(driver, 5).until(lambda d: d.execute_script(
+        """
+        const marker = document.querySelector('.dc-map-marker--center[aria-label="Amazon Data Services BWI-150 through BWI-153"]');
+        const style = getComputedStyle(marker);
+        const glow = getComputedStyle(marker, '::before');
+        const filters = JSON.parse(new URL(location.href).searchParams.get('filters')).datacenters;
+        const result = {
+          scale: Number(style.getPropertyValue('--marker-glow-scale')),
+          blurScale: Number(style.getPropertyValue('--marker-glow-blur')),
+          filter: glow.filter,
+          fieldWidth: parseFloat(glow.width),
+          markerWidth: parseFloat(style.width),
+          queryDistance: filters.glowDistance,
+          queryBlur: filters.glowBlur,
+        };
+        return result.blurScale === 0.25 && result.queryDistance === 0.5 && result.queryBlur === 0.25 ? result : null;
+        """
+    ))
+    if not 1 <= adjusted["fieldWidth"] / adjusted["markerWidth"] <= 1.2:
+        raise AssertionError(f"adjusted glow distance did not shrink the field: {adjusted}")
+    if adjusted["blurScale"] != 0.25 or adjusted["queryDistance"] != 0.5 or adjusted["queryBlur"] != 0.25:
+        raise AssertionError(f"adjusted glow controls were not applied and persisted: {adjusted}")
 
     driver.execute_script(
         """
@@ -1137,18 +1537,38 @@ def verify_data_center_glow(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
         """
         document.querySelector('[data-layer-config="datacenters"]').click();
         document.querySelector('#layer-filter-form [name="glowBy"]').value = 'contestation';
+        document.querySelector('#layer-filter-form [name="glowDistance"]').value = '1';
+        document.querySelector('#layer-filter-form [name="glowBlur"]').value = '1';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         """
     )
-    return {"appearance": appearance, "disabled_opacity": disabled_opacity, "screenshot": str(screenshot)}
+    return {"appearance": appearance, "adjusted": adjusted, "disabled_opacity": disabled_opacity, "screenshot": str(screenshot)}
 
 
 def verify_power_interchanges(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     layer_id = "remote-power-interchanges-point"
-    set_checkbox(driver, "show-power-interchanges", True)
+    set_checkbox(driver, "show-neon-streets", False)
+    driver.execute_script(
+        """
+        const checkbox = document.getElementById('show-power-interchanges');
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+        """
+    )
     driver.find_element(By.CSS_SELECTOR, '[data-layer-locate="power-interchanges"]').click()
     WebDriverWait(driver, 30).until(
         lambda d: "78 border corridors" in d.find_element(By.ID, "status-power-interchanges").text
+    )
+    WebDriverWait(driver, 30).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            return map && !map.isMoving() && map.getLayer(arguments[0])
+              && map.getLayoutProperty(arguments[0], 'visibility') !== 'none';
+            """
+            ,
+            layer_id,
+        )
     )
     hit = WebDriverWait(driver, 20).until(
         lambda d: d.execute_script(
@@ -1187,6 +1607,8 @@ def verify_power_interchanges(driver: webdriver.Remote, screenshot_dir: pathlib.
     )
     if "Actual direction and MW are not published for this individual crossing" not in inspector["text"]:
         raise AssertionError(f"interchange hover implied a per-line flow measurement: {inspector}")
+    if "planning guess, not metered flow for this crossing" not in inspector["text"]:
+        raise AssertionError(f"interchange hover omitted the estimated-flow basis: {inspector}")
     if "Bidirectional interstate interchange corridor" not in inspector["text"]:
         raise AssertionError(f"interchange hover omitted its bidirectional physical role: {inspector}")
     dispatch_click(driver, hit["x"], hit["y"])
@@ -1202,6 +1624,7 @@ def verify_power_interchanges(driver: webdriver.Remote, screenshot_dir: pathlib.
 
 def verify_transmission_color_key(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     layer_id = "remote-electric-transmission-lines-line"
+    set_checkbox(driver, "show-neon-streets", False)
     set_checkbox(driver, "show-electric-transmission-lines", True)
     theme_options = driver.execute_script(
         """
@@ -1209,11 +1632,21 @@ def verify_transmission_color_key(driver: webdriver.Remote, screenshot_dir: path
         const select = document.querySelector('#layer-filter-form [name="colorTheme"]');
         const options = [...select.options].map((option) => ({value: option.value, label: option.textContent.trim()}));
         select.value = 'black-body';
+        const width = document.querySelector('#layer-filter-form [name="lineWidth"]');
+        width.value = '3';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         return options;
         """
     )
     driver.find_element(By.CSS_SELECTOR, '[data-layer-locate="electric-transmission-lines"]').click()
+    WebDriverWait(driver, 30).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            return map && !map.isMoving() && map.getZoom() >= 7;
+            """
+        )
+    )
     hit = WebDriverWait(driver, 45).until(
         lambda d: d.execute_script(
             """
@@ -1227,6 +1660,7 @@ def verify_transmission_color_key(driver: webdriver.Remote, screenshot_dir: path
               : feature.geometry.coordinates;
             const width = map.getCanvas().clientWidth;
             const height = map.getCanvas().clientHeight;
+            const styleLayer = map.getStyle().layers.find((candidate) => candidate.id === arguments[0]) || {};
             const candidates = coordinates.map((coordinate) => ({coordinate, point: map.project(coordinate)}))
               .filter(({point}) => point.x >= 4 && point.x <= width - 4 && point.y >= 4 && point.y <= height - 4)
               .sort((a, b) => Math.hypot(a.point.x - width / 2, a.point.y - height / 2)
@@ -1237,12 +1671,22 @@ def verify_transmission_color_key(driver: webdriver.Remote, screenshot_dir: path
               y: candidates[0].point.y,
               voltageClass: feature.properties.VOLT_CLASS || '',
               voltage: Number(feature.properties.VOLTAGE) || null,
-              paint: map.getPaintProperty(arguments[0], 'line-color')
+              paint: styleLayer.paint?.['line-color'],
+              lineWidth: styleLayer.paint?.['line-width'],
+              blur: styleLayer.paint?.['line-blur'],
+              opacity: styleLayer.paint?.['line-opacity'],
+              queryWidth: JSON.parse(new URL(location.href).searchParams.get('filters')).remote['electric-transmission-lines'].lineWidth
             };
             """,
             layer_id,
         )
     )
+    if "#ff263f" not in json.dumps(hit["paint"]):
+        raise AssertionError(f"transmission proposal glow color was not present in the line paint: {hit}")
+    if "4.5" not in json.dumps(hit["blur"]):
+        raise AssertionError(f"transmission proposal glow blur was not present in the line paint: {hit}")
+    if hit["queryWidth"] != 3 or hit["lineWidth"][4] != 3 or hit["lineWidth"][-1] != 12:
+        raise AssertionError(f"transmission line width did not preserve and scale its expression: {hit}")
     dispatch_hover(driver, hit["x"], hit["y"])
     key = WebDriverWait(driver, 15).until(
         lambda d: d.execute_script(
@@ -1265,13 +1709,14 @@ def verify_transmission_color_key(driver: webdriver.Remote, screenshot_dir: path
         raise AssertionError(f"transmission heat theme was not reflected in hover: {hit} {key}")
     if key["itemCount"]:
         raise AssertionError(f"transmission hover included a full legend: {key}")
-    if {option["value"] for option in theme_options} != {"default", "black-body", "forge", "stellar"}:
+    if {option["value"] for option in theme_options} != {"uniform", "default", "black-body", "forge", "stellar"}:
         raise AssertionError(f"transmission heat theme options were incomplete: {theme_options}")
     screenshot = save_screenshot(driver, screenshot_dir, "datacenters-transmission-color-key.png")
     driver.execute_script(
         """
         document.querySelector('[data-layer-config="electric-transmission-lines"]').click();
-        document.querySelector('#layer-filter-form [name="colorTheme"]').value = 'default';
+        document.querySelector('#layer-filter-form [name="colorTheme"]').value = 'uniform';
+        document.querySelector('#layer-filter-form [name="lineWidth"]').value = '1';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         """
     )
@@ -1280,6 +1725,12 @@ def verify_transmission_color_key(driver: webdriver.Remote, screenshot_dir: path
 
 
 def zoom_until_parcels_visible(driver: webdriver.Remote, max_clicks: int) -> str:
+    driver.execute_script(
+        """
+        const map = window.__codeCollectiveDatacenterMap;
+        map.jumpTo({center: [-76.6122, 39.2904], zoom: Math.max(map.getZoom(), 13.2)});
+        """
+    )
     zoom_in = driver.find_element(By.CSS_SELECTOR, ".maplibregl-ctrl-zoom-in")
     status = driver.find_element(By.ID, "parcel-status")
     text = status.text.strip()
@@ -1375,6 +1826,52 @@ def wait_for_lookup_result(driver: webdriver.Remote, fetch_count_before: int, de
 
 
 def first_parcel_point(driver: webdriver.Remote, sample_limit: int) -> tuple[dict, list[dict]]:
+    known_parcel_points = driver.execute_script(
+        """
+        const map = window.__codeCollectiveDatacenterMap;
+        const width = map.getCanvas().clientWidth;
+        const height = map.getCanvas().clientHeight;
+        return [
+          [-76.6205, 39.293],
+          [-76.609, 39.3],
+          [-76.617, 39.287]
+        ].map((coordinate) => {
+          const point = map.project(coordinate);
+          return {x: Number(point.x.toFixed(1)), y: Number(point.y.toFixed(1))};
+        }).filter((point) => point.x >= 24 && point.x <= width - 24 && point.y >= 24 && point.y <= height - 24);
+        """
+    )
+    rendered_points = driver.execute_script(
+        """
+        const map = window.__codeCollectiveDatacenterMap;
+        const layer = 'mdp-sdat-parcels-line';
+        if (!map.getLayer(layer)) return [];
+        const width = map.getCanvas().clientWidth;
+        const height = map.getCanvas().clientHeight;
+        const points = [];
+        const features = map.queryRenderedFeatures({layers: [layer]}).slice(0, 80);
+        const collect = (coordinates) => {
+          if (!Array.isArray(coordinates)) return;
+          if (typeof coordinates[0] === 'number' && typeof coordinates[1] === 'number') {
+            const point = map.project(coordinates);
+            if (point.x >= 24 && point.x <= width - 24 && point.y >= 24 && point.y <= height - 24) {
+              points.push({x: Number(point.x.toFixed(1)), y: Number(point.y.toFixed(1))});
+            }
+            return;
+          }
+          coordinates.forEach(collect);
+        };
+        features.forEach((feature) => collect(feature.geometry.coordinates));
+        const seen = new Set();
+        return points.filter((point) => {
+          const key = `${Math.round(point.x / 4)}:${Math.round(point.y / 4)}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        }).slice(0, arguments[0]);
+        """,
+        sample_limit,
+    )
     size = driver.execute_script(
         """
         const rect = document.querySelector('#datacenter-map canvas.maplibregl-canvas').getBoundingClientRect();
@@ -1394,6 +1891,7 @@ def first_parcel_point(driver: webdriver.Remote, sample_limit: int) -> tuple[dic
         for x in xs:
             points.append({"x": round(x, 1), "y": round(y, 1)})
 
+    points = [*known_parcel_points, *rendered_points, *points]
     attempted = []
     for point in points[:sample_limit]:
         probe_before = read_probe(driver)
@@ -1402,7 +1900,7 @@ def first_parcel_point(driver: webdriver.Remote, sample_limit: int) -> tuple[dic
             driver,
             fetch_count_before=len(probe_before.get("fetches", [])),
             detail_count_before=len(probe_before.get("detailRenders", [])),
-            timeout=6,
+            timeout=20,
         )
         attempted.append({"point": point, "hit": bool(result)})
         if result:
@@ -1429,7 +1927,7 @@ def collect_hover_samples(driver: webdriver.Remote, point: dict, count: int) -> 
             driver,
             fetch_count_before=len(probe_before.get("fetches", [])),
             detail_count_before=len(probe_before.get("detailRenders", [])),
-            timeout=6,
+            timeout=20,
         )
         if not result:
             raise AssertionError(f"parcel hover sample {index + 1} did not resolve")
@@ -1479,14 +1977,22 @@ def run(args: argparse.Namespace) -> int:
     screenshot_dir = pathlib.Path(args.screenshot_dir).resolve()
     driver = new_driver(args.selenium_url, args.width, args.height)
     report_path = screenshot_dir / "datacenters-parcel-hover-report.json"
+    stage = "startup"
+    def step(name: str, action):
+        nonlocal stage
+        stage = name
+        return action()
     try:
+        stage = "load page"
         driver.get(args.base_url)
+        stage = "map ready"
         wait_for_map_ready(driver)
+        stage = "install instrumentation"
         install_instrumentation(driver)
         if args.mobile_only:
             report = {
                 "base_url": args.base_url,
-                "mobile_layout": verify_mobile_layout(driver, screenshot_dir),
+                "mobile_layout": step("mobile layout", lambda: verify_mobile_layout(driver, screenshot_dir)),
             }
             screenshot_dir.mkdir(parents=True, exist_ok=True)
             report_path.write_text(json.dumps(report, indent=2))
@@ -1495,24 +2001,79 @@ def run(args: argparse.Namespace) -> int:
         if args.glow_only:
             report = {
                 "base_url": args.base_url,
-                "data_center_glow": verify_data_center_glow(driver, screenshot_dir),
+                "data_center_glow": step("data center glow", lambda: verify_data_center_glow(driver, screenshot_dir)),
             }
             screenshot_dir.mkdir(parents=True, exist_ok=True)
             report_path.write_text(json.dumps(report, indent=2))
             print(json.dumps(report, indent=2))
             return 0
-        layer_search = verify_layer_search(driver)
-        layer_color_controls = verify_layer_color_controls(driver, screenshot_dir)
-        data_center_draw_scaling = verify_data_center_draw_scaling(driver, screenshot_dir)
-        data_center_glow = verify_data_center_glow(driver, screenshot_dir)
-        data_center_power_scale = verify_data_center_power_scale(driver, screenshot_dir)
-        power_interchanges = verify_power_interchanges(driver, screenshot_dir)
-        base_layers = verify_base_layers(driver, screenshot_dir)
-        neon_streets = verify_neon_streets(driver, screenshot_dir)
-        map_export = verify_no_base_and_png_export(driver, screenshot_dir)
-        power_plant_webgl = verify_power_plant_webgl(driver, screenshot_dir)
-        transmission_color_key = verify_transmission_color_key(driver, screenshot_dir)
-        zoning = verify_baltimore_zoning(driver, screenshot_dir)
+        if args.power_webgl_only:
+            report = {
+                "base_url": args.base_url,
+                "power_plant_webgl": step("power plant webgl", lambda: verify_power_plant_webgl(driver, screenshot_dir)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
+        if args.line_width_only:
+            report = {
+                "base_url": args.base_url,
+                "line_width_controls": step("line width controls", lambda: verify_line_width_controls(driver, screenshot_dir)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
+        if args.projected_demand_only:
+            report = {
+                "base_url": args.base_url,
+                "data_center_draw_scaling": step("data center draw scaling", lambda: verify_data_center_draw_scaling(driver, screenshot_dir)),
+                "projected_data_center_demand": step("projected data center demand", lambda: verify_projected_data_center_demand(driver, screenshot_dir)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
+        if args.map_interactions_only:
+            report = {
+                "base_url": args.base_url,
+                "map_gestures_over_data_center": step("map gestures over data center", lambda: verify_map_gestures_over_data_center(driver)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
+        if args.layer_order_only:
+            report = {
+                "base_url": args.base_url,
+                "layer_order_controls": step("layer order controls", lambda: verify_layer_order_controls(driver, screenshot_dir)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
+        if args.transmission_only:
+            report = {
+                "base_url": args.base_url,
+                "transmission_color_key": step("transmission color key", lambda: verify_transmission_color_key(driver, screenshot_dir)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
+        layer_search = step("layer search", lambda: verify_layer_search(driver))
+        layer_color_controls = step("layer color controls", lambda: verify_layer_color_controls(driver, screenshot_dir))
+        data_center_draw_scaling = step("data center draw scaling", lambda: verify_data_center_draw_scaling(driver, screenshot_dir))
+        data_center_glow = step("data center glow", lambda: verify_data_center_glow(driver, screenshot_dir))
+        data_center_power_scale = step("data center power scale", lambda: verify_data_center_power_scale(driver, screenshot_dir))
+        power_interchanges = step("power interchanges", lambda: verify_power_interchanges(driver, screenshot_dir))
+        base_layers = step("base layers", lambda: verify_base_layers(driver, screenshot_dir))
+        neon_streets = step("neon streets", lambda: verify_neon_streets(driver, screenshot_dir))
+        map_export = step("map export", lambda: verify_no_base_and_png_export(driver, screenshot_dir))
+        power_plant_webgl = step("power plant webgl", lambda: verify_power_plant_webgl(driver, screenshot_dir))
+        transmission_color_key = step("transmission color key", lambda: verify_transmission_color_key(driver, screenshot_dir))
+        zoning = step("baltimore zoning", lambda: verify_baltimore_zoning(driver, screenshot_dir))
         if args.zoning_only:
             report = {
                 "base_url": args.base_url,
@@ -1533,13 +2094,14 @@ def run(args: argparse.Namespace) -> int:
             report_path.write_text(json.dumps(report, indent=2))
             print(json.dumps(report, indent=2))
             return 0
+        stage = "parcel hover setup"
         set_checkbox(driver, "show-parcels", True)
         set_checkbox(driver, "hover-parcels", True)
-        visible_status = zoom_until_parcels_visible(driver, args.max_zoom_clicks)
+        visible_status = step("parcel visibility", lambda: zoom_until_parcels_visible(driver, args.max_zoom_clicks))
         ready_shot = save_screenshot(driver, screenshot_dir, "datacenters-parcels-ready.png")
 
-        point, attempted = first_parcel_point(driver, args.point_search_limit)
-        samples = collect_hover_samples(driver, point, args.hover_samples)
+        point, attempted = step("parcel point discovery", lambda: first_parcel_point(driver, args.point_search_limit))
+        samples = step("parcel hover samples", lambda: collect_hover_samples(driver, point, args.hover_samples))
         final_shot = save_screenshot(driver, screenshot_dir, "datacenters-parcel-hover-hit.png")
 
         report = {
@@ -1571,6 +2133,7 @@ def run(args: argparse.Namespace) -> int:
         failure_shot = save_screenshot(driver, screenshot_dir, "datacenters-parcel-hover-failure.png")
         failure = {
             "base_url": args.base_url,
+            "stage": stage,
             "error": str(error),
             "failure_screenshot": str(failure_shot),
         }
@@ -1606,6 +2169,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--zoning-only", action="store_true", help="Verify Baltimore zoning rendering and hover, then exit.")
     parser.add_argument("--mobile-only", action="store_true", help="Verify the touch layout and mobile inspector, then exit.")
     parser.add_argument("--glow-only", action="store_true", help="Verify the data-center contestation glow, then exit.")
+    parser.add_argument("--power-webgl-only", action="store_true", help="Verify the antialiased WebGL power-plant bolts, then exit.")
+    parser.add_argument("--line-width-only", action="store_true", help="Verify line-layer width controls, then exit.")
+    parser.add_argument("--projected-demand-only", action="store_true", help="Verify projected demand for unbuilt data centers, then exit.")
+    parser.add_argument("--map-interactions-only", action="store_true", help="Verify hover, drag-pan, and scroll-zoom over a data-center marker, then exit.")
+    parser.add_argument("--layer-order-only", action="store_true", help="Verify selected layer drag ordering and persisted z-order, then exit.")
+    parser.add_argument("--transmission-only", action="store_true", help="Verify transmission line color theme and width controls, then exit.")
     return parser.parse_args()
 
 

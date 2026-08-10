@@ -71,6 +71,14 @@ def curated_data_center(**values):
         "reported_grid_demand_mw": None,
         "reported_annual_energy_mwh": None,
         "reported_pue": None,
+        "estimated_power_draw_mw": None,
+        "estimated_power_draw_basis": None,
+        "estimated_power_draw_confidence": None,
+        "estimated_power_draw_source_ids": [],
+        "projected_power_demand_mw": None,
+        "projected_power_demand_basis": None,
+        "projected_power_demand_confidence": None,
+        "projected_power_demand_source_ids": [],
         "on_site_natural_gas_power_plant": "not identified in reviewed records",
         "on_site_generation_capacity_mw": None,
         "on_site_generation_technology": None,
@@ -227,6 +235,213 @@ CURATED_DATA_CENTER_ADDITIONS = [
         source_ids=["ainet-cybernap", "ainet-global-cloud-connect", "ainet-data-center-services", "peeringdb-md-facilities", "mdp-sdat-parcel-property", "esri-world-geocoder"],
         notes="The parcel structure is larger than AiNET's stated data-center area. The operator page uses future-tense opening language while PeeringDB lists the facility; current operating status therefore remains explicitly unverified.",
     ),
+    curated_data_center(
+        id="ainet-one-market-center-baltimore",
+        name="AiNET One Market Center",
+        operator="AiNET",
+        owner=None,
+        status_tags=["Year unknown", "Operating", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="Directory-listed colocation and connectivity facility in the 300 West Lexington carrier-hotel building.",
+        street_address="300 West Lexington Street", city="Baltimore", county="Baltimore City", postal_code="21201",
+        latitude=39.2917, longitude=-76.620038,
+        coordinate_method="shared point-address match from existing 300 West Lexington record",
+        hardware_detail="DataCenterMap describes One Market Center as a major connected Baltimore colocation facility; site-specific rack count, IT load, and metered demand were not found.",
+        hardware_workflow_basis="Directory listing supports the facility identity and colocation/connectivity function; demand and tenant hardware remain estimated.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026"],
+        notes="Shares the 300 West Lexington carrier-hotel building with other listed providers; retained as a separate operator/listing record.",
+    ),
+    curated_data_center(
+        id="crown-castle-baltimore",
+        name="Crown Castle Baltimore",
+        operator="Crown Castle",
+        owner=None,
+        status_tags=["Year unknown", "Operating", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="Directory-listed network and colocation presence at 111 Market Place.",
+        street_address="111 Market Place", city="Baltimore", county="Baltimore City", postal_code="21202",
+        latitude=39.2874338, longitude=-76.6063475,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        hardware_detail="DataCenterMap describes a high-capacity transport and fiber-network provider presence serving Baltimore, Washington, D.C., and Delmarva; facility power totals are not disclosed.",
+        hardware_workflow_basis="Directory listing supports the network/facility presence; data-center load is estimated at network-room scale.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+        notes="Shares the 111 Market Place / Candler Building location with other directory listings; retained as a separate provider/listing record.",
+    ),
+    curated_data_center(
+        id="databank-111-market-place",
+        name="DataBank - 111 Market Place",
+        operator="DataBank",
+        owner=None,
+        status_tags=["Year unknown", "Operating", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="Directory-listed downtown Baltimore connectivity facility with metro interconnects to 300 West Lexington.",
+        street_address="111 Market Place", city="Baltimore", county="Baltimore City", postal_code="21202",
+        latitude=39.2874338, longitude=-76.6063475,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        hardware_detail="DataCenterMap describes direct connections to nine carriers and metro interconnects to DataBank BWI1 at 300 West Lexington; rack count and power totals are not disclosed.",
+        hardware_workflow_basis="Directory listing supports the connectivity role; power draw is estimated because no metered or capacity figure was found.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+        notes="Shares the Candler Building address with other directory-listed providers; retained separately because DataCenterMap lists it separately.",
+    ),
+    curated_data_center(
+        id="infradms-bal01-baltimore",
+        name="InfraDMS BAL01",
+        operator="InfraDMS",
+        owner=None,
+        status_tags=["Year unknown", "Operating", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="Directory-listed infrastructure-services data center at One South Street.",
+        street_address="1 South Street", city="Baltimore", county="Baltimore City", postal_code="21202",
+        latitude=39.2893325, longitude=-76.6105729,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        reported_power_capacity_mw=0.65,
+        reported_power_capacity_basis="DataCenterMap directory description says facility highlights include up to 650 kW of power; this is capacity, not metered draw.",
+        backup_generator_count=2,
+        backup_generator_capacity_mw=1.5,
+        backup_generator_detail="Directory description reports dual 750 kW generators.",
+        hardware_detail="Directory description reports up to 650 kW of power, dual 750 kW generators, and redundant Liebert systems.",
+        hardware_workflow_basis="Directory listing supports facility identity and power-envelope figures; measured grid demand remains estimated.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+    ),
+    curated_data_center(
+        id="amazon-cronridge-owings-mills",
+        name="Amazon AWS - 11550 Cronridge Drive",
+        operator="Amazon AWS",
+        owner="Amazon AWS / acquired facility according to directory listing",
+        status="directory listed / operating status not independently verified",
+        development_status="directory listed / operating status not independently verified",
+        status_tags=["Year unknown", "Directory listed", "Operating status unverified"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="DataCenterMap lists the Owings Mills Cronridge Drive property as an Amazon AWS acquired data-center facility.",
+        street_address="11550 Cronridge Drive", city="Owings Mills", county="Baltimore", postal_code="21117",
+        latitude=39.442891, longitude=-76.7721384,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        hardware_detail="Directory listing identifies an acquired Amazon AWS data-center facility; public rack, generator, and grid-demand details were not found in the reviewed listing.",
+        likely_workflows_detail="Likely AWS cloud infrastructure if the directory listing is current; workload attribution is an operator inference, not a site-specific disclosure.",
+        hardware_workflow_basis="Directory listing supports the facility identity; AWS workload description is an operator inference.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+    ),
+    curated_data_center(
+        id="woodlawn-drive-1500-proposal",
+        name="1500 Woodlawn Drive data center proposal",
+        operator="Unknown Company",
+        owner=None,
+        status="proposed / directory listed",
+        development_status="proposed",
+        status_tags=["Not built", "Proposed", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="DataCenterMap describes a proposed 150 MW data-center campus on a 42-acre Baltimore County site with construction expected in June or July 2026.",
+        street_address="1500 Woodlawn Drive", city="Baltimore", county="Baltimore", postal_code="21241",
+        latitude=39.307986, longitude=-76.7385748,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        site_acres=42,
+        reported_power_capacity_mw=150,
+        reported_power_capacity_basis="DataCenterMap directory description reports a proposed 150 MW campus; this is planning-scale capacity, not measured demand.",
+        hardware_detail="Directory description identifies a proposed 150 MW campus and planned donation of five acres for an electrical substation; no tenant hardware was disclosed.",
+        likely_workflows_detail="Likely hyperscale or large enterprise/cloud workloads if built, inferred from the proposed 150 MW campus scale.",
+        hardware_workflow_basis="Directory listing supports the proposal scale; workload is a scale-based inference.",
+        public_opposition_status="not researched beyond directory listing",
+        public_sentiment_label="insufficient evidence",
+        sentiment_basis="No facility-specific public sentiment review has been completed for this newly added directory listing.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+    ),
+    curated_data_center(
+        id="comcast-nottingham",
+        name="Comcast Nottingham",
+        operator="Comcast",
+        owner=None,
+        status_tags=["Year unknown", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="Directory-listed Comcast facility in Nottingham / White Marsh.",
+        street_address="8031 Corporate Drive", city="Nottingham", county="Baltimore", postal_code="21236",
+        latitude=39.3687901, longitude=-76.4671785,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        hardware_detail="DataCenterMap lists a Comcast Nottingham profile but does not disclose site-specific power, rack, UPS, or generator details in the Baltimore listing.",
+        likely_workflows_detail="Likely cable/network headend, transport, edge compute, and enterprise infrastructure support, inferred from Comcast operator identity.",
+        hardware_workflow_basis="Directory listing supports the facility identity; workflow is an operator inference.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+    ),
+    curated_data_center(
+        id="gi-partners-eternal-rings-laurel",
+        name="9800 South Eternal Rings Drive",
+        operator="GI Partners",
+        owner="GI Partners",
+        status="directory listed / hyperscale powered shell",
+        development_status="directory listed / hyperscale powered shell",
+        status_tags=["Year unknown", "Directory listed", "Powered shell"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="DataCenterMap describes a hyperscale powered-shell data center in Laurel, part of a 218,000-square-foot development on 95 acres.",
+        street_address="9800 South Eternal Rings Drive", city="Laurel", county="Howard", postal_code="20723",
+        latitude=39.1335439, longitude=-76.8515612,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        site_acres=95,
+        hardware_detail="Directory listing describes a hyperscale powered shell designed for cloud and computing contracts; no public metered demand or tenant hardware inventory was found.",
+        likely_workflows_detail="Likely hyperscale cloud or high-density compute workloads, inferred from powered-shell scale and directory description.",
+        hardware_workflow_basis="Directory listing supports the powered-shell identity and scale; power draw and workloads remain estimated.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+    ),
+    curated_data_center(
+        id="gi-partners-sandy-farm-severn",
+        name="7665 Sandy Farm Road",
+        operator="GI Partners",
+        owner="GI Partners",
+        status="directory listed / hyperscale powered shell",
+        development_status="directory listed / hyperscale powered shell",
+        status_tags=["Year unknown", "Directory listed", "Powered shell", "Fully leased"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="DataCenterMap describes a hyperscale powered-shell data center in Severn developed for cloud and computing contracts and fully leased.",
+        street_address="7665 Sandy Farm Road", city="Severn", county="Anne Arundel", postal_code="21144",
+        latitude=39.1485935, longitude=-76.6846043,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        hardware_detail="Directory listing describes a fully leased hyperscale powered shell for cloud and computing contracts; no public metered demand or tenant hardware inventory was found.",
+        likely_workflows_detail="Likely hyperscale cloud or high-density compute workloads, inferred from powered-shell scale and directory description.",
+        hardware_workflow_basis="Directory listing supports the powered-shell identity and lease status; power draw and workloads remain estimated.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+    ),
+    curated_data_center(
+        id="lumen-baltimore",
+        name="Lumen Baltimore",
+        operator="Lumen",
+        owner=None,
+        status_tags=["Year unknown", "Operating", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="Directory-listed Lumen facility/presence at 300 West Lexington Street.",
+        street_address="300 West Lexington Street", city="Baltimore", county="Baltimore City", postal_code="21201",
+        latitude=39.2917, longitude=-76.620038,
+        coordinate_method="shared point-address match from existing 300 West Lexington record",
+        hardware_detail="DataCenterMap lists Lumen Baltimore at 300 West Lexington; site-specific power, rack, UPS, and generator details were not disclosed in the listing.",
+        likely_workflows_detail="Likely network transport, carrier interconnection, edge compute, and enterprise connectivity workloads.",
+        hardware_workflow_basis="Directory listing supports the facility identity; workload is an operator inference.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026"],
+        notes="Shares the 300 West Lexington carrier-hotel building with other listed providers; retained as a separate provider/listing record.",
+    ),
+    curated_data_center(
+        id="candler-building-baltimore",
+        name="Candler Building",
+        operator="Unknown Company",
+        owner=None,
+        status_tags=["Year unknown", "Operating", "Directory listed"],
+        status_source_ids=["datacentermap-baltimore-2026"],
+        plan_detail="Directory-listed data-center/candler-building entry at 111 Market Place.",
+        street_address="111 Market Place", city="Baltimore", county="Baltimore City", postal_code="21202",
+        latitude=39.2874338, longitude=-76.6063475,
+        coordinate_method="OpenStreetMap Nominatim point-address match",
+        hardware_detail="DataCenterMap lists a Candler Building data-center entry but does not disclose operator, power, rack, UPS, or generator details in the Baltimore listing.",
+        hardware_workflow_basis="Directory listing supports the location listing only; power draw and workflows are low-confidence estimates.",
+        profile_source_ids=["datacentermap-baltimore-2026"],
+        source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
+        notes="Shares the 111 Market Place / Candler Building location with other provider listings; retained because DataCenterMap lists it separately.",
+    ),
 ]
 
 
@@ -315,14 +530,312 @@ POWER_SCALE_SOURCE_IDS = {
 }
 
 
+ESTIMATED_POWER_DRAWS = {
+    "aligned-iad04-frederick": {
+        "mw": 300,
+        "confidence": "medium",
+        "basis": (
+            "Estimated normal grid draw from a 508 MW permitted emergency-generator plant for a single hyperscale "
+            "facility. The estimate treats backup nameplate as a resilience envelope and applies a conservative "
+            "hyperscale load proxy; it is not a metered demand value."
+        ),
+        "source_ids": ["mde-aligned-air-permit-application", "mde-aligned-issued-air-permit-2025"],
+    },
+    "amazon-bwi150-153-frederick": {
+        "mw": 160,
+        "confidence": "medium",
+        "basis": (
+            "Estimated normal grid draw from the 257.75 MW permitted backup-generator fleet across four Amazon "
+            "buildings. Backup nameplate is used only as an order-of-magnitude proxy, not as actual demand."
+        ),
+        "source_ids": ["mde-amazon-air-permit-application", "mde-amazon-issued-air-permit-2026"],
+    },
+    "annapolis-state-data-center": {
+        "mw": 1,
+        "confidence": "low",
+        "basis": (
+            "Estimated as a small legacy government data center because reviewed budget and facility records do not "
+            "publish IT load, service capacity, or metered demand."
+        ),
+        "source_ids": ["maryland-dgs-annapolis-data-center", "mdp-sdat-parcel-property"],
+    },
+    "tierpoint-baltimore-bal": {
+        "mw": 1.5,
+        "confidence": "medium",
+        "basis": "Estimated from a documented 3 MW backup-generator envelope for an operating colocation site.",
+        "source_ids": ["tierpoint-baltimore", "tierpoint-baltimore-spec"],
+    },
+    "tierpoint-baltimore-bwi": {
+        "mw": 1.25,
+        "confidence": "medium",
+        "basis": "Estimated from a documented 2.5 MW backup-generator envelope for an operating colocation site.",
+        "source_ids": ["tierpoint-bwi", "tierpoint-bwi-spec"],
+    },
+    "expedient-tide-point": {
+        "mw": 1,
+        "confidence": "medium",
+        "basis": (
+            "Estimated operating draw from the operator-stated 1.5 MW critical IT load, using a partial-utilization "
+            "proxy because measured utility demand is not public."
+        ),
+        "source_ids": ["expedient-tide-point-spec"],
+    },
+    "expedient-owings-mills": {
+        "mw": 0.55,
+        "confidence": "medium",
+        "basis": (
+            "Estimated operating draw from the operator-stated 0.8 MW critical IT load, using a partial-utilization "
+            "proxy because measured utility demand is not public."
+        ),
+        "source_ids": ["expedient-owings-mills-spec"],
+    },
+    "databank-bwi1-baltimore": {
+        "mw": 0.4,
+        "confidence": "medium",
+        "basis": (
+            "Estimated operating draw from the published 600 kW critical-power figure. The separate 1.5 MW site-power "
+            "figure is not used as normal demand."
+        ),
+        "source_ids": ["databank-bwi1-2020"],
+    },
+    "databridge-silver-spring": {
+        "mw": 6.5,
+        "confidence": "medium",
+        "basis": "Estimated from the marketed 10 MW site-power capacity using a partial-utilization proxy.",
+        "source_ids": ["databridge-home"],
+    },
+    "atmosphere-dickerson": {
+        "mw": 360,
+        "confidence": "high",
+        "basis": "Estimated from the proposal's published 360 MW campus scale; it is planning demand, not operating load.",
+        "source_ids": ["montgomery-zta-26-01", "dcd-atmosphere-moratorium-challenge-2026"],
+    },
+    "brightseat-tech-park-landover": {
+        "mw": 300,
+        "confidence": "low",
+        "basis": (
+            "Estimated as five large data-center buildings on an 88-acre concept plan, using 60 MW per building "
+            "as a planning-scale proxy because utility demand and IT load are not public."
+        ),
+        "source_ids": ["axios-landover-opposition-2025", "pg-executive-orders-2026"],
+    },
+    "jhu-bayview-research-data-center": {
+        "mw": 5,
+        "confidence": "low",
+        "basis": (
+            "Estimated as a university research data center because public funding records identify the project but "
+            "do not disclose utility demand or IT load."
+        ),
+        "source_ids": ["jhu-bayview-state-grant-2026"],
+    },
+    "cogent-elkridge": {
+        "mw": 5,
+        "confidence": "medium",
+        "basis": (
+            "Estimated from Cogent's 7.50 MW facility-power and 6.17 MW protected-power disclosures using a "
+            "partial-utilization proxy; the disclosed values are capacity, not metered draw."
+        ),
+        "source_ids": ["cogent-elkridge-wholesale-2025", "cogent-elkridge-brochure-2025"],
+    },
+    "atlantech-rockville": {
+        "mw": 0.75,
+        "confidence": "low",
+        "basis": (
+            "Estimated as a small regional colocation facility because reviewed operator pages disclose redundant "
+            "power and generators but not rack count, utility demand, or IT load."
+        ),
+        "source_ids": ["atlantech-data-centers", "atlantech-rockville"],
+    },
+    "atlantech-silver-spring": {
+        "mw": 0.5,
+        "confidence": "low",
+        "basis": (
+            "Estimated as a small regional colocation facility because reviewed operator pages disclose redundant "
+            "power and generators but not rack count, utility demand, or IT load."
+        ),
+        "source_ids": ["atlantech-data-centers", "atlantech-colocation-terms"],
+    },
+    "ainet-beltsville": {
+        "mw": 2,
+        "confidence": "low",
+        "basis": (
+            "Estimated as a small-to-medium AiNET colocation site because public operator and registry records do "
+            "not disclose site capacity or metered demand."
+        ),
+        "source_ids": ["ainet-cybernap", "ainet-data-center-services"],
+    },
+    "ainet-laurel": {
+        "mw": 1.5,
+        "confidence": "low",
+        "basis": (
+            "Estimated as a small AiNET colocation site because public operator and registry records do not disclose "
+            "site capacity or metered demand."
+        ),
+        "source_ids": ["ainet-cybernap", "ainet-data-center-services"],
+    },
+    "ainet-cybernap-glen-burnie": {
+        "mw": 52,
+        "confidence": "medium",
+        "basis": (
+            "Estimated from AiNET's published 80 MW utility-feed capacity using a partial-utilization proxy. The "
+            "facility's current operating status remains separately marked as not independently verified."
+        ),
+        "source_ids": ["ainet-cybernap", "ainet-data-center-services"],
+    },
+    "ainet-one-market-center-baltimore": {
+        "mw": 3,
+        "confidence": "low",
+        "basis": "Estimated as a multi-provider carrier-hotel colocation presence because the directory listing does not disclose metered demand or power capacity.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "crown-castle-baltimore": {
+        "mw": 0.25,
+        "confidence": "low",
+        "basis": "Estimated as a network-provider facility presence because the directory listing describes transport/fiber services rather than a disclosed data-center power envelope.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "databank-111-market-place": {
+        "mw": 0.5,
+        "confidence": "low",
+        "basis": "Estimated as a smaller carrier-hotel interconnection facility because the directory listing discloses connectivity but not metered demand or power capacity.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "infradms-bal01-baltimore": {
+        "mw": 0.45,
+        "confidence": "medium",
+        "basis": "Estimated from the directory-listed 650 kW power capacity using a partial-utilization proxy; the 650 kW value is capacity, not measured demand.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "amazon-cronridge-owings-mills": {
+        "mw": 5,
+        "confidence": "low",
+        "basis": "Estimated as a small AWS acquired data-center facility because the directory listing identifies the facility but does not disclose power capacity or metered demand.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "woodlawn-drive-1500-proposal": {
+        "mw": 150,
+        "confidence": "medium",
+        "basis": "Estimated from the directory-listed proposed 150 MW campus scale; this is planning demand, not operating load.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "comcast-nottingham": {
+        "mw": 0.75,
+        "confidence": "low",
+        "basis": "Estimated as a Comcast network/edge facility because the directory listing does not disclose power capacity or metered demand.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "gi-partners-eternal-rings-laurel": {
+        "mw": 60,
+        "confidence": "low",
+        "basis": "Estimated as a hyperscale powered-shell facility from the directory-listed 218,000-square-foot development scale; no metered demand was disclosed.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "gi-partners-sandy-farm-severn": {
+        "mw": 60,
+        "confidence": "low",
+        "basis": "Estimated as a fully leased hyperscale powered-shell facility from the directory description; no metered demand or power capacity was disclosed.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "lumen-baltimore": {
+        "mw": 1,
+        "confidence": "low",
+        "basis": "Estimated as a carrier network and interconnection facility presence because the directory listing does not disclose power capacity or metered demand.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+    "candler-building-baltimore": {
+        "mw": 0.5,
+        "confidence": "low",
+        "basis": "Estimated as a generic carrier-hotel building listing because the directory listing does not disclose operator, power capacity, or metered demand.",
+        "source_ids": ["datacentermap-baltimore-2026"],
+    },
+}
+
+
+def apply_estimated_power_draw(record):
+    demand = record.get("reported_grid_demand_mw")
+    if isinstance(demand, (int, float)):
+        record.update(
+            {
+                "estimated_power_draw_mw": float(demand),
+                "estimated_power_draw_basis": "Uses the published normal grid-demand value; no separate estimate was needed.",
+                "estimated_power_draw_confidence": "high",
+                "estimated_power_draw_source_ids": POWER_SCALE_SOURCE_IDS.get(
+                    record["id"], record.get("profile_source_ids", [])
+                ),
+            }
+        )
+        return record
+
+    estimate = ESTIMATED_POWER_DRAWS.get(record["id"])
+    if estimate:
+        record.update(
+            {
+                "estimated_power_draw_mw": float(estimate["mw"]),
+                "estimated_power_draw_basis": estimate["basis"],
+                "estimated_power_draw_confidence": estimate["confidence"],
+                "estimated_power_draw_source_ids": estimate["source_ids"],
+            }
+        )
+        return record
+
+    capacity = record.get("reported_power_capacity_mw")
+    if isinstance(capacity, (int, float)):
+        estimate_value = round(float(capacity) * 0.67, 3)
+        record.update(
+            {
+                "estimated_power_draw_mw": estimate_value,
+                "estimated_power_draw_basis": (
+                    "Estimated from published facility power capacity using a two-thirds utilization proxy because "
+                    "measured grid demand is not public."
+                ),
+                "estimated_power_draw_confidence": "low",
+                "estimated_power_draw_source_ids": POWER_SCALE_SOURCE_IDS.get(
+                    record["id"], record.get("profile_source_ids", [])
+                ),
+            }
+        )
+    return record
+
+
+def apply_projected_power_demand(record):
+    status = str(record.get("status") or "").lower()
+    unbuilt = any(term in status for term in ("development", "proposed", "concept", "planned"))
+    estimate = record.get("estimated_power_draw_mw")
+    if unbuilt and isinstance(estimate, (int, float)):
+        record.update(
+            {
+                "projected_power_demand_mw": float(estimate),
+                "projected_power_demand_basis": record.get("estimated_power_draw_basis"),
+                "projected_power_demand_confidence": record.get("estimated_power_draw_confidence"),
+                "projected_power_demand_source_ids": record.get("estimated_power_draw_source_ids", []),
+            }
+        )
+    else:
+        record.update(
+            {
+                "projected_power_demand_mw": None,
+                "projected_power_demand_basis": None,
+                "projected_power_demand_confidence": None,
+                "projected_power_demand_source_ids": [],
+            }
+        )
+    return record
+
+
 def classify_data_center_power(record):
     demand = record.get("reported_grid_demand_mw")
+    estimate = record.get("estimated_power_draw_mw")
     capacity = record.get("reported_power_capacity_mw")
     if isinstance(demand, (int, float)):
         value = float(demand)
         value_kind = "reported grid demand"
         tag_prefix = "Draw"
         detail = "Classified from publicly reported normal grid demand."
+    elif isinstance(estimate, (int, float)):
+        value = float(estimate)
+        value_kind = "estimated grid demand"
+        tag_prefix = "Estimated draw"
+        detail = record.get("estimated_power_draw_basis") or "Classified from estimated normal grid demand."
     elif isinstance(capacity, (int, float)):
         value = float(capacity)
         value_kind = "reported power-capacity proxy"
@@ -362,7 +875,7 @@ def classify_data_center_power(record):
             "power_scale_detail": detail,
             "power_scale_tag": tag,
             "power_scale_source_ids": POWER_SCALE_SOURCE_IDS.get(
-                record["id"], record.get("profile_source_ids", [])
+                record["id"], record.get("estimated_power_draw_source_ids") or record.get("profile_source_ids", [])
             ),
         }
     )
@@ -384,6 +897,43 @@ def plant_status_metadata(status_codes):
     else:
         development_status = "mixed operable-generator status"
     return development_status, labels
+
+
+def enrich_power_plant_planning_output(record):
+    capacity = record.get("nameplate_capacity_mw")
+    generation = record.get("net_generation_mwh")
+    year = record.get("generation_year")
+    source_id = record.get("generation_source_id")
+    fields = {
+        "planning_sustained_output_mw": None,
+        "annual_capacity_factor": None,
+        "planning_output_basis": None,
+        "planning_output_source_id": source_id,
+    }
+    if not isinstance(capacity, (int, float)) or capacity <= 0:
+        fields["planning_output_basis"] = "No positive nameplate capacity is available to bound annual-average planning output."
+        record.update(fields)
+        return record
+    if not isinstance(generation, (int, float)):
+        fields["planning_output_basis"] = "No annual net-generation value is available to calculate annual-average planning output."
+        record.update(fields)
+        return record
+
+    raw_output = float(generation) / 8760
+    bounded_output = min(float(capacity), max(0.0, raw_output))
+    fields.update(
+        {
+            "planning_sustained_output_mw": clean_number(bounded_output),
+            "annual_capacity_factor": clean_number(bounded_output / float(capacity), 4),
+            "planning_output_basis": (
+                f"Annual-average planning output calculated from {year or 'reported'} net generation divided by "
+                "8,760 hours and bounded between zero and EIA nameplate capacity. This is a year-round planning "
+                "proxy, not a peak, dispatchable, accredited, or reliability-capacity rating."
+            ),
+        }
+    )
+    record.update(fields)
+    return record
 
 
 def coordinate_decimal_places(value):
@@ -452,7 +1002,14 @@ def load_data_centers(output):
     merged = [additions_by_id.get(record["id"], record) for record in records]
     existing_ids = {record["id"] for record in records}
     merged.extend(record for record in CURATED_DATA_CENTER_ADDITIONS if record["id"] not in existing_ids)
-    return [classify_data_center_power(apply_contestation_profile(record)) for record in merged]
+    return [
+        classify_data_center_power(
+            apply_projected_power_demand(
+                apply_estimated_power_draw(apply_contestation_profile(record))
+            )
+        )
+        for record in merged
+    ]
 
 
 def main() -> None:
@@ -468,7 +1025,11 @@ def main() -> None:
 
     if args.curated_only:
         existing = json.loads(args.output.read_text())
-        plants = [record for record in existing if record.get("record_type") == "power_plant"]
+        plants = [
+            enrich_power_plant_planning_output(record)
+            for record in existing
+            if record.get("record_type") == "power_plant"
+        ]
         args.output.write_text(json.dumps(load_data_centers(args.output) + plants, indent=2) + "\n")
         return
 
@@ -537,7 +1098,7 @@ def main() -> None:
         if not generator:
             continue
         records.append(
-            {
+            enrich_power_plant_planning_output({
                 "id": f"eia-{plant_code}",
                 "record_type": "power_plant",
                 "eia_plant_code": plant_code,
@@ -574,7 +1135,7 @@ def main() -> None:
                 "status_source_ids": [f"eia-860-{args.year}-final"],
                 "capacity_source_id": f"eia-860-{args.year}-final",
                 "generation_source_id": f"eia-923-{args.year}-final",
-            }
+            })
         )
 
     add_coordinate_confidence(records)

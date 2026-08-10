@@ -45,6 +45,17 @@ EIA_FLOW_YEAR = 2024
 EIA_NET_INTERSTATE_TRADE_MWH = -27_111_098
 CLUSTER_DISTANCE_KM = 0.12
 
+VOLTAGE_CLASS_PROXY_KV = {
+    "Under 100": 69,
+    "100-161": 138,
+    "220-287": 230,
+    "345": 345,
+    "500": 500,
+    "735 And Above": 735,
+    "DC": 500,
+    "Dc": 500,
+}
+
 
 def fetch_geojson(url: str, parameters: dict[str, str]) -> dict:
     response = requests.get(url, params=parameters, timeout=90)
@@ -101,6 +112,22 @@ def clean_values(records: list[dict], field: str, unknown=None) -> list[str]:
     return sorted(values)
 
 
+def voltage_proxy_kv(line: dict) -> float:
+    voltage = line.get("VOLTAGE")
+    try:
+        value = float(voltage)
+        if value > 0:
+            return value
+    except (TypeError, ValueError):
+        pass
+    voltage_class = str(line.get("VOLT_CLASS") or "").strip()
+    return VOLTAGE_CLASS_PROXY_KV.get(voltage_class, 138)
+
+
+def crossing_flow_weight(lines: list[dict]) -> float:
+    return sum(voltage_proxy_kv(line) for line in lines) or len(lines) or 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -152,7 +179,7 @@ def main() -> int:
 
     net_import_mwh = abs(EIA_NET_INTERSTATE_TRADE_MWH)
     hours = 8784 if EIA_FLOW_YEAR % 4 == 0 else 8760
-    features = []
+    feature_rows = []
     for index, cluster in enumerate(clusters, 1):
         point = cluster["point"]
         lines = cluster["lines"]
@@ -163,7 +190,9 @@ def main() -> int:
         owners = clean_values(lines, "OWNER", "NOT AVAILABLE")
         substations = clean_values(lines, "SUB_1") + clean_values(lines, "SUB_2")
         substations = sorted(set(value for value in substations if not value.startswith("UNKNOWN") and not value.startswith("TAP")))
-        features.append({
+        feature_rows.append({
+            "weight": crossing_flow_weight(lines),
+            "feature": {
             "type": "Feature",
             "id": f"md-interchange-{index:03d}",
             "geometry": {"type": "Point", "coordinates": [round(point.x, 6), round(point.y, 6)]},
@@ -185,7 +214,26 @@ def main() -> int:
                 "statewide_flow_year": EIA_FLOW_YEAR,
                 "axis_rotation_degrees": inward_axis_rotation(point, maryland),
             },
+            },
         })
+
+    total_weight = sum(row["weight"] for row in feature_rows) or 1
+    average_net_import_mw = net_import_mwh / hours
+    features = []
+    for row in feature_rows:
+        feature = row["feature"]
+        share = row["weight"] / total_weight
+        estimated_mw = average_net_import_mw * share
+        properties = feature["properties"]
+        properties["estimated_average_interchange_mw"] = round(estimated_mw, 1)
+        properties["estimated_interchange_share_percent"] = round(share * 100, 2)
+        properties["estimated_interchange_weight"] = round(row["weight"], 1)
+        properties["estimated_interchange_basis"] = (
+            "Estimated allocation of Maryland's statewide 2024 average net import across mapped border crossings "
+            "using HIFLD voltage proxy multiplied by co-located circuit count. This is a planning guess, not "
+            "metered flow for this crossing."
+        )
+        features.append(feature)
 
     output = {
         "type": "FeatureCollection",
@@ -197,6 +245,10 @@ def main() -> int:
             "line_crossing_count": len(crossings),
             "cluster_distance_meters": int(CLUSTER_DISTANCE_KM * 1000),
             "flow_scope": "EIA statewide annual net interstate trade; not a measurement for any individual mapped line",
+            "estimated_crossing_flow_method": (
+                "Statewide average net import MW allocated across crossings in proportion to voltage-weighted "
+                "co-located circuit count. Estimates are for visual planning only."
+            ),
             "sources": [
                 {"label": "HIFLD U.S. Electric Power Transmission Lines (2024)", "url": HIFLD_ITEM_URL},
                 {"label": "Maryland iMAP State Boundary", "url": MARYLAND_BOUNDARY_URL},

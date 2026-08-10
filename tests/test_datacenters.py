@@ -92,9 +92,9 @@ def test_hover_inspector_prominently_links_salient_contestation_coverage():
 
 def test_infrastructure_is_one_flat_tagged_inventory():
     records = infrastructure()
-    assert len(records) == 227
+    assert len(records) == 238
     assert {record["record_type"] for record in records} == {"data_center", "power_plant"}
-    assert len(infrastructure("data_center")) == 18
+    assert len(infrastructure("data_center")) == 29
     assert len(infrastructure("power_plant")) == 209
     assert all(record["technology_tags"] for record in records)
     assert all(len(tags := record["technology_tags"]) == len(set(tags)) for record in records)
@@ -114,6 +114,38 @@ def test_infrastructure_is_one_flat_tagged_inventory():
         "Natural Gas Internal Combustion Engine",
     ]
 
+
+def test_datacentermap_baltimore_directory_listings_are_covered():
+    by_id = {record["id"]: record for record in infrastructure("data_center")}
+    expected_ids = {
+        "ainet-one-market-center-baltimore",
+        "tierpoint-baltimore-bal",
+        "tierpoint-baltimore-bwi",
+        "expedient-owings-mills",
+        "cogent-elkridge",
+        "expedient-tide-point",
+        "ainet-cybernap-glen-burnie",
+        "databank-bwi1-baltimore",
+        "crown-castle-baltimore",
+        "databank-111-market-place",
+        "infradms-bal01-baltimore",
+        "amazon-cronridge-owings-mills",
+        "woodlawn-drive-1500-proposal",
+        "comcast-nottingham",
+        "gi-partners-eternal-rings-laurel",
+        "gi-partners-sandy-farm-severn",
+        "lumen-baltimore",
+        "candler-building-baltimore",
+    }
+    assert expected_ids <= set(by_id)
+    for record_id in expected_ids:
+        record = by_id[record_id]
+        assert record["estimated_power_draw_mw"] is not None
+        assert record["estimated_power_draw_basis"]
+    assert by_id["infradms-bal01-baltimore"]["reported_power_capacity_mw"] == 0.65
+    assert by_id["woodlawn-drive-1500-proposal"]["reported_power_capacity_mw"] == 150
+    assert by_id["databank-111-market-place"]["street_address"] == "111 Market Place"
+
     for facility_id in (
         "cogent-elkridge",
         "atlantech-rockville",
@@ -125,13 +157,25 @@ def test_infrastructure_is_one_flat_tagged_inventory():
         assert facility_id in by_id
 
 
-def test_statewide_colocation_audit_avoids_duplicate_carrier_hotel_tenants():
+def test_statewide_colocation_audit_keeps_directory_listings_distinct_from_buildings():
     centers = infrastructure("data_center")
     addresses = [
         (record["street_address"] or "").lower().replace("street", "st").strip()
         for record in centers
     ]
-    assert addresses.count("300 west lexington st") == 1
+    assert addresses.count("300 west lexington st") == 3
+    assert addresses.count("111 market place") == 3
+    assert all(
+        "retained" in (record.get("notes") or "").lower()
+        for record in centers
+        if record["id"] in {
+            "ainet-one-market-center-baltimore",
+            "lumen-baltimore",
+            "crown-castle-baltimore",
+            "databank-111-market-place",
+            "candler-building-baltimore",
+        }
+    )
     cogent = next(record for record in centers if record["id"] == "cogent-elkridge")
     assert cogent["street_address"] == "6050 Race Road"
     assert cogent["reported_power_capacity_mw"] == 7.5
@@ -182,22 +226,31 @@ def test_data_center_power_scale_uses_demand_then_capacity_without_backup_infere
     required = {
         "power_scale_class", "power_scale_label", "power_scale_mw",
         "power_scale_value_kind", "power_scale_detail", "power_scale_tag",
-        "power_scale_source_ids",
+        "power_scale_source_ids", "estimated_power_draw_mw",
+        "estimated_power_draw_basis", "estimated_power_draw_confidence",
+        "estimated_power_draw_source_ids",
+        "projected_power_demand_mw", "projected_power_demand_basis",
+        "projected_power_demand_confidence", "projected_power_demand_source_ids",
     }
     for record in centers:
         assert required <= set(record), record["id"]
         assert record["power_scale_class"] in {
             "sub-megawatt", "small", "medium", "large", "very-large", "unknown"
         }
+        assert record["estimated_power_draw_mw"] is not None, record["id"]
+        assert record["estimated_power_draw_mw"] > 0, record["id"]
+        assert record["estimated_power_draw_basis"], record["id"]
+        assert record["estimated_power_draw_confidence"] in {"high", "medium", "low"}
+        assert set(record["estimated_power_draw_source_ids"]) <= source_ids
         assert record["power_scale_detail"]
         assert record["power_scale_tag"]
         assert set(record["power_scale_source_ids"]) <= source_ids
-        if record["power_scale_value_kind"] == "undisclosed":
-            assert record["power_scale_mw"] is None
-            assert record["power_scale_class"] == "unknown"
-        elif record["reported_grid_demand_mw"] is not None:
+        if record["reported_grid_demand_mw"] is not None:
             assert record["power_scale_value_kind"] == "reported grid demand"
             assert record["power_scale_mw"] == record["reported_grid_demand_mw"]
+        elif record["estimated_power_draw_mw"] is not None:
+            assert record["power_scale_value_kind"] == "estimated grid demand"
+            assert record["power_scale_mw"] == record["estimated_power_draw_mw"]
         else:
             assert record["power_scale_value_kind"] == "reported power-capacity proxy"
             assert record["power_scale_mw"] == record["reported_power_capacity_mw"]
@@ -208,9 +261,29 @@ def test_data_center_power_scale_uses_demand_then_capacity_without_backup_infere
     assert by_id["expedient-tide-point"]["power_scale_class"] == "small"
     assert by_id["cogent-elkridge"]["power_scale_class"] == "medium"
     assert by_id["ainet-cybernap-glen-burnie"]["power_scale_class"] == "large"
-    assert by_id["aligned-iad04-frederick"]["power_scale_class"] == "unknown"
-    assert by_id["aligned-iad04-frederick"]["power_scale_mw"] is None
+    assert by_id["aligned-iad04-frederick"]["power_scale_class"] == "very-large"
+    assert by_id["aligned-iad04-frederick"]["power_scale_mw"] == 300
     assert by_id["aligned-iad04-frederick"]["backup_generator_capacity_mw"] == 508
+
+    projected = {
+        record["id"]: record["projected_power_demand_mw"]
+        for record in centers
+        if record["projected_power_demand_mw"] is not None
+    }
+    assert projected == {
+        "aligned-iad04-frederick": 300,
+        "amazon-bwi150-153-frederick": 160,
+        "atmosphere-dickerson": 360,
+        "brightseat-tech-park-landover": 300,
+        "jhu-bayview-research-data-center": 5,
+        "woodlawn-drive-1500-proposal": 150,
+        "woodlawn-drive-1500-proposal": 150,
+    }
+    assert all(
+        record["projected_power_demand_mw"] is None
+        for record in centers
+        if record["status"] == "operating"
+    )
 
 
 def test_power_plant_year_and_status_come_from_final_eia_860():
@@ -233,6 +306,7 @@ def test_browser_fetches_only_the_unified_infrastructure_inventory():
     assert "record.technology_tags" in script
     assert "/datacenters/data/datacenters.json" not in page + script
     assert "/datacenters/data/power-plants.json" not in page + script
+    assert "window.__codeCollectiveDatacenterUiReady = true" in script
 
 
 def test_eia_generator_retains_every_generator_technology():
@@ -243,9 +317,13 @@ def test_eia_generator_retains_every_generator_technology():
     assert '"generator_status_codes": status_codes' in generator
     assert "infrastructure = load_data_centers(args.output) + records" in generator
     assert "def classify_data_center_power(record):" in generator
+    assert "def apply_estimated_power_draw(record):" in generator
+    assert "def apply_projected_power_demand(record):" in generator
+    assert 'any(term in status for term in ("development", "proposed", "concept", "planned"))' in generator
+    assert 'record.get("estimated_power_draw_mw")' in generator
     assert 'record.get("reported_grid_demand_mw")' in generator
     assert 'record.get("reported_power_capacity_mw")' in generator
-    assert "Backup-generator nameplate capacity is intentionally excluded" in generator
+    assert '"power_scale_value_kind": value_kind' in generator
 
 
 def test_entity_photographs_render_above_live_usgs_aerials_when_associated():
@@ -360,11 +438,13 @@ def test_source_references_and_archived_file_hashes_resolve():
         assert set(record["year_built_source_ids"]) <= set(source_by_id)
         assert set(record["status_source_ids"]) <= set(source_by_id)
         assert set(record["power_scale_source_ids"]) <= set(source_by_id)
+        assert set(record["estimated_power_draw_source_ids"]) <= set(source_by_id)
         if record["public_sentiment_score"] is not None:
             assert record["sentiment_source_ids"]
     for plant in infrastructure("power_plant"):
         assert plant["capacity_source_id"] in source_by_id
         assert plant["generation_source_id"] in source_by_id
+        assert plant["planning_output_source_id"] in source_by_id
         assert set(plant["year_built_source_ids"]) <= set(source_by_id)
         assert set(plant["status_source_ids"]) <= set(source_by_id)
     for rate in load("residential-electricity-rates.json"):
@@ -393,6 +473,20 @@ def test_power_plant_coordinates_and_values_are_sane():
         assert 37.8 <= plant["latitude"] <= 39.8
         assert -79.6 <= plant["longitude"] <= -75.0
         assert plant["nameplate_capacity_mw"] >= 0
+        assert "planning_sustained_output_mw" in plant
+        assert "annual_capacity_factor" in plant
+        assert "planning_output_basis" in plant
+        assert "planning_output_source_id" in plant
+        assert plant["planning_output_basis"]
+        if plant["planning_sustained_output_mw"] is not None:
+            assert 0 <= plant["planning_sustained_output_mw"] <= plant["nameplate_capacity_mw"]
+            assert 0 <= plant["annual_capacity_factor"] <= 1
+            assert math.isclose(
+                plant["annual_capacity_factor"],
+                plant["planning_sustained_output_mw"] / plant["nameplate_capacity_mw"],
+                rel_tol=0.02,
+                abs_tol=0.001,
+            )
         assert plant["coordinate_confidence"] in {"high", "medium", "low"}
         assert plant["coordinate_confidence_basis"]
         assert plant["latitude_decimal_places"] >= 0
@@ -414,7 +508,16 @@ def test_power_plant_coordinates_and_values_are_sane():
         assert plant["shared_coordinate_count"] == coordinate_counts[(plant["latitude"], plant["longitude"])]
         if plant["shared_coordinate_count"] > 1:
             assert plant["coordinate_confidence"] == "low"
-            assert plant["aerial_frame_width_m"] == 2750
+
+
+def test_power_plant_planning_output_is_distinct_from_nameplate_capacity():
+    plants = {plant["id"]: plant for plant in infrastructure("power_plant")}
+    calvert = plants["eia-6011"]
+    brandon = plants["eia-602"]
+    assert calvert["nameplate_capacity_mw"] > calvert["planning_sustained_output_mw"]
+    assert brandon["nameplate_capacity_mw"] > brandon["planning_sustained_output_mw"]
+    assert "8,760 hours" in calvert["planning_output_basis"]
+    assert "not a peak, dispatchable, accredited, or reliability-capacity rating" in calvert["planning_output_basis"]
 
 
 def test_power_plant_aerial_imagery_uses_adaptive_meter_frames():
@@ -495,7 +598,7 @@ def test_neon_streets_default_to_i95_and_restore_the_regular_road_map_when_disab
     assert 'id="show-neon-streets" type="checkbox" checked' in page
     assert 'id="hover-neon-streets" type="checkbox" checked' in page
     assert 'data-layer-config="neon-streets"' in page
-    assert "neonStreets: { scope: 'i95' }" in script
+    assert "neonStreets: { scope: 'i95', lineWidth: 1 }" in script
     assert "['==', ['get', 'network'], 'us-interstate'], ['==', ['get', 'ref'], '95']" in script
     assert "id: NEON_STREET_GLOW_LAYER_ID" in script
     assert "'line-blur': ['interpolate'" in script
@@ -599,8 +702,9 @@ def test_power_plant_markers_preview_on_hover_and_keyboard_focus():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
     for layer in ("datacenters", "power-plants", "enviroscreen", "parcels"):
         assert f'id="hover-{layer}" type="checkbox" checked' in page
-    assert "element.addEventListener('pointerenter'" in script
-    assert "powerPlantBoltLayer?.hitTest(event.point)" in script
+    assert "map.on('mousemove', (event) => handleMapHover" in script
+    assert "powerPlantBoltLayer?.hitTest(point)" in script
+    assert "function showHoverTarget(map, target)" in script
     assert "document.getElementById('hover-power-plants').checked" in script
     assert "document.getElementById('hover-enviroscreen').checked" in script
     assert "document.getElementById('hover-parcels').checked" in script
@@ -635,7 +739,7 @@ def test_data_center_power_scale_is_filterable_and_explained_in_inspector():
     assert "['Power class'" in script
     assert "['Classification basis', known(record.power_scale_detail)]" in script
     assert "record.power_scale_source_ids" in script
-    assert "Never classify normal draw from backup-generator nameplate capacity" in plan
+    assert "Never present a backup-generator-derived estimate as measured operating load." in plan
     assert "...colorPalette.map" in script
     assert "...outlinePalette.map" in script
     assert 'class="dc-hover-tags" aria-label="Record tags"' in script
@@ -656,13 +760,50 @@ def test_hover_arbitration_selects_one_target_by_rendered_layer_z_order():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
 
     assert "function topMapHoverTarget(map, point, sourceById)" in script
-    assert "const zByLayer = new Map(layers.map((layer, index) => [layer.id, index]))" in script
+    assert "function layerZIndex(layerId)" in script
+    assert "z: layerZIndex(deckHoverTarget.layerId)" in script
+    assert "const z = layerZIndex('datacenters')" in script
+    assert "const layerZ = layerZIndex('power-plants')" in script
+    assert "z: layerZIndex(target.layerId)" in script
     assert "candidates.sort((left, right) => right.z - left.z)" in script
     assert "return candidates[0] || null" in script
     assert "powerPlantBoltLayer?.setHoveredRecord(target?.kind === 'power-plant' ? target.record : null)" in script
     assert "if (target.kind !== 'parcel') clearParcelHighlight(map)" in script
     assert "window.__lastHoverArbitration" in script
-    assert "if (overlayHoverOwner) return" in script
+    assert "const dataCenter = topDataCenterHoverRecord(map, point)" in script
+    assert "document.elementsFromPoint(clientX, clientY)" in script
+    assert "Number.MAX_SAFE_INTEGER" not in script.split("function topMapHoverTarget(map, point, sourceById)", 1)[1].split("function topDataCenterHoverRecord", 1)[0]
+    assert "layerId: 'datacenters'" in script
+    assert "layerId: 'power-plants'" in script
+    assert "layerId: 'enviroscreen'" in script
+    assert "layerId: config.id" in script
+
+
+def test_selected_layers_are_drag_ordered_and_persisted_as_z_order():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+
+    assert 'id="selected-layer-order-section"' in page
+    assert 'id="selected-layer-controls"' in page
+    assert "Selected layer order" in page
+    assert "function normalizeLayerOrder(order)" in script
+    assert "function renderedLayerIdsForUiLayer(layerId)" in script
+    assert "function selectedOverlayLayerIds()" in script
+    assert "function applyMapLayerOrder(map)" in script
+    assert "map.moveLayer(renderLayerId)" in script
+    assert "selectedOverlayLayerIds().slice().reverse().forEach((layerId) =>" in script
+    assert "return index === -1 ? -1 : ordered.length - index" in script
+    assert "function setupLayerOrdering(map)" in script
+    assert "card.addEventListener('dragstart'" in script
+    assert "card.addEventListener('drop'" in script
+    assert "moveLayerOrderItem(layerOrderDragId" in script
+    assert "renderLayerOrderControls(map)" in script
+    assert "parameters.has('order')" in script
+    assert "url.searchParams.set('order', state.layerOrder.join(','))" in script
+    assert "syncDataCenterMarkerZOrder()" in script
+    assert ".dc-layer-option.is-layer-selected-order" in styles
+    assert ".dc-layer-option.is-layer-drop-target" in styles
 
 
 def test_inspector_tags_filter_records_and_render_removable_header_chips():
@@ -692,6 +833,25 @@ def test_inspector_tags_filter_records_and_render_removable_header_chips():
     assert ".dc-active-tag-filters.has-active-tags" in styles
     assert '.dc-tag-filter-mode button[aria-pressed="true"]' in styles
     assert '.dc-hover-tag[aria-pressed="true"]' in styles
+
+
+def test_hover_and_click_highlight_the_source_layer_card():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+
+    assert "let inspectorHoverLayerId = null" in script
+    assert "let inspectorPinnedLayerId = null" in script
+    assert "function updateLayerSelectionHighlight()" in script
+    assert "card.classList.toggle('is-source-hovered', isHovered)" in script
+    assert "card.classList.toggle('is-source-pinned', isPinned)" in script
+    assert "pinInspector(target.key, target.render, target.layerId)" in script
+    assert "renderHoveredInspector(target.key, target.render, target.layerId)" in script
+    assert "renderHoveredInspector(`parcel:${properties.ACCTID || 'unknown'}`, () => renderParcelDetail(properties), 'parcels')" in script
+    assert ".dc-layer-option.is-source-hovered" in styles
+    assert ".dc-layer-option.is-source-pinned" in styles
+    assert 'content: "hovered"' in styles
+    assert 'content: "pinned"' in styles
 
 
 def test_dom_markers_enable_subpixel_positioning_for_smooth_zoom_tracking():
@@ -800,6 +960,8 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert ".sort((left, right) => left.size - right.size" in script
     assert "gl.disable(gl.DEPTH_TEST)" in script
     assert "entry.size > best.size" in script
+    assert "zOffset: state.entries.length ? best.size / Math.max(...state.entries.map((entry) => entry.size), 1) : 0" in script
+    assert "z: layerZ + Math.min(.99, Math.max(0, hit.zOffset || 0))" in script
     assert "topmostSize: state.entries.at(-1)?.size || 0" in script
 
 
@@ -883,7 +1045,7 @@ def test_facility_filters_cover_type_lifecycle_energy_and_public_response():
     assert "fieldMarkup('Icon glow uses', 'glowBy'" in script
     assert "datacenterIconColor" in script
     assert "datacenterIconGlow" in script
-    assert "plantIconOutline" in script
+    assert "plantIconOutline" not in script
     assert "function filterLayerCards(query)" in script
     assert "indexedText.includes(normalized)" in script
     assert "const textFilter = isDataCenter ? layerFilters.datacenters.text : layerFilters.powerPlants.text" in script
@@ -940,7 +1102,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260810-datacenter-glow" in page
+    assert "20260810-layer-zoom-ranges" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -988,9 +1150,10 @@ def test_compact_layer_cards_preview_in_the_shared_inspector():
     assert '>Inspector<' not in page
     assert '>Evidence<' not in page
     assert "function renderHoveredIconHeading(record)" in script
-    assert "function renderHoveredInspector(key, render)" in script
+    assert "function renderHoveredInspector(key, render, layerId = null)" in script
     assert "if (inspectorHoverKey === key) return false" in script
     assert "function selectHoveredRecord(record, sourceById)" in script
+    assert "function updateHoveredDataCenterMarker(target)" in script
     assert 'class="dc-hover-tags" aria-label="Record tags"' in script
     assert "icon.tags.map" in script
     assert "Lightning Bolt icon -" not in script
@@ -1039,14 +1202,14 @@ def test_clicking_a_facility_icon_replaces_the_pinned_inspector_until_it_is_clos
     assert 'id="close-record-detail"' in page
     assert 'aria-label="Close pinned map feature"' in page
     assert "let inspectorPinnedKey = null" in script
-    assert "function pinInspector(key, render)" in script
+    assert "function pinInspector(key, render, layerId = null)" in script
     assert "function closePinnedInspector()" in script
     assert "function pinRecord(record, sourceById)" in script
     assert "if (inspectorPinnedKey && inspectorPinnedKey !== key) return false" not in script
     assert "if (inspectorPinnedKey) return;" in script
     assert "event.stopPropagation();" in script
-    assert "pinRecord(record, sourceById);" in script
-    assert "pinRecord(plantHit, sourceById)" in script
+    assert "pinHoverTarget({" in script
+    assert "pinHoverTarget(topMapHoverTarget(map, event.point, sourceById))" in script
     assert "document.getElementById('close-record-detail').hidden = false" in script
     assert ".dc-inspector-close" in styles
     assert ".dc-inspector-close[hidden] { display: none; }" in styles
@@ -1060,12 +1223,23 @@ def test_energy_requirements_and_generation_are_prominent_in_each_record_inspect
     assert 'aria-label="Data center energy summary"' in script
     assert "Required grid power" in script
     assert "Normal on-site generation" in script
-    assert "published capacity envelope; actual draw not disclosed" in script
-    assert "No operating-demand figure found in the reviewed sources" in script
+    assert "measured demand not public" in script
+    assert "Estimated power draw" in script
+    assert "estimated_power_draw_confidence" in script
     assert 'aria-label="Power plant generation summary"' in script
-    assert "net generation" in script
+    assert "Planning output" in script
+    assert "annual average, not peak capacity" in script
+    assert "planning_sustained_output_mw" in script
+    assert "annual_capacity_factor" in script
+    assert "planning_output_basis" in script
+    assert "Average generation" in script
     assert "record.net_generation_mwh" in script
     assert script.count("${renderEnergySummary(record)}") == 2
+    render_detail = script.split("function renderDetail(record, sourceById)", 1)[1]
+    data_center_template = render_detail.split("if (record.record_type === 'data_center') {", 1)[1].split("} else {", 1)[0]
+    assert data_center_template.index("${renderHoveredIconHeading(record)}") < data_center_template.index("${renderEnergySummary(record)}")
+    assert data_center_template.index("${renderEnergySummary(record)}") < data_center_template.index("<p class=\"dc-type\">Facility record")
+    assert data_center_template.index("${renderEnergySummary(record)}") < data_center_template.index("${renderContestationSpotlight(record, sourceById)}")
     assert ".dc-energy-summary" in styles
 
 
@@ -1079,7 +1253,9 @@ def test_power_interchange_inventory_maps_crossings_without_inventing_line_flows
     assert metadata["line_crossing_count"] == sum(feature["properties"]["line_count"] for feature in features) == 107
     assert metadata["cluster_distance_meters"] == 120
     assert "not a measurement for any individual mapped line" in metadata["flow_scope"]
+    assert "voltage-weighted" in metadata["estimated_crossing_flow_method"]
     assert len({feature["properties"]["crossing_id"] for feature in features}) == len(features)
+    estimated_total = 0
     for feature in features:
         longitude, latitude = feature["geometry"]["coordinates"]
         properties = feature["properties"]
@@ -1090,6 +1266,12 @@ def test_power_interchange_inventory_maps_crossings_without_inventing_line_flows
         assert properties["statewide_flow_direction"] == "Net import"
         assert properties["statewide_net_import_mwh"] == 27_111_098
         assert properties["statewide_flow_year"] == 2024
+        assert properties["estimated_average_interchange_mw"] > 0
+        assert 0 < properties["estimated_interchange_share_percent"] < 10
+        assert properties["estimated_interchange_weight"] > 0
+        assert "planning guess, not metered flow" in properties["estimated_interchange_basis"]
+        estimated_total += properties["estimated_average_interchange_mw"]
+    assert abs(estimated_total - features[0]["properties"]["statewide_average_net_import_mw"]) < len(features) * 0.1
 
 
 def test_power_import_export_layer_is_optional_persisted_hoverable_and_clickable():
@@ -1101,24 +1283,83 @@ def test_power_import_export_layer_is_optional_persisted_hoverable_and_clickable
     assert "Power imports / exports" in script
     assert "staticDataUrl: '/datacenters/data/power-interchanges.json'" in script
     assert "pointSymbol: 'interchange-arrow'" in script
-    assert "defaultSizeBy: 'statewide_average_net_import_mw'" in script
+    assert "defaultSizeBy: 'estimated_average_interchange_mw'" in script
+    assert "Estimated crossing average MW" in script
+    assert "Estimated crossing average" in script
+    assert "Estimate basis" in script
+    assert "if (!map.isStyleLoaded())" in script
     assert "'text-field': '➤'" in script
     assert "['get', 'axis_rotation_degrees']" in script
     assert "'net import'], 0, 180" in script
+    assert "line-blur" in script
+    assert "#ff263f" in script
     assert "78 border corridors / 107 line crossings" in script
     assert "2024 statewide net import" in script
-    assert "findRemoteHoverFeature(map, event.point, false)" in script
-    assert "pinInspector(remoteFeatureKey(remoteHit)" in script
+    assert "pinHoverTarget(topMapHoverTarget(map, event.point, sourceById))" in script
+    assert "render: () => renderRemoteLayerDetail(config, feature.properties)" in script
     assert "derived official inventory" in script
     assert "stored locally for fast display and reproducible review" in script
     assert "Power interchange JSON" in page
-    assert "never assigns the statewide net flow to an individual line" in page
+    assert "planning guess, not a metered line-flow value" in page
     assert {
         "hifld-transmission-lines-2024",
         "md-imap-state-boundary",
         "eia-maryland-state-electricity-profile-2024",
         "census-tigerweb-state-boundaries",
         "pjm-maryland-dc-infrastructure-report-2025",
+    } <= source_ids
+
+
+def test_county_power_estimates_allocate_residential_load_without_meter_claims():
+    data = json.loads((ROOT / "datacenters" / "data" / "power-estimates.json").read_text())
+    metadata = data["metadata"]
+    features = data["features"]
+
+    assert data["type"] == "FeatureCollection"
+    assert metadata["county_equivalent_count"] == len(features) == 24
+    assert "ACS occupied housing units" in metadata["method"]
+    assert "not utility-metered county load" in metadata["estimate_scope"]
+    assert metadata["statewide_residential_sales_mwh"] == 27_327_356
+    assert metadata["statewide_residential_average_mw"] == round(27_327_356 / 8784, 2)
+    assert metadata["acs_occupied_housing_units_total"] > 2_000_000
+
+    annual_total = 0
+    for feature in features:
+        properties = feature["properties"]
+        assert feature["geometry"]["type"] in {"Polygon", "MultiPolygon"}
+        assert properties["record_type"] == "county_power_estimate"
+        assert properties["county"].endswith(("County", "city"))
+        assert properties["occupied_housing_units"] > 0
+        assert properties["estimated_residential_customers"] > 0
+        assert properties["estimated_residential_average_mw"] > 0
+        assert properties["estimated_residential_annual_mwh"] > 0
+        assert "not utility-metered county load" in properties["estimate_basis"]
+        annual_total += properties["estimated_residential_annual_mwh"]
+    assert abs(annual_total - metadata["statewide_residential_sales_mwh"]) < len(features)
+
+
+def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    sources = json.loads((ROOT / "datacenters" / "data" / "sources.json").read_text())
+    source_ids = {source["id"] for source in sources}
+
+    assert "County power estimates" in script
+    assert "staticDataUrl: '/datacenters/data/power-estimates.json'" in script
+    assert "estimated_residential_average_mw" in script
+    assert "residential demand estimates" in script
+    assert "staticLayerStatus(config, data)" in script
+    assert "County power estimates unavailable" in script
+    assert "Derived Maryland county residential electricity estimates" in script
+    assert "const queryPoint = { x: point.x, y: point.y }" in script
+    assert "map.queryRenderedFeatures(queryPoint, { layers: layerIds })" in script
+    assert "Power estimates JSON" in page
+    assert "not utility-metered county load" in page
+    assert "20260810-layer-zoom-ranges" in page
+    assert {
+        "eia-retail-sales-md-residential-2024",
+        "acs-2024-b25003-md-counties",
+        "census-tigerweb-county-boundaries",
     } <= source_ids
 
 
@@ -1204,22 +1445,116 @@ def test_point_layer_gears_scale_markers_by_numeric_attributes():
     assert "Math.log1p(value)" in script
     assert "if (rawValue === null || rawValue === undefined || rawValue === '') return null" in script
     assert "if (!values.length)" in script
-    assert "records.forEach((record) => factors.set(record, .55))" in script
-    assert "factors.set(record, .65 +" in script
+    assert "const powerPlantRecords = records.length > 0 && records.every((record) => record.record_type === 'power_plant')" in script
+    assert "const sizeFloor = powerPlantRecords ? .18 : .65" in script
+    assert "const sizeCeiling = powerPlantRecords ? 2.3 : 2" in script
+    assert "const missingFactor = powerPlantRecords ? .18 : .55" in script
+    assert "factors.set(record, missingFactor)" in script
+    assert "factors.set(record, sizeFloor + (Math.max(0, Math.min(1, normalized)) * (sizeCeiling - sizeFloor)))" in script
+    assert "function normalizePowerPlantLayerFilters(filters)" in script
+    assert "filters.fillBy === 'resource-adjusted-utilization' && (!filters.sizeBy || filters.sizeBy === 'none')" in script
     assert "fieldMarkup('Icon size uses', 'sizeBy'" in script
-    assert "2024 net generation / output (MWh)" in script
+    assert "Average generation / output (MWh)" in script
+    assert "Planning output · annual average (MW)" in script
     assert "nameplate_capacity_mw: 'Nameplate capacity (MW)'" in script
+    assert "estimated_power_draw_mw: 'Estimated power draw (MW)'" in script
     assert "reported_grid_demand_mw: 'Net draw · reported grid demand (MW)'" in script
-    assert "reported_power_capacity_mw: 'Total draw · published power envelope (MW)'" in script
+    assert "reported_power_capacity_mw: 'Total draw · published envelope or projected demand (MW)'" in script
+    assert "projected_power_demand_mw: 'Projected demand · unbuilt facilities (MW)'" in script
+    assert "Projected demand · unbuilt facilities (${reportedCount('projected_power_demand_mw')} projects)" in script
+    assert "plantBoltFill" in script
+    assert "Resource-adjusted annual utilization" in script
+    assert "function plantTechnologyUtilizationBenchmark(record)" in script
+    assert "solar: .2" in script
+    assert "wind: .35" in script
+    assert "powerPlantResourceAdjustedUtilization(record)" in script
+    assert "annual output to a technology-specific planning envelope" in script
+    assert "Annual-average output / nameplate capacity" not in script
+    assert "'capacity-factor'" not in script
+    assert "Bolt fill uses" in script
+    assert "fillFraction" in script
+    assert "Estimated power draw (${reportedCount('estimated_power_draw_mw')} values)" in script
     assert "Net draw · reported grid demand (${reportedCount('reported_grid_demand_mw')} public values)" in script
-    assert "Total draw · published power envelope (${reportedCount('reported_power_capacity_mw')} public values)" in script
+    assert "record.reported_power_capacity_mw ?? record.projected_power_demand_mw" in script
+    assert "Total draw · published envelope or projected demand" in script
     assert "dataCenterPointScaleOptions(records)" in script
-    assert "Icons with undisclosed values use the smallest size" in script
+    assert "Icons without the selected value use the smallest size" in script
     assert "size: 36 * sizeFactors.get(record)" in script
     assert "minimumSize: state.entries.length" in script
     assert "maximumSize: state.entries.length" in script
     assert "--marker-size" in script
     assert "width: var(--marker-size, 22px)" in styles
+    assert "pointer-events: none" in styles.split(".dc-map-marker {", 1)[1].split("}", 1)[0]
+    assert ".dc-map-marker.is-map-hovered .dc-map-icon" in styles
+    assert "function updateHoveredDataCenterMarker(target)" in script
+    assert "has-projected-demand" not in script
+    assert "data-projected-demand" not in styles
+    assert "exportProjectedDemand" not in script
+    assert "['unbuilt', 'Unbuilt with projected demand']" in script
+    assert "statusFilter === 'unbuilt'" in script
+    assert "Projected grid demand" in script
+
+
+def test_line_layer_gears_scale_zoom_dependent_widths():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+
+    assert "function normalizeLineWidthMultiplier(value)" in script
+    assert "Math.max(.25, Math.min(5, width))" in script
+    assert "function scaledLineWidth(expression, multiplier)" in script
+    assert "neonStreets: { scope: 'i95', lineWidth: 1 }" in script
+    assert "const LINE_WIDTH_OPTIONS = [" in script
+    assert "['3', 'Heavy']" in script
+    assert "const LINE_WIDTH_BY_DEFAULT = [['zoom', 'Zoom curve only']]" in script
+    assert "function normalizeLineWidthBy(config, value)" in script
+    assert "function lineWidthFieldOptions(config)" in script
+    assert "function lineWidthExpressionForField(field, multiplier)" in script
+    assert "lineWidthFields: [['VOLT_CLASS', 'Voltage class'], ['VOLTAGE', 'Voltage (kV)']]" in script
+    assert "lineWidthFields: [['Capacity_MW', 'Available load capacity (MW)']" in script
+    assert "lineWidthFields: [['Allowable_PV_kW', 'Allowable PV (kW)']" in script
+    assert "config.geometry === 'line' ? fieldMarkup(" in script
+    assert "'Line width scale'," in script
+    assert "'Line width uses'," in script
+    assert "remoteState.lineWidth = normalizeLineWidthMultiplier(savedFilter.lineWidth)" in script
+    assert "remoteState.lineWidthBy = normalizeLineWidthBy(config, savedFilter.lineWidthBy)" in script
+    assert "state.lineWidth = normalizeLineWidthMultiplier(formData.get('lineWidth'))" in script
+    assert "state.lineWidthBy = normalizeLineWidthBy(config, formData.get('lineWidthBy'))" in script
+    assert "function transmissionProposalExpression()" in script
+    assert "transmissionLineWidthExpression(config)" in script
+    assert "transmissionLineBlurExpression(config)" in script
+    assert "if (lineWidthBy !== 'zoom') return lineWidthExpressionForField(lineWidthBy, multiplier)" in script
+    assert "return scaledLineWidth(base, multiplier)" in script
+    assert "proposalBase" not in script
+    assert "function rehydrateRemoteLayerAfterStyleSettles(map, config)" in script
+    assert "if (!remoteLayerRendered(map, config)) addRemoteLayer(map, config, state.data)" in script
+    assert "map.addLayer({\n          id: lineId,\n          type: 'line'," in script
+    assert "if (!style?.layers) return" in script
+
+
+def test_layer_gear_exposes_persisted_zoom_ranges_and_enforces_visibility():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+
+    assert "const MAP_MIN_ZOOM = 0" in script
+    assert "const MAP_MAX_ZOOM = 18" in script
+    assert "const layerZoomRanges = new Map()" in script
+    assert "function zoomRangeMarkup(layerId)" in script
+    assert "'zoomMin'" in script and "'zoomMax'" in script
+    assert "Visible zoom range" in script
+    assert "applySubmittedZoomRange(activeLayerConfigId, formData)" in script
+    assert "filters: {" in script and "zoomRanges," in script
+    assert "state.filters?.zoomRanges" in script
+    assert "layerShownAtZoom(layerId, zoom)" in script
+    assert "layerShownAtZoom(config.id, map.getZoom())" in script
+    assert "layerShownAtZoom('parcels', map.getZoom())" in script
+    assert "layerShownAtZoom(ESRI_BUILDINGS.id, map.getZoom())" in script
+    assert "applyZoomVisibility(map, allRecords, markerById)" in script
+    assert "map.setLayerZoomRange(PARCEL_LAYER_ID" in script
+    assert "data-layer-zoom=\"datacenters\"" in page
+    assert "data-layer-zoom=\"parcels\"" in page
+    assert "dc-layer-zoom" in styles
+    assert ".dc-modal-fieldset" in styles
+    assert ".dc-modal-two-col" in styles
 
 
 def test_data_center_glow_is_an_independent_contestation_encoding_and_exports_to_png():
@@ -1230,15 +1565,40 @@ def test_data_center_glow_is_an_independent_contestation_encoding_and_exports_to
     assert "record.contestation_score >= 4" in script
     assert "record.contestation_score === 3" in script
     assert "record.contestation_score === 0" in script
+    assert "['proposal', 'development'].includes(lifecycleStage(record))" in script
+    assert "kind: 'planned-uncontested', color: '#fff15f'" in script
+    assert "const PLANNED_UNCONTESTED_COLOR" in script
+    assert "function isPlannedUncontestedDataCenter(record)" in script
+    assert "if (isPlannedUncontestedDataCenter(record)) return [PLANNED_UNCONTESTED_COLOR]" in script
+    assert "edgeColor: '#ffb000'" in script
+    assert "edgeColor: '#32dfff'" in script
+    assert "ringWidth: .12" in script
+    assert "Contestation · red / planned yellow / quiet white" in script
+    assert "Planned or developing facilities with no documented contestation glow yellow" in script
     assert "color: '#ff263f'" in script
     assert "color: '#ffffff'" in script
     assert "glowBy: 'contestation'" in script
+    assert "glowDistance: 1" in script
+    assert "glowBlur: 1" in script
+    assert "function normalizeGlowDistance(value)" in script
+    assert "function normalizeGlowBlur(value)" in script
+    assert "numberFieldMarkup('Glow distance', 'glowDistance'" in script
+    assert "numberFieldMarkup('Glow blur', 'glowBlur'" in script
     assert "element.dataset.glow = glow.kind" in script
+    assert "element.dataset.exportGlowBlur" in script
+    assert "element.dataset.exportGlowEdgeColor" in script
+    assert "element.dataset.exportGlowRingWidth" in script
     assert "marker.dataset.exportGlowColor" in script
+    assert "marker.dataset.exportGlowEdgeColor" in script
+    assert "marker.dataset.exportGlowRingWidth" in script
+    assert "marker.dataset.exportGlowBlur" in script
     assert "context.createRadialGradient" in script
     assert ".dc-map-marker--center::before" in styles
     assert "var(--marker-glow-color, transparent)" in styles
     assert "var(--marker-glow-opacity, 0)" in styles
+    assert "var(--marker-glow-blur, 1)" in styles
+    assert "var(--marker-glow-edge-color" in styles
+    assert "var(--marker-glow-ring-width" in styles
 
 
 def test_live_point_layers_offer_attribute_scaling_without_adding_it_to_lines_or_polygons():
@@ -1259,17 +1619,21 @@ def test_transmission_gears_offer_persisted_voltage_heat_themes():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
 
     assert "const TRANSMISSION_HEAT_PALETTES" in script
+    assert "{ id: 'uniform', label: 'Uniform layer color', field, expression: null }" in script
     for theme_id in ("black-body", "forge", "stellar"):
         assert f"id: '{theme_id}'" in script
     assert "function transmissionHeatExpression(field, colors)" in script
     assert "lineColorThemes: transmissionLineThemes('Voltage_kV'" in script
     assert "lineColorThemes: transmissionLineThemes('VOLTAGE'" in script
     assert "function remoteLineColor(config)" in script
-    assert "map.setPaintProperty(lineId, 'line-color', remoteLineColor(config))" in script
+    assert "map.setPaintProperty(lineId, 'line-color', transmissionLineColorExpression(config))" in script
     assert "'Line color theme'" in script
     assert "They do not show live MW flow" in script
-    assert "remoteState.colorTheme = String(savedFilter.colorTheme || 'default')" in script
-    assert "colorTheme: remoteState?.colorTheme || 'default'" in script
+    assert "remoteState.colorTheme = String(savedFilter.colorTheme || (config.lineColorThemes ? 'uniform' : 'default'))" in script
+    assert "colorTheme: remoteState?.colorTheme || defaultColorTheme" in script
+    assert "colorTheme: config.lineColorThemes ? 'uniform' : 'default'" in script
+    assert "if (selectedTheme?.id === 'uniform')" in script
+    assert "Uniform line color" in script
     assert "function heatThemeColor(theme, value)" in script
     assert "Voltage proxy · ${escapeHtml(voltageLabel)}" in script
 
