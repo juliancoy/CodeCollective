@@ -755,19 +755,48 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert "drawElementsInstanced" in script
     assert "async function loadLightningBoltMesh()" in script
     assert "fetch('/datacenters/models/lightning-bolt.gltf')" in script
+    assert model["meshes"][0]["extras"]["outline2d"]
+    assert "function buildLightningOutlineMesh(points)" in script
+    assert "outline: buildLightningOutlineMesh(outline2d.map(([x, y]) => ({ x, y })))" in script
+    assert "const outlineWidth = .045" in script
+    assert "const winding = polygonArea(points) >= 0 ? 1 : -1" in script
     assert "options.defaultProjectionData.mainMatrix" in script
     assert "attribute vec3 a_position" in script
     assert "attribute vec3 a_normal" in script
+    assert "attribute vec3 a_outlineColor" in script
     assert "-((rotated.y * cos(tilt)) - (rotated.z * sin(tilt)))" in script
     assert "mix(v_accentColor, vec3(1.0), 0.3)" in script
     assert "attribute float a_hover" in script
     assert "float glowAlpha = mix(0.38, 0.92, v_hover);" in script
+    assert "if (filled < 0.5) discard;" in script
+    assert "gl_FragColor = vec4(litColor, 1.0);" in script
+    assert "gl_FragColor = vec4(outlineColor, mix(0.92, 1.0, v_hover));" in script
+    assert "indices.push(base, nextBase, nextBase + 1, base, nextBase + 1, base + 1);" in script
+    assert "function normalizeBoltOutlineScale(value)" in script
+    assert "Math.max(.5, Math.min(2, scale))" in script
+    assert "outlineScale: 1.04" in script
+    assert "Bolt outline size" in script
+    assert "use values below 1 for inset outlines or above 1" in script
+    assert "normalizeBoltOutlineScale(formData.get('outlineScale'))" in script
+    assert "gl.uniform1f(state.uniforms.scale, boltOutlineScale)" in script
+    assert "outlineScale: normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale)" in script
+    assert "a_outlineColor" in script
+    assert "v_outlineColor" in script
+    assert "Float32Array(state.entries.length * 12)" in script
+    assert "uniform mediump float u_outlineOnly;" in script
+    assert "drawElementsInstanced(gl.TRIANGLES, state.outlineIndexCount" in script
+    assert "outlineIndexCount: state.outlineIndexCount" in script
+    assert "if (state.antialiasSamples > 1) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE)" in script
+    assert "antialiasSamples: state.antialiasSamples" in script
+    assert "outline: rgbToHex(entry.outline)" in script
     assert "setHoveredRecord(record)" in script
     assert "setHoveredRecord(target?.kind === 'power-plant' ? target.record : null)" in script
     assert "function createLightningBoltTextureCanvas" not in script
     assert "function ensurePowerPlantBoltLayer(map)" in script
     assert "map.addLayer(powerPlantBoltLayer);" in script
     assert "powerPlantBoltLayer?.setRecords" in script
+    assert "context.fillStyle = entry.accent" in script
+    assert "context.strokeStyle = entry.accent" in script
     assert ".sort((left, right) => left.size - right.size" in script
     assert "gl.disable(gl.DEPTH_TEST)" in script
     assert "entry.size > best.size" in script
