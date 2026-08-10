@@ -1714,9 +1714,15 @@
         const depthTestEnabled = gl.isEnabled(gl.DEPTH_TEST);
         const depthWriteEnabled = gl.getParameter(gl.DEPTH_WRITEMASK);
         const alphaToCoverageEnabled = gl.isEnabled(gl.SAMPLE_ALPHA_TO_COVERAGE);
+        const cullFaceEnabled = gl.isEnabled(gl.CULL_FACE);
+        const cullFaceMode = gl.getParameter(gl.CULL_FACE_MODE);
+        const frontFaceMode = gl.getParameter(gl.FRONT_FACE);
         gl.disable(gl.DEPTH_TEST);
         gl.depthMask(false);
         if (state.antialiasSamples > 1) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+        gl.frontFace(gl.CCW);
 
         gl.uniform1f(state.uniforms.glowPass, 1.0);
         gl.uniform1f(state.uniforms.outlineOnly, 0.0);
@@ -1746,6 +1752,9 @@
         drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
 
         if (!alphaToCoverageEnabled) gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
+        gl.cullFace(cullFaceMode);
+        gl.frontFace(frontFaceMode);
+        if (!cullFaceEnabled) gl.disable(gl.CULL_FACE);
         gl.depthMask(depthWriteEnabled);
         if (depthTestEnabled) gl.enable(gl.DEPTH_TEST);
         state.renderCount += 1;
