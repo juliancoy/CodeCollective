@@ -15,6 +15,6 @@ def test_org_deployment_applies_migrations_and_checks_a_database_route():
 
 
 def test_site_bundle_excludes_pytest_cache():
-    build_script = (ROOT / "scripts/build_cloudflare_site.sh").read_text()
+    build_script = (ROOT / "cloudflare/scripts/build_cloudflare_site.sh").read_text()
 
     assert "--exclude='.pytest_cache/'" in build_script

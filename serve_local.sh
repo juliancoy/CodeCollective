@@ -110,7 +110,7 @@ fi
 
 if [[ "$MODE" == "build" && "$SKIP_BUILD" -eq 0 ]]; then
   echo "[serve-local] building full static bundle"
-  "$ROOT_DIR/scripts/build_cloudflare_site.sh"
+  "$ROOT_DIR/cloudflare/scripts/build_cloudflare_site.sh"
 elif [[ "$MODE" == "build" ]]; then
   echo "[serve-local] skipping build; using $SITE_DIR"
 fi
@@ -499,8 +499,14 @@ fi
 
 DOCKER_ARGS+=("$NODE_IMAGE" node /server.mjs)
 
+DISPLAY_HOST="$HOST"
+if [[ "$DISPLAY_HOST" == "0.0.0.0" ]]; then
+  DISPLAY_HOST="127.0.0.1"
+fi
+
 echo "[serve-local] starting $CONTAINER_NAME with $NODE_IMAGE"
-echo "[serve-local] URL: https://$HOST:$PORT/"
+echo "[serve-local] bind: https://$HOST:$PORT/"
+echo "[serve-local] browse: https://$DISPLAY_HOST:$PORT/"
 echo "[serve-local] self-signed cert: use browser trust flow or curl -k"
 echo "[serve-local] mode: $MODE"
 docker "${DOCKER_ARGS[@]}"

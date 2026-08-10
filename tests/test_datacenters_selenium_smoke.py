@@ -50,6 +50,7 @@ def test_datacenter_selenium_probe_verifies_webgl_power_plant_meshes():
     assert "pinned inspector was replaced by hover" in script
     assert 'find_element(By.ID, "close-record-detail").click()' in script
     assert "power output scaling did not vary WebGL bolt sizes" in script
+    assert "larger WebGL bolts were not assigned the highest draw order" in script
     assert "power output was absent from point scaling options" in script
     assert "verified entity image was not attributed above the aerial" in script
     assert "dc-entity-image" in script
@@ -57,6 +58,18 @@ def test_datacenter_selenium_probe_verifies_webgl_power_plant_meshes():
     assert '"Fourmile Ridge"' in script
     assert 'datacenters-power-webgl-hover-1.png' in script
     assert "WebGL lightning bolt frames did not animate" in script
+
+
+def test_datacenter_selenium_probe_verifies_neon_i95_default_and_broader_street_scope():
+    script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
+
+    assert "def verify_neon_streets" in script
+    assert "non-I-95 roads leaked into the default neon view" in script
+    assert "ordinary streets remained visible beneath the default neon overlay" in script
+    assert "hover arbiter did not choose the highest rendered z-value" in script
+    assert "inspector did not show the one chosen hover target" in script
+    assert "datacenters-neon-i95.png" in script
+    assert "neon_streets = verify_neon_streets" in script
 
 
 def test_datacenter_selenium_probe_verifies_transmission_color_key():
@@ -113,6 +126,33 @@ def test_datacenter_selenium_probe_verifies_power_scale_tags_and_filter():
     assert '["all", "sub-megawatt", "small", "medium", "large", "very-large", "unknown"]' in script
     assert "datacenters-power-scale-filter.png" in script
     assert "data_center_power_scale = verify_data_center_power_scale" in script
+
+
+def test_datacenter_selenium_probe_verifies_net_and_total_draw_icon_scaling():
+    script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
+
+    assert "def verify_data_center_draw_scaling" in script
+    assert "Net draw · reported grid demand" in script
+    assert "Total draw · published power envelope" in script
+    assert "AiNET CyberNAP" in script
+    assert "Aligned Data Centers IAD04" in script
+    assert "undisclosed net draw did not use the smallest marker size" in script
+    assert '"datacenters-total-draw-icon-scaling.png"' in script
+    assert "data_center_draw_scaling = verify_data_center_draw_scaling" in script
+
+
+def test_datacenter_selenium_probe_verifies_contestation_glow_dimension():
+    script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
+
+    assert "def verify_data_center_glow" in script
+    assert "Amazon Data Services BWI-150 through BWI-153" in script
+    assert "AiNET Beltsville Data Center" in script
+    assert "contested facility did not receive a red glow" in script
+    assert "quiet facility did not receive a white glow" in script
+    assert "intermediate facility received a misleading glow" in script
+    assert '"datacenters-contestation-glow.png"' in script
+    assert "data_center_glow = verify_data_center_glow" in script
+    assert 'parser.add_argument("--glow-only"' in script
 
 
 def test_datacenter_selenium_probe_verifies_mobile_layout_and_inspector():

@@ -167,7 +167,7 @@ jobs:
         env:
           STRICT_TS: "1"
           VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
-        run: ./scripts/build_cloudflare_site.sh
+        run: ./cloudflare/scripts/build_cloudflare_site.sh
 
       - name: Deploy self-hosted Android update to Cloudflare
         if: inputs.deploy_static_update
