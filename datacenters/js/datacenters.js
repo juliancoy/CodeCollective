@@ -2735,7 +2735,13 @@
   function syncDataCenterMarkerZOrder() {
     const z = layerZIndex('datacenters');
     document.querySelectorAll('.dc-map-marker--center').forEach((element) => {
-      element.style.zIndex = z >= 0 ? String(100 + z) : '';
+      if (z < 0 || element.hidden) {
+        element.style.zIndex = '';
+        return;
+      }
+      const markerSize = Number.parseFloat(element.style.getPropertyValue('--marker-size')) || 22;
+      const markerPriority = Math.round(markerSize * 10);
+      element.style.zIndex = String(1000 + (z * 1000) + markerPriority);
     });
   }
 
