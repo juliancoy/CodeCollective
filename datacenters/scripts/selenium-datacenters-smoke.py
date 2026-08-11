@@ -152,6 +152,30 @@ def set_checkbox(driver: webdriver.Remote, checkbox_id: str, checked: bool) -> N
         element.click()
 
 
+def hover_marker(driver: webdriver.Remote, selector: str) -> None:
+    driver.execute_script(
+        """
+        const marker = document.querySelector(arguments[0]);
+        if (!marker) return false;
+        const rect = marker.getBoundingClientRect();
+        const clientX = rect.left + (rect.width / 2);
+        const clientY = rect.top + (rect.height / 2);
+        const canvas = document.querySelector('#datacenter-map canvas.maplibregl-canvas');
+        [marker, canvas].filter(Boolean).forEach((target) => {
+          target.dispatchEvent(new MouseEvent('mousemove', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX,
+            clientY,
+          }));
+        });
+        return true;
+        """,
+        selector,
+    )
+
+
 def verify_base_layers(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     initial = driver.execute_script(
         "return document.querySelector('.dc-base-layer-toggle:checked')?.id || null;"
@@ -1125,8 +1149,7 @@ def verify_layer_color_controls(driver: webdriver.Remote, screenshot_dir: pathli
 
 
 def verify_data_center_power_scale(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
-    marker = driver.find_element(By.CSS_SELECTOR, '.dc-map-marker--center[aria-label="Cogent Elkridge"]')
-    ActionChains(driver).move_to_element(marker).pause(.4).perform()
+    hover_marker(driver, '.dc-map-marker--center[aria-label="Cogent Elkridge"]')
     WebDriverWait(driver, 10).until(
         lambda d: any(
             tag.text.startswith("Estimated draw:")

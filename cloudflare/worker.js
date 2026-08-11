@@ -92,6 +92,58 @@ function jsonResponse(payload, status = 200, headers = {}) {
   });
 }
 
+function getRangeContentLength(range) {
+  if (!range || typeof range.offset !== "number" || typeof range.length !== "number") {
+    return null;
+  }
+
+  return String(range.length);
+}
+
+function getContentRangeHeader(range, size) {
+  if (!range || typeof range.offset !== "number" || typeof range.length !== "number") {
+    return null;
+  }
+
+  const end = range.offset + range.length - 1;
+  return `bytes ${range.offset}-${end}/${size}`;
+}
+
+async function handleAudioRequest(request, env, path) {
+  if (!env.MEDIA_BUCKET || !pathMatchesPrefix(path, "/audio")) {
+    return null;
+  }
+
+  const key = path.replace(/^\/+/, "");
+  const object =
+    request.method === "HEAD"
+      ? await env.MEDIA_BUCKET.head(key)
+      : await env.MEDIA_BUCKET.get(key, { range: request.headers });
+
+  if (!object) {
+    return null;
+  }
+
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set("etag", object.httpEtag);
+  headers.set("accept-ranges", "bytes");
+  headers.set("cache-control", headers.get("cache-control") || "public, max-age=2592000");
+
+  const contentLength = getRangeContentLength(object.range) || String(object.size);
+  headers.set("content-length", contentLength);
+
+  const contentRange = getContentRangeHeader(object.range, object.size);
+  if (contentRange) {
+    headers.set("content-range", contentRange);
+  }
+
+  return new Response(request.method === "HEAD" ? null : object.body, {
+    status: object.range ? 206 : 200,
+    headers,
+  });
+}
+
 async function readLatestJobsPointer(env) {
   if (!env.JOBS_BUCKET) return null;
   const object = await env.JOBS_BUCKET.get("jobs/latest.json");
@@ -428,6 +480,13 @@ export default {
     if (path === "/auth/callback") {
       url.pathname = "/p/auth/callback";
       return Response.redirect(url.toString(), 308);
+    }
+
+    if (pathMatchesPrefix(path, "/audio")) {
+      const audioResponse = await handleAudioRequest(request, env, path);
+      if (audioResponse) {
+        return audioResponse;
+      }
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
