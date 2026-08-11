@@ -4,6 +4,7 @@
     entityImages: '/datacenters/data/power-plant-images.json',
     sources: '/datacenters/data/sources.json',
   };
+  const MOBILE_INSPECTOR_MEDIA = '(max-width: 760px), (hover: none) and (pointer: coarse)';
   const POWER_PLANT_WEBGL_LAYER_ID = 'power-plant-bolt-webgl';
   const NEON_STREET_GLOW_LAYER_ID = 'neon-streets-glow';
   const NEON_STREET_CORE_LAYER_ID = 'neon-streets-core';
@@ -29,6 +30,7 @@
   const ENVIROSCREEN_FILL_ID = 'mde-enviroscreen-fill';
   const ENVIROSCREEN_LINE_ID = 'mde-enviroscreen-line';
   const PARCEL_SERVICE = 'https://mdgeodata.md.gov/imap/rest/services/PlanningCadastre/MD_ParcelBoundaries/MapServer';
+  const BALTIMORE_HOUSING_SERVICE = 'https://egisdata.baltimorecity.gov/egis/rest/services/Housing/Accela_DHCD/MapServer';
   const PARCEL_SOURCE_ID = 'mdp-sdat-parcels';
   const PARCEL_LAYER_ID = 'mdp-sdat-parcels-line';
   const PARCEL_HOVER_SOURCE_ID = 'mdp-sdat-parcel-hover';
@@ -165,6 +167,24 @@
       category: 'Facility inventory',
       sourceUrl: '/datacenters/data/infrastructure.json',
       sourceLabel: 'Published data-center inventory',
+      tags: [
+        'public catalog',
+        'public catalogs',
+        'independent server catalog',
+        'independent server catalogs',
+        'independent directory',
+        'independent directories',
+        'colocation directory',
+        'interconnection database',
+        'peeringdb',
+        'data center map',
+        'cloudscene',
+      ],
+      additionalSources: [
+        ['PeeringDB', 'https://www.peeringdb.com/'],
+        ['Data Center Map', 'https://www.datacentermap.com/'],
+        ['Cloudscene', 'https://cloudscene.com/'],
+      ],
       statusId: 'datacenter-layer-count',
       statusSuffix: ' documented records',
     },
@@ -377,6 +397,93 @@
       outFields: ['CCNumber', 'CrimeDateTime', 'CrimeCode', 'Description', 'Inside_Outside', 'Weapon', 'Shooting', 'New_District', 'Neighborhood', 'PremiseType', 'Total_Incidents'],
       titleFields: ['Description', 'CrimeCode'],
       facts: [['Incident number', 'CCNumber'], ['Date and time', 'CrimeDateTime'], ['NIBRS code', 'CrimeCode'], ['Description', 'Description'], ['Inside / outside', 'Inside_Outside'], ['Weapon', 'Weapon'], ['Shooting', 'Shooting'], ['Police district', 'New_District'], ['Neighborhood', 'Neighborhood'], ['Premise type', 'PremiseType'], ['Incident count', 'Total_Incidents']],
+    },
+    {
+      id: 'baltimore-vacant-lots',
+      name: 'Baltimore vacant lots',
+      description: 'DHCD vacant-lot records from the Baltimore codemap stack',
+      category: 'Baltimore property conditions',
+      tags: ['baltimore city', 'vacants', 'vacant lot', 'dhcd', 'property conditions', 'housing'],
+      service: `${BALTIMORE_HOUSING_SERVICE}/8`,
+      sourceUrl: `${BALTIMORE_HOUSING_SERVICE}/8`,
+      sourceLabel: 'Baltimore City Housing Accela_DHCD Vacant Lots',
+      geometry: 'point',
+      color: '#f59e0b',
+      focus: { center: [-76.6122, 39.2904], zoom: 12.3 },
+      minZoom: 11,
+      maxFeatures: 2000,
+      outFields: ['OBJECTID', 'Address', 'Neighborhood', 'BLOCKLOT', 'OWNER_ABBR'],
+      titleFields: ['Address', 'BLOCKLOT', 'OBJECTID'],
+      facts: [['Address', 'Address'], ['Neighborhood', 'Neighborhood'], ['Block / lot', 'BLOCKLOT'], ['Owner', 'OWNER_ABBR'], ['Object ID', 'OBJECTID']],
+    },
+    {
+      id: 'baltimore-vacant-building-notices',
+      name: 'Baltimore building notices',
+      description: 'DHCD vacant-building notice records from the Baltimore codemap stack',
+      category: 'Baltimore property conditions',
+      tags: ['baltimore city', 'vacants', 'vacant building', 'building notice', 'dhcd', 'property conditions', 'housing'],
+      service: `${BALTIMORE_HOUSING_SERVICE}/9`,
+      sourceUrl: `${BALTIMORE_HOUSING_SERVICE}/9`,
+      sourceLabel: 'Baltimore City Housing Accela_DHCD Building Notices',
+      geometry: 'point',
+      color: '#ef4444',
+      focus: { center: [-76.6122, 39.2904], zoom: 12.3 },
+      minZoom: 11,
+      maxFeatures: 2000,
+      outFields: ['OBJECTID', 'Address', 'Neighborhood', 'BLOCKLOT', 'OWNER_ABBR', 'NoticeNum', 'DateNotice', 'DateCancel', 'DateAbate'],
+      titleFields: ['Address', 'NoticeNum', 'OBJECTID'],
+      facts: [['Address', 'Address'], ['Neighborhood', 'Neighborhood'], ['Block / lot', 'BLOCKLOT'], ['Owner', 'OWNER_ABBR'], ['Notice number', 'NoticeNum'], ['Notice date', 'DateNotice'], ['Cancel date', 'DateCancel'], ['Abatement date', 'DateAbate'], ['Object ID', 'OBJECTID']],
+    },
+    {
+      id: 'baltimore-realprop-vacind',
+      name: 'Baltimore realprop VACIND=Y',
+      description: 'Baltimore real-property records flagged vacant in the codemap overlay',
+      category: 'Baltimore property conditions',
+      tags: ['baltimore city', 'real property', 'vacind', 'vacant', 'housing', 'property conditions'],
+      service: `${BALTIMORE_HOUSING_SERVICE}/1`,
+      sourceUrl: `${BALTIMORE_HOUSING_SERVICE}/1`,
+      sourceLabel: 'Baltimore City Housing Accela_DHCD Real Property',
+      where: "VACIND = 'Y'",
+      geometry: 'polygon',
+      color: '#22c55e',
+      fillColor: '#22c55e',
+      fillOpacity: .14,
+      lineColor: '#166534',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 11, 0.9, 15, 1.7],
+      lineOpacity: .88,
+      focus: { center: [-76.6122, 39.2904], zoom: 12.1 },
+      minZoom: 11,
+      maxFeatures: 2000,
+      outFields: ['OBJECTID', 'BLOCKLOT', 'FULLADDR', 'OWNER_ABBR', 'NEIGHBOR', 'VACIND', 'TAXBASE', 'YEAR_BUILD', 'SALEDATE', 'SALEPRIC'],
+      titleFields: ['FULLADDR', 'BLOCKLOT', 'OBJECTID'],
+      facts: [['Address', 'FULLADDR'], ['Block / lot', 'BLOCKLOT'], ['Neighborhood', 'NEIGHBOR'], ['Vacancy indicator', 'VACIND'], ['Owner', 'OWNER_ABBR'], ['Year built', 'YEAR_BUILD'], ['Tax base', 'TAXBASE'], ['Sale date', 'SALEDATE'], ['Sale price', 'SALEPRIC'], ['Object ID', 'OBJECTID']],
+    },
+    {
+      id: 'baltimore-vacants-parcels',
+      name: 'Baltimore vacants parcel boundaries',
+      description: 'Parcel polygons joined to Baltimore vacants records in the codemap pipeline',
+      category: 'Baltimore property conditions',
+      tags: ['baltimore city', 'vacants', 'parcel boundaries', 'blocklot', 'housing', 'property conditions'],
+      shardApi: {
+        metaUrl: '/api/vacants_parcels/meta',
+        pageUrl: '/api/vacants_parcels',
+        group: 'ALL',
+      },
+      sourceUrl: '/api/vacants_parcels/meta',
+      sourceLabel: 'Baltimore vacants parcel-boundary inventory',
+      geometry: 'polygon',
+      color: '#60a5fa',
+      fillColor: '#60a5fa',
+      fillOpacity: .03,
+      lineColor: '#1d4ed8',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 11, 0.9, 15, 1.4],
+      lineOpacity: .78,
+      focus: { center: [-76.6122, 39.2904], zoom: 12.1 },
+      minZoom: 11,
+      maxFeatures: 5000,
+      statusOffText: 'Off · published shard inventory',
+      titleFields: ['BLOCKLOT', 'OBJECTID'],
+      facts: [['Block / lot', 'BLOCKLOT'], ['Dataset', 'dataset'], ['Object ID', 'OBJECTID']],
     },
     {
       id: 'historic-properties',
@@ -2018,13 +2125,14 @@
   let inspectorPinnedKey = null;
   let inspectorHoverLayerId = null;
   let inspectorPinnedLayerId = null;
+  const mobileInspectorQuery = window.matchMedia(MOBILE_INSPECTOR_MEDIA);
   let hoveredDataCenterElement = null;
   let visibleDataCenterHoverEntries = [];
   let deckHoverTarget = null;
   let streetStyleLayerIds = [];
   const layerFilters = {
-    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'none' },
-    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'none', fillFraction: 1, sizeBy: 'none', outlineScale: 1.04 },
+    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'estimated_power_draw_mw' },
+    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, sizeBy: 'planning_sustained_output_mw', outlineScale: 1.04 },
     neonStreets: { scope: 'i95', lineWidth: 1 },
     enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
     parcels: { text: '' },
@@ -2387,6 +2495,37 @@
     return state;
   }
 
+  function hasStoredUiState() {
+    try {
+      return Boolean(localStorage.getItem(UI_STATE_STORAGE_KEY));
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  function updatePageStateIndicator(map = activeLayerContext?.map || null) {
+    const indicator = document.getElementById('page-state-indicator');
+    if (!indicator) return;
+    const customized = hasStoredUiState() || window.location.search.length > 0;
+    indicator.classList.toggle('is-customized', customized);
+    indicator.textContent = customized ? 'Customized view active' : 'Defaults active';
+    if (map) {
+      indicator.title = customized
+        ? 'Saved local settings or shareable URL parameters are currently overriding the factory defaults.'
+        : 'The page is using its factory defaults.';
+    }
+  }
+
+  function resetStoredUiState() {
+    try {
+      localStorage.removeItem(UI_STATE_STORAGE_KEY);
+    } catch (_error) {
+      // Ignore storage failures and still attempt a clean reload.
+    }
+    const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+    window.location.assign(cleanUrl);
+  }
+
   function applyUiState(state, themeSelect) {
     if (state.theme && BASEMAP_STYLES[state.theme]) themeSelect.value = state.theme;
     if (Array.isArray(state.layers)) {
@@ -2546,6 +2685,7 @@
     if (state.orientation) url.searchParams.set('o', `${state.orientation.bearing},${state.orientation.pitch}`);
     url.searchParams.set('filters', JSON.stringify(state.filters));
     history.replaceState(null, '', `${url.pathname}?${url.searchParams}${url.hash}`);
+    updatePageStateIndicator(map);
   }
 
   function setupUiStatePersistence(map) {
@@ -3153,6 +3293,16 @@
     const themeSelect = document.getElementById('map-theme');
     const restoredUiState = readUiState();
     document.getElementById('close-record-detail').addEventListener('click', closePinnedInspector);
+    document.getElementById('reset-page-state').addEventListener('click', () => {
+      document.getElementById('reset-page-modal').showModal();
+    });
+    document.getElementById('reset-page-form').addEventListener('submit', (event) => {
+      if (event.submitter?.value === 'confirm') {
+        event.preventDefault();
+        document.getElementById('reset-page-modal').close('confirm');
+        resetStoredUiState();
+      }
+    });
     if (restoredUiState.theme && BASEMAP_STYLES[restoredUiState.theme]) themeSelect.value = restoredUiState.theme;
     const map = new maplibregl.Map({
       container: 'datacenter-map',
@@ -3227,8 +3377,14 @@
           render: () => selectRecord(record, sourceById),
         });
       });
-      element.addEventListener('focus', () => selectHoveredRecord(record, sourceById));
-      element.addEventListener('blur', clearInspectorHover);
+      element.addEventListener('focus', () => {
+        if (mobileInspectorMode()) return;
+        selectHoveredRecord(record, sourceById);
+      });
+      element.addEventListener('blur', () => {
+        if (mobileInspectorMode()) return;
+        clearInspectorHover();
+      });
       const marker = new maplibregl.Marker({
         element,
         anchor: 'center',
@@ -3274,17 +3430,22 @@
     setupLayerColorUi();
     setupTagFilterUi();
     setupUiStatePersistence(map);
+    updatePageStateIndicator(map);
 
     renderResults(allRecords, markerById);
     filterLayerCards(layerSearch);
     renderSources(data.sources);
-    map.on('mousemove', (event) => handleMapHover(map, event, sourceById));
+    map.on('mousemove', (event) => {
+      if (mobileInspectorMode()) return;
+      handleMapHover(map, event, sourceById);
+    });
     window.__resolveDatacenterHoverTargets = (point) => {
       topMapHoverTarget(map, new maplibregl.Point(point.x, point.y), sourceById);
       return window.__lastHoverArbitration;
     };
     map.on('click', (event) => handleMapClick(map, event, sourceById));
     map.getCanvas().addEventListener('mouseleave', () => {
+      if (mobileInspectorMode()) return;
       updateHoveredDataCenterMarker(null);
       powerPlantBoltLayer?.setHoveredRecord(null);
       clearInspectorHover();
@@ -3323,6 +3484,32 @@
     return 3;
   }
 
+  function boundsArrayFromMap(bounds) {
+    return [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()];
+  }
+
+  function bboxIntersects(a, b) {
+    if (!Array.isArray(a) || a.length < 4 || !Array.isArray(b) || b.length < 4) return false;
+    return a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
+  }
+
+  function featureTouchesBounds(feature, boundsArray) {
+    const geometry = feature?.geometry;
+    if (!geometry || !Array.isArray(boundsArray) || boundsArray.length < 4) return false;
+    const [west, south, east, north] = boundsArray;
+    const coordinates = [];
+    const collect = (value) => {
+      if (!Array.isArray(value)) return;
+      if (value.length >= 2 && typeof value[0] === 'number' && typeof value[1] === 'number') {
+        coordinates.push(value);
+        return;
+      }
+      value.forEach(collect);
+    };
+    collect(geometry.coordinates);
+    return coordinates.some(([lng, lat]) => lng >= west && lng <= east && lat >= south && lat <= north);
+  }
+
   function remoteService(config, zoom) {
     if (!config.services) return config.service;
     return config.services.find(([minimumZoom]) => zoom >= minimumZoom)?.[1]
@@ -3342,6 +3529,74 @@
     if (zoom < 5) return '1200';
     if (zoom < 8) return '1600';
     return '2000';
+  }
+
+  async function loadShardApiLayer(map, config, state, status) {
+    const range = zoomRangeForLayer(config.id);
+    const zoom = map.getZoom();
+    if (!layerShownAtZoom(config.id, zoom)) {
+      state.abort?.abort();
+      hideRemoteLayer(map, config);
+      status.textContent = `Visible only from zoom ${number(range.min, 2)} through ${number(range.max, 2)}`;
+      return;
+    }
+    const bounds = map.getBounds();
+    const boundsArray = boundsArrayFromMap(bounds);
+    const precision = remoteRequestPrecision(zoom);
+    const requestKey = [config.shardApi.metaUrl, boundsArray.map((value) => Number(value).toFixed(precision)).join(',')].join('|');
+    if (requestKey === state.requestKey && state.data) {
+      addRemoteLayer(map, config, state.data);
+      rehydrateRemoteLayerAfterStyleSettles(map, config);
+      return;
+    }
+
+    state.abort?.abort();
+    state.abort = new AbortController();
+    status.textContent = 'Loading published parcel shards…';
+    try {
+      if (!state.meta) {
+        const metaResponse = await fetch(config.shardApi.metaUrl, { cache: 'no-store', signal: state.abort.signal });
+        if (!metaResponse.ok) throw new Error(`HTTP ${metaResponse.status}`);
+        state.meta = await metaResponse.json();
+      }
+      const group = state.meta?.groups?.[config.shardApi.group || 'ALL'];
+      const shards = Array.isArray(group?.shards) ? group.shards : [];
+      const matching = shards.filter((shard) => bboxIntersects(shard.bbox, boundsArray));
+      if (!matching.length) {
+        state.data = { type: 'FeatureCollection', features: [] };
+        state.requestKey = requestKey;
+        addRemoteLayer(map, config, state.data);
+        status.textContent = '0 parcel boundaries in current view';
+        return;
+      }
+      const features = [];
+      for (const shard of matching) {
+        const params = new URLSearchParams({
+          group: config.shardApi.group || 'ALL',
+          page: String(shard.page),
+        });
+        const response = await fetch(`${config.shardApi.pageUrl}?${params}`, { cache: 'no-store', signal: state.abort.signal });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        (payload.features || []).forEach((feature) => {
+          if (!featureTouchesBounds(feature, boundsArray)) return;
+          const properties = { ...(feature.properties || {}) };
+          const normalized = properties._normalized || {};
+          if (normalized.dataset && !properties.dataset) properties.dataset = normalized.dataset;
+          if (normalized.blocklot && !properties.BLOCKLOT) properties.BLOCKLOT = normalized.blocklot;
+          features.push({ ...feature, properties });
+        });
+      }
+      if (!state.enabled) return;
+      state.data = { type: 'FeatureCollection', features };
+      state.requestKey = requestKey;
+      addRemoteLayer(map, config, state.data);
+      rehydrateRemoteLayerAfterStyleSettles(map, config);
+      status.textContent = `${number(features.length)} parcel boundaries in current view`;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      status.textContent = `Published shard inventory unavailable · ${error.message}`;
+    }
   }
 
   function setupRemoteLayerControls(map) {
@@ -3367,6 +3622,7 @@
         enabled: false,
         data: null,
         filteredData: null,
+        meta: null,
         abort: null,
         requestKey: '',
         text: '',
@@ -3408,6 +3664,12 @@
     return document.getElementById(`status-${config.id}`)?.textContent?.trim() || 'Ready';
   }
 
+  function renderLayerCardSources(config) {
+    const sources = [[config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
+      .filter(([label, href]) => label && href);
+    return `<div class="dc-record-sources"><strong>Sources</strong><ul>${sources.map(([label, href]) => `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul></div>`;
+  }
+
   function renderLayerCardPreview(config) {
     if (inspectorPinnedKey) return;
     const visible = document.getElementById(`show-${config.id}`)?.checked;
@@ -3425,7 +3687,7 @@
         ['Visible zoom range', known(zoomRangeLabel(config.id))],
       ])}
       <p class="dc-record-note">Hovering this card previews its purpose and state; it does not enable or query the layer.</p>
-      <div class="dc-record-sources"><strong>Source</strong><ul><li><a href="${escapeHtml(config.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(config.sourceLabel)}</a></li></ul></div>`;
+      ${renderLayerCardSources(config)}`;
   }
 
   function setupLayerCardPreviews() {
@@ -3455,10 +3717,11 @@
 
   function filterLayerCards(query) {
     const normalized = String(query || '').trim().toLowerCase();
+    const terms = normalized.split(/[^a-z0-9]+/i).filter(Boolean);
     let visibleCount = 0;
     document.querySelectorAll('.dc-controls .dc-layer-option[data-layer-preview]').forEach((card) => {
       const indexedText = layerPreviewSearchIndex.get(card.dataset.layerPreview) || card.textContent.toLowerCase();
-      const matches = !normalized || indexedText.includes(normalized);
+      const matches = !terms.length || terms.every((term) => indexedText.includes(term));
       card.hidden = !matches;
       if (matches) visibleCount += 1;
     });
@@ -3822,6 +4085,10 @@
     const state = remoteLayerStates.get(config.id);
     if (!state?.enabled) return;
     const status = document.getElementById(`status-${config.id}`);
+    if (config.shardApi) {
+      await loadShardApiLayer(map, config, state, status);
+      return;
+    }
     const range = zoomRangeForLayer(config.id);
     const zoom = map.getZoom();
     if (!layerShownAtZoom(config.id, zoom)) {
@@ -4321,9 +4588,9 @@
   function resetActiveLayerFilter() {
     layerZoomRanges.delete(activeLayerConfigId);
     if (activeLayerConfigId === 'datacenters') {
-      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'none' };
+      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'estimated_power_draw_mw' };
     } else if (activeLayerConfigId === 'power-plants') {
-      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'none', fillFraction: 1, outlineScale: 1.04, sizeBy: 'none' };
+      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineScale: 1.04, sizeBy: 'planning_sustained_output_mw' };
     } else if (activeLayerConfigId === 'neon-streets') {
       layerFilters.neonStreets = { scope: 'i95', lineWidth: 1 };
     } else if (activeLayerConfigId === 'enviroscreen') {
@@ -5180,7 +5447,18 @@
     renderDetail(record, sourceById);
   }
 
+  function mobileInspectorMode() {
+    return mobileInspectorQuery.matches;
+  }
+
+  function defaultInspectorMarkup() {
+    return mobileInspectorMode()
+      ? '<h2>Tap a map icon</h2><p>Select a visible icon or map feature to inspect it.</p>'
+      : '<h2>Hover a map icon</h2><p>Move over a visible icon or map feature to see what it represents.</p>';
+  }
+
   function renderHoveredInspector(key, render, layerId = null) {
+    if (mobileInspectorMode()) return false;
     if (inspectorPinnedKey) return false;
     if (inspectorHoverKey === key) return false;
     inspectorHoverKey = key;
@@ -5219,7 +5497,7 @@
     document.querySelector('.dc-detail').classList.remove('is-pinned');
     document.getElementById('close-record-detail').hidden = true;
     const detail = prepareInspectorDetail();
-    detail.innerHTML = '<h2>Hover a map icon</h2><p>Move over a visible icon or map feature to see what it represents.</p>';
+    detail.innerHTML = defaultInspectorMarkup();
   }
 
   function pinHoverTarget(target) {
@@ -5235,6 +5513,7 @@
   }
 
   function selectHoveredRecord(record, sourceById) {
+    if (mobileInspectorMode()) return;
     renderHoveredInspector(`record:${record.id}`, () => selectRecord(record, sourceById), recordLayerId(record));
   }
 
