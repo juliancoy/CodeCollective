@@ -50,7 +50,7 @@
             <h3 id="filters-title">Layers</h3>
           </header>
           <label class="dc-filter-field dc-layer-search" for="layer-search">Search layers
-            <input id="layer-search" type="search" placeholder="Zoning, imagery, power…">
+            <input id="layer-search" type="search" placeholder="Zoning, imagery, power, PeeringDB, Data Center Map, Cloudscene…">
           </label>
           <p id="layer-search-empty" class="dc-layer-search-empty" hidden>No layers match this search.</p>
           <fieldset class="dc-layer-control">
@@ -187,6 +187,8 @@
             </div>
             <div class="dc-map-heading-tools">
               <button id="download-map-png" class="dc-map-download" type="button" aria-describedby="map-download-status">Download PNG</button>
+              <button id="reset-page-state" class="dc-map-reset" type="button">Reset Page</button>
+              <p id="page-state-indicator" class="dc-page-state-indicator" aria-live="polite">Defaults active</p>
               <span id="map-download-status" class="dc-visually-hidden" aria-live="polite"></span>
               <label for="map-theme">Map theme
                 <select id="map-theme">
@@ -285,6 +287,26 @@
         <span class="dc-modal-footer-actions">
           <button class="dc-modal-secondary" type="submit" value="cancel">Cancel</button>
           <button class="dc-modal-primary" type="submit" value="apply">Apply color</button>
+        </span>
+      </footer>
+    </form>
+  </dialog>
+  <dialog id="reset-page-modal" class="dc-modal">
+    <form id="reset-page-form" class="dc-modal-card" method="dialog">
+      <header class="dc-modal-header">
+        <div>
+          <p class="dc-eyebrow">Reset page</p>
+          <h3>Clear saved datacenters settings?</h3>
+        </div>
+        <button class="dc-modal-close" type="submit" value="cancel" aria-label="Close reset dialog">×</button>
+      </header>
+      <div class="dc-modal-body">
+        <p class="dc-modal-note">This clears the saved local settings for this datacenters page and reloads the default view. It does not affect other pages on the site.</p>
+      </div>
+      <footer class="dc-modal-footer">
+        <span class="dc-modal-footer-actions">
+          <button class="dc-modal-secondary" type="submit" value="cancel">Cancel</button>
+          <button id="confirm-reset-page-state" class="dc-modal-primary" type="submit" value="confirm">Clear and reload</button>
         </span>
       </footer>
     </form>

@@ -479,6 +479,7 @@ body.datacenter-page::before {
   display: flex;
   align-items: end;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
   margin: 0;
 }
@@ -492,6 +493,7 @@ body.datacenter-page::before {
 
 .dc-map-title-editor {
   display: grid;
+  flex: 1 1 16rem;
   min-width: min(17rem, 42vw);
   gap: .2rem;
 }
@@ -549,8 +551,12 @@ body.datacenter-page::before {
 
 .dc-map-heading-tools {
   display: flex;
+  flex: 1 1 24rem;
+  flex-wrap: wrap;
   align-items: end;
+  justify-content: flex-end;
   gap: .8rem;
+  min-width: 0;
 }
 
 .dc-map-download {
@@ -572,6 +578,42 @@ body.datacenter-page::before {
 
 .dc-map-download:disabled { cursor: wait; opacity: .65; }
 
+.dc-map-reset {
+  min-height: 2rem;
+  padding: .35rem .65rem;
+  border: 1px solid rgba(255, 213, 130, .7);
+  border-radius: .4rem;
+  color: #fff3cc;
+  background: linear-gradient(145deg, #7d4e0c, #4a281b);
+  font: 700 .64rem NectoMono, monospace;
+  cursor: pointer;
+}
+
+.dc-map-reset:hover,
+.dc-map-reset:focus-visible {
+  color: var(--dc-navy-deep);
+  background: #ffd582;
+}
+
+.dc-page-state-indicator {
+  margin: 0;
+  padding: .3rem .55rem;
+  border: 1px solid rgba(135, 206, 235, .35);
+  border-radius: 999px;
+  color: var(--dc-muted);
+  background: rgba(0, 17, 43, .46);
+  font: 700 .58rem/1.2 NectoMono, monospace;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dc-page-state-indicator.is-customized {
+  border-color: rgba(255, 213, 130, .75);
+  color: #fff3cc;
+  background: rgba(125, 78, 12, .28);
+}
+
 .dc-map-heading-tools > p {
   max-width: 36ch;
   margin: 0;
@@ -583,7 +625,7 @@ body.datacenter-page::before {
 
 .dc-map-heading-tools label {
   display: grid;
-  flex: 0 0 9.5rem;
+  flex: 0 1 9.5rem;
   gap: .25rem;
   color: var(--dc-muted);
   font-size: .62rem;
@@ -602,6 +644,19 @@ body.datacenter-page::before {
   font: 700 .68rem NectoMono, ui-monospace, monospace;
   letter-spacing: 0;
   text-transform: none;
+}
+
+@media (max-width: 1500px) {
+  .dc-map-panel > .dc-pane-heading {
+    align-items: start;
+  }
+  .dc-map-title-editor,
+  .dc-map-heading-tools {
+    flex-basis: 100%;
+  }
+  .dc-map-heading-tools {
+    justify-content: flex-start;
+  }
 }
 
 .dc-layer-control legend {
