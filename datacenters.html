@@ -9,7 +9,7 @@
   <link rel="icon" href="/images/favicons/favicon.png">
   <link rel="stylesheet" href="/css/master.css?v=20260807-project-menu">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260810-layer-zoom-ranges">
+  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260811-datacenter-defaults">
 </head>
 <body id="body" class="datacenter-page">
   <video id="bg-video" autoplay loop muted playsinline poster="/images/general_encircled_banner.webp">
@@ -110,7 +110,7 @@
                   <span id="power-plant-layer-count" class="dc-layer-count" aria-label="Power plant count">—</span>
                   <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change Power plants color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
                   <span class="dc-layer-zoom" data-layer-zoom="power-plants">z 0–18</span>
-                  <label class="dc-layer-toggle"><input id="show-power-plants" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="show-power-plants" type="checkbox" checked> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-power-plants" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure power plant layer">⚙</button>
                 </span>
@@ -135,7 +135,7 @@
                 <span class="dc-layer-controls-row">
                   <button class="dc-layer-color" type="button" data-layer-color="enviroscreen" aria-label="Change MDE EnviroScreen color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--environment" aria-hidden="true"></i></button>
                   <span class="dc-layer-zoom" data-layer-zoom="enviroscreen">z 0–18</span>
-                  <label class="dc-layer-toggle"><input id="show-enviroscreen" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="show-enviroscreen" type="checkbox" checked> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-enviroscreen" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="enviroscreen" aria-label="Configure EnviroScreen layer">⚙</button>
                 </span>
@@ -147,7 +147,7 @@
                 <span class="dc-layer-controls-row">
                   <button class="dc-layer-color" type="button" data-layer-color="parcels" aria-label="Change MDP / SDAT parcels color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--parcel" aria-hidden="true"></i></button>
                   <span class="dc-layer-zoom" data-layer-zoom="parcels">z 13–18</span>
-                  <label class="dc-layer-toggle"><input id="show-parcels" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="show-parcels" type="checkbox" checked> Render</label>
                   <label class="dc-layer-toggle"><input id="hover-parcels" type="checkbox" checked> Hover</label>
                   <button class="dc-layer-gear" type="button" data-layer-config="parcels" aria-label="Configure parcels layer">⚙</button>
                 </span>
@@ -315,6 +315,6 @@
   <script src="https://unpkg.com/deck.gl@9.2.11/dist.min.js"></script>
   <script src="https://unpkg.com/@loaders.gl/i3s@4.3.4/dist/dist.min.js"></script>
   <script type="module" src="/js/reusableComponents.js?v=20260807-project-menu"></script>
-  <script src="/datacenters/js/datacenters.js?v=20260810-layer-zoom-ranges" defer></script>
+  <script src="/datacenters/js/datacenters.js?v=20260811-datacenter-defaults" defer></script>
 </body>
 </html>
