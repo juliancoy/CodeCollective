@@ -1006,6 +1006,93 @@
     liberty: 'https://tiles.openfreemap.org/styles/liberty',
   };
   const UI_STATE_STORAGE_KEY = 'codecollective.datacenters.ui-state.v1';
+  const DEFAULT_UI_STATE = {
+    theme: 'collective',
+    baseLayer: 'street-map',
+    layers: ['datacenters', 'power-plants', 'neon-streets'],
+    layerOrder: [
+      'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
+      'esri-3d-buildings', 'maryland-state-boundary', 'maryland-county-boundaries',
+      'dhcd-multifamily', 'dhcd-qct', 'dhcd-just-communities', 'mdp-generalized-zoning',
+      'baltimore-city-zoning', 'baltimore-nibrs-crime', 'historic-properties',
+      'dpw-storm-ms4', 'dpw-stormwater', 'dpw-water', 'dpw-wastewater',
+      'md-waterbodies-streams', 'md-waterbodies-lakes', 'md-watersheds-12digit',
+      'md-fema-floodplain', 'md-stream-gauges', 'md-blue-infrastructure',
+      'power-interchanges', 'county-power-estimates', 'md-imap-substations',
+      'md-imap-transmission-lines', 'bge-generation-hosting', 'bge-load-capacity',
+      'pepco-generation-hosting', 'pepco-load-capacity', 'delmarva-generation-hosting',
+      'delmarva-load-capacity', 'potomac-edison-generation-hosting',
+      'smeco-generation-hosting', 'electric-transmission-lines', 'baltimore-vacant-lots',
+      'baltimore-vacant-building-notices', 'baltimore-realprop-vacind',
+      'baltimore-vacants-parcels',
+    ],
+    hover: [
+      'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
+      'esri-3d-buildings', 'maryland-state-boundary', 'maryland-county-boundaries',
+      'dhcd-multifamily', 'dhcd-qct', 'dhcd-just-communities', 'mdp-generalized-zoning',
+      'baltimore-city-zoning', 'baltimore-nibrs-crime', 'historic-properties',
+      'dpw-storm-ms4', 'dpw-stormwater', 'dpw-water', 'dpw-wastewater',
+      'md-waterbodies-streams', 'md-waterbodies-lakes', 'md-watersheds-12digit',
+      'md-fema-floodplain', 'md-stream-gauges', 'md-blue-infrastructure',
+      'power-interchanges', 'county-power-estimates', 'md-imap-substations',
+      'md-imap-transmission-lines', 'bge-generation-hosting', 'bge-load-capacity',
+      'pepco-generation-hosting', 'pepco-load-capacity', 'delmarva-generation-hosting',
+      'delmarva-load-capacity', 'potomac-edison-generation-hosting',
+      'smeco-generation-hosting', 'electric-transmission-lines',
+    ],
+    search: '',
+    animation: { speed: 1, distance: 1 },
+    tagFilters: [],
+    tagFilterMode: 'and',
+    mapTitle: 'Infrastructure map',
+    showMapTitle: false,
+    colors: {},
+    center: [-76.92167, 39.07408],
+    zoom: 7.95,
+    orientation: { bearing: 0, pitch: 0 },
+    filters: {
+      datacenters: {
+        text: '',
+        status: 'all',
+        energy: 'all',
+        sentiment: 'all',
+        powerScale: 'all',
+        colorBy: 'energy',
+        outlineBy: 'lifecycle',
+        glowBy: 'contestation',
+        glowDistance: 1,
+        glowBlur: 1,
+        sizeBy: 'reported_power_capacity_mw',
+      },
+      powerPlants: {
+        text: '',
+        energy: 'all',
+        colorBy: 'energy',
+        outlineBy: 'technology',
+        fillBy: 'resource-adjusted-utilization',
+        fillFraction: 1,
+        sizeBy: 'planning_sustained_output_mw',
+        outlineScale: 1.04,
+      },
+      neonStreets: { scope: 'i95', lineWidth: 1 },
+      enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
+      parcels: { text: '' },
+      remote: {
+        'power-interchanges': {
+          text: '',
+          sizeBy: 'estimated_average_interchange_mw',
+          colorTheme: 'default',
+          lineWidth: 1,
+          lineWidthBy: 'zoom',
+        },
+      },
+      zoomRanges: {},
+    },
+  };
+
+  function cloneDefaultUiState() {
+    return JSON.parse(JSON.stringify(DEFAULT_UI_STATE));
+  }
   const ENERGY_SOURCES = {
     SUN: { label: 'Solar', light: '#69c7ff', color: '#167fc1', dark: '#064a7d' },
     BIT: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
@@ -2131,7 +2218,7 @@
   let deckHoverTarget = null;
   let streetStyleLayerIds = [];
   const layerFilters = {
-    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'estimated_power_draw_mw' },
+    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'reported_power_capacity_mw' },
     powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, sizeBy: 'planning_sustained_output_mw', outlineScale: 1.04 },
     neonStreets: { scope: 'i95', lineWidth: 1 },
     enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
@@ -2435,11 +2522,11 @@
   }
 
   function readUiState() {
-    let state = {};
+    let state = cloneDefaultUiState();
     try {
-      state = JSON.parse(localStorage.getItem(UI_STATE_STORAGE_KEY) || '{}');
+      state = { ...state, ...JSON.parse(localStorage.getItem(UI_STATE_STORAGE_KEY) || '{}') };
     } catch (_error) {
-      state = {};
+      state = cloneDefaultUiState();
     }
     const parameters = new URLSearchParams(window.location.search);
     if (parameters.has('theme')) state.theme = parameters.get('theme');
@@ -4594,7 +4681,7 @@
   function resetActiveLayerFilter() {
     layerZoomRanges.delete(activeLayerConfigId);
     if (activeLayerConfigId === 'datacenters') {
-      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'estimated_power_draw_mw' };
+      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'reported_power_capacity_mw' };
     } else if (activeLayerConfigId === 'power-plants') {
       layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineScale: 1.04, sizeBy: 'planning_sustained_output_mw' };
     } else if (activeLayerConfigId === 'neon-streets') {

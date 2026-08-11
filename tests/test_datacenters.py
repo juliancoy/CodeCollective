@@ -569,9 +569,9 @@ def test_datacenter_page_is_map_first_with_compact_filter_hierarchy():
     assert 'id="type-filter"' not in page
     assert 'id="result-list"' not in page
     assert 'id="show-datacenters" type="checkbox" checked' in page
-    assert 'id="show-power-plants" type="checkbox"' in page
-    assert 'id="show-enviroscreen" type="checkbox" checked' not in page
-    assert 'id="show-parcels" type="checkbox" checked' not in page
+    assert 'id="show-power-plants" type="checkbox" checked' in page
+    assert 'id="show-enviroscreen" type="checkbox" checked' in page
+    assert 'id="show-parcels" type="checkbox" checked' in page
     assert 'class="dc-layer-gear"' in page
     assert 'id="layer-filter-modal"' in page
     assert "maplibre-gl@5.24.0" in page
@@ -1507,6 +1507,7 @@ def test_line_layer_gears_scale_zoom_dependent_widths():
     assert "Math.max(.25, Math.min(5, width))" in script
     assert "function scaledLineWidth(expression, multiplier)" in script
     assert "neonStreets: { scope: 'i95', lineWidth: 1 }" in script
+    assert "sizeBy: 'reported_power_capacity_mw'" in script
     assert "const LINE_WIDTH_OPTIONS = [" in script
     assert "['3', 'Heavy']" in script
     assert "const LINE_WIDTH_BY_DEFAULT = [['zoom', 'Zoom curve only']]" in script
