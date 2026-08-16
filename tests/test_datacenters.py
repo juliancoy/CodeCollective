@@ -1246,7 +1246,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260816-map-release" in page
+    assert "20260816-moratorium-layer" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -1568,13 +1568,13 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
     assert "County total power estimates unavailable" in script
     assert "Derived Maryland county residential electricity estimates" in script
     assert "Derived Maryland county total electricity planning estimates" in script
-    assert "const queryPoint = { x: point.x, y: point.y }" in script
+    assert "const queryPoint = new maplibregl.Point(point.x, point.y)" in script
     assert "map.queryRenderedFeatures(queryPoint, { layers: layerIds })" in script
     assert "Baltimore Red Line GeoJSON" in page
     assert "Power estimates JSON" in page
     assert "not utility-metered county load" in page
     assert "not utility-metered county load or coincident peak demand" in page
-    assert "20260816-map-release" in page
+    assert "20260816-moratorium-layer" in page
     assert {
         "eia-retail-sales-md-residential-2024",
         "eia-retail-sales-md-all-sectors-2024",
@@ -1582,6 +1582,49 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
         "acs-2024-b23025-md-counties",
         "census-tigerweb-county-boundaries",
     } <= source_ids
+
+
+def test_local_moratorium_layer_has_all_counties_and_explicit_status_semantics():
+    collection = load("moratoriums.json")
+    features = collection["features"]
+    assert collection["metadata"]["county_equivalent_count"] == len(features) == 24
+    assert collection["metadata"]["geometry_display_simplification_degrees"] == 0.001
+    assert collection["metadata"]["status_counts"] == {
+        "enacted": 8,
+        "pending": 1,
+        "stopped": 1,
+        "none": 14,
+    }
+    by_county = {feature["properties"]["county"]: feature["properties"] for feature in features}
+    assert by_county["Baltimore city"]["status"] == "enacted"
+    assert by_county["Calvert County"]["status"] == "pending"
+    assert by_county["Frederick County"]["status"] == "stopped"
+    assert by_county["Allegany County"]["status"] == "none"
+    for feature in features:
+        properties = feature["properties"]
+        assert feature["id"] == int(properties["geoid"])
+        assert feature["geometry"]["type"] in {"Polygon", "MultiPolygon"}
+        assert properties["status"] in {"enacted", "pending", "stopped", "none"}
+        assert properties["verified_date"] == "2026-08-16"
+        if properties["status"] == "none":
+            assert properties["source_url"] is None
+        else:
+            assert properties["source_url"].startswith("https://")
+            assert properties["source_title"]
+            assert properties["scope"]
+
+
+def test_local_moratorium_layer_uses_requested_colors_and_is_visible_by_default():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "id: 'data-center-moratoriums'" in script
+    assert "'enacted', '#22c55e'" in script
+    assert "'pending', '#facc15'" in script
+    assert "'stopped', '#ef4444'" in script
+    assert "'rgba(0, 0, 0, 0)'" in script
+    assert "layers: ['datacenters', 'power-plants', 'neon-streets', 'data-center-moratoriums']" in script
+    assert "recordSourceFields: ['source_title', 'source_url']" in script
+    assert "/datacenters/data/moratoriums.json" in script
+    assert "window.__showDatacenterHoverTarget" in script
 
 
 def test_contested_transit_and_gas_layers_are_available_and_source_backed():
