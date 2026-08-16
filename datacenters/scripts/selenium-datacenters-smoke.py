@@ -182,11 +182,11 @@ def verify_moratorium_layer(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
         """
     )
     state.update(published)
-    expected_counts = {"enacted": 8, "pending": 1, "stopped": 1, "none": 14}
+    expected_counts = {"restricted": 9, "pending_action": 1, "operating": 1, "open": 13}
     if not state["checked"] or state["counts"] != expected_counts:
         raise AssertionError(f"moratorium status polygons did not load as specified: {state}")
     paint_text = json.dumps({"fill": state["fillColor"], "line": state["lineColor"]})
-    for color in ("#22c55e", "#facc15", "#ef4444", "rgba(0, 0, 0, 0)"):
+    for color in ("#00e676", "rgba(34, 197, 94, 0.5)", "#facc15", "#ef4444"):
         if color not in paint_text:
             raise AssertionError(f"moratorium palette is missing {color}: {state}")
 
@@ -200,7 +200,7 @@ def verify_moratorium_layer(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
             for (let y = 2; y < canvas.clientHeight; y += 3) {
               for (let x = 2; x < canvas.clientWidth; x += 3) {
                 const hit = map.queryRenderedFeatures([x, y], {layers: ['remote-data-center-moratoriums-fill']})
-                  .find((feature) => feature.properties.status === 'pending');
+                  .find((feature) => feature.properties.status === 'pending_action');
                 if (hit) return {x, y, county: hit.properties.county};
               }
             }
@@ -229,7 +229,7 @@ def verify_moratorium_layer(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
             """
         )
     )
-    if "Pending" not in inspector["key"] or "calvertcountymd.gov" not in inspector["source"]:
+    if "Action pending" not in inspector["key"] or "calvertcountymd.gov" not in inspector["source"]:
         raise AssertionError(f"pending moratorium inspector omitted its status or primary source: {inspector}")
     screenshot = save_screenshot(driver, screenshot_dir, "datacenters-moratorium-layer.png")
     return {"state": state, "pendingPoint": pending_point, "inspector": inspector, "screenshot": str(screenshot)}
@@ -2400,7 +2400,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--map-interactions-only", action="store_true", help="Verify hover, drag-pan, and scroll-zoom over a data-center marker, then exit.")
     parser.add_argument("--layer-order-only", action="store_true", help="Verify selected layer drag ordering and persisted z-order, then exit.")
     parser.add_argument("--transmission-only", action="store_true", help="Verify transmission line color theme and width controls, then exit.")
-    parser.add_argument("--moratorium-only", action="store_true", help="Verify moratorium status colors, counts, default visibility, hover, and sourcing, then exit.")
+    parser.add_argument("--moratorium-only", action="store_true", help="Verify local operating-environment colors, counts, default visibility, hover, and sourcing, then exit.")
     return parser.parse_args()
 
 

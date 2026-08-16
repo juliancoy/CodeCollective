@@ -868,37 +868,41 @@
     },
     {
       id: 'data-center-moratoriums',
-      name: 'Data-center moratoriums',
-      description: 'Green enacted · yellow pending · red stopped · transparent no identified action',
-      category: 'Local policy status',
-      tags: ['Moratorium', 'Ban', 'Pause', 'County', 'Policy', 'Zoning'],
+      name: 'Data-center operating environment',
+      description: 'Bright green operating · translucent green open · yellow pending action · red restricted',
+      category: 'Local operating environment',
+      tags: ['Operating', 'Open', 'Moratorium', 'Ban', 'Pause', 'County', 'Policy', 'Zoning'],
       staticDataUrl: '/datacenters/data/moratoriums.json',
       sourceUrl: '/datacenters/data/moratoriums.json',
-      sourceLabel: 'Curated Maryland local moratorium status inventory',
+      sourceLabel: 'Maryland local data-center operating environment inventory',
       attribution: 'Maryland local governments, U.S. Census Bureau',
       geometry: 'polygon',
-      color: '#22c55e',
+      color: '#00e676',
       fillColor: ['match', ['get', 'status'],
-        'enacted', '#22c55e',
-        'pending', '#facc15',
-        'stopped', '#ef4444',
-        'rgba(0, 0, 0, 0)'],
-      fillOpacity: .42,
+        'operating', '#00e676',
+        'open', 'rgba(34, 197, 94, 0.5)',
+        'pending_action', '#facc15',
+        'restricted', '#ef4444',
+        'rgba(34, 197, 94, 0.5)'],
+      fillOpacity: .68,
       lineColor: ['match', ['get', 'status'],
-        'enacted', '#86efac',
-        'pending', '#fde047',
-        'stopped', '#fca5a5',
-        'rgba(0, 0, 0, 0)'],
+        'operating', '#69f0ae',
+        'open', 'rgba(134, 239, 172, 0.65)',
+        'pending_action', '#fde047',
+        'restricted', '#fca5a5',
+        'rgba(134, 239, 172, 0.65)'],
       lineWidth: ['interpolate', ['linear'], ['zoom'], 6, .8, 11, 2.2],
       lineOpacity: .92,
       focus: { center: [-76.75, 39.05], zoom: 7.2 },
       minZoom: 0,
-      statusOffText: 'Off · 24 localities · enacted, pending, stopped, or transparent',
+      statusOffText: 'Off · 24 localities · operating, open, pending, or restricted',
       titleFields: ['county', 'geoid'],
       facts: [
         ['Locality', 'county'],
-        ['Status', 'status_label'],
-        ['Action type', 'action_type'],
+        ['Operating environment', 'status_label'],
+        ['Confirmed operating facilities', 'operating_facility_count'],
+        ['Policy status', 'policy_status_label'],
+        ['Restriction type', 'action_type'],
         ['Legal instrument', 'legal_instrument'],
         ['Adopted', 'adopted_date'],
         ['Effective', 'effective_date'],
@@ -908,17 +912,17 @@
       ],
       colorLegend: {
         field: 'status',
-        label: 'Local action status',
+        label: 'Data-center operating environment',
         entries: [
-          { value: 'enacted', label: 'Enacted', color: '#22c55e' },
-          { value: 'pending', label: 'Pending', color: '#facc15' },
-          { value: 'stopped', label: 'Stopped', color: '#ef4444' },
-          { value: 'none', label: 'No identified action', color: 'rgba(0, 0, 0, 0)' },
+          { value: 'operating', label: 'Data centers operating', color: '#00e676' },
+          { value: 'open', label: 'Open, none operating identified', color: 'rgba(34, 197, 94, 0.5)' },
+          { value: 'pending_action', label: 'Action pending', color: '#facc15' },
+          { value: 'restricted', label: 'Moratorium or restriction', color: '#ef4444' },
         ],
-        fallback: { label: 'No identified action', color: 'rgba(0, 0, 0, 0)' },
+        fallback: { label: 'Open, none operating identified', color: 'rgba(34, 197, 94, 0.5)' },
       },
       recordSourceFields: ['source_title', 'source_url'],
-      provenanceNote: 'County-equivalent geometry is from Census TIGERweb. Policy status is curated from the linked primary local record; transparent counties have no qualifying current action identified as of the verification date.',
+      provenanceNote: 'County-equivalent geometry is from Census TIGERweb. Red restrictions and yellow proposals are curated from linked primary local records. Operating presence comes from confirmed operating records in the facility inventory. Restrictions take visual precedence over operating facilities.',
       additionalSources: [
         ['U.S. Census Bureau TIGERweb county boundaries', 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1'],
       ],
@@ -5128,7 +5132,7 @@
   function staticLayerLoadingText(config) {
     if (config.id === 'baltimore-red-line') return 'Loading Baltimore Red Line alignment…';
     if (config.id === 'power-interchanges') return 'Loading documented transmission crossings…';
-    if (config.id === 'data-center-moratoriums') return 'Loading local moratorium status…';
+    if (config.id === 'data-center-moratoriums') return 'Loading local operating environment…';
     if (config.id === 'county-power-estimates') return 'Loading county residential power estimates…';
     if (config.id === 'county-total-power-estimates') return 'Loading county total power planning estimates…';
     return `Loading ${config.name.toLowerCase()}…`;
@@ -5145,7 +5149,7 @@
     }
     if (config.id === 'data-center-moratoriums') {
       const counts = data?.metadata?.status_counts || {};
-      return `${number(featureCount)} localities · ${number(counts.enacted || 0)} enacted · ${number(counts.pending || 0)} pending · ${number(counts.stopped || 0)} stopped`;
+      return `${number(featureCount)} localities · ${number(counts.operating || 0)} operating · ${number(counts.open || 0)} open · ${number(counts.pending_action || 0)} pending · ${number(counts.restricted || 0)} restricted`;
     }
     if (config.id === 'county-power-estimates') {
       const averageMw = data?.metadata?.statewide_residential_average_mw;
@@ -5163,7 +5167,7 @@
   function staticLayerErrorText(config, error) {
     if (config.id === 'baltimore-red-line') return `Baltimore Red Line alignment unavailable · ${error.message}`;
     if (config.id === 'power-interchanges') return `Crossing inventory unavailable · ${error.message}`;
-    if (config.id === 'data-center-moratoriums') return `Moratorium status unavailable · ${error.message}`;
+    if (config.id === 'data-center-moratoriums') return `Operating environment unavailable · ${error.message}`;
     if (config.id === 'county-power-estimates') return `County power estimates unavailable · ${error.message}`;
     if (config.id === 'county-total-power-estimates') return `County total power estimates unavailable · ${error.message}`;
     return `${config.name} unavailable · ${error.message}`;
