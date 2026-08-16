@@ -61,7 +61,7 @@
     "backup_generator_count": 172,
     "backup_generator_capacity_mw": 508,
     "backup_generator_detail": "168 generators at 3 MW and 4 generators at 1 MW",
-    "ups_technology": null,
+    "ups_technology": "Aligned markets 2 MW UPS line-ups for IAD-04; detailed topology and energy duration are not disclosed.",
     "ups_capacity_mw": null,
     "ups_energy_mwh": null,
     "cooling_water_detail": "The permit application says Aligned data centers are designed to use no water; facility-specific operating consumption is not yet public.",
@@ -79,17 +79,19 @@
     ],
     "sentiment_assessed_date": "2026-08-07",
     "sentiment_confidence": "medium",
-    "hardware_detail": "Planned hyperscale shells for high-density rack deployments. Aligned publicly markets Delta3 air cooling up to 50 kW per rack and DeltaFlow liquid cooling for denser GPU and accelerator clusters, while the Maryland permit confirms a very large diesel backup plant but not tenant IT equipment.",
+    "hardware_detail": "Planned hyperscale shells for high-density rack deployments. Aligned's Frederick County page identifies IAD-04 at 5601 Manor Woods Road on a 75-acre campus designed to Tier III standards, with 3 MW backup generators, 2 MW UPS line-ups, N+1 block redundancy, 500 kVA PDUs, 415V distribution, Delta3 air cooling, and DeltaFlow liquid-cooling taps. Maryland permit records remain the source for the full backup-generator fleet.",
     "likely_workflows_detail": "Likely AI and HPC clusters plus general hyperscale cloud and enterprise workloads, based on Aligned's published Maryland campus positioning rather than a tenant roster for IAD04 itself.",
     "hardware_workflow_basis": "Hardware description combines the site permit with Aligned's published cooling platform. Workload statement is an operator-capability inference, not a building-specific customer disclosure.",
     "profile_source_ids": [
-      "aligned-hyperscale-campus",
-      "aligned-cooling-innovation",
+      "aligned-maryland-data-centers",
       "mde-aligned-issued-air-permit-2025",
-      "mde-aligned-air-permit-application"
+      "mde-aligned-air-permit-application",
+      "mde-frederick-data-center-hub"
     ],
     "last_verified_date": "2026-08-09",
     "source_ids": [
+      "aligned-maryland-data-centers",
+      "frederick-oed-data-centers-2026",
       "mde-aligned-issued-air-permit-2025",
       "mde-aligned-final-determination-2025",
       "mde-aligned-air-permit-application",
@@ -143,6 +145,33 @@
     "projected_power_demand_source_ids": [
       "mde-aligned-air-permit-application",
       "mde-aligned-issued-air-permit-2025"
+    ],
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $396,334,080 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 2635200.0,
+    "estimated_annual_electricity_cost_usd": 396334080,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 300.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 396334080,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 300.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "mde-aligned-air-permit-application",
+          "mde-aligned-issued-air-permit-2025"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "mde-aligned-air-permit-application",
+      "mde-aligned-issued-air-permit-2025"
     ]
   },
   {
@@ -178,7 +207,7 @@
       "mde-amazon-issued-air-permit-2026",
       "mde-amazon-final-determination-2026"
     ],
-    "plan_detail": "Four data-center buildings, retained as one campus record to avoid double counting.",
+    "plan_detail": "Amazon Data Services BWI-150 through BWI-153 corresponds to Rowan's Bauxite I development phase within Quantum Frederick, documented in MDE air-permit records as a four-building data-center campus at 3250 Digital Drive.",
     "permit_detail": "MDE issued the air permit to construct on March 25, 2026 after public review.",
     "financing_detail": "No facility-specific public award was identified. Eligibility for Maryland's general data-center sales-tax program is not evidence of an award.",
     "street_address": "3250 Digital Drive",
@@ -230,7 +259,8 @@
       "aws-global-infrastructure",
       "mde-amazon-issued-air-permit-2026",
       "mde-amazon-air-permit-application",
-      "mde-frederick-data-center-hub"
+      "mde-frederick-data-center-hub",
+      "frederick-oed-data-centers-2026"
     ],
     "last_verified_date": "2026-08-09",
     "source_ids": [
@@ -238,6 +268,7 @@
       "mde-amazon-final-determination-2026",
       "mde-amazon-air-permit-application",
       "mde-frederick-data-center-hub",
+      "frederick-oed-data-centers-2026",
       "esri-world-geocoder"
     ],
     "not_disclosed_fields": [
@@ -286,6 +317,33 @@
     "projected_power_demand_basis": "Estimated normal grid draw from the 257.75 MW permitted backup-generator fleet across four Amazon buildings. Backup nameplate is used only as an order-of-magnitude proxy, not as actual demand.",
     "projected_power_demand_confidence": "medium",
     "projected_power_demand_source_ids": [
+      "mde-amazon-air-permit-application",
+      "mde-amazon-issued-air-permit-2026"
+    ],
+    "funding_summary": "No facility-specific public award was identified. Eligibility for Maryland's general data-center sales-tax program is not evidence of an award.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $211,378,176 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 1405440.0,
+    "estimated_annual_electricity_cost_usd": 211378176,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 160.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 211378176,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 160.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "mde-amazon-air-permit-application",
+          "mde-amazon-issued-air-permit-2026"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
       "mde-amazon-air-permit-application",
       "mde-amazon-issued-air-permit-2026"
     ]
@@ -418,7 +476,58 @@
     "projected_power_demand_mw": null,
     "projected_power_demand_basis": null,
     "projected_power_demand_confidence": null,
-    "projected_power_demand_source_ids": []
+    "projected_power_demand_source_ids": [],
+    "funding_summary": "State-owned and operated Maryland facility; reviewed records did not isolate facility-level capital or operating funding.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [
+      {
+        "funder": "Maryland Department of General Services / Maryland DoIT",
+        "amount_usd": null,
+        "amount_status": "amount not isolated",
+        "basis": "Responsible state agencies identified; facility-level budget amount not isolated in reviewed sources.",
+        "source_ids": [
+          "maryland-dgs-annapolis-data-center",
+          "maryland-doit-cloud-hosting"
+        ]
+      }
+    ],
+    "funding_source_ids": [
+      "maryland-dgs-annapolis-data-center",
+      "maryland-doit-cloud-hosting"
+    ],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $1,321,114 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 8784.0,
+    "estimated_annual_electricity_cost_usd": 1321114,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 1.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 1321114,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 1.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "maryland-dgs-annapolis-data-center",
+          "mdp-sdat-parcel-property"
+        ]
+      },
+      {
+        "label": "Public budget or grant context",
+        "amount_usd": null,
+        "amount_status": "capital context; not operating cost",
+        "basis": "State-owned and operated; no facility-specific appropriation amount identified in this review.",
+        "source_ids": [
+          "maryland-dgs-annapolis-data-center",
+          "maryland-doit-cloud-hosting"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "maryland-dgs-annapolis-data-center",
+      "mdp-sdat-parcel-property"
+    ]
   },
   {
     "id": "tierpoint-baltimore-bal",
@@ -550,7 +659,34 @@
     "projected_power_demand_mw": null,
     "projected_power_demand_basis": null,
     "projected_power_demand_confidence": null,
-    "projected_power_demand_source_ids": []
+    "projected_power_demand_source_ids": [],
+    "funding_summary": "Private financing; no facility-specific public grant, loan, or tax award identified.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $1,981,670 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 13176.0,
+    "estimated_annual_electricity_cost_usd": 1981670,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 1.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 1981670,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 1.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "tierpoint-baltimore",
+          "tierpoint-baltimore-spec"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "tierpoint-baltimore",
+      "tierpoint-baltimore-spec"
+    ]
   },
   {
     "id": "tierpoint-baltimore-bwi",
@@ -683,7 +819,46 @@
     "projected_power_demand_mw": null,
     "projected_power_demand_basis": null,
     "projected_power_demand_confidence": null,
-    "projected_power_demand_source_ids": []
+    "projected_power_demand_source_ids": [],
+    "funding_summary": "TierPoint announced an initial facility investment exceeding $10 million. The public record reviewed does not identify a facility-specific government award.",
+    "funding_total_known_usd": 10000000,
+    "funding_breakdown": [
+      {
+        "funder": "TierPoint",
+        "amount_usd": 10000000,
+        "amount_status": "reported minimum",
+        "basis": "Announced initial private facility investment exceeding $10 million; chart uses $10 million as a conservative floor.",
+        "source_ids": [
+          "tierpoint-bwi-investment"
+        ]
+      }
+    ],
+    "funding_source_ids": [
+      "tierpoint-bwi-investment"
+    ],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $1,651,392 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 10980.0,
+    "estimated_annual_electricity_cost_usd": 1651392,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 1.25 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 1651392,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 1.25 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "tierpoint-bwi",
+          "tierpoint-bwi-spec"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "tierpoint-bwi",
+      "tierpoint-bwi-spec"
+    ]
   },
   {
     "id": "expedient-tide-point",
@@ -814,7 +989,44 @@
     "projected_power_demand_mw": null,
     "projected_power_demand_basis": null,
     "projected_power_demand_confidence": null,
-    "projected_power_demand_source_ids": []
+    "projected_power_demand_source_ids": [],
+    "funding_summary": "Expedient reported more than $6 million of upgrades and expansions for its Baltimore data-center footprint during 2011\u20132013.",
+    "funding_total_known_usd": 6000000,
+    "funding_breakdown": [
+      {
+        "funder": "Expedient",
+        "amount_usd": 6000000,
+        "amount_status": "reported minimum",
+        "basis": "Reported upgrades and expansions exceeded $6 million; chart uses $6 million as a conservative floor.",
+        "source_ids": [
+          "expedient-baltimore-investment-2013"
+        ]
+      }
+    ],
+    "funding_source_ids": [
+      "expedient-baltimore-investment-2013"
+    ],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $1,321,114 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 8784.0,
+    "estimated_annual_electricity_cost_usd": 1321114,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 1.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 1321114,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 1.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "expedient-tide-point-spec"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "expedient-tide-point-spec"
+    ]
   },
   {
     "id": "expedient-owings-mills",
@@ -943,7 +1155,32 @@
     "projected_power_demand_mw": null,
     "projected_power_demand_basis": null,
     "projected_power_demand_confidence": null,
-    "projected_power_demand_source_ids": []
+    "projected_power_demand_source_ids": [],
+    "funding_summary": "Expedient announced several million dollars of private upgrades before its 2013 opening; no exact total or public award identified.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $726,612 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 4831.2,
+    "estimated_annual_electricity_cost_usd": 726612,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.55 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 726612,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.55 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "expedient-owings-mills-spec"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "expedient-owings-mills-spec"
+    ]
   },
   {
     "id": "databank-bwi1-baltimore",
@@ -1072,7 +1309,32 @@
     "projected_power_demand_mw": null,
     "projected_power_demand_basis": null,
     "projected_power_demand_confidence": null,
-    "projected_power_demand_source_ids": []
+    "projected_power_demand_source_ids": [],
+    "funding_summary": "No facility-specific financing or public award identified.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $528,445 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 3513.6,
+    "estimated_annual_electricity_cost_usd": 528445,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.4 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 528445,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.4 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "databank-bwi1-2020",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "databank-bwi1-2020",
+      "eia-retail-sales-md-all-sectors-2024"
+    ]
   },
   {
     "id": "databridge-silver-spring",
@@ -1200,7 +1462,32 @@
     "projected_power_demand_mw": null,
     "projected_power_demand_basis": null,
     "projected_power_demand_confidence": null,
-    "projected_power_demand_source_ids": []
+    "projected_power_demand_source_ids": [],
+    "funding_summary": "No facility-specific financing or public award identified.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $8,587,238 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 57096.0,
+    "estimated_annual_electricity_cost_usd": 8587238,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 6.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 8587238,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 6.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "databridge-home",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "databridge-home",
+      "eia-retail-sales-md-all-sectors-2024"
+    ]
   },
   {
     "id": "atmosphere-dickerson",
@@ -1220,7 +1507,7 @@
     "development_status": "proposed / not built",
     "permit_status": "conditional-use and NPDES applications entered review; no building permit identified",
     "air_permit_status": "no approved data-center air permit identified in the reviewed records",
-    "legal_status": "Montgomery County enacted Ordinance 20-35 prohibiting data centers in all zones effective August 17, 2026; its transition rule reaches applications without a building permit before that date",
+    "legal_status": "DCD reports Atmosphere challenged Montgomery County's six-month data-center permit moratorium after County Executive Marc Elrich issued it on June 12, 2026. Montgomery County also enacted Ordinance 20-35 prohibiting data centers in all zones effective August 17, 2026; its transition rule reaches applications without a building permit before that date.",
     "status_tags": [
       "Not built",
       "Proposed",
@@ -1234,10 +1521,11 @@
     "status_source_ids": [
       "montgomery-dickerson-case",
       "mde-atmosphere-npdes",
-      "montgomery-zta-26-01"
+      "montgomery-zta-26-01",
+      "dcd-atmosphere-moratorium-challenge-2026"
     ],
-    "plan_detail": "Proposed hyperscale data center paired with a battery energy storage system on the former power-plant tract.",
-    "permit_detail": "A Montgomery County conditional-use case and MDE NPDES application 26-DP-3903 entered review. On July 28, 2026 the County Council approved ZTA 26-01 prohibiting large data centers countywide, including this proposal.",
+    "plan_detail": "Proposed 360 MW hyperscale campus at the former Dickerson Power Plant site. DCD reports five 226,850-square-foot data-center buildings, and the existing record also tracks the paired battery-energy-storage component described in county and state review materials.",
+    "permit_detail": "A Montgomery County conditional-use case and MDE NPDES application 26-DP-3903 entered review. DCD reports the moratorium stopped processing of the stormwater management concept plan and fire access plan; on July 28, 2026 the County Council approved ZTA 26-01 prohibiting large data centers countywide, including this proposal.",
     "financing_detail": "Private financing details were not disclosed in reviewed records; proposed annual county tax-revenue claims are forecasts, not financing.",
     "street_address": "21200 Martinsburg Road",
     "city": "Dickerson",
@@ -1248,7 +1536,7 @@
     "longitude": -77.463848,
     "coordinate_method": "Esri World Geocoding Service point-address match",
     "coordinate_checked_date": "2026-08-07",
-    "building_count": null,
+    "building_count": 5,
     "site_acres": null,
     "utility": "Potomac Edison / PJM interconnection under review",
     "reported_power_capacity_mw": null,
@@ -1283,18 +1571,20 @@
     ],
     "sentiment_assessed_date": "2026-08-07",
     "sentiment_confidence": "high",
-    "hardware_detail": "Proposed hyperscale campus hardware only at concept level: large multi-building compute halls, utility interconnection, and a paired battery-energy-storage component were described, but no public filing reviewed disclosed rack density, server classes, or cooling architecture.",
+    "hardware_detail": "Proposed 360 MW hyperscale campus with five 226,850-square-foot data-center buildings at the former Dickerson Power Plant. DCD reports the owner Terra Energy first submitted plans in 2023. Public filings reviewed do not disclose rack density, server classes, or cooling architecture.",
     "likely_workflows_detail": "Likely hyperscale cloud, storage, and possibly AI training or inference workloads because the proposal was framed as a large data-center redevelopment of a former generating-station site, but no tenant or service catalog was publicly identified.",
     "hardware_workflow_basis": "This is a proposal-stage inference from land-use and permit materials. It should be read as likely intended use, not confirmed installed hardware or contracted workloads.",
     "profile_source_ids": [
       "montgomery-dickerson-case",
-      "mde-atmosphere-npdes"
+      "mde-atmosphere-npdes",
+      "dcd-atmosphere-moratorium-challenge-2026"
     ],
     "last_verified_date": "2026-08-09",
     "source_ids": [
       "montgomery-dickerson-case",
       "mde-atmosphere-npdes",
       "montgomery-zta-26-01",
+      "dcd-atmosphere-moratorium-challenge-2026",
       "montgomery-data-center-pause-2026",
       "esri-world-geocoder"
     ],
@@ -1346,6 +1636,33 @@
     "projected_power_demand_source_ids": [
       "montgomery-zta-26-01",
       "dcd-atmosphere-moratorium-challenge-2026"
+    ],
+    "funding_summary": "Private financing details were not disclosed in reviewed records; proposed annual county tax-revenue claims are forecasts, not financing.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $475,600,896 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 3162240.0,
+    "estimated_annual_electricity_cost_usd": 475600896,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 360.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 475600896,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 360.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "dcd-atmosphere-moratorium-challenge-2026",
+          "eia-retail-sales-md-all-sectors-2024",
+          "montgomery-zta-26-01"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "dcd-atmosphere-moratorium-challenge-2026",
+      "eia-retail-sales-md-all-sectors-2024",
+      "montgomery-zta-26-01"
     ]
   },
   {
@@ -1491,6 +1808,45 @@
     "projected_power_demand_source_ids": [
       "axios-landover-opposition-2025",
       "pg-executive-orders-2026"
+    ],
+    "funding_summary": "The former Landover Mall concept was reported as a $5 billion development proposal. The reviewed records do not name executed funders or a public award.",
+    "funding_total_known_usd": 5000000000,
+    "funding_breakdown": [
+      {
+        "funder": "Unnamed Brightseat Tech Park development sponsor",
+        "amount_usd": 5000000000,
+        "amount_status": "reported concept value",
+        "basis": "Reported $5 billion development concept; not evidence of closed project financing.",
+        "source_ids": [
+          "wbj-landover-concept-2024"
+        ]
+      }
+    ],
+    "funding_source_ids": [
+      "wbj-landover-concept-2024"
+    ],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $396,334,080 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 2635200.0,
+    "estimated_annual_electricity_cost_usd": 396334080,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 300.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 396334080,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 300.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "axios-landover-opposition-2025",
+          "eia-retail-sales-md-all-sectors-2024",
+          "pg-executive-orders-2026"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "axios-landover-opposition-2025",
+      "eia-retail-sales-md-all-sectors-2024",
+      "pg-executive-orders-2026"
     ]
   },
   {
@@ -1633,6 +1989,61 @@
     "projected_power_demand_confidence": "low",
     "projected_power_demand_source_ids": [
       "jhu-bayview-state-grant-2026"
+    ],
+    "funding_summary": "The project was reported at $196 million, including a $9 million Maryland capital grant approved by the Board of Public Works; the remainder is not broken down by funder in the reviewed record.",
+    "funding_total_known_usd": 196000000,
+    "funding_breakdown": [
+      {
+        "funder": "Maryland Board of Public Works / State of Maryland",
+        "amount_usd": 9000000,
+        "amount_status": "approved grant",
+        "basis": "Board of Public Works approval reported for a Maryland capital grant.",
+        "source_ids": [
+          "jhu-bayview-state-grant-2026"
+        ]
+      },
+      {
+        "funder": "Johns Hopkins project funds and other non-itemized sources",
+        "amount_usd": 187000000,
+        "amount_status": "derived remainder",
+        "basis": "Reported total project cost less the identified $9 million Maryland grant; reviewed records did not publish a more specific funder split.",
+        "source_ids": [
+          "jhu-bayview-state-grant-2026"
+        ]
+      }
+    ],
+    "funding_source_ids": [
+      "jhu-bayview-state-grant-2026"
+    ],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $6,605,568 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 43920.0,
+    "estimated_annual_electricity_cost_usd": 6605568,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 5.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 6605568,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 5.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "jhu-bayview-state-grant-2026"
+        ]
+      },
+      {
+        "label": "Public budget or grant context",
+        "amount_usd": null,
+        "amount_status": "capital context; not operating cost",
+        "basis": "$9 million Maryland capital grant approved by the Board of Public Works on May 6, 2026.",
+        "source_ids": [
+          "jhu-bayview-state-grant-2026"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "jhu-bayview-state-grant-2026"
     ]
   },
   {
@@ -1715,6 +2126,46 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "Cogent sold this facility as part of a ten-property, $225 million portfolio sale to an I Squared Capital-sponsored entity. No Elkridge-specific allocation was disclosed.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [
+      {
+        "funder": "I Squared Capital-sponsored acquiring entity",
+        "amount_usd": null,
+        "amount_status": "portfolio amount not facility allocated",
+        "aggregate_amount_usd": 225000000,
+        "basis": "Aggregate ten-property transaction value was disclosed; no facility allocation was published.",
+        "source_ids": [
+          "cogent-elkridge-sale-closing-2026"
+        ]
+      }
+    ],
+    "funding_source_ids": [
+      "cogent-elkridge-sale-closing-2026"
+    ],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $6,605,568 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 43920.0,
+    "estimated_annual_electricity_cost_usd": 6605568,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 5.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 6605568,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 5.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "cogent-elkridge-brochure-2025",
+          "cogent-elkridge-wholesale-2025",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "cogent-elkridge-brochure-2025",
+      "cogent-elkridge-wholesale-2025",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -1752,7 +2203,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "The June 29, 2026 sale transferred the real estate to an unnamed I Squared Capital-sponsored entity. Cogent's current facility materials remain the best public service description, but the post-closing operating arrangement is not disclosed.",
     "power_scale_class": "medium",
@@ -1843,6 +2298,33 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $990,835 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 6588.0,
+    "estimated_annual_electricity_cost_usd": 990835,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.75 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 990835,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.75 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "atlantech-data-centers",
+          "atlantech-rockville",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "atlantech-data-centers",
+      "atlantech-rockville",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -1878,7 +2360,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "sub-megawatt",
@@ -1970,6 +2456,33 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $660,557 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 4392.0,
+    "estimated_annual_electricity_cost_usd": 660557,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 660557,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "atlantech-colocation-terms",
+          "atlantech-data-centers",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "atlantech-colocation-terms",
+      "atlantech-data-centers",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2005,7 +2518,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "sub-megawatt",
@@ -2097,6 +2614,33 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $2,642,227 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 17568.0,
+    "estimated_annual_electricity_cost_usd": 2642227,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 2.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 2642227,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 2.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "ainet-cybernap",
+          "ainet-data-center-services",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "ainet-cybernap",
+      "ainet-data-center-services",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2139,7 +2683,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "small",
@@ -2231,6 +2779,33 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $1,981,670 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 13176.0,
+    "estimated_annual_electricity_cost_usd": 1981670,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 1.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 1981670,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 1.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "ainet-cybernap",
+          "ainet-data-center-services",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "ainet-cybernap",
+      "ainet-data-center-services",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2267,7 +2842,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "small",
@@ -2360,6 +2939,33 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $68,697,907 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 456768.0,
+    "estimated_annual_electricity_cost_usd": 68697907,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 52.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 68697907,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 52.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "ainet-cybernap",
+          "ainet-data-center-services",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "ainet-cybernap",
+      "ainet-data-center-services",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2396,7 +3002,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "The parcel structure is larger than AiNET's stated data-center area. The operator page uses future-tense opening language while PeeringDB lists the facility; current operating status therefore remains explicitly unverified.",
     "power_scale_class": "large",
@@ -2484,6 +3094,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $3,963,341 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 26352.0,
+    "estimated_annual_electricity_cost_usd": 3963341,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 3.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 3963341,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 3.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2514,7 +3149,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Shares the 300 West Lexington carrier-hotel building with other listed providers; retained as a separate operator/listing record.",
     "power_scale_class": "small",
@@ -2602,6 +3241,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $330,278 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 2196.0,
+    "estimated_annual_electricity_cost_usd": 330278,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.25 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 330278,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.25 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2633,7 +3297,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Shares the 111 Market Place / Candler Building location with other directory listings; retained as a separate provider/listing record.",
     "power_scale_class": "sub-megawatt",
@@ -2721,6 +3389,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $660,557 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 4392.0,
+    "estimated_annual_electricity_cost_usd": 660557,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 660557,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2752,7 +3445,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Shares the Candler Building address with other directory-listed providers; retained separately because DataCenterMap lists it separately.",
     "power_scale_class": "sub-megawatt",
@@ -2840,6 +3537,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $594,501 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 3952.8,
+    "estimated_annual_electricity_cost_usd": 594501,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.45 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 594501,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.45 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2871,7 +3593,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "sub-megawatt",
@@ -2959,6 +3685,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $6,605,568 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 43920.0,
+    "estimated_annual_electricity_cost_usd": 6605568,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 5.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 6605568,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 5.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -2990,7 +3741,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "medium",
@@ -3080,6 +3835,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $198,167,040 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 1317600.0,
+    "estimated_annual_electricity_cost_usd": 198167040,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 150.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 198167040,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 150.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "not researched beyond directory listing",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -3111,7 +3891,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "very-large",
@@ -3198,6 +3982,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $990,835 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 6588.0,
+    "estimated_annual_electricity_cost_usd": 990835,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.75 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 990835,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.75 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -3229,7 +4038,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "sub-megawatt",
@@ -3317,6 +4130,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $79,266,816 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 527040.0,
+    "estimated_annual_electricity_cost_usd": 79266816,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 60.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 79266816,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 60.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -3348,7 +4186,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "large",
@@ -3437,6 +4279,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $79,266,816 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 527040.0,
+    "estimated_annual_electricity_cost_usd": 79266816,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 60.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 79266816,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 60.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -3468,7 +4335,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     "power_scale_class": "large",
@@ -3556,6 +4427,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $1,321,114 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 8784.0,
+    "estimated_annual_electricity_cost_usd": 1321114,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 1.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 1321114,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 1.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -3586,7 +4482,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Shares the 300 West Lexington carrier-hotel building with other listed providers; retained as a separate provider/listing record.",
     "power_scale_class": "small",
@@ -3674,6 +4574,31 @@
     "capital_investment_usd": null,
     "tax_incentive_detail": null,
     "public_funding_detail": null,
+    "funding_summary": "No facility-specific public financing or tax-exemption award was identified in the reviewed records.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $660,557 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 4392.0,
+    "estimated_annual_electricity_cost_usd": 660557,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 0.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 660557,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 0.5 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "datacentermap-baltimore-2026",
+          "eia-retail-sales-md-all-sectors-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "datacentermap-baltimore-2026",
+      "eia-retail-sales-md-all-sectors-2024"
+    ],
     "public_opposition_status": "no facility-specific evidence identified",
     "public_sentiment_score": null,
     "public_sentiment_label": "insufficient evidence",
@@ -3705,7 +4630,11 @@
       "PUE",
       "UPS energy duration",
       "current and committed site employment",
-      "facility-specific tax benefits"
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
     ],
     "notes": "Shares the 111 Market Place / Candler Building location with other provider listings; retained because DataCenterMap lists it separately.",
     "power_scale_class": "sub-megawatt",
@@ -3716,6 +4645,676 @@
     "power_scale_tag": "Estimated draw: under 1 MW",
     "power_scale_source_ids": [
       "datacentermap-baltimore-2026"
+    ]
+  },
+  {
+    "id": "fannie-mae-urbana-tech-center",
+    "record_type": "data_center",
+    "technology_tags": [
+      "Colocation",
+      "Carrier connectivity",
+      "Diesel backup generation"
+    ],
+    "name": "Fannie Mae Urbana Technology Center",
+    "operator": "Fannie Mae",
+    "owner": "Fannie Mae",
+    "campus": null,
+    "status": "operating / offered for sale",
+    "year_built": 2004,
+    "year_built_status": "documented",
+    "year_built_basis": "JLL sale materials for the Fannie Mae Tech Center list original construction in 2004.",
+    "development_status": "operating / offered for sale",
+    "permit_status": "operating facility; no current expansion permit decision identified in the reviewed records",
+    "air_permit_status": "no facility-specific air-permit decision identified in the reviewed records",
+    "legal_status": "no project-specific legal dispute identified in the reviewed records",
+    "status_tags": [
+      "Built 2004",
+      "Operating",
+      "Offered for sale 2026"
+    ],
+    "year_built_source_ids": [
+      "jll-fannie-mae-tech-center-2026"
+    ],
+    "status_source_ids": [
+      "frederick-oed-data-centers-2026",
+      "fannie-mae-contact-urbana-tech-center",
+      "jll-fannie-mae-tech-center-2026"
+    ],
+    "plan_detail": "Existing Tier III-equivalent enterprise data center with expansion capacity in the existing improvements and an adjacent undeveloped parcel marketed for possible future data-center development.",
+    "permit_detail": "No current facility-specific government expansion permit was identified; JLL describes expansion potential and near-term power availability rather than an issued construction approval.",
+    "financing_detail": "JLL states Fannie Mae is migrating operations to the cloud and intends to divest the Tech Center by year-end 2026; no facility-specific public financing was identified.",
+    "street_address": "9107 Bennett Creek Boulevard",
+    "city": "Frederick",
+    "county": "Frederick",
+    "state": "MD",
+    "postal_code": "21704",
+    "latitude": 39.322492,
+    "longitude": -77.34973,
+    "coordinate_method": "U.S. Census Geocoder street-segment match",
+    "coordinate_checked_date": "2026-08-10",
+    "building_count": 1,
+    "site_acres": 37.26,
+    "utility": null,
+    "reported_power_capacity_mw": 9.8,
+    "reported_power_capacity_basis": "JLL reports 4.3 MW installed critical capacity plus 5.5 MW expansion capacity in existing improvements; this is a facility capacity envelope, not metered demand.",
+    "reported_grid_demand_mw": null,
+    "reported_annual_energy_mwh": null,
+    "reported_pue": null,
+    "estimated_power_draw_mw": 4.3,
+    "estimated_power_draw_basis": "Uses JLL's published 4.3 MW installed critical capacity as the best public operating-load proxy. The separate 5.5 MW expansion capacity is retained as facility capacity and is not treated as current draw.",
+    "estimated_power_draw_confidence": "medium",
+    "estimated_power_draw_source_ids": [
+      "jll-fannie-mae-tech-center-2026"
+    ],
+    "projected_power_demand_mw": null,
+    "projected_power_demand_basis": null,
+    "projected_power_demand_confidence": null,
+    "projected_power_demand_source_ids": [],
+    "on_site_natural_gas_power_plant": "not identified in reviewed records",
+    "on_site_generation_capacity_mw": null,
+    "on_site_generation_technology": null,
+    "backup_generation_fuel": "diesel (reported by earlier technical coverage; current official sale materials reviewed here do not enumerate generators)",
+    "backup_generator_count": null,
+    "backup_generator_capacity_mw": null,
+    "backup_generator_detail": "Earlier specialist coverage reported six 2 MW generators; current Fannie Mae and JLL materials reviewed for this update do not publish a generator schedule.",
+    "ups_technology": "UPS system present by data-center design implication; topology and rating not disclosed in the reviewed owner/broker materials.",
+    "ups_capacity_mw": null,
+    "ups_energy_mwh": null,
+    "cooling_water_detail": "Frederick OED describes redundant utility feeds including water; detailed water consumption was not disclosed.",
+    "employees_current": null,
+    "employees_committed": null,
+    "capital_investment_usd": null,
+    "tax_incentive_detail": null,
+    "public_funding_detail": null,
+    "funding_summary": "JLL states Fannie Mae is migrating operations to the cloud and intends to divest the Tech Center by year-end 2026; no facility-specific public financing was identified.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $5,680,788 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 37771.2,
+    "estimated_annual_electricity_cost_usd": 5680788,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 4.3 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 5680788,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 4.3 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "jll-fannie-mae-tech-center-2026"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "jll-fannie-mae-tech-center-2026"
+    ],
+    "public_opposition_status": "no facility-specific evidence identified",
+    "public_sentiment_score": null,
+    "public_sentiment_label": "insufficient evidence",
+    "sentiment_basis": "No representative facility-specific public sentiment record was identified.",
+    "sentiment_source_ids": [],
+    "sentiment_assessed_date": "2026-08-09",
+    "sentiment_confidence": "insufficient",
+    "contestation_score": 0,
+    "contestation_label": "none identified",
+    "contestation_category": "none identified",
+    "contestation_basis": "A renewed search found no credible facility-specific public, regulatory, or legal controversy. Broader jurisdictional policy debates are not attributed to an established facility without site-specific evidence.",
+    "contestation_source_ids": [],
+    "salient_news_source_ids": [],
+    "contestation_assessed_date": "2026-08-09",
+    "hardware_detail": "Frederick OED describes a 220,000-square-foot facility with 90,000 square feet of office space, 60,000 square feet of data-center space, and a 70,000-square-foot MEP facility. JLL lists 245,000 gross square feet, Tier III-equivalent rating, 4.3 MW installed critical capacity, and 5.5 MW expansion capacity.",
+    "likely_workflows_detail": "Enterprise mortgage-finance technology operations and disaster-recovery workloads; JLL states Fannie Mae is migrating operations to the cloud before disposition.",
+    "hardware_workflow_basis": "Fannie Mae owns and lists the Urbana Technology Center; Frederick OED and JLL describe it as an existing data center.",
+    "profile_source_ids": [
+      "frederick-oed-data-centers-2026",
+      "fannie-mae-contact-urbana-tech-center",
+      "jll-fannie-mae-tech-center-2026"
+    ],
+    "last_verified_date": "2026-08-09",
+    "source_ids": [
+      "frederick-oed-data-centers-2026",
+      "fannie-mae-contact-urbana-tech-center",
+      "jll-fannie-mae-tech-center-2026",
+      "census-geocoder"
+    ],
+    "not_disclosed_fields": [
+      "facility grid demand",
+      "annual electricity use",
+      "PUE",
+      "UPS energy duration",
+      "current and committed site employment",
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
+    ],
+    "notes": "Frederick OED and JLL report different gross-area figures. Both are retained in the narrative rather than collapsed into a single asserted area.",
+    "power_scale_class": "small",
+    "power_scale_label": "Small",
+    "power_scale_mw": 4.3,
+    "power_scale_value_kind": "estimated grid demand",
+    "power_scale_detail": "Uses JLL's published 4.3 MW installed critical capacity as the best public operating-load proxy. The separate 5.5 MW expansion capacity is retained as facility capacity and is not treated as current draw.",
+    "power_scale_tag": "Estimated draw: 1 to under 5 MW",
+    "power_scale_source_ids": [
+      "jll-fannie-mae-tech-center-2026"
+    ]
+  },
+  {
+    "id": "ssa-national-support-center-urbana",
+    "record_type": "data_center",
+    "technology_tags": [
+      "Colocation",
+      "Carrier connectivity",
+      "Diesel backup generation"
+    ],
+    "name": "Social Security Administration National Support Center",
+    "operator": "Social Security Administration",
+    "owner": "U.S. General Services Administration",
+    "campus": null,
+    "status": "operating",
+    "year_built": 2014,
+    "year_built_status": "documented",
+    "year_built_basis": "Public project profiles and 2014 opening coverage identify the facility as newly opened in 2014.",
+    "development_status": "operating",
+    "permit_status": "operating federal facility; no current local data-center expansion permit identified in the reviewed records",
+    "air_permit_status": "no facility-specific air-permit decision identified in the reviewed records",
+    "legal_status": "no project-specific legal dispute identified in the reviewed records",
+    "status_tags": [
+      "Built 2014",
+      "Operating",
+      "Federal facility",
+      "LEED Gold"
+    ],
+    "year_built_source_ids": [
+      "southland-ssa-national-support-center",
+      "som-ssa-national-support-center"
+    ],
+    "status_source_ids": [
+      "frederick-oed-data-centers-2026",
+      "southland-ssa-national-support-center"
+    ],
+    "plan_detail": "Federal Tier III National Support Center replacing the former National Computer Center and supporting core SSA data operations.",
+    "permit_detail": "No current facility-specific air-permit or development dispute was identified; this is an established federal facility.",
+    "financing_detail": "Federal facility delivered for the U.S. General Services Administration; no local data-center incentive award was identified in the reviewed records.",
+    "street_address": "8999 Bennett Creek Boulevard",
+    "city": "Frederick",
+    "county": "Frederick",
+    "state": "MD",
+    "postal_code": "21704",
+    "latitude": 39.316723,
+    "longitude": -77.351526,
+    "coordinate_method": "U.S. Census Geocoder street-segment match",
+    "coordinate_checked_date": "2026-08-10",
+    "building_count": 1,
+    "site_acres": 63,
+    "utility": null,
+    "reported_power_capacity_mw": 10,
+    "reported_power_capacity_basis": "Southland reports the facility supports approximately 10 MW of IT server load; this is a published IT-load figure, not metered utility demand.",
+    "reported_grid_demand_mw": null,
+    "reported_annual_energy_mwh": null,
+    "reported_pue": null,
+    "estimated_power_draw_mw": 10.0,
+    "estimated_power_draw_basis": "Uses Southland's published approximately 10 MW IT server-load figure as the best public load proxy. This is not a metered utility-demand value.",
+    "estimated_power_draw_confidence": "medium",
+    "estimated_power_draw_source_ids": [
+      "southland-ssa-national-support-center"
+    ],
+    "projected_power_demand_mw": null,
+    "projected_power_demand_basis": null,
+    "projected_power_demand_confidence": null,
+    "projected_power_demand_source_ids": [],
+    "on_site_natural_gas_power_plant": "not identified in reviewed records",
+    "on_site_generation_capacity_mw": null,
+    "on_site_generation_technology": null,
+    "backup_generation_fuel": "not disclosed in reviewed records",
+    "backup_generator_count": null,
+    "backup_generator_capacity_mw": null,
+    "backup_generator_detail": "Project profiles identify an energy center and resilient federal data-center design but do not disclose a generator count or aggregate generator rating.",
+    "ups_technology": "Tier III data-center UPS equivalent expected; topology and rating not disclosed in reviewed records.",
+    "ups_capacity_mw": null,
+    "ups_energy_mwh": null,
+    "cooling_water_detail": "Southland reports five independent 100,000-gallon below-grade cooling-tower make-up-water sumps, designed to provide at least three days of cooling-tower make-up water if main water service fails.",
+    "employees_current": 80,
+    "employees_committed": 80,
+    "capital_investment_usd": null,
+    "tax_incentive_detail": null,
+    "public_funding_detail": null,
+    "funding_summary": "Federal facility delivered for the U.S. General Services Administration; the reviewed records did not isolate a facility-level funding amount.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [
+      {
+        "funder": "U.S. General Services Administration",
+        "amount_usd": null,
+        "amount_status": "amount not isolated",
+        "basis": "Responsible federal owner/delivery agency identified; facility-level funding amount not isolated in reviewed sources.",
+        "source_ids": [
+          "southland-ssa-national-support-center",
+          "som-ssa-national-support-center"
+        ]
+      }
+    ],
+    "funding_source_ids": [
+      "southland-ssa-national-support-center",
+      "som-ssa-national-support-center"
+    ],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $13,211,136 (operating planning proxy). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 87840.0,
+    "estimated_annual_electricity_cost_usd": 13211136,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 10.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 13211136,
+        "amount_status": "operating planning proxy",
+        "basis": "Estimated as 10.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "southland-ssa-national-support-center"
+        ]
+      },
+      {
+        "label": "Published site personnel",
+        "amount_usd": null,
+        "amount_status": "80 people; payroll cost not published",
+        "basis": "Headcount is carried from the facility profile; wages, benefits, contractors, and operating payroll were not isolated.",
+        "source_ids": [
+          "frederick-oed-data-centers-2026",
+          "southland-ssa-national-support-center",
+          "som-ssa-national-support-center"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "southland-ssa-national-support-center"
+    ],
+    "public_opposition_status": "no facility-specific evidence identified",
+    "public_sentiment_score": null,
+    "public_sentiment_label": "insufficient evidence",
+    "sentiment_basis": "No representative facility-specific public sentiment record was identified.",
+    "sentiment_source_ids": [],
+    "sentiment_assessed_date": "2026-08-09",
+    "sentiment_confidence": "insufficient",
+    "contestation_score": 0,
+    "contestation_label": "none identified",
+    "contestation_category": "none identified",
+    "contestation_basis": "A renewed search found no credible facility-specific public, regulatory, or legal controversy. Broader jurisdictional policy debates are not attributed to an established facility without site-specific evidence.",
+    "contestation_source_ids": [],
+    "salient_news_source_ids": [],
+    "contestation_assessed_date": "2026-08-09",
+    "hardware_detail": "Southland describes a 275,000-square-foot Tier III data center with IT white space, office building, access-control center, approximately 10 MW of IT server load, and roughly 80 employees. SOM describes a 285,000-square-foot facility on 63 acres.",
+    "likely_workflows_detail": "Federal demographic, wage, earnings, benefits, and payment-support data processing for Social Security Administration operations.",
+    "hardware_workflow_basis": "Frederick OED and Southland state the facility maintains earnings, wage, demographic, and benefits information and processes high-volume SSA transactions.",
+    "profile_source_ids": [
+      "frederick-oed-data-centers-2026",
+      "southland-ssa-national-support-center",
+      "som-ssa-national-support-center"
+    ],
+    "last_verified_date": "2026-08-09",
+    "source_ids": [
+      "frederick-oed-data-centers-2026",
+      "southland-ssa-national-support-center",
+      "som-ssa-national-support-center",
+      "census-geocoder"
+    ],
+    "not_disclosed_fields": [
+      "facility grid demand",
+      "annual electricity use",
+      "PUE",
+      "UPS energy duration",
+      "current and committed site employment",
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
+    ],
+    "notes": "Frederick OED, Southland, DBIA, and SOM publish slightly different floor-area figures; this record uses Southland's 275,000-square-foot operational profile and retains SOM's 285,000-square-foot figure in the narrative.",
+    "power_scale_class": "medium",
+    "power_scale_label": "Medium",
+    "power_scale_mw": 10.0,
+    "power_scale_value_kind": "estimated grid demand",
+    "power_scale_detail": "Uses Southland's published approximately 10 MW IT server-load figure as the best public load proxy. This is not a metered utility-demand value.",
+    "power_scale_tag": "Estimated draw: 5 to under 20 MW",
+    "power_scale_source_ids": [
+      "southland-ssa-national-support-center"
+    ]
+  },
+  {
+    "id": "rowan-bauxite-ii-frederick",
+    "record_type": "data_center",
+    "technology_tags": [
+      "Colocation",
+      "Carrier connectivity",
+      "Diesel backup generation"
+    ],
+    "name": "Rowan Bauxite II Data Center",
+    "operator": "Rowan Digital Infrastructure",
+    "owner": "Rowan Digital Infrastructure",
+    "campus": "Quantum Frederick",
+    "status": "site plan approved / planned",
+    "year_built": null,
+    "year_built_status": "unknown",
+    "year_built_basis": "No authoritative construction year was identified in the reviewed records.",
+    "development_status": "site plan approved / planned",
+    "permit_status": "Frederick County Planning Commission agenda identified a site-plan decision for SP22-04 / AP SP276740 on December 11, 2024; no facility-specific MDE air permit package was identified in the reviewed records.",
+    "air_permit_status": "no facility-specific air-permit decision identified in the reviewed records",
+    "legal_status": "campus-wide referendum litigation resolved against referendum petitioners; no Bauxite II-specific legal dispute identified in the reviewed records",
+    "status_tags": [
+      "Year unknown",
+      "Planning approved",
+      "Planned",
+      "Quantum Frederick"
+    ],
+    "year_built_source_ids": [],
+    "status_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "mde-frederick-data-center-hub"
+    ],
+    "plan_detail": "Frederick County Planning Commission agenda describes Bauxite II Data Center, Quantum Frederick Section 1, Lot 302, as an 822,620-square-foot Critical Digital Infrastructure Facility on a 111.50-acre site south and west of New Design Road and Manor Woods Road.",
+    "permit_detail": "Local site-plan decision documented; MDE's Frederick data-center hub lists Rowan Bauxite environmental documents but no Bauxite II air-permit decision in the reviewed index.",
+    "financing_detail": "No Bauxite II-specific public financing record was identified in the reviewed records; DCD attributes the project to Rowan at Quantum Frederick.",
+    "street_address": "New Design Road and Manor Woods Road",
+    "city": "Frederick",
+    "county": "Frederick",
+    "state": "MD",
+    "postal_code": "21703",
+    "latitude": 39.331036,
+    "longitude": -77.454889,
+    "coordinate_method": "U.S. Census Geocoder intersection match for planning-agenda location",
+    "coordinate_checked_date": "2026-08-10",
+    "building_count": 4,
+    "site_acres": 111.5,
+    "utility": null,
+    "reported_power_capacity_mw": null,
+    "reported_power_capacity_basis": "No Bauxite II-specific power capacity was found in the reviewed official agenda or MDE hub.",
+    "reported_grid_demand_mw": null,
+    "reported_annual_energy_mwh": null,
+    "reported_pue": null,
+    "estimated_power_draw_mw": 205.7,
+    "estimated_power_draw_basis": "Estimated from the Frederick Planning Commission's 822,620-square-foot planned facility area using a 0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite II-specific public MW capacity or metered demand was found.",
+    "estimated_power_draw_confidence": "low",
+    "estimated_power_draw_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024"
+    ],
+    "projected_power_demand_mw": 205.7,
+    "projected_power_demand_basis": "Estimated from the Frederick Planning Commission's 822,620-square-foot planned facility area using a 0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite II-specific public MW capacity or metered demand was found.",
+    "projected_power_demand_confidence": "low",
+    "projected_power_demand_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024"
+    ],
+    "on_site_natural_gas_power_plant": "not identified in reviewed records",
+    "on_site_generation_capacity_mw": null,
+    "on_site_generation_technology": null,
+    "backup_generation_fuel": "not disclosed in reviewed records",
+    "backup_generator_count": null,
+    "backup_generator_capacity_mw": null,
+    "backup_generator_detail": "No facility-specific backup-generator count or rating was identified in the reviewed Bauxite II records.",
+    "ups_technology": "UPS likely for hyperscale data-center design, but topology and rating were not disclosed in the reviewed records.",
+    "ups_capacity_mw": null,
+    "ups_energy_mwh": null,
+    "cooling_water_detail": null,
+    "employees_current": null,
+    "employees_committed": null,
+    "capital_investment_usd": null,
+    "tax_incentive_detail": null,
+    "public_funding_detail": null,
+    "funding_summary": "No Bauxite II-specific public financing record was identified in the reviewed records; DCD attributes the project to Rowan at Quantum Frederick.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $271,753,068 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 1806868.8,
+    "estimated_annual_electricity_cost_usd": 271753068,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 205.7 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 271753068,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 205.7 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "frederick-planning-bauxite-ii-iii-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "frederick-planning-bauxite-ii-iii-2024"
+    ],
+    "public_opposition_status": "no facility-specific evidence identified",
+    "public_sentiment_score": null,
+    "public_sentiment_label": "insufficient evidence",
+    "sentiment_basis": "No representative facility-specific public sentiment record was identified.",
+    "sentiment_source_ids": [],
+    "sentiment_assessed_date": "2026-08-09",
+    "sentiment_confidence": "insufficient",
+    "contestation_score": 3,
+    "contestation_label": "high",
+    "contestation_category": "campus-wide public and legal",
+    "contestation_basis": "No Bauxite II-specific litigation was identified, but it is part of the Quantum Frederick campus that generated a 21,000-signature referendum campaign, litigation, and county development restrictions. DCD also notes the applications advanced through a public Planning Commission process.",
+    "contestation_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "wypr-frederick-referendum-ruling-2026"
+    ],
+    "salient_news_source_ids": [
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "wypr-frederick-referendum-ruling-2026"
+    ],
+    "contestation_assessed_date": "2026-08-09",
+    "hardware_detail": "Planned 822,620-square-foot critical digital infrastructure facility; DCD reports it as Rowan's second adjacent Bauxite project at Quantum Frederick.",
+    "likely_workflows_detail": "Likely hyperscale cloud or AI infrastructure for a large tenant; tenant and hardware inventory not disclosed.",
+    "hardware_workflow_basis": "Inferred from Rowan hyperscale campus context and critical digital infrastructure site-plan description.",
+    "profile_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "mde-frederick-data-center-hub"
+    ],
+    "last_verified_date": "2026-08-09",
+    "source_ids": [
+      "frederick-oed-data-centers-2026",
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "mde-frederick-data-center-hub",
+      "census-geocoder"
+    ],
+    "not_disclosed_fields": [
+      "facility grid demand",
+      "annual electricity use",
+      "PUE",
+      "UPS energy duration",
+      "current and committed site employment",
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
+    ],
+    "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
+    "power_scale_class": "very-large",
+    "power_scale_label": "Very large",
+    "power_scale_mw": 205.7,
+    "power_scale_value_kind": "estimated grid demand",
+    "power_scale_detail": "Estimated from the Frederick Planning Commission's 822,620-square-foot planned facility area using a 0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite II-specific public MW capacity or metered demand was found.",
+    "power_scale_tag": "Estimated draw: 100 MW or more",
+    "power_scale_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024"
+    ]
+  },
+  {
+    "id": "rowan-bauxite-iii-frederick",
+    "record_type": "data_center",
+    "technology_tags": [
+      "Colocation",
+      "Carrier connectivity",
+      "Diesel backup generation"
+    ],
+    "name": "Rowan Bauxite III Data Center",
+    "operator": "Rowan Digital Infrastructure",
+    "owner": "Rowan Digital Infrastructure",
+    "campus": "Quantum Frederick",
+    "status": "site plan approved / planned",
+    "year_built": null,
+    "year_built_status": "unknown",
+    "year_built_basis": "No authoritative construction year was identified in the reviewed records.",
+    "development_status": "site plan approved / planned",
+    "permit_status": "Frederick County Planning Commission agenda identified a site-plan decision for SP22-04 / AP SP276843 on December 11, 2024; MDE lists Bauxite III environmental management and sampling documents.",
+    "air_permit_status": "no facility-specific air-permit decision identified in the reviewed records",
+    "legal_status": "campus-wide referendum litigation resolved against referendum petitioners; no Bauxite III-specific legal dispute identified in the reviewed records",
+    "status_tags": [
+      "Year unknown",
+      "Planning approved",
+      "Planned",
+      "Quantum Frederick",
+      "Environmental management plan"
+    ],
+    "year_built_source_ids": [],
+    "status_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "mde-frederick-data-center-hub"
+    ],
+    "plan_detail": "Frederick County Planning Commission agenda describes Bauxite III Data Center, Quantum Frederick Section 1, Lot 102, as a 591,913-square-foot Critical Digital Infrastructure Facility on a 55.08-acre site south and east of Ballenger Creek Pike and Manor Woods Road.",
+    "permit_detail": "Local site-plan decision documented. MDE states Bauxite III is the only Rowan Bauxite parcel within the former Eastalco operations boundary and has state-overseen environmental management plans for remediation and redevelopment.",
+    "financing_detail": "No Bauxite III-specific public financing record was identified in the reviewed records; DCD attributes the project to Rowan at Quantum Frederick.",
+    "street_address": "Ballenger Creek Pike and Manor Woods Road",
+    "city": "Frederick",
+    "county": "Frederick",
+    "state": "MD",
+    "postal_code": "21703",
+    "latitude": 39.321172,
+    "longitude": -77.488391,
+    "coordinate_method": "Approximate intersection point from published Bauxite III vicinity descriptions and U.S. Census Geocoder",
+    "coordinate_checked_date": "2026-08-10",
+    "building_count": 3,
+    "site_acres": 55.08,
+    "utility": null,
+    "reported_power_capacity_mw": null,
+    "reported_power_capacity_basis": "No Bauxite III-specific power capacity was found in the reviewed official agenda or MDE hub.",
+    "reported_grid_demand_mw": null,
+    "reported_annual_energy_mwh": null,
+    "reported_pue": null,
+    "estimated_power_draw_mw": 148.0,
+    "estimated_power_draw_basis": "Estimated from the Frederick Planning Commission's 591,913-square-foot planned facility area using a 0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite III-specific public MW capacity or metered demand was found.",
+    "estimated_power_draw_confidence": "low",
+    "estimated_power_draw_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024"
+    ],
+    "projected_power_demand_mw": 148.0,
+    "projected_power_demand_basis": "Estimated from the Frederick Planning Commission's 591,913-square-foot planned facility area using a 0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite III-specific public MW capacity or metered demand was found.",
+    "projected_power_demand_confidence": "low",
+    "projected_power_demand_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024"
+    ],
+    "on_site_natural_gas_power_plant": "not identified in reviewed records",
+    "on_site_generation_capacity_mw": null,
+    "on_site_generation_technology": null,
+    "backup_generation_fuel": "not disclosed in reviewed records",
+    "backup_generator_count": null,
+    "backup_generator_capacity_mw": null,
+    "backup_generator_detail": "No facility-specific backup-generator count or rating was identified in the reviewed Bauxite III records.",
+    "ups_technology": "UPS likely for hyperscale data-center design, but topology and rating were not disclosed in the reviewed records.",
+    "ups_capacity_mw": null,
+    "ups_energy_mwh": null,
+    "cooling_water_detail": null,
+    "employees_current": null,
+    "employees_committed": null,
+    "capital_investment_usd": null,
+    "tax_incentive_detail": null,
+    "public_funding_detail": null,
+    "funding_summary": "No Bauxite III-specific public financing record was identified in the reviewed records; DCD attributes the project to Rowan at Quantum Frederick.",
+    "funding_total_known_usd": null,
+    "funding_breakdown": [],
+    "funding_source_ids": [],
+    "operational_finance_summary": "Estimated annual electricity energy-charge proxy is $195,524,813 (if built / fully energized). Facility-specific operating revenue, property-tax payments, demand charges, negotiated utility tariffs, and power-purchase terms were not isolated in reviewed records.",
+    "estimated_annual_electricity_use_mwh": 1300032.0,
+    "estimated_annual_electricity_cost_usd": 195524813,
+    "electricity_cost_rate_cents_per_kwh": 15.04,
+    "electricity_cost_basis": "Estimated as 148.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+    "operational_finance_items": [
+      {
+        "label": "Electricity energy charge proxy",
+        "amount_usd": 195524813,
+        "amount_status": "if built / fully energized",
+        "basis": "Estimated as 148.0 MW average draw multiplied by 8,784 hours in 2024. This is a planning proxy, not metered consumption. Cost applies Maryland's 2024 all-sector average retail electricity price of 15.04\u00a2/kWh. It excludes demand charges, riders, taxes, capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements.",
+        "source_ids": [
+          "eia-retail-sales-md-all-sectors-2024",
+          "frederick-planning-bauxite-ii-iii-2024"
+        ]
+      }
+    ],
+    "operational_finance_source_ids": [
+      "eia-retail-sales-md-all-sectors-2024",
+      "frederick-planning-bauxite-ii-iii-2024"
+    ],
+    "public_opposition_status": "no facility-specific evidence identified",
+    "public_sentiment_score": null,
+    "public_sentiment_label": "insufficient evidence",
+    "sentiment_basis": "No representative facility-specific public sentiment record was identified.",
+    "sentiment_source_ids": [],
+    "sentiment_assessed_date": "2026-08-09",
+    "sentiment_confidence": "insufficient",
+    "contestation_score": 3,
+    "contestation_label": "high",
+    "contestation_category": "campus-wide public, legal, and environmental-management context",
+    "contestation_basis": "No Bauxite III-specific litigation was identified, but it is part of the Quantum Frederick campus that generated a 21,000-signature referendum campaign, litigation, and county development restrictions. MDE also identifies Bauxite III as the Rowan parcel within the former Eastalco operations boundary with environmental management plans.",
+    "contestation_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "mde-frederick-data-center-hub",
+      "wypr-frederick-referendum-ruling-2026"
+    ],
+    "salient_news_source_ids": [
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "wypr-frederick-referendum-ruling-2026"
+    ],
+    "contestation_assessed_date": "2026-08-09",
+    "hardware_detail": "Planned 591,913-square-foot critical digital infrastructure facility; DCD reports it as Rowan's third adjacent Bauxite project at Quantum Frederick.",
+    "likely_workflows_detail": "Likely hyperscale cloud or AI infrastructure for a large tenant; tenant and hardware inventory not disclosed.",
+    "hardware_workflow_basis": "Inferred from Rowan hyperscale campus context and critical digital infrastructure site-plan description.",
+    "profile_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "mde-frederick-data-center-hub"
+    ],
+    "last_verified_date": "2026-08-09",
+    "source_ids": [
+      "frederick-oed-data-centers-2026",
+      "frederick-planning-bauxite-ii-iii-2024",
+      "dcd-rowan-bauxite-ii-iii-approval-2024",
+      "mde-frederick-data-center-hub",
+      "census-geocoder"
+    ],
+    "not_disclosed_fields": [
+      "facility grid demand",
+      "annual electricity use",
+      "PUE",
+      "UPS energy duration",
+      "current and committed site employment",
+      "facility-specific tax benefits",
+      "facility-specific funder breakdown",
+      "facility-specific operating revenue",
+      "facility-specific tax payments",
+      "facility-specific power purchase agreement or tariff"
+    ],
+    "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
+    "power_scale_class": "very-large",
+    "power_scale_label": "Very large",
+    "power_scale_mw": 148.0,
+    "power_scale_value_kind": "estimated grid demand",
+    "power_scale_detail": "Estimated from the Frederick Planning Commission's 591,913-square-foot planned facility area using a 0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite III-specific public MW capacity or metered demand was found.",
+    "power_scale_tag": "Estimated draw: 100 MW or more",
+    "power_scale_source_ids": [
+      "frederick-planning-bauxite-ii-iii-2024"
     ]
   },
   {

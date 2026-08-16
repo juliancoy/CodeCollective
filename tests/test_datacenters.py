@@ -51,6 +51,69 @@ def test_datacenters_share_a_complete_flat_schema():
             assert record["public_sentiment_label"] == "insufficient evidence"
 
 
+def test_data_center_funding_breakdowns_are_source_backed_and_agency_named():
+    records = infrastructure("data_center")
+    source_ids = {source["id"] for source in load("sources.json")}
+    for record in records:
+        assert "funding_summary" in record
+        assert "funding_total_known_usd" in record
+        assert "funding_breakdown" in record
+        assert "funding_source_ids" in record
+        assert isinstance(record["funding_breakdown"], list)
+        assert set(record["funding_source_ids"]) <= source_ids
+        for item in record["funding_breakdown"]:
+            assert item["funder"]
+            assert item["amount_status"]
+            assert item["basis"]
+            assert set(item["source_ids"]) <= source_ids
+
+    by_id = {record["id"]: record for record in records}
+    bayview = by_id["jhu-bayview-research-data-center"]
+    assert bayview["funding_total_known_usd"] == 196_000_000
+    assert [item["funder"] for item in bayview["funding_breakdown"]] == [
+        "Maryland Board of Public Works / State of Maryland",
+        "Johns Hopkins project funds and other non-itemized sources",
+    ]
+    assert bayview["funding_breakdown"][0]["amount_usd"] == 9_000_000
+    assert bayview["funding_breakdown"][1]["amount_usd"] == 187_000_000
+    assert by_id["cogent-elkridge"]["funding_total_known_usd"] is None
+    assert by_id["cogent-elkridge"]["funding_breakdown"][0]["aggregate_amount_usd"] == 225_000_000
+    assert by_id["annapolis-state-data-center"]["funding_breakdown"][0]["funder"] == "Maryland Department of General Services / Maryland DoIT"
+
+
+def test_data_center_operational_finance_uses_all_sector_power_cost_proxy():
+    records = infrastructure("data_center")
+    source_ids = {source["id"] for source in load("sources.json")}
+    for record in records:
+        assert "operational_finance_summary" in record
+        assert "estimated_annual_electricity_use_mwh" in record
+        assert "estimated_annual_electricity_cost_usd" in record
+        assert "electricity_cost_rate_cents_per_kwh" in record
+        assert "electricity_cost_basis" in record
+        assert "operational_finance_items" in record
+        assert "operational_finance_source_ids" in record
+        assert isinstance(record["operational_finance_items"], list)
+        assert set(record["operational_finance_source_ids"]) <= source_ids
+        assert record["electricity_cost_rate_cents_per_kwh"] == 15.04
+        for item in record["operational_finance_items"]:
+            assert item["label"]
+            assert item["amount_status"]
+            assert item["basis"]
+            assert set(item["source_ids"]) <= source_ids
+
+    by_id = {record["id"]: record for record in records}
+    bayview = by_id["jhu-bayview-research-data-center"]
+    assert bayview["estimated_annual_electricity_use_mwh"] == 43_920.0
+    assert bayview["estimated_annual_electricity_cost_usd"] == 6_605_568
+    assert bayview["operational_finance_items"][0]["label"] == "Electricity energy charge proxy"
+    assert bayview["operational_finance_items"][0]["amount_status"] == "if built / fully energized"
+    assert "demand charges" in bayview["electricity_cost_basis"]
+    assert "eia-retail-sales-md-all-sectors-2024" in bayview["operational_finance_source_ids"]
+    assert all(item["amount_status"] != "0 people; payroll cost not published" for item in bayview["operational_finance_items"])
+    ssa = by_id["ssa-national-support-center-urbana"]
+    assert any(item["amount_status"] == "80 people; payroll cost not published" for item in ssa["operational_finance_items"])
+
+
 def test_data_center_contestation_is_ranked_and_source_backed():
     centers = infrastructure("data_center")
     source_ids = {source["id"] for source in load("sources.json")}
@@ -90,11 +153,36 @@ def test_hover_inspector_prominently_links_salient_contestation_coverage():
     assert ".dc-salient-news-link" in styles
 
 
+def test_hover_inspector_renders_funder_pie_without_public_private_split():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+    assert "function renderFundingBreakdown(record, sourceById)" in script
+    assert "function renderFundingPie(items)" in script
+    assert "${renderFundingBreakdown(record, sourceById)}" in script
+    assert "class=\"dc-funding-pie\"" in script
+    assert "item.funder || 'Unnamed funder'" in script
+    assert "public/private" not in script.lower()
+    assert ".dc-funding" in styles
+    assert ".dc-funding-pie" in styles
+
+
+def test_hover_inspector_renders_operational_finance_panel():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+    assert "function renderOperationalFinance(record, sourceById)" in script
+    assert "${renderOperationalFinance(record, sourceById)}" in script
+    assert "Estimated annual electricity cost" in script
+    assert "operational_finance_items" in script
+    assert "electricity_cost_rate_cents_per_kwh" in script
+    assert ".dc-operational-finance" in styles
+    assert ".dc-operational-finance-list" in styles
+
+
 def test_infrastructure_is_one_flat_tagged_inventory():
     records = infrastructure()
-    assert len(records) == 238
+    assert len(records) == 242
     assert {record["record_type"] for record in records} == {"data_center", "power_plant"}
-    assert len(infrastructure("data_center")) == 29
+    assert len(infrastructure("data_center")) == 33
     assert len(infrastructure("power_plant")) == 209
     assert all(record["technology_tags"] for record in records)
     assert all(len(tags := record["technology_tags"]) == len(set(tags)) for record in records)
@@ -102,6 +190,16 @@ def test_infrastructure_is_one_flat_tagged_inventory():
     assert not (DATA / "power-plants.json").exists()
 
     by_id = {record["id"]: record for record in records}
+    assert {
+        "aligned-iad04-frederick",
+        "amazon-bwi150-153-frederick",
+        "rowan-bauxite-ii-frederick",
+        "rowan-bauxite-iii-frederick",
+        "fannie-mae-urbana-tech-center",
+        "ssa-national-support-center-urbana",
+    } <= set(by_id)
+    assert "frederick-oed-data-centers-2026" in by_id["fannie-mae-urbana-tech-center"]["source_ids"]
+    assert "frederick-planning-bauxite-ii-iii-2024" in by_id["rowan-bauxite-ii-frederick"]["source_ids"]
     assert by_id["eia-65945"]["technology_tags"] == [
         "Natural Gas Internal Combustion Engine",
         "Solar Photovoltaic",
@@ -264,6 +362,11 @@ def test_data_center_power_scale_uses_demand_then_capacity_without_backup_infere
     assert by_id["aligned-iad04-frederick"]["power_scale_class"] == "very-large"
     assert by_id["aligned-iad04-frederick"]["power_scale_mw"] == 300
     assert by_id["aligned-iad04-frederick"]["backup_generator_capacity_mw"] == 508
+    assert by_id["atmosphere-dickerson"]["building_count"] == 5
+    assert "five 226,850-square-foot data-center buildings" in by_id["atmosphere-dickerson"]["plan_detail"]
+    assert "stormwater management concept plan and fire access plan" in by_id["atmosphere-dickerson"]["permit_detail"]
+    assert "dcd-atmosphere-moratorium-challenge-2026" in by_id["atmosphere-dickerson"]["source_ids"]
+    assert "dcd-atmosphere-moratorium-challenge-2026" in by_id["atmosphere-dickerson"]["profile_source_ids"]
 
     projected = {
         record["id"]: record["projected_power_demand_mw"]
@@ -276,6 +379,8 @@ def test_data_center_power_scale_uses_demand_then_capacity_without_backup_infere
         "atmosphere-dickerson": 360,
         "brightseat-tech-park-landover": 300,
         "jhu-bayview-research-data-center": 5,
+        "rowan-bauxite-ii-frederick": 205.7,
+        "rowan-bauxite-iii-frederick": 148.0,
         "woodlawn-drive-1500-proposal": 150,
         "woodlawn-drive-1500-proposal": 150,
     }
@@ -550,6 +655,7 @@ def test_projects_page_and_shared_dropdown_have_the_same_order():
 
 def test_datacenter_page_is_map_first_with_compact_filter_hierarchy():
     page = (ROOT / "datacenters.html").read_text()
+    css = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
     assert 'class="dc-hero"' not in page
     assert 'class="dc-overview"' not in page
     assert 'class="dc-map-intro"' in page
@@ -579,6 +685,18 @@ def test_datacenter_page_is_map_first_with_compact_filter_hierarchy():
     assert "@loaders.gl/i3s@4.3.4" in page
     assert "leaflet" not in page.lower()
     assert 'id="map-theme"' in page
+    assert 'id="compress-query-state" type="checkbox"' in page
+    assert 'id="open-share-sheet"' in page
+    assert 'id="copy-compressed-url"' in page
+    assert 'id="share-x"' in page
+    assert 'id="share-bluesky"' in page
+    assert 'id="share-linkedin"' in page
+    assert 'id="share-facebook"' in page
+    assert 'id="share-email"' in page
+    assert 'Compact URL' in page
+    assert 'Copy compact URL' in page
+    assert ".dc-map-share-sheet[hidden]" in css
+    assert "display: none;" in css
     for theme in ("collective", "dark", "fiord", "positron", "bright", "liberty"):
         assert f'<option value="{theme}">' in page
 
@@ -598,7 +716,7 @@ def test_neon_streets_default_to_i95_and_restore_the_regular_road_map_when_disab
     assert 'id="show-neon-streets" type="checkbox" checked' in page
     assert 'id="hover-neon-streets" type="checkbox" checked' in page
     assert 'data-layer-config="neon-streets"' in page
-    assert "neonStreets: { scope: 'i95', lineWidth: 1 }" in script
+    assert "neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 }" in script
     assert "['==', ['get', 'network'], 'us-interstate'], ['==', ['get', 'ref'], '95']" in script
     assert "id: NEON_STREET_GLOW_LAYER_ID" in script
     assert "'line-blur': ['interpolate'" in script
@@ -702,7 +820,8 @@ def test_power_plant_markers_preview_on_hover_and_keyboard_focus():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
     for layer in ("datacenters", "power-plants", "enviroscreen", "parcels"):
         assert f'id="hover-{layer}" type="checkbox" checked' in page
-    assert "map.on('mousemove', (event) => handleMapHover" in script
+    assert "map.on('mousemove', (event) => {" in script
+    assert "handleMapHover(map, event, sourceById)" in script
     assert "powerPlantBoltLayer?.hitTest(point)" in script
     assert "function showHoverTarget(map, target)" in script
     assert "document.getElementById('hover-power-plants').checked" in script
@@ -714,6 +833,12 @@ def test_power_plant_markers_preview_on_hover_and_keyboard_focus():
     assert "Cached aerial context" in script
     assert "Fresh USGS aerial context" in script
     assert "Generated fallback illustration" in script
+
+
+def test_disabling_parcel_hover_clears_the_stale_parcel_inspector():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+
+    assert "clearParcelHighlight(map);\n        clearInspectorHover('parcel:');" in script
 
 
 def test_hover_heading_renders_all_record_tags_as_bubbles():
@@ -915,37 +1040,45 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert "drawElementsInstanced" in script
     assert "async function loadLightningBoltMesh()" in script
     assert "fetch('/datacenters/models/lightning-bolt.gltf')" in script
-    assert model["meshes"][0]["extras"]["outline2d"]
-    assert "function buildLightningOutlineMesh(points)" in script
-    assert "outline: buildLightningOutlineMesh(outline2d.map(([x, y]) => ({ x, y })))" in script
-    assert "const outlineWidth = .045" in script
-    assert "const winding = polygonArea(points) >= 0 ? 1 : -1" in script
+    assert "extras" not in model["meshes"][0]
+    assert "function buildLightningSilhouetteEdges(positions, indices)" in script
+    assert "silhouetteEdges: buildLightningSilhouetteEdges(positions, indices)" in script
+    assert "edge.normals.push(normal)" in script
+    assert "const quadCorners = [[0, -1], [1, 1], [1, -1], [0, -1], [0, 1], [1, 1]]" in script
     assert "options.defaultProjectionData.mainMatrix" in script
     assert "attribute vec3 a_position" in script
     assert "attribute vec3 a_normal" in script
+    assert "attribute vec3 a_edgeNormalA" in script
+    assert "attribute vec3 a_edgeNormalB" in script
     assert "attribute vec3 a_outlineColor" in script
-    assert "-((rotated.y * cos(tilt)) - (rotated.z * sin(tilt)))" in script
+    assert "return vec2(value.x, -((value.y * cos(tilt)) - (value.z * sin(tilt))));" in script
     assert "mix(v_accentColor, vec3(1.0), 0.3)" in script
     assert "attribute float a_hover" in script
-    assert "float glowAlpha = mix(0.38, 0.92, v_hover);" in script
+    assert "float glowAlpha = mix(0.38, 0.92, v_hover) * max(0.42, materialAlpha);" in script
     assert "if (filled < 0.5) discard;" in script
-    assert "gl_FragColor = vec4(litColor, 1.0);" in script
-    assert "gl_FragColor = vec4(outlineColor, mix(0.92, 1.0, v_hover));" in script
-    assert "indices.push(base, nextBase, nextBase + 1, base, nextBase + 1, base + 1);" in script
-    assert "function normalizeBoltOutlineScale(value)" in script
-    assert "Math.max(.5, Math.min(2, scale))" in script
-    assert "outlineScale: 1.04" in script
-    assert "Bolt outline size" in script
-    assert "use values below 1 for inset outlines or above 1" in script
-    assert "normalizeBoltOutlineScale(formData.get('outlineScale'))" in script
-    assert "gl.uniform1f(state.uniforms.scale, boltOutlineScale)" in script
-    assert "outlineScale: normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale)" in script
+    assert script.index("if (u_glowPass > 0.5)") < script.index("if (filled < 0.5) discard;")
+    assert "gl_FragColor = vec4(materialColor * materialAlpha * u_globalAlpha, materialAlpha * u_globalAlpha);" in script
+    assert "uniform mediump float u_globalAlpha;" in script
+    assert "float coverage = 1.0 - smoothstep(-0.5, 0.5, traceDistance);" in script
+    assert "gl_FragColor = vec4(outlineColor * coverage * u_globalAlpha, coverage * u_globalAlpha);" in script
+    assert "v_traceVisible = step(facingA * facingB, 0.0001);" in script
+    assert "function normalizeBoltOutlineWidth(value)" in script
+    assert "Math.max(.5, Math.min(5, width))" in script
+    assert "outlineWidth: 1.5" in script
+    assert "Bolt outline width" in script
+    assert "Sets the silhouette trace width in screen pixels." in script
+    assert "normalizeBoltOutlineWidth(formData.get('outlineWidth'))" in script
+    assert "gl.uniform1f(state.uniforms.outlineWidth, boltOutlineWidth)" in script
+    assert "outlineWidth: normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth)" in script
     assert "a_outlineColor" in script
     assert "v_outlineColor" in script
     assert "Float32Array(state.entries.length * 12)" in script
     assert "uniform mediump float u_outlineOnly;" in script
-    assert "drawElementsInstanced(gl.TRIANGLES, state.outlineIndexCount" in script
-    assert "outlineIndexCount: state.outlineIndexCount" in script
+    assert script.count("uniform highp float u_time;") == 2
+    assert "drawArraysInstanced(gl.TRIANGLES, 0, state.silhouetteVertexCount" in script
+    assert "gl.disableVertexAttribArray(state.attribs.position)" in script
+    assert "gl.vertexAttrib3f(state.attribs.normal, 0, 0, 1)" in script
+    assert "silhouetteEdgeCount: state.silhouetteEdgeCount" in script
     assert "if (state.antialiasSamples > 1) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE)" in script
     assert "antialiasSamples: state.antialiasSamples" in script
     assert "outline: rgbToHex(entry.outline)" in script
@@ -998,9 +1131,13 @@ def test_generated_lightning_bolt_gltf_has_consistent_face_winding():
     front_normals = set()
     back_normals = set()
     side_normals = []
+    edge_face_counts = {}
 
     for offset in range(0, len(indices), 3):
         a, b, c = [positions[index] for index in indices[offset:offset + 3]]
+        for start, end in ((a, b), (b, c), (c, a)):
+            edge = tuple(sorted((start, end)))
+            edge_face_counts[edge] = edge_face_counts.get(edge, 0) + 1
         ab = (b[0] - a[0], b[1] - a[1], b[2] - a[2])
         ac = (c[0] - a[0], c[1] - a[1], c[2] - a[2])
         normal = (
@@ -1023,6 +1160,8 @@ def test_generated_lightning_bolt_gltf_has_consistent_face_winding():
     assert back_normals == {-1.0}
     assert len(side_normals) == 14
     assert all(abs(normal[0]) > 0 or abs(normal[1]) > 0 for normal in side_normals)
+    assert len(edge_face_counts) == 36
+    assert set(edge_face_counts.values()) == {2}
 
 
 def test_facility_filters_cover_type_lifecycle_energy_and_public_response():
@@ -1052,7 +1191,7 @@ def test_facility_filters_cover_type_lifecycle_energy_and_public_response():
     assert "datacenterIconGlow" in script
     assert "plantIconOutline" not in script
     assert "function filterLayerCards(query)" in script
-    assert "indexedText.includes(normalized)" in script
+    assert "terms.every((term) => indexedText.includes(term))" in script
     assert "const textFilter = isDataCenter ? layerFilters.datacenters.text : layerFilters.powerPlants.text" in script
 
 
@@ -1107,7 +1246,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260810-layer-zoom-ranges" in page
+    assert "20260816-map-release" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -1124,6 +1263,8 @@ def test_optional_maryland_grid_layers_use_official_live_services():
     assert "MD_PowerTransmission/MapServer/1" in script
     assert "BGE_HOSTING_CAPACITY_AGOL/FeatureServer/37" in script
     assert "BGE_EV_Load_Capacity/FeatureServer/1" in script
+    assert "[15, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/1']" in script
+    assert "[11, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/2']" in script
     assert "PHI_Hosting_Capacity_Public/FeatureServer/0" in script
     assert "PHI_Hosting_Capacity_Public/FeatureServer/2" in script
     assert "PHI_EV_Load_Serving_Capacity/FeatureServer/0" in script
@@ -1139,10 +1280,14 @@ def test_bge_polygon_layers_follow_their_published_renderer_fields_and_outlines(
     assert "Sum_Hosting_Capacity_Remaining_kW" in script
     assert "lineColor: '#343434'" in script
     assert "id: 'bge-load-capacity'" in script
+    assert "Sum_FEEDER_AVAIL_CAP_MW_MIN" in script
     assert "Max_FEEDER_AVAIL_CAP_MW_MIN" in script
+    assert "GRID_SIZE" in script
+    assert "PLOT_DATE" in script
+    assert "UPDATE_FLAG" in script
     assert "lineColor: '#6e6e6e'" in script
     assert "lineWidth: ['interpolate', ['linear'], ['zoom'], 7, 0.4, 14, 0.8]" in script
-    assert "Sum_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027'" not in script
+    assert "fillColor: ['step', ['coalesce', ['get', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027', 1, '#f46d43', 4, '#f5f500', 8, '#94f700', 15, '#00f500']" in script
 
 
 def test_compact_layer_cards_preview_in_the_shared_inspector():
@@ -1176,6 +1321,33 @@ def test_compact_layer_cards_preview_in_the_shared_inspector():
     assert "function renderEnviroScreenDetail(properties)" in script
 
 
+def test_idle_inspector_shows_latest_datacenter_news():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+    news = json.loads((ROOT / "datacenters" / "data" / "datacenter-news.json").read_text())
+
+    assert "datacenterNews: '/datacenters/data/datacenter-news.json'" in script
+    assert "let datacenterNewsItems = []" in script
+    assert "function renderIdleInspectorNews(force = false)" in script
+    assert "Latest data-center news" in script
+    assert "function shiftMapToNewsTarget(element)" in script
+    assert "function setupNewsHoverTargets()" in script
+    assert "data-target-record-id" in script
+    assert "map.easeTo({" in script
+    assert "renderIdleInspectorNews(true)" in script
+    assert "renderIdleInspectorNews();" in script
+    assert "document.getElementById('record-detail').dataset.inspectorMode = 'detail'" in script
+    assert "Facility facts on the map remain tied to the source register" in script
+    assert ".dc-news-card" in styles
+    assert news["metadata"]["retrieved_date"]
+    assert len(news["items"]) >= 6
+    assert all({"id", "title", "publisher", "published_date", "url", "summary", "tags"} <= set(item) for item in news["items"])
+    assert any("Frederick" in " ".join(item["tags"]) for item in news["items"])
+    atmosphere = next(item for item in news["items"] if item["id"] == "dcd-atmosphere-moratorium-challenge-2026")
+    assert atmosphere["url"].endswith("/atmosphere-data-centers-challenges-six-month-data-center-moratorium-in-montgomery-maryland/")
+    assert atmosphere["target_record_id"] == "atmosphere-dickerson"
+
+
 def test_layer_color_picker_is_adjacent_to_render_and_hover_and_persists():
     page = (ROOT / "datacenters.html").read_text()
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
@@ -1183,6 +1355,8 @@ def test_layer_color_picker_is_adjacent_to_render_and_hover_and_persists():
 
     assert 'id="layer-color-modal"' in page
     assert 'id="layer-color-input" name="color" type="color"' in page
+    assert 'id="layer-alpha-input" name="alpha" type="range"' in page
+    assert 'id="layer-alpha-value" for="layer-alpha-input">100%</output>' in page
     assert 'data-layer-color="datacenters"' in page
     assert '<input id="show-datacenters" type="checkbox" checked> Render' in page
     assert '<input id="hover-datacenters" type="checkbox" checked> Hover' in page
@@ -1191,11 +1365,20 @@ def test_layer_color_picker_is_adjacent_to_render_and_hover_and_persists():
     assert '<input id="hover-${config.id}" type="checkbox" checked> Hover' in script
     assert "function setupLayerColorUi()" in script
     assert "function applyLayerColor(layerId)" in script
-    assert "layerCustomColors.set(activeLayerColorId, input.value.toLowerCase())" in script
+    assert "function normalizeLayerColorSetting(value)" in script
+    assert "function normalizeLayerAlpha(value)" in script
+    assert "function colorValueString(color, alpha = 1)" in script
+    assert "function layerCustomColorAlpha(layerId)" in script
+    assert "function formatLayerColorValue(color, alpha)" in script
+    assert "layerCustomColors.set(activeLayerColorId, {" in script
+    assert "alpha: normalizeLayerAlpha(alphaInput.value)" in script
     assert "layerCustomColors.delete(activeLayerColorId)" in script
     assert "url.searchParams.set('colors', JSON.stringify(state.colors))" in script
     assert "colors: Object.fromEntries(layerCustomColors)" in script
-    assert "layerCustomColors.get(config.id) || config.fillColor || config.color" in script
+    assert "document.getElementById('layer-alpha-value').value" in script
+    assert "remoteLayerPaintColor(config, config.fillColor || config.color)" in script
+    assert ".dc-color-alpha-field" in styles
+    assert "#layer-alpha-value" in styles
     assert ".dc-layer-color.has-custom-color" in styles
 
 
@@ -1216,6 +1399,7 @@ def test_clicking_a_facility_icon_replaces_the_pinned_inspector_until_it_is_clos
     assert "pinHoverTarget({" in script
     assert "pinHoverTarget(topMapHoverTarget(map, event.point, sourceById))" in script
     assert "document.getElementById('close-record-detail').hidden = false" in script
+    assert "renderIdleInspectorNews(true)" in script
     assert ".dc-inspector-close" in styles
     assert ".dc-inspector-close[hidden] { display: none; }" in styles
 
@@ -1292,7 +1476,9 @@ def test_power_import_export_layer_is_optional_persisted_hoverable_and_clickable
     assert "Estimated crossing average MW" in script
     assert "Estimated crossing average" in script
     assert "Estimate basis" in script
-    assert "if (!map.isStyleLoaded())" in script
+    assert "if (!map.getStyle?.()?.layers?.length)" in script
+    assert "function scheduleRemoteLayerRehydrate(map)" in script
+    assert "map.on('styledata', () => scheduleRemoteLayerRehydrate(map))" in script
     assert "'text-field': '➤'" in script
     assert "['get', 'axis_rotation_degrees']" in script
     assert "'net import'], 0, 180" in script
@@ -1323,12 +1509,18 @@ def test_county_power_estimates_allocate_residential_load_without_meter_claims()
     assert data["type"] == "FeatureCollection"
     assert metadata["county_equivalent_count"] == len(features) == 24
     assert "ACS occupied housing units" in metadata["method"]
+    assert "employed resident population" in metadata["method"]
     assert "not utility-metered county load" in metadata["estimate_scope"]
     assert metadata["statewide_residential_sales_mwh"] == 27_327_356
+    assert metadata["statewide_all_sector_sales_mwh"] == 59_018_688
+    assert metadata["statewide_nonresidential_sales_mwh"] == 31_691_332
     assert metadata["statewide_residential_average_mw"] == round(27_327_356 / 8784, 2)
+    assert metadata["statewide_all_sector_average_mw"] == round(59_018_688 / 8784, 2)
     assert metadata["acs_occupied_housing_units_total"] > 2_000_000
+    assert metadata["acs_employed_population_total"] > 3_000_000
 
     annual_total = 0
+    all_sector_total = 0
     for feature in features:
         properties = feature["properties"]
         assert feature["geometry"]["type"] in {"Polygon", "MultiPolygon"}
@@ -1338,9 +1530,22 @@ def test_county_power_estimates_allocate_residential_load_without_meter_claims()
         assert properties["estimated_residential_customers"] > 0
         assert properties["estimated_residential_average_mw"] > 0
         assert properties["estimated_residential_annual_mwh"] > 0
+        assert properties["employed_population"] > 0
+        assert properties["estimated_nonresidential_average_mw"] > 0
+        assert properties["estimated_total_average_mw"] > properties["estimated_residential_average_mw"]
+        assert properties["estimated_total_with_projected_datacenters_average_mw"] >= properties["estimated_total_average_mw"]
+        assert "non-residential remainder is allocated by ACS employed resident population" in properties["total_estimate_basis"]
+        assert "planned data-center demand" in properties["planning_context_basis"].lower()
+        assert "shown separately" in properties["planning_context_basis"].lower()
         assert "not utility-metered county load" in properties["estimate_basis"]
         annual_total += properties["estimated_residential_annual_mwh"]
+        all_sector_total += properties["estimated_total_annual_mwh"]
     assert abs(annual_total - metadata["statewide_residential_sales_mwh"]) < len(features)
+    assert abs(all_sector_total - metadata["statewide_all_sector_sales_mwh"]) < len(features)
+    carroll = next(feature["properties"] for feature in features if feature["properties"]["county"] == "Carroll County")
+    assert carroll["estimated_total_average_mw"] == 189.89
+    assert carroll["county_power_plant_count"] == 0
+    assert carroll["estimated_generation_minus_total_load_average_mw"] == -189.89
 
 
 def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
@@ -1350,22 +1555,88 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
     source_ids = {source["id"] for source in sources}
 
     assert "County power estimates" in script
+    assert "County total power estimates" in script
     assert "staticDataUrl: '/datacenters/data/power-estimates.json'" in script
     assert "estimated_residential_average_mw" in script
+    assert "estimated_total_with_projected_datacenters_average_mw" in script
+    assert "county_power_plant_average_generation_mw" in script
+    assert "county_planned_data_center_projected_mw" in script
     assert "residential demand estimates" in script
+    assert "total demand planning estimates" in script
     assert "staticLayerStatus(config, data)" in script
     assert "County power estimates unavailable" in script
+    assert "County total power estimates unavailable" in script
     assert "Derived Maryland county residential electricity estimates" in script
+    assert "Derived Maryland county total electricity planning estimates" in script
     assert "const queryPoint = { x: point.x, y: point.y }" in script
     assert "map.queryRenderedFeatures(queryPoint, { layers: layerIds })" in script
+    assert "Baltimore Red Line GeoJSON" in page
     assert "Power estimates JSON" in page
     assert "not utility-metered county load" in page
-    assert "20260810-layer-zoom-ranges" in page
+    assert "not utility-metered county load or coincident peak demand" in page
+    assert "20260816-map-release" in page
     assert {
         "eia-retail-sales-md-residential-2024",
+        "eia-retail-sales-md-all-sectors-2024",
         "acs-2024-b25003-md-counties",
+        "acs-2024-b23025-md-counties",
         "census-tigerweb-county-boundaries",
     } <= source_ids
+
+
+def test_contested_transit_and_gas_layers_are_available_and_source_backed():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    sources = json.loads((ROOT / "datacenters" / "data" / "sources.json").read_text())
+    source_ids = {source["id"] for source in sources}
+
+    assert "Baltimore Red Line alignment" in script
+    assert "staticDataUrl: '/datacenters/data/baltimore-red-line.json'" in script
+    assert "Contested transit infrastructure" in script
+    assert "13 Red Line alignment segments" in script
+    assert "Baltimore Red Line alignment unavailable" in script
+    assert "Maryland LNG terminals" in script
+    assert "Liquefied Natural Gas Import Export Terminals (EIA)" in script
+    assert "where: \"STATE = 'MD'\"" in script
+    assert "Natural gas pipelines" in script
+    assert "Natural Gas Interstate and Intrastate Pipelines (EIA)" in script
+    assert "TYPEPIPE" in script
+    assert "baltimore-red-line.json" in page
+    assert {
+        "baltimore-red-line-alternative-4c",
+        "eia-lng-import-export-terminals",
+        "eia-natural-gas-pipelines",
+    } <= source_ids
+
+
+def test_baltimore_red_line_snapshot_is_a_local_geojson_feature_collection():
+    data = json.loads((ROOT / "datacenters" / "data" / "baltimore-red-line.json").read_text())
+
+    assert data["type"] == "FeatureCollection"
+    assert data["metadata"]["source_item_id"] == "ea0cc16a76c444968b7f634e3d8dc737"
+    assert data["metadata"]["feature_count"] == 13
+    assert data["metadata"]["generated_date"] == "2026-08-11"
+    assert "contested alignment remains reproducible" in data["metadata"]["note"]
+    assert len(data["features"]) == 13
+    assert {feature["geometry"]["type"] for feature in data["features"]} <= {"LineString", "MultiLineString"}
+    assert {feature["properties"]["Layer"] for feature in data["features"]} <= {"surface", "aerial", "tunnell"}
+
+
+def test_municipal_boundary_layers_are_live_optional_hover_targets():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    sources = json.loads((ROOT / "datacenters" / "data" / "sources.json").read_text())
+    source_ids = {source["id"] for source in sources}
+
+    assert "Municipal boundaries" in script
+    assert "Census-designated places" in script
+    assert "County subdivisions" in script
+    assert "Places_CouSub_ConCity_SubMCD/MapServer/11" in script
+    assert "Places_CouSub_ConCity_SubMCD/MapServer/12" in script
+    assert "Places_CouSub_ConCity_SubMCD/MapServer/8" in script
+    assert "where: \"STATE='24'\"" in script
+    assert "U.S. Census TIGERweb Incorporated Places" in script
+    assert "U.S. Census TIGERweb County Subdivisions" in script
+    assert "census-tigerweb-places-cousub" in source_ids
 
 
 def test_worldsim_live_layers_are_lazy_viewport_queries_without_local_downloads():
@@ -1402,7 +1673,12 @@ def test_zoning_crime_and_grid_layers_follow_live_official_services():
     assert "if (config.geometry === 'line')" in script
     assert "config.fillColor || config.color" in script
     assert "config.lineColor || config.color" in script
-    assert "data.exceededTransferLimit || count >= Number(remoteResultRecordCount(config, zoom))" in script
+    assert "function geojsonExceededTransferLimit(data)" in script
+    assert "function fetchRemoteLayerData(service, parameters, signal, pageSize, maxPages = 8)" in script
+    assert "pageParameters.set('resultOffset', String(pageIndex * pageSize))" in script
+    assert "data?.properties?.exceededTransferLimit" in script
+    assert "const responseData = await fetchRemoteLayerData(service, parameters, state.abort.signal, pageSize)" in script
+    assert "geojsonExceededTransferLimit(data) || count >= pageSize" in script
     assert "data-layer-locate" in script
     assert "map.easeTo({ center: config.focus.center" in script
     assert "window.__codeCollectiveDatacenterMap = map" in script
@@ -1484,7 +1760,7 @@ def test_point_layer_gears_scale_markers_by_numeric_attributes():
     assert "Total draw · published envelope or projected demand" in script
     assert "dataCenterPointScaleOptions(records)" in script
     assert "Icons without the selected value use the smallest size" in script
-    assert "size: 36 * sizeFactors.get(record)" in script
+    assert "size: 36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * sizeFactors.get(record)" in script
     assert "minimumSize: state.entries.length" in script
     assert "maximumSize: state.entries.length" in script
     assert "--marker-size" in script
@@ -1500,23 +1776,75 @@ def test_point_layer_gears_scale_markers_by_numeric_attributes():
     assert "Projected grid demand" in script
 
 
+def test_icon_layer_gears_have_persisted_scale_sliders():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    styles = (ROOT / "datacenters" / "css" / "datacenters.css").read_text()
+
+    assert "function normalizeIconScale(value)" in script
+    assert "Math.max(.25, Math.min(4, scale))" in script
+    assert "function scaleFieldMarkup(label, name, value)" in script
+    assert 'data-icon-scale-range name="${escapeHtml(name)}" type="range" min="0.25" max="4" step="0.05"' in script
+    assert script.count("scaleFieldMarkup('Icon scale', 'iconScale'") == 3
+    assert "event.target.closest('.dc-modal-scale')?.querySelector('output')?.replaceChildren" in script
+    assert "iconScale: normalizeIconScale(formData.get('iconScale'))" in script
+    assert "remoteState.iconScale = normalizeIconScale(savedFilter.iconScale)" in script
+    assert "iconScale: normalizeIconScale(remoteState?.iconScale)" in script
+    assert "state.iconScale = 1" in script
+    assert "36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * sizeFactors.get(record)" in script
+    assert "22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1)" in script
+    assert "function remotePointSizeExpression(config)" in script
+    assert "map.setLayoutProperty(layerId, 'text-size', remotePointSizeExpression(config))" in script
+    assert "map.setPaintProperty(layerId, 'circle-radius', remotePointSizeExpression(config))" in script
+    assert "'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8 * iconScale" in script
+    assert "return ['interpolate', ['linear'], factor, .5, 3.5 * iconScale, 1, 5.5 * iconScale, 2, 9 * iconScale]" in script
+    assert '.dc-modal-scale input[type="range"]' in styles
+    assert "filter: brightness(var(--marker-brightness, 1))" in styles
+
+
+def test_layer_gears_have_persisted_brightness_controls():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+
+    assert "function normalizeBrightness(value)" in script
+    assert "Math.max(.25, Math.min(3, brightness))" in script
+    assert "function adjustHexBrightness(color, brightness)" in script
+    assert "brightness: normalizeBrightness(formData.get('brightness'))" in script
+    assert "remoteState.brightness = normalizeBrightness(savedFilter.brightness)" in script
+    assert "brightness: normalizeBrightness(remoteState?.brightness)" in script
+    assert "state.brightness = 1" in script
+    assert "numberFieldMarkup('Brightness', 'brightness'" in script
+    assert "element.style.setProperty('--marker-brightness', String(brightness))" in script
+    assert "element.querySelector('.dc-map-icon')?.style.setProperty('filter', `brightness(${brightness})`)" in script
+    assert "brightenedMarkerAccentColor(record, layerFilters.powerPlants.colorBy, brightness)" in script
+    assert "brightness: normalizeBrightness(layerFilters.powerPlants.brightness)" in script
+    assert "remoteLayerStates.get(config.id)?.brightness" in script
+    assert "'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, .7 * brightness" in script
+    assert "brightnessScaledOpacity(config, .84)" in script
+    assert "Math.min(1, .72 * brightness)" in script
+    assert "Math.min(1, .48 * enviroscreenBrightness * layerCustomColorAlpha('enviroscreen'))" in script
+    assert "Math.min(1, .82 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels'))" in script
+
+
 def test_line_layer_gears_scale_zoom_dependent_widths():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
 
     assert "function normalizeLineWidthMultiplier(value)" in script
     assert "Math.max(.25, Math.min(5, width))" in script
     assert "function scaledLineWidth(expression, multiplier)" in script
-    assert "neonStreets: { scope: 'i95', lineWidth: 1 }" in script
+    assert "neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 }" in script
     assert "sizeBy: 'reported_power_capacity_mw'" in script
     assert "const LINE_WIDTH_OPTIONS = [" in script
     assert "['3', 'Heavy']" in script
     assert "const LINE_WIDTH_BY_DEFAULT = [['zoom', 'Zoom curve only']]" in script
+    assert "function defaultLineWidthBy(config)" in script
+    assert "return config.defaultLineWidthBy || config.lineWidthFields?.[0]?.[0] || 'zoom'" in script
     assert "function normalizeLineWidthBy(config, value)" in script
+    assert "const fallback = defaultLineWidthBy(config)" in script
     assert "function lineWidthFieldOptions(config)" in script
     assert "function lineWidthExpressionForField(field, multiplier)" in script
     assert "lineWidthFields: [['VOLT_CLASS', 'Voltage class'], ['VOLTAGE', 'Voltage (kV)']]" in script
     assert "lineWidthFields: [['Capacity_MW', 'Available load capacity (MW)']" in script
     assert "lineWidthFields: [['Allowable_PV_kW', 'Allowable PV (kW)']" in script
+    assert "lineWidthFields: [['Shape__Length', 'Segment length']]" in script
     assert "config.geometry === 'line' ? fieldMarkup(" in script
     assert "'Line width scale'," in script
     assert "'Line width uses'," in script
@@ -1524,11 +1852,14 @@ def test_line_layer_gears_scale_zoom_dependent_widths():
     assert "remoteState.lineWidthBy = normalizeLineWidthBy(config, savedFilter.lineWidthBy)" in script
     assert "state.lineWidth = normalizeLineWidthMultiplier(formData.get('lineWidth'))" in script
     assert "state.lineWidthBy = normalizeLineWidthBy(config, formData.get('lineWidthBy'))" in script
+    assert "lineWidthBy: defaultLineWidthBy(config)" in script
+    assert "state.lineWidthBy = defaultLineWidthBy(config)" in script
     assert "function transmissionProposalExpression()" in script
     assert "transmissionLineWidthExpression(config)" in script
     assert "transmissionLineBlurExpression(config)" in script
     assert "if (lineWidthBy !== 'zoom') return lineWidthExpressionForField(lineWidthBy, multiplier)" in script
     assert "return scaledLineWidth(base, multiplier)" in script
+    assert "By default, line width carries the available flow, electrical capacity, gas segment, or liquid/water magnitude" in script
     assert "proposalBase" not in script
     assert "function rehydrateRemoteLayerAfterStyleSettles(map, config)" in script
     assert "if (!remoteLayerRendered(map, config)) addRemoteLayer(map, config, state.data)" in script
@@ -1573,16 +1904,17 @@ def test_data_center_glow_is_an_independent_contestation_encoding_and_exports_to
     assert "record.contestation_score === 0" in script
     assert "['proposal', 'development'].includes(lifecycleStage(record))" in script
     assert "kind: 'planned-uncontested', color: '#fff15f'" in script
-    assert "const PLANNED_UNCONTESTED_COLOR" in script
     assert "function isPlannedUncontestedDataCenter(record)" in script
-    assert "if (isPlannedUncontestedDataCenter(record)) return [PLANNED_UNCONTESTED_COLOR]" in script
-    assert "edgeColor: '#ffb000'" in script
-    assert "edgeColor: '#32dfff'" in script
-    assert "ringWidth: .12" in script
-    assert "Contestation · red / planned yellow / quiet white" in script
-    assert "Planned or developing facilities with no documented contestation glow yellow" in script
+    assert "edgeColor: '#fff15f'" in script
+    assert "kind: 'quiet', color: '#19c37d', edgeColor: '#19c37d'" in script
+    assert "edgeOpacity: '0%', edgeSoftOpacity: '0%', ringWidth: 0" in script
+    assert "opacity: .26, scale: 2.15" in script
+    assert "opacity: .42, scale: 2.15" in script
+    assert "Contestation halos · red / planned yellow / peaceful green" in script
+    assert "keep their normal icon colors and get a yellow halo" in script
     assert "color: '#ff263f'" in script
-    assert "color: '#ffffff'" in script
+    assert "color: '#19c37d'" in script
+    assert "--dc-contestation-accent: #19c37d" in styles
     assert "glowBy: 'contestation'" in script
     assert "glowDistance: 1" in script
     assert "glowBlur: 1" in script
@@ -1600,6 +1932,11 @@ def test_data_center_glow_is_an_independent_contestation_encoding_and_exports_to
     assert "marker.dataset.exportGlowBlur" in script
     assert "context.createRadialGradient" in script
     assert ".dc-map-marker--center::before" in styles
+    assert "isolation: isolate;" in styles
+    assert ".dc-map-marker--center::before {" in styles
+    assert "z-index: 0;" in styles
+    assert ".dc-map-icon {" in styles
+    assert "z-index: 1;" in styles
     assert "var(--marker-glow-color, transparent)" in styles
     assert "var(--marker-glow-opacity, 0)" in styles
     assert "var(--marker-glow-blur, 1)" in styles
@@ -1607,13 +1944,40 @@ def test_data_center_glow_is_an_independent_contestation_encoding_and_exports_to
     assert "var(--marker-glow-ring-width" in styles
 
 
+def test_larger_icon_features_take_z_priority():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+
+    assert "marker.getElement().dataset.renderSize = String(size)" in script
+    assert ".sort((left, right) => Number(left.dataset.renderSize || 0) - Number(right.dataset.renderSize || 0))" in script
+    assert "String(1000 + (z * 1000) + index)" in script
+    assert ".sort((left, right) => left.size - right.size" in script
+    assert "drawOrderAscending: state.entries.every" in script
+    assert "'symbol-sort-key': ['coalesce', ['get', '_dcPointScale'], 1]" in script
+    assert "'circle-sort-key': ['coalesce', ['get', '_dcPointScale'], 1]" in script
+    assert "map.setLayoutProperty(layerId, config.pointSymbol === 'interchange-arrow' ? 'symbol-sort-key' : 'circle-sort-key'" in script
+
+
 def test_live_point_layers_offer_attribute_scaling_without_adding_it_to_lines_or_polygons():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
 
     assert "function scaleRemotePointData(config, data, sizeBy)" in script
     assert "if (config.geometry !== 'point'" in script
+    assert "const POINT_RENDER_OPTIONS = [" in script
+    assert "['gpu-splat', 'GPU Splat density']" in script
+    assert "function normalizePointRenderMode(config, value)" in script
+    assert "function remotePointSplatPaint(config)" in script
+    assert "type: 'heatmap'" in script
+    assert "'heatmap-radius'" in script
+    assert "return [`${sourceId}-splat`, `${sourceId}-point`]" in script
+    assert "remoteState.pointRenderMode = normalizePointRenderMode(config, savedFilter.pointRenderMode)" in script
+    assert "pointRenderMode: normalizePointRenderMode(config, remoteState?.pointRenderMode)" in script
     assert "config.geometry === 'point' ? fieldMarkup(" in script
+    assert "'Point rendering'" in script
+    assert "'GPU Splat uses a WebGL heatmap pass" in script
     assert "'Point size uses'" in script
+    assert "state.pointRenderMode = normalizePointRenderMode(config, formData.get('pointRenderMode'))" in script
+    assert "state.pointRenderMode = 'points'" in script
+    assert "renderMode === 'gpu-splat'" in script
     assert "_dcPointScale" in script
     assert "['coalesce', ['get', '_dcPointScale'], 1]" in script
     assert "scaleFields: [['ResUnits', 'Residential units']" in script
@@ -1632,12 +1996,15 @@ def test_transmission_gears_offer_persisted_voltage_heat_themes():
     assert "lineColorThemes: transmissionLineThemes('Voltage_kV'" in script
     assert "lineColorThemes: transmissionLineThemes('VOLTAGE'" in script
     assert "function remoteLineColor(config)" in script
+    assert "function defaultLineColorTheme(config)" in script
+    assert "config?.geometry === 'line' ? 'uniform'" in script
+    assert "if (selectedTheme === 'uniform') return adjustHexBrightness(layerCustomColorHex(config.id) || config.color" in script
     assert "map.setPaintProperty(lineId, 'line-color', transmissionLineColorExpression(config))" in script
     assert "'Line color theme'" in script
     assert "They do not show live MW flow" in script
-    assert "remoteState.colorTheme = String(savedFilter.colorTheme || (config.lineColorThemes ? 'uniform' : 'default'))" in script
+    assert "remoteState.colorTheme = String(savedFilter.colorTheme || defaultLineColorTheme(config))" in script
     assert "colorTheme: remoteState?.colorTheme || defaultColorTheme" in script
-    assert "colorTheme: config.lineColorThemes ? 'uniform' : 'default'" in script
+    assert "colorTheme: defaultLineColorTheme(config)" in script
     assert "if (selectedTheme?.id === 'uniform')" in script
     assert "Uniform line color" in script
     assert "function heatThemeColor(theme, value)" in script
@@ -1646,12 +2013,17 @@ def test_transmission_gears_offer_persisted_voltage_heat_themes():
 
 def test_official_maryland_state_and_county_political_boundaries_are_optional_layers():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
-    for layer_id in ("maryland-state-boundary", "maryland-county-boundaries"):
+    for layer_id in ("maryland-state-boundary", "maryland-county-boundaries", "maryland-county-names"):
         assert f"id: '{layer_id}'" in script
     assert "Boundaries/MD_PoliticalBoundaries/FeatureServer/0" in script
     assert "Boundaries/MD_PoliticalBoundaries/FeatureServer/1" in script
     assert "outFields: ['OBJECTID', 'State'" in script
     assert "outFields: ['COUNTY', 'DISTRICT'" in script
+    assert "name: 'Maryland county names'" in script
+    assert "geometry: 'label'" in script
+    assert "if (config.geometry === 'label') return [`${sourceId}-label`]" in script
+    assert "'text-field': ['coalesce', ['get', 'COUNTY']" in script
+    assert "'text-transform': 'uppercase'" in script
     assert "category: 'Political boundaries'" in script
     assert "config.fillOpacity ?? .3" in script
     assert "config.lineWidth || 0" in script
@@ -1661,11 +2033,49 @@ def test_official_maryland_state_and_county_political_boundaries_are_optional_la
 def test_all_map_selections_persist_to_storage_and_shareable_query_parameters():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
     assert "codecollective.datacenters.ui-state.v1" in script
-    assert "function readUiState()" in script
+    assert "const COMPRESSED_STATE_QUERY_PARAM = 's'" in script
+    assert "const COMPACT_STATE_QUERY_PARAM = 'compact'" in script
+    assert "async function readUiState()" in script
     assert "function applyUiState(state, themeSelect)" in script
     assert "function currentUiState(" in script
     assert "function persistUiState(" in script
     assert "function normalizedMapView(map)" in script
+    assert "function applyExpandedQueryState(state, parameters)" in script
+    assert "function supportsCompressedQueryState()" in script
+    assert "function syncCompressedQueryToggle()" in script
+    assert "async function copyTextToClipboard(text)" in script
+    assert "new CompressionStream('gzip')" in script
+    assert "new DecompressionStream('gzip')" in script
+    assert "bytesToBase64Url(new Uint8Array" in script
+    assert "base64UrlToBytes(value)" in script
+    assert "async function buildShareUrl(" in script
+    assert "function setupShareSheet(map)" in script
+    assert "await buildShareUrl(map, { preferCompressed: true })" in script
+    assert "document.getElementById('share-x').href" in script
+    assert "twitter.com/intent/tweet" in script
+    assert "bsky.app/intent/compose" in script
+    assert "linkedin.com/sharing/share-offsite/" in script
+    assert "facebook.com/sharer/sharer.php" in script
+    assert "mailto:?subject=" in script
+    assert "await copyTextToClipboard(url)" in script
+    assert "navigator.share({ title, text, url })" in script
+    assert "setupShareSheet(map)" in script
+    assert "setShareSheetOpen(false);" in script
+    assert "sheet.querySelectorAll('a.dc-map-share-link').forEach((link) => {" in script
+    assert "link.addEventListener('pointerdown', () => setShareSheetOpen(false))" in script
+    assert "window.addEventListener('blur', () => setShareSheetOpen(false))" in script
+    assert "window.addEventListener('pagehide', () => setShareSheetOpen(false))" in script
+    assert "document.addEventListener('visibilitychange', () => {" in script
+    assert "queryStateCompressionEnabled = parameters.has(COMPRESSED_STATE_QUERY_PARAM) || parameters.get(COMPACT_STATE_QUERY_PARAM) === '1'" in script
+    assert "document.getElementById('compress-query-state')" in script
+    assert "toggle.checked = queryStateCompressionEnabled && supported" in script
+    assert "toggle.disabled = !supported" in script
+    assert "function setupCompressedQueryToggle(map)" in script
+    assert "queryStateCompressionEnabled = Boolean(toggle.checked)" in script
+    assert "setupCompressedQueryToggle(map)" in script
+    assert "url.searchParams.set(COMPRESSED_STATE_QUERY_PARAM, compressed)" in script
+    assert "url.searchParams.delete(COMPRESSED_STATE_QUERY_PARAM)" in script
+    assert "url.searchParams.delete(COMPACT_STATE_QUERY_PARAM)" in script
     assert "localStorage.setItem(UI_STATE_STORAGE_KEY" in script
     for parameter in ("theme", "layers", "hover", "q", "z", "o", "filters", "animation"):
         assert f"url.searchParams.set('{parameter}'" in script
