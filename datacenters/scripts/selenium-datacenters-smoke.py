@@ -152,6 +152,89 @@ def set_checkbox(driver: webdriver.Remote, checkbox_id: str, checked: bool) -> N
         element.click()
 
 
+def verify_moratorium_layer(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    set_checkbox(driver, "show-data-center-moratoriums", True)
+    set_checkbox(driver, "hover-data-center-moratoriums", True)
+    state = WebDriverWait(driver, 30).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            const sourceId = 'remote-data-center-moratoriums';
+            const fillId = `${sourceId}-fill`;
+            if (!map.getSource(sourceId) || !map.getLayer(fillId) || !map.isSourceLoaded(sourceId)) return null;
+            if (!document.getElementById('status-data-center-moratoriums').textContent.includes('24 localities')) return null;
+            return {
+              checked: document.getElementById('show-data-center-moratoriums').checked,
+              statusText: document.getElementById('status-data-center-moratoriums').textContent.trim(),
+              fillColor: map.getPaintProperty(fillId, 'fill-color'),
+              lineColor: map.getPaintProperty(`${sourceId}-line`, 'line-color'),
+            };
+            """
+        )
+    )
+    published = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        fetch('/datacenters/data/moratoriums.json')
+          .then((response) => response.json())
+          .then((data) => done({featureCount: data.features.length, counts: data.metadata.status_counts}))
+          .catch((error) => done({error: String(error)}));
+        """
+    )
+    state.update(published)
+    expected_counts = {"enacted": 8, "pending": 1, "stopped": 1, "none": 14}
+    if not state["checked"] or state["counts"] != expected_counts:
+        raise AssertionError(f"moratorium status polygons did not load as specified: {state}")
+    paint_text = json.dumps({"fill": state["fillColor"], "line": state["lineColor"]})
+    for color in ("#22c55e", "#facc15", "#ef4444", "rgba(0, 0, 0, 0)"):
+        if color not in paint_text:
+            raise AssertionError(f"moratorium palette is missing {color}: {state}")
+
+    for layer_id in ("datacenters", "power-plants", "neon-streets"):
+        set_checkbox(driver, f"hover-{layer_id}", False)
+    pending_point = WebDriverWait(driver, 15).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            const canvas = map.getCanvas();
+            for (let y = 2; y < canvas.clientHeight; y += 3) {
+              for (let x = 2; x < canvas.clientWidth; x += 3) {
+                const hit = map.queryRenderedFeatures([x, y], {layers: ['remote-data-center-moratoriums-fill']})
+                  .find((feature) => feature.properties.status === 'pending');
+                if (hit) return {x, y, county: hit.properties.county};
+              }
+            }
+            return null;
+            """
+        )
+    )
+    arbitration = driver.execute_script(
+        "return window.__showDatacenterHoverTarget(arguments[0]);", pending_point
+    )
+    chosen = arbitration.get("chosen", {})
+    if chosen.get("layerId") != "data-center-moratoriums" or not chosen.get("key", "").endswith(":24009"):
+        raise AssertionError(f"moratorium hover did not win at pending polygon: {arbitration}")
+    inspector = WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script(
+            """
+            const detail = document.getElementById('record-detail');
+            const heading = detail.querySelector('h2')?.textContent.trim() || '';
+            if (heading !== 'Calvert County') return null;
+            return {
+              heading,
+              type: detail.querySelector('.dc-type')?.textContent.trim() || '',
+              key: detail.querySelector('.dc-feature-color-key')?.textContent.trim() || '',
+              source: detail.querySelector('.dc-record-sources a')?.href || '',
+            };
+            """
+        )
+    )
+    if "Pending" not in inspector["key"] or "calvertcountymd.gov" not in inspector["source"]:
+        raise AssertionError(f"pending moratorium inspector omitted its status or primary source: {inspector}")
+    screenshot = save_screenshot(driver, screenshot_dir, "datacenters-moratorium-layer.png")
+    return {"state": state, "pendingPoint": pending_point, "inspector": inspector, "screenshot": str(screenshot)}
+
+
 def verify_base_layers(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     initial = driver.execute_script(
         "return document.querySelector('.dc-base-layer-toggle:checked')?.id || null;"
@@ -551,14 +634,18 @@ def verify_layer_search(driver: webdriver.Remote) -> dict:
         const cards = [...document.querySelectorAll('.dc-controls .dc-layer-option[data-layer-preview]')];
         const powerLayer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
         return {
-          visible: cards.filter((card) => !card.hidden).map((card) => card.textContent.replace(/\s+/g, ' ').trim()),
+          visible: cards.filter((card) => !card.hidden).map((card) => ({
+            id: card.dataset.layerPreview,
+            text: card.textContent.replace(/\s+/g, ' ').trim()
+          })),
           hidden: cards.filter((card) => card.hidden).length,
           dataCentersHidden: document.querySelector('[data-layer-preview="datacenters"]').hidden,
           powerRecords: powerLayer?.implementation?.getDiagnostics?.().recordCount || 0
         };
         """
     )
-    if not filtered["visible"] or any("zoning" not in text.lower() for text in filtered["visible"]):
+    expected_visible = {"data-center-moratoriums", "mdp-generalized-zoning", "baltimore-city-zoning"}
+    if {card["id"] for card in filtered["visible"]} != expected_visible:
         raise AssertionError(f"layer search returned nonmatching cards: {filtered}")
     if not filtered["dataCentersHidden"] or filtered["powerRecords"] != before["powerRecords"]:
         raise AssertionError(f"layer search changed map records instead of card visibility: {before} {filtered}")
@@ -2190,6 +2277,15 @@ def run(args: argparse.Namespace) -> int:
             report_path.write_text(json.dumps(report, indent=2))
             print(json.dumps(report, indent=2))
             return 0
+        if args.moratorium_only:
+            report = {
+                "base_url": args.base_url,
+                "moratorium_layer": step("moratorium layer", lambda: verify_moratorium_layer(driver, screenshot_dir)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
         layer_search = step("layer search", lambda: verify_layer_search(driver))
         layer_color_controls = step("layer color controls", lambda: verify_layer_color_controls(driver, screenshot_dir))
         data_center_draw_scaling = step("data center draw scaling", lambda: verify_data_center_draw_scaling(driver, screenshot_dir))
@@ -2304,6 +2400,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--map-interactions-only", action="store_true", help="Verify hover, drag-pan, and scroll-zoom over a data-center marker, then exit.")
     parser.add_argument("--layer-order-only", action="store_true", help="Verify selected layer drag ordering and persisted z-order, then exit.")
     parser.add_argument("--transmission-only", action="store_true", help="Verify transmission line color theme and width controls, then exit.")
+    parser.add_argument("--moratorium-only", action="store_true", help="Verify moratorium status colors, counts, default visibility, hover, and sourcing, then exit.")
     return parser.parse_args()
 
 

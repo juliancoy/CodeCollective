@@ -867,6 +867,63 @@
       ],
     },
     {
+      id: 'data-center-moratoriums',
+      name: 'Data-center moratoriums',
+      description: 'Green enacted · yellow pending · red stopped · transparent no identified action',
+      category: 'Local policy status',
+      tags: ['Moratorium', 'Ban', 'Pause', 'County', 'Policy', 'Zoning'],
+      staticDataUrl: '/datacenters/data/moratoriums.json',
+      sourceUrl: '/datacenters/data/moratoriums.json',
+      sourceLabel: 'Curated Maryland local moratorium status inventory',
+      attribution: 'Maryland local governments, U.S. Census Bureau',
+      geometry: 'polygon',
+      color: '#22c55e',
+      fillColor: ['match', ['get', 'status'],
+        'enacted', '#22c55e',
+        'pending', '#facc15',
+        'stopped', '#ef4444',
+        'rgba(0, 0, 0, 0)'],
+      fillOpacity: .42,
+      lineColor: ['match', ['get', 'status'],
+        'enacted', '#86efac',
+        'pending', '#fde047',
+        'stopped', '#fca5a5',
+        'rgba(0, 0, 0, 0)'],
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 6, .8, 11, 2.2],
+      lineOpacity: .92,
+      focus: { center: [-76.75, 39.05], zoom: 7.2 },
+      minZoom: 0,
+      statusOffText: 'Off · 24 localities · enacted, pending, stopped, or transparent',
+      titleFields: ['county', 'geoid'],
+      facts: [
+        ['Locality', 'county'],
+        ['Status', 'status_label'],
+        ['Action type', 'action_type'],
+        ['Legal instrument', 'legal_instrument'],
+        ['Adopted', 'adopted_date'],
+        ['Effective', 'effective_date'],
+        ['Ends / sunsets', 'end_date'],
+        ['Scope', 'scope'],
+        ['Verified', 'verified_date'],
+      ],
+      colorLegend: {
+        field: 'status',
+        label: 'Local action status',
+        entries: [
+          { value: 'enacted', label: 'Enacted', color: '#22c55e' },
+          { value: 'pending', label: 'Pending', color: '#facc15' },
+          { value: 'stopped', label: 'Stopped', color: '#ef4444' },
+          { value: 'none', label: 'No identified action', color: 'rgba(0, 0, 0, 0)' },
+        ],
+        fallback: { label: 'No identified action', color: 'rgba(0, 0, 0, 0)' },
+      },
+      recordSourceFields: ['source_title', 'source_url'],
+      provenanceNote: 'County-equivalent geometry is from Census TIGERweb. Policy status is curated from the linked primary local record; transparent counties have no qualifying current action identified as of the verification date.',
+      additionalSources: [
+        ['U.S. Census Bureau TIGERweb county boundaries', 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1'],
+      ],
+    },
+    {
       id: 'county-power-estimates',
       name: 'County power estimates',
       description: 'Derived residential electricity demand estimates by Maryland county equivalent',
@@ -1245,7 +1302,7 @@
   const DEFAULT_UI_STATE = {
     theme: 'collective',
     baseLayer: 'street-map',
-    layers: ['datacenters', 'power-plants', 'neon-streets'],
+    layers: ['datacenters', 'power-plants', 'neon-streets', 'data-center-moratoriums'],
     layerOrder: [
       'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
       'esri-3d-buildings', 'maryland-state-boundary', 'maryland-county-boundaries',
@@ -1254,7 +1311,7 @@
       'dpw-storm-ms4', 'dpw-stormwater', 'dpw-water', 'dpw-wastewater',
       'md-waterbodies-streams', 'md-waterbodies-lakes', 'md-watersheds-12digit',
       'md-fema-floodplain', 'md-stream-gauges', 'md-blue-infrastructure',
-      'power-interchanges', 'county-power-estimates', 'md-imap-substations',
+      'power-interchanges', 'data-center-moratoriums', 'county-power-estimates', 'md-imap-substations',
       'md-imap-transmission-lines', 'bge-generation-hosting', 'bge-load-capacity',
       'pepco-generation-hosting', 'pepco-load-capacity', 'delmarva-generation-hosting',
       'delmarva-load-capacity', 'potomac-edison-generation-hosting',
@@ -1270,7 +1327,7 @@
       'dpw-storm-ms4', 'dpw-stormwater', 'dpw-water', 'dpw-wastewater',
       'md-waterbodies-streams', 'md-waterbodies-lakes', 'md-watersheds-12digit',
       'md-fema-floodplain', 'md-stream-gauges', 'md-blue-infrastructure',
-      'power-interchanges', 'county-power-estimates', 'md-imap-substations',
+      'power-interchanges', 'data-center-moratoriums', 'county-power-estimates', 'md-imap-substations',
       'md-imap-transmission-lines', 'bge-generation-hosting', 'bge-load-capacity',
       'pepco-generation-hosting', 'pepco-load-capacity', 'delmarva-generation-hosting',
       'delmarva-load-capacity', 'potomac-edison-generation-hosting',
@@ -4290,6 +4347,11 @@
       topMapHoverTarget(map, new maplibregl.Point(point.x, point.y), sourceById);
       return window.__lastHoverArbitration;
     };
+    window.__showDatacenterHoverTarget = (point) => {
+      const target = topMapHoverTarget(map, new maplibregl.Point(point.x, point.y), sourceById);
+      showHoverTarget(map, target);
+      return window.__lastHoverArbitration;
+    };
     map.on('click', (event) => handleMapClick(map, event, sourceById));
     map.getCanvas().addEventListener('mouseleave', () => {
       if (mobileInspectorMode()) return;
@@ -5066,6 +5128,7 @@
   function staticLayerLoadingText(config) {
     if (config.id === 'baltimore-red-line') return 'Loading Baltimore Red Line alignment…';
     if (config.id === 'power-interchanges') return 'Loading documented transmission crossings…';
+    if (config.id === 'data-center-moratoriums') return 'Loading local moratorium status…';
     if (config.id === 'county-power-estimates') return 'Loading county residential power estimates…';
     if (config.id === 'county-total-power-estimates') return 'Loading county total power planning estimates…';
     return `Loading ${config.name.toLowerCase()}…`;
@@ -5079,6 +5142,10 @@
       return lineCount
         ? `${number(featureCount)} border corridors · ${number(lineCount)} line crossings · 2024 net import`
         : `${number(featureCount)} border corridors · 2024 Maryland net import`;
+    }
+    if (config.id === 'data-center-moratoriums') {
+      const counts = data?.metadata?.status_counts || {};
+      return `${number(featureCount)} localities · ${number(counts.enacted || 0)} enacted · ${number(counts.pending || 0)} pending · ${number(counts.stopped || 0)} stopped`;
     }
     if (config.id === 'county-power-estimates') {
       const averageMw = data?.metadata?.statewide_residential_average_mw;
@@ -5096,6 +5163,7 @@
   function staticLayerErrorText(config, error) {
     if (config.id === 'baltimore-red-line') return `Baltimore Red Line alignment unavailable · ${error.message}`;
     if (config.id === 'power-interchanges') return `Crossing inventory unavailable · ${error.message}`;
+    if (config.id === 'data-center-moratoriums') return `Moratorium status unavailable · ${error.message}`;
     if (config.id === 'county-power-estimates') return `County power estimates unavailable · ${error.message}`;
     if (config.id === 'county-total-power-estimates') return `County total power estimates unavailable · ${error.message}`;
     return `${config.name} unavailable · ${error.message}`;
@@ -6113,7 +6181,7 @@
   }
 
   function topMapHoverTarget(map, point, sourceById) {
-    const queryPoint = { x: point.x, y: point.y };
+    const queryPoint = new maplibregl.Point(point.x, point.y);
     const candidates = [];
     const dataCenter = topDataCenterHoverRecord(map, point);
     if (dataCenter) {
@@ -6332,17 +6400,21 @@
     const active = legend.entries.find((entry) => entry.value === value || entry.aliases?.includes(value));
     const activeEntry = active || legend.fallback;
     const displayedValue = active?.label || value || legend.fallback.label;
-    return `<section class="dc-feature-color-key" aria-label="${escapeHtml(config.name)} color"><span class="dc-color-key-swatch" style="--dc-key-color:${activeEntry.color}" aria-hidden="true"></span><span><strong>Line color</strong><small>${escapeHtml(legend.label)} · ${escapeHtml(displayedValue)}</small></span></section>`;
+    return `<section class="dc-feature-color-key" aria-label="${escapeHtml(config.name)} color"><span class="dc-color-key-swatch" style="--dc-key-color:${activeEntry.color}" aria-hidden="true"></span><span><strong>${config.geometry === 'line' ? 'Line color' : 'Map color'}</strong><small>${escapeHtml(legend.label)} · ${escapeHtml(displayedValue)}</small></span></section>`;
   }
 
   function renderRemoteLayerDetail(config, properties) {
     const title = config.titleFields.map((field) => properties[field]).find((value) => value != null && value !== '') || config.name;
     const facts = config.facts.map(([label, field, suffix = '']) => [label, `${displayRemoteValue(properties[field], field)}${escapeHtml(suffix)}`]);
-    const sources = [[config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])];
+    const recordSource = config.recordSourceFields
+      ? [[properties[config.recordSourceFields[0]], properties[config.recordSourceFields[1]]]]
+      : [];
+    const sources = [...recordSource, [config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
+      .filter(([label, url]) => label && url);
     const recordType = config.staticDataUrl ? 'derived official inventory' : 'live official service';
-    const provenanceNote = config.staticDataUrl
+    const provenanceNote = config.provenanceNote || (config.staticDataUrl
       ? 'This point was generated from the cited official boundary and transmission geometry. It is stored locally for fast display and reproducible review.'
-      : 'This feature was queried on demand for the current map view and is not stored by this site.';
+      : 'This feature was queried on demand for the current map view and is not stored by this site.');
     const detail = prepareInspectorDetail();
     detail.innerHTML = `
       <h2>${escapeHtml(title)}</h2>
