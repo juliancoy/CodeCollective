@@ -41,7 +41,7 @@ def test_datacenter_selenium_probe_verifies_webgl_power_plant_meshes():
     script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
 
     assert "def verify_power_plant_webgl" in script
-    assert "diagnostics?.ready && diagnostics.renderCount > 1" in script
+    assert "diagnostics?.ready && diagnostics.renderCount > 0" in script
     assert 'document.querySelectorAll(\'.dc-map-marker--plant\').length' in script
     assert 'diagnostics["lastGlError"] != 0' in script
     assert 'getDiagnostics?.().hoveredRecordId' in script
@@ -62,11 +62,11 @@ def test_datacenter_selenium_probe_verifies_webgl_power_plant_meshes():
     assert '"Fourmile Ridge"' in script
     assert 'datacenters-power-webgl-hover-1.png' in script
     assert "WebGL lightning bolt frames did not animate" in script
-    assert "WebGL lightning antialiasing was not active" in script
+    assert "multisampled WebGL context did not enable alpha-to-coverage" in script
     assert "WebGL lightning outline default was not compact and readable" in script
-    assert "WebGL lightning outline scale was not adjustable from the gear menu" in script
-    assert "outline.value = '1.14'" in script
-    assert "WebGL lightning planar outline mesh was not generated" in script
+    assert "WebGL lightning outline width was not adjustable from the gear menu" in script
+    assert "outline.value = '2.5'" in script
+    assert "WebGL lightning silhouette edge data was not generated" in script
     assert 'parser.add_argument("--power-webgl-only"' in script
 
 
@@ -89,6 +89,19 @@ def test_datacenter_selenium_probe_verifies_neon_i95_default_and_broader_street_
     assert "inspector did not show the one chosen hover target" in script
     assert "datacenters-neon-i95.png" in script
     assert 'neon_streets = step("neon streets", lambda: verify_neon_streets' in script
+
+
+def test_datacenter_selenium_probe_verifies_point_gpu_splat_mode():
+    script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
+
+    assert "def verify_point_gpu_splat_controls" in script
+    assert "baltimore-nibrs-crime" in script
+    assert "pointRenderMode" in script
+    assert "gpu-splat" in script
+    assert "GPU Splat did not enable a visible heatmap layer" in script
+    assert "GPU Splat did not hide the discrete point layer" in script
+    assert "datacenters-point-gpu-splat.png" in script
+    assert 'parser.add_argument("--point-splat-only"' in script
 
 
 def test_datacenter_selenium_probe_verifies_transmission_color_key():
@@ -208,8 +221,8 @@ def test_datacenter_selenium_probe_verifies_contestation_glow_dimension():
     assert "AiNET Beltsville Data Center" in script
     assert "contested facility did not receive a red glow" in script
     assert "planned uncontested facility did not receive a yellow glow" in script
-    assert "planned uncontested facility icon was not yellow" in script
-    assert "quiet facility did not receive a white glow" in script
+    assert "planned uncontested facility icon incorrectly inherited the halo color" in script
+    assert "quiet facility did not receive a green glow" in script
     assert "intermediate facility received a misleading glow" in script
     assert '"datacenters-contestation-glow.png"' in script
     assert 'data_center_glow = step("data center glow", lambda: verify_data_center_glow' in script

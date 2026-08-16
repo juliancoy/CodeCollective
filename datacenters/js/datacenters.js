@@ -3,6 +3,7 @@
     infrastructure: '/datacenters/data/infrastructure.json',
     entityImages: '/datacenters/data/power-plant-images.json',
     sources: '/datacenters/data/sources.json',
+    datacenterNews: '/datacenters/data/datacenter-news.json',
   };
   const MOBILE_INSPECTOR_MEDIA = '(max-width: 760px), (hover: none) and (pointer: coarse)';
   const POWER_PLANT_WEBGL_LAYER_ID = 'power-plant-bolt-webgl';
@@ -69,6 +70,25 @@
     ['2', 'Bold'],
     ['3', 'Heavy'],
     ['5', 'Maximum'],
+  ];
+  const POINT_RENDER_OPTIONS = [
+    ['points', 'Individual points'],
+    ['gpu-splat', 'GPU Splat density'],
+  ];
+  const POWER_PLANT_RENDER_MATERIAL_OPTIONS = [
+    ['standard', 'Standard'],
+    ['brushed-metal', 'Brushed metal'],
+    ['polished-metal', 'Polished metal'],
+    ['iridescent', 'Iridescent metal'],
+    ['pearl', 'Pearlescent'],
+    ['glass', 'Tinted glass'],
+    ['emissive', 'Neon glow'],
+    ['hologram', 'Hologram'],
+    ['xray', 'X-ray'],
+    ['phong', 'Phong'],
+    ['toon', 'Toon'],
+    ['normal', 'Normals'],
+    ['wireframe', 'Wireframe'],
   ];
   const LINE_WIDTH_BY_DEFAULT = [['zoom', 'Zoom curve only']];
 
@@ -276,6 +296,124 @@
       outFields: ['COUNTY', 'DISTRICT', 'TSD_ID', 'OBJECTID_1', 'COUNTY_FIP', 'COUNTYNUM', 'Shape__Area', 'Shape__Length'],
       titleFields: ['COUNTY'],
       facts: [['County', 'COUNTY'], ['County FIPS', 'COUNTY_FIP'], ['County number', 'COUNTYNUM'], ['MDOT SHA district', 'DISTRICT'], ['Object ID', 'OBJECTID_1']],
+    },
+    {
+      id: 'maryland-county-names',
+      name: 'Maryland county names',
+      description: 'County and Baltimore City names from the official Maryland political boundary service',
+      category: 'Political boundaries',
+      service: 'https://mdgeodata.md.gov/imap/rest/services/Boundaries/MD_PoliticalBoundaries/FeatureServer/1',
+      sourceUrl: 'https://mdgeodata.md.gov/imap/rest/services/Boundaries/MD_PoliticalBoundaries/FeatureServer/1',
+      sourceLabel: 'Maryland iMAP County Boundaries',
+      attribution: 'MD iMAP, MDP, MDOT SHA',
+      geometry: 'label',
+      color: '#d8f6ff',
+      focus: { center: [-76.7, 39.05], zoom: 7.2 },
+      minZoom: 0,
+      maxFeatures: 50,
+      outFields: ['COUNTY', 'COUNTY_FIP', 'COUNTYNUM', 'OBJECTID_1'],
+      titleFields: ['COUNTY'],
+      facts: [['County', 'COUNTY'], ['County FIPS', 'COUNTY_FIP'], ['County number', 'COUNTYNUM'], ['Object ID', 'OBJECTID_1']],
+    },
+    {
+      id: 'baltimore-red-line',
+      name: 'Baltimore Red Line alignment',
+      description: 'Static contested rapid-transit alignment from the public Red Line Alternative 4C web map',
+      category: 'Contested transit infrastructure',
+      tags: ['Transit', 'Red Line', 'Baltimore', 'Contested infrastructure', 'Rapid transit'],
+      staticDataUrl: '/datacenters/data/baltimore-red-line.json',
+      sourceUrl: '/datacenters/data/baltimore-red-line.json',
+      sourceLabel: 'Static Baltimore Red Line alignment copy',
+      attribution: 'Public ArcGIS feature collection',
+      geometry: 'line',
+      color: '#ff263f',
+      lineColor: '#ff263f',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 10, 2.2, 14, 4.8],
+      lineOpacity: .92,
+      focus: { center: [-76.677, 39.297], zoom: 11.6 },
+      minZoom: 9,
+      maxZoom: MAP_MAX_ZOOM,
+      statusOffText: 'Off · 13 Red Line alignment segments',
+      titleFields: ['Layer', 'FID'],
+      facts: [['Segment type', 'Layer'], ['Line type', 'Linetype'], ['Elevation code', 'Elevation'], ['Reference name', 'RefName'], ['Segment length', 'Shape_len'], ['Feature ID', 'FID']],
+      additionalSources: [
+        ['Baltimore Red Line Alternative 4C web map', 'https://www.arcgis.com/home/item.html?id=ea0cc16a76c444968b7f634e3d8dc737'],
+      ],
+    },
+    {
+      id: 'census-incorporated-places',
+      name: 'Municipal boundaries',
+      description: 'Census TIGER incorporated places in Maryland',
+      category: 'Municipal / civil boundaries',
+      tags: ['Municipalities', 'Incorporated places', 'Cities', 'Towns', 'Census TIGER'],
+      service: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/11',
+      sourceUrl: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/11',
+      sourceLabel: 'U.S. Census TIGERweb Incorporated Places',
+      attribution: 'U.S. Census Bureau',
+      where: "STATE='24'",
+      geometry: 'polygon',
+      color: '#f0abfc',
+      fillColor: '#f0abfc',
+      fillOpacity: .055,
+      lineColor: '#f0abfc',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, .5, 12, 1.8],
+      lineOpacity: .86,
+      focus: { center: [-76.7, 39.05], zoom: 7.4 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'STATE', 'PLACE', 'GEOID', 'NAME', 'BASENAME', 'LSADC', 'FUNCSTAT', 'AREALAND', 'AREAWATER', 'CENTLAT', 'CENTLON', 'INTPTLAT', 'INTPTLON'],
+      titleFields: ['NAME', 'BASENAME'],
+      facts: [['Place', 'NAME'], ['Base name', 'BASENAME'], ['GEOID', 'GEOID'], ['Place code', 'PLACE'], ['Legal/statistical area type', 'LSADC'], ['Functional status', 'FUNCSTAT'], ['Land area', 'AREALAND'], ['Water area', 'AREAWATER']],
+    },
+    {
+      id: 'census-designated-places',
+      name: 'Census-designated places',
+      description: 'Unincorporated named community boundaries from Census TIGER',
+      category: 'Municipal / civil boundaries',
+      tags: ['Unincorporated places', 'Census-designated places', 'Communities', 'Census TIGER'],
+      service: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/12',
+      sourceUrl: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/12',
+      sourceLabel: 'U.S. Census TIGERweb Census Designated Places',
+      attribution: 'U.S. Census Bureau',
+      where: "STATE='24'",
+      geometry: 'polygon',
+      color: '#c4b5fd',
+      fillColor: '#c4b5fd',
+      fillOpacity: .045,
+      lineColor: '#c4b5fd',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, .45, 12, 1.5],
+      lineOpacity: .82,
+      focus: { center: [-76.7, 39.05], zoom: 7.4 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'STATE', 'PLACE', 'GEOID', 'NAME', 'BASENAME', 'LSADC', 'FUNCSTAT', 'AREALAND', 'AREAWATER', 'CENTLAT', 'CENTLON', 'INTPTLAT', 'INTPTLON'],
+      titleFields: ['NAME', 'BASENAME'],
+      facts: [['Place', 'NAME'], ['Base name', 'BASENAME'], ['GEOID', 'GEOID'], ['Place code', 'PLACE'], ['Legal/statistical area type', 'LSADC'], ['Functional status', 'FUNCSTAT'], ['Land area', 'AREALAND'], ['Water area', 'AREAWATER']],
+    },
+    {
+      id: 'census-county-subdivisions',
+      name: 'County subdivisions',
+      description: 'Minor civil divisions / county subdivisions from Census TIGER',
+      category: 'Municipal / civil boundaries',
+      tags: ['County subdivisions', 'Election districts', 'Minor civil divisions', 'Census TIGER'],
+      service: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/8',
+      sourceUrl: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/8',
+      sourceLabel: 'U.S. Census TIGERweb County Subdivisions',
+      attribution: 'U.S. Census Bureau',
+      where: "STATE='24'",
+      geometry: 'polygon',
+      color: '#93c5fd',
+      fillColor: '#93c5fd',
+      fillOpacity: .035,
+      lineColor: '#93c5fd',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, .35, 12, 1.2],
+      lineOpacity: .76,
+      focus: { center: [-76.7, 39.05], zoom: 7.4 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'STATE', 'COUNTY', 'COUSUB', 'GEOID', 'NAME', 'BASENAME', 'LSADC', 'FUNCSTAT', 'AREALAND', 'AREAWATER', 'CENTLAT', 'CENTLON', 'INTPTLAT', 'INTPTLON'],
+      titleFields: ['NAME', 'BASENAME'],
+      facts: [['Subdivision', 'NAME'], ['Base name', 'BASENAME'], ['GEOID', 'GEOID'], ['County code', 'COUNTY'], ['Subdivision code', 'COUSUB'], ['Legal/statistical area type', 'LSADC'], ['Functional status', 'FUNCSTAT'], ['Land area', 'AREALAND'], ['Water area', 'AREAWATER']],
     },
     {
       id: 'dhcd-multifamily',
@@ -576,6 +714,7 @@
       geometry: 'line',
       color: '#4cc9f0',
       lineColor: '#4cc9f0',
+      lineWidthFields: [['Shape__Length', 'Segment length']],
       focus: { center: [-76.7, 39.05], zoom: 8.2 },
       minZoom: 8,
       outFields: ['OBJECTID', 'LAYER', 'Shape__Length'],
@@ -774,6 +913,61 @@
       ],
     },
     {
+      id: 'county-total-power-estimates',
+      name: 'County total power estimates',
+      description: 'Derived all-sector demand, generation, and planned data-center load context by Maryland county equivalent',
+      category: 'Power demand estimates',
+      tags: ['Total demand', 'Generation balance', 'Data center demand', 'County', 'ACS', 'EIA'],
+      staticDataUrl: '/datacenters/data/power-estimates.json',
+      sourceUrl: '/datacenters/data/power-estimates.json',
+      sourceLabel: 'Derived Maryland county total electricity planning estimates',
+      attribution: 'EIA, U.S. Census Bureau, Census Reporter, Code Collective flat inventory',
+      geometry: 'polygon',
+      color: '#fb7185',
+      fillColor: [
+        'interpolate', ['linear'], ['coalesce', ['get', 'estimated_total_with_projected_datacenters_average_mw'], ['get', 'estimated_total_average_mw'], 0],
+        0, '#12315f',
+        80, '#2563eb',
+        200, '#06b6d4',
+        450, '#facc15',
+        900, '#f97316',
+        1400, '#ef4444',
+      ],
+      fillOpacity: .42,
+      lineColor: '#fecdd3',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 6, .7, 11, 2.0],
+      lineOpacity: .86,
+      focus: { center: [-76.75, 39.05], zoom: 7.2 },
+      minZoom: 0,
+      statusOffText: 'Off · 24 county total-demand estimates',
+      titleFields: ['county', 'geoid'],
+      facts: [
+        ['County', 'county'],
+        ['Source year', 'source_year'],
+        ['Estimated total average', 'estimated_total_average_mw', ' MW'],
+        ['Estimated total with planned data centers', 'estimated_total_with_projected_datacenters_average_mw', ' MW'],
+        ['Estimated total annual use', 'estimated_total_annual_mwh', ' MWh'],
+        ['Estimated residential average', 'estimated_residential_average_mw', ' MW'],
+        ['Estimated non-residential average', 'estimated_nonresidential_average_mw', ' MW'],
+        ['Employed population proxy', 'employed_population'],
+        ['Power plant average generation', 'county_power_plant_average_generation_mw', ' MW'],
+        ['Power plant nameplate capacity', 'county_power_plant_nameplate_capacity_mw', ' MW'],
+        ['Power plant count', 'county_power_plant_count'],
+        ['Planned data-center additions', 'county_planned_data_center_projected_mw', ' MW'],
+        ['Planned data-center count', 'county_planned_data_center_count'],
+        ['Generation minus estimated total load', 'estimated_generation_minus_total_load_average_mw', ' MW'],
+        ['Generation minus total plus planned data centers', 'estimated_generation_minus_total_with_projected_datacenters_average_mw', ' MW'],
+        ['Total estimate basis', 'total_estimate_basis'],
+        ['Planning context basis', 'planning_context_basis'],
+      ],
+      additionalSources: [
+        ['EIA Maryland retail electricity records', 'https://api.eia.gov/v2/electricity/retail-sales/data/'],
+        ['Census Reporter ACS tables B25003 and B23025', 'https://api.censusreporter.org/1.0/data/show/latest'],
+        ['U.S. Census Bureau TIGERweb county boundaries', 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1'],
+        ['Code Collective flat infrastructure inventory', '/datacenters/data/infrastructure.json'],
+      ],
+    },
+    {
       id: 'md-imap-substations',
       name: 'MD iMAP substations',
       description: 'Delmarva Peninsula substations',
@@ -810,6 +1004,26 @@
       facts: [['Line name', 'Name'], ['Voltage (kV)', 'Voltage_kV'], ['Status', 'Status'], ['Underground', 'Undergrnd'], ['Line ID', 'Id']],
     },
     {
+      id: 'maryland-lng-terminals',
+      name: 'Maryland LNG terminals',
+      description: 'Liquefied natural gas import and export terminals in Maryland',
+      category: 'Gas infrastructure',
+      tags: ['LNG', 'Liquefied natural gas', 'Cove Point', 'Terminal', 'Gas infrastructure'],
+      service: 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/Liquefied_Natural_Gas_Import_Export_Terminals/FeatureServer/0',
+      sourceUrl: 'https://www.arcgis.com/home/item.html?id=cf9fa5240d4d4d55b3286f873ce0d8e7',
+      sourceLabel: 'Liquefied Natural Gas Import Export Terminals (EIA)',
+      attribution: 'U.S. Energy Information Administration',
+      where: "STATE = 'MD'",
+      geometry: 'point',
+      color: '#ff9f1c',
+      scaleFields: [['POPULATION', 'Population']],
+      focus: { center: [-76.4345, 38.3817], zoom: 12.1 },
+      minZoom: 7,
+      outFields: ['TERMID', 'NAME', 'TYPE', 'STATUS', 'ADDRESS', 'CITY', 'STATE', 'ZIP', 'POPULATION'],
+      titleFields: ['NAME', 'TERMID'],
+      facts: [['Terminal', 'NAME'], ['Type', 'TYPE'], ['Status', 'STATUS'], ['Address', 'ADDRESS'], ['City', 'CITY'], ['State', 'STATE'], ['ZIP', 'ZIP'], ['Population', 'POPULATION'], ['Terminal ID', 'TERMID']],
+    },
+    {
       id: 'bge-generation-hosting',
       name: 'BGE generation hosting',
       description: 'Estimated remaining DER capacity',
@@ -840,8 +1054,8 @@
       name: 'BGE load capacity',
       description: 'Estimated capacity for new electric load',
       services: [
-        [14, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/1'],
-        [10, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/2'],
+        [15, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/1'],
+        [11, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/2'],
         [0, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/3'],
       ],
       sourceUrl: 'https://www.arcgis.com/home/item.html?id=3388d9b757a64147b84bd5ee8c3a7e1a',
@@ -849,7 +1063,7 @@
       attribution: 'BGE',
       geometry: 'polygon',
       color: '#00b4d8',
-      fillColor: ['step', ['coalesce', ['get', 'Max_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027', .77, '#f46d43', 1.83, '#f5f500', 2.93, '#94f700', 4.21, '#00f500'],
+      fillColor: ['step', ['coalesce', ['get', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027', 1, '#f46d43', 4, '#f5f500', 8, '#94f700', 15, '#00f500'],
       fillOpacity: .56,
       lineColor: '#6e6e6e',
       lineWidth: ['interpolate', ['linear'], ['zoom'], 7, 0.4, 14, 0.8],
@@ -857,9 +1071,9 @@
       focus: { center: [-76.65, 39.25], zoom: 8.6 },
       minZoom: 7,
       maxFeatures: 1000,
-      outFields: ['OBJECTID_1', 'MAP_NAME', 'Count_', 'Sum_FEEDER_AVAIL_CAP_MW_MIN', 'Min_FEEDER_AVAIL_CAP_MW_MIN', 'Max_FEEDER_AVAIL_CAP_MW_MIN', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN'],
+      outFields: ['OBJECTID_1', 'MAP_NAME', 'GRID_SIZE', 'PLOT_DATE', 'UPDATE_FLAG', 'Count_', 'Sum_FEEDER_AVAIL_CAP_MW_MIN', 'Min_FEEDER_AVAIL_CAP_MW_MIN', 'Max_FEEDER_AVAIL_CAP_MW_MIN', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN'],
       titleFields: ['MAP_NAME', 'OBJECTID_1'],
-      facts: [['Map area', 'MAP_NAME'], ['Feeder capacity sum (MW)', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], ['Minimum feeder capacity (MW)', 'Min_FEEDER_AVAIL_CAP_MW_MIN'], ['Maximum feeder capacity (MW)', 'Max_FEEDER_AVAIL_CAP_MW_MIN'], ['Substation capacity sum (MW)', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN']],
+      facts: [['Map area', 'MAP_NAME'], ['Grid size', 'GRID_SIZE'], ['Plot date', 'PLOT_DATE'], ['Update flag', 'UPDATE_FLAG'], ['Feeder capacity sum (MW)', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], ['Minimum feeder capacity (MW)', 'Min_FEEDER_AVAIL_CAP_MW_MIN'], ['Maximum feeder capacity (MW)', 'Max_FEEDER_AVAIL_CAP_MW_MIN'], ['Substation capacity sum (MW)', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN']],
     },
     {
       id: 'pepco-generation-hosting',
@@ -996,6 +1210,26 @@
       titleFields: ['ID', 'OWNER'],
       facts: [['Line ID', 'ID'], ['Type', 'TYPE'], ['Status', 'STATUS'], ['Owner', 'OWNER'], ['Voltage', 'VOLTAGE'], ['Voltage class', 'VOLT_CLASS'], ['Inferred attributes', 'INFERRED'], ['Origin', 'SUB_1'], ['Destination', 'SUB_2'], ['Source', 'SOURCE'], ['Source date', 'SOURCEDATE'], ['Validation method', 'VAL_METHOD'], ['Validation date', 'VAL_DATE']],
     },
+    {
+      id: 'natural-gas-pipelines',
+      name: 'Natural gas pipelines',
+      description: 'Interstate and intrastate natural-gas pipelines in the current map view',
+      category: 'Gas infrastructure',
+      tags: ['Natural gas', 'Pipeline', 'Gas infrastructure', 'Interstate', 'Intrastate'],
+      service: 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/Natural_Gas_Interstate_and_Intrastate_Pipelines_1/FeatureServer/0',
+      sourceUrl: 'https://www.arcgis.com/home/item.html?id=53e5594f0d0242c0a18f6019f98f8841',
+      sourceLabel: 'Natural Gas Interstate and Intrastate Pipelines (EIA)',
+      attribution: 'U.S. Energy Information Administration',
+      geometry: 'line',
+      color: '#ffb703',
+      lineColor: '#ffb703',
+      lineWidthFields: [['Shape__Length', 'Segment length']],
+      focus: { center: [-76.75, 39.05], zoom: 8.4 },
+      minZoom: 7,
+      outFields: ['TYPEPIPE', 'Operator', 'Status', 'Shape__Length'],
+      titleFields: ['Operator', 'TYPEPIPE'],
+      facts: [['Operator', 'Operator'], ['Pipe type', 'TYPEPIPE'], ['Status', 'Status'], ['Segment length', 'Shape__Length']],
+    },
   ];
   const BASEMAP_STYLES = {
     collective: 'https://tiles.openfreemap.org/styles/liberty',
@@ -1006,6 +1240,8 @@
     liberty: 'https://tiles.openfreemap.org/styles/liberty',
   };
   const UI_STATE_STORAGE_KEY = 'codecollective.datacenters.ui-state.v1';
+  const COMPRESSED_STATE_QUERY_PARAM = 's';
+  const COMPACT_STATE_QUERY_PARAM = 'compact';
   const DEFAULT_UI_STATE = {
     theme: 'collective',
     baseLayer: 'street-map',
@@ -1062,6 +1298,8 @@
         glowBy: 'contestation',
         glowDistance: 1,
         glowBlur: 1,
+        iconScale: 1,
+        brightness: 1,
         sizeBy: 'reported_power_capacity_mw',
       },
       powerPlants: {
@@ -1071,12 +1309,16 @@
         outlineBy: 'technology',
         fillBy: 'resource-adjusted-utilization',
         fillFraction: 1,
+        iconScale: 1,
+        brightness: 1,
         sizeBy: 'planning_sustained_output_mw',
+        outlineWidth: 1.5,
         outlineScale: 1.04,
+        renderMaterial: 'standard',
       },
-      neonStreets: { scope: 'i95', lineWidth: 1 },
-      enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
-      parcels: { text: '' },
+      neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 },
+      enviroscreen: { text: '', scoreBand: 'all', community: 'all', brightness: 1 },
+      parcels: { text: '', brightness: 1 },
       remote: {
         'power-interchanges': {
           text: '',
@@ -1122,12 +1364,6 @@
     proposal: { label: 'Proposed / planned', light: '#ffd98a', color: '#d9911f', dark: '#7d4e0c' },
     paused: { label: 'Paused / blocked', light: '#ffaaa5', color: '#d24a43', dark: '#6d1f1b' },
     unknown: { label: 'Unknown', light: '#c6d0d8', color: '#738392', dark: '#384654' },
-  };
-  const PLANNED_UNCONTESTED_COLOR = {
-    label: 'Planned / unbuilt / uncontested',
-    light: '#fffbd1',
-    color: '#fff15f',
-    dark: '#9a5e00',
   };
   const SENTIMENT_COLORS = {
     supportive: { label: 'Supportive', light: '#8de6b4', color: '#24995f', dark: '#0f5634' },
@@ -1191,6 +1427,13 @@
   const number = (value, digits = 0) => Number(value).toLocaleString('en-US', {
     maximumFractionDigits: digits,
   });
+
+  function formatNewsDate(value) {
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime())
+      ? String(value || 'Undated')
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
 
   function markerSourceCodes(record) {
     if (record.record_type === 'power_plant') {
@@ -1272,7 +1515,6 @@
 
   function stylePaletteForRecord(record, attribute) {
     if (record.record_type === 'data_center') {
-      if (isPlannedUncontestedDataCenter(record)) return [PLANNED_UNCONTESTED_COLOR];
       if (attribute === 'lifecycle') return [LIFECYCLE_COLORS[lifecycleStage(record)] || LIFECYCLE_COLORS.unknown];
       if (attribute === 'sentiment') return [SENTIMENT_COLORS[classifySentiment(record)]];
       return markerPalette(markerSourceCodes(record));
@@ -1283,7 +1525,7 @@
   }
 
   function iconFillForRecord(record, attribute) {
-    const customColor = record.record_type === 'data_center' ? layerCustomColors.get('datacenters') : null;
+    const customColor = record.record_type === 'data_center' ? layerCustomColorHex('datacenters') : null;
     if (customColor) {
       return `radial-gradient(circle at 30% 22%, rgba(255,255,255,.78) 0 7%, rgba(255,255,255,.2) 22%, transparent 48%), linear-gradient(145deg, ${adjustHexColor(customColor, 1.28)} 0%, ${customColor} 48%, ${adjustHexColor(customColor, .58)} 100%)`;
     }
@@ -1328,6 +1570,59 @@
     return `#${[r, g, b].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0')).join('')}`;
   }
 
+  function adjustHexBrightness(color, brightness) {
+    if (!/^#[0-9a-f]{6}$/i.test(String(color))) return color;
+    const factor = normalizeBrightness(brightness);
+    const rgb = hexToRgb(color);
+    return rgbToHex({ r: rgb.r * factor, g: rgb.g * factor, b: rgb.b * factor });
+  }
+
+  function isLayerColorHex(value) {
+    return /^#[0-9a-f]{6}$/i.test(String(value));
+  }
+
+  function normalizeLayerAlpha(value) {
+    const alpha = Number(value);
+    if (!Number.isFinite(alpha)) return 1;
+    return Math.max(0, Math.min(1, alpha));
+  }
+
+  function normalizeLayerColorSetting(value) {
+    if (isLayerColorHex(value)) {
+      return { color: String(value).toLowerCase(), alpha: 1 };
+    }
+    if (value && typeof value === 'object' && isLayerColorHex(value.color)) {
+      return {
+        color: String(value.color).toLowerCase(),
+        alpha: normalizeLayerAlpha(value.alpha),
+      };
+    }
+    return null;
+  }
+
+  function colorValueString(color, alpha = 1) {
+    if (!isLayerColorHex(color)) return color;
+    const normalizedAlpha = normalizeLayerAlpha(alpha);
+    if (normalizedAlpha >= .999) return String(color).toLowerCase();
+    return rgbToRgbaString(hexToRgb(color), normalizedAlpha);
+  }
+
+  function layerCustomColorSetting(layerId) {
+    return normalizeLayerColorSetting(layerCustomColors.get(layerId));
+  }
+
+  function layerCustomColorHex(layerId) {
+    return layerCustomColorSetting(layerId)?.color || null;
+  }
+
+  function layerCustomColorAlpha(layerId) {
+    return layerCustomColorSetting(layerId)?.alpha ?? 1;
+  }
+
+  function formatLayerColorValue(color, alpha) {
+    return `${String(color).toUpperCase()} @ ${Math.round(normalizeLayerAlpha(alpha) * 100)}%`;
+  }
+
   function rgbToRgbaString({ r, g, b }, alpha = 1) {
     return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${alpha})`;
   }
@@ -1365,8 +1660,8 @@
   }
 
   function markerAccentColor(record, attribute) {
-    if (record.record_type === 'power_plant' && layerCustomColors.has('power-plants')) {
-      return layerCustomColors.get('power-plants');
+    if (record.record_type === 'power_plant' && layerCustomColorHex('power-plants')) {
+      return layerCustomColorHex('power-plants');
     }
     if (record.record_type === 'power_plant' && attribute === 'energy') {
       const codes = markerSourceCodes(record);
@@ -1377,6 +1672,10 @@
     }
     const palette = stylePaletteForRecord(record, attribute);
     return mixColors(palette.map((source) => hexToRgb(source.color)));
+  }
+
+  function brightenedMarkerAccentColor(record, attribute, brightness) {
+    return adjustHexBrightness(markerAccentColor(record, attribute), brightness);
   }
 
   const POINT_SCALE_LABELS = {
@@ -1509,8 +1808,7 @@
     const meshDefinition = model.meshes?.[0];
     const primitive = meshDefinition?.primitives?.[0];
     const encoded = model.buffers?.[0]?.uri?.split(',', 2)?.[1];
-    const outline2d = meshDefinition?.extras?.outline2d;
-    if (!primitive || !encoded || !Array.isArray(outline2d)) throw new Error('Lightning bolt model is missing embedded mesh data');
+    if (!primitive || !encoded) throw new Error('Lightning bolt model is missing embedded mesh data');
 
     const binary = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
     const componentReaders = {
@@ -1553,77 +1851,65 @@
       positions,
       normals,
       indices,
-      outline: buildLightningOutlineMesh(outline2d.map(([x, y]) => ({ x, y }))),
+      silhouetteEdges: buildLightningSilhouetteEdges(positions, indices),
       bounds: { minY, maxY },
     };
   }
 
-  function polygonArea(points) {
-    let area = 0;
-    points.forEach((point, index) => {
-      const next = points[(index + 1) % points.length];
-      area += (point.x * next.y) - (next.x * point.y);
-    });
-    return area * 0.5;
-  }
-
-  function normalize2D(vector) {
-    const length = Math.hypot(vector.x, vector.y);
-    return length > 0 ? { x: vector.x / length, y: vector.y / length } : { x: 0, y: 0 };
-  }
-
-  function buildLightningOutlineMesh(points) {
-    if (!Array.isArray(points) || points.length < 3) {
-      return {
-        positions: new Float32Array(),
-        normals: new Float32Array(),
-        indices: new Uint32Array(),
-      };
-    }
-    const outlineWidth = .045;
-    const winding = polygonArea(points) >= 0 ? 1 : -1;
-    const outerPoints = points.map((point, index) => {
-      const previous = points[(index + points.length - 1) % points.length];
-      const next = points[(index + 1) % points.length];
-      const incoming = normalize2D({ x: point.x - previous.x, y: point.y - previous.y });
-      const outgoing = normalize2D({ x: next.x - point.x, y: next.y - point.y });
-      const incomingNormal = winding > 0
-        ? { x: incoming.y, y: -incoming.x }
-        : { x: -incoming.y, y: incoming.x };
-      const outgoingNormal = winding > 0
-        ? { x: outgoing.y, y: -outgoing.x }
-        : { x: -outgoing.y, y: outgoing.x };
-      const miter = normalize2D({
-        x: incomingNormal.x + outgoingNormal.x,
-        y: incomingNormal.y + outgoingNormal.y,
+  function buildLightningSilhouetteEdges(positions, indices) {
+    const edgeMap = new Map();
+    const point = (index) => [positions[index * 3], positions[(index * 3) + 1], positions[(index * 3) + 2]];
+    const pointKey = (value) => value.map((component) => component.toFixed(6)).join(',');
+    const faceNormal = (a, b, c) => {
+      const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+      const ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      const normal = [
+        (ab[1] * ac[2]) - (ab[2] * ac[1]),
+        (ab[2] * ac[0]) - (ab[0] * ac[2]),
+        (ab[0] * ac[1]) - (ab[1] * ac[0]),
+      ];
+      const length = Math.hypot(...normal) || 1;
+      return normal.map((component) => component / length);
+    };
+    for (let offset = 0; offset < indices.length; offset += 3) {
+      const triangle = [point(indices[offset]), point(indices[offset + 1]), point(indices[offset + 2])];
+      const normal = faceNormal(...triangle);
+      [[0, 1], [1, 2], [2, 0]].forEach(([startIndex, endIndex]) => {
+        const start = triangle[startIndex];
+        const end = triangle[endIndex];
+        const startKey = pointKey(start);
+        const endKey = pointKey(end);
+        const key = startKey < endKey ? `${startKey}|${endKey}` : `${endKey}|${startKey}`;
+        const edge = edgeMap.get(key) || { start, end, normals: [] };
+        edge.normals.push(normal);
+        edgeMap.set(key, edge);
       });
-      const reference = outgoingNormal;
-      const divider = Math.abs((miter.x * reference.x) + (miter.y * reference.y));
-      const scale = outlineWidth / Math.max(.35, divider);
-      return {
-        x: point.x + (miter.x * scale),
-        y: point.y + (miter.y * scale),
-      };
-    });
-
-    const positions = [];
-    const normals = [];
-    const indices = [];
-    points.forEach((point, index) => {
-      const outer = outerPoints[index];
-      positions.push(point.x, point.y, 0, outer.x, outer.y, 0);
-      normals.push(0, 0, 1, 0, 0, 1);
-    });
-    for (let index = 0; index < points.length; index += 1) {
-      const next = (index + 1) % points.length;
-      const base = index * 2;
-      const nextBase = next * 2;
-      indices.push(base, nextBase, nextBase + 1, base, nextBase + 1, base + 1);
     }
+
+    const starts = [];
+    const ends = [];
+    const normalAs = [];
+    const normalBs = [];
+    const corners = [];
+    const quadCorners = [[0, -1], [1, 1], [1, -1], [0, -1], [0, 1], [1, 1]];
+    edgeMap.forEach(({ start, end, normals }) => {
+      const normalA = normals[0];
+      const normalB = normals[1] || normalA.map((component) => -component);
+      quadCorners.forEach((corner) => {
+        starts.push(...start);
+        ends.push(...end);
+        normalAs.push(...normalA);
+        normalBs.push(...normalB);
+        corners.push(...corner);
+      });
+    });
     return {
-      positions: new Float32Array(positions),
-      normals: new Float32Array(normals),
-      indices: new Uint32Array(indices),
+      starts: new Float32Array(starts),
+      ends: new Float32Array(ends),
+      normalAs: new Float32Array(normalAs),
+      normalBs: new Float32Array(normalBs),
+      corners: new Float32Array(corners),
+      vertexCount: corners.length / 2,
     };
   }
 
@@ -1632,6 +1918,11 @@
       precision highp float;
       attribute vec3 a_position;
       attribute vec3 a_normal;
+      attribute vec3 a_edgeStart;
+      attribute vec3 a_edgeEnd;
+      attribute vec3 a_edgeNormalA;
+      attribute vec3 a_edgeNormalB;
+      attribute vec2 a_edgeCorner;
       attribute vec2 a_anchor;
       attribute vec3 a_accentColor;
       attribute vec3 a_outlineColor;
@@ -1641,10 +1932,11 @@
       attribute float a_fillFraction;
       uniform mat4 u_matrix;
       uniform vec2 u_viewportSize;
-      uniform float u_time;
+      uniform highp float u_time;
       uniform float u_scale;
       uniform float u_fillMinY;
       uniform float u_fillMaxY;
+      uniform float u_outlineWidth;
       uniform mediump float u_glowPass;
       uniform mediump float u_outlineOnly;
       varying vec3 v_accentColor;
@@ -1653,6 +1945,24 @@
       varying float v_hover;
       varying float v_fillY;
       varying float v_fillFraction;
+      varying float v_traceVisible;
+      varying vec2 v_traceCoord;
+      varying float v_traceLength;
+      varying float v_traceHalfWidth;
+      varying vec3 v_normal;
+      varying vec3 v_modelPosition;
+
+      vec3 rotateBolt(vec3 value, float cosAngle, float sinAngle) {
+        return vec3(
+          (value.x * cosAngle) + (value.z * sinAngle),
+          value.y,
+          (-value.x * sinAngle) + (value.z * cosAngle)
+        );
+      }
+
+      vec2 projectBolt(vec3 value, float tilt) {
+        return vec2(value.x, -((value.y * cos(tilt)) - (value.z * sin(tilt))));
+      }
 
       void main() {
         vec4 clip = u_matrix * vec4(a_anchor, 0.0, 1.0);
@@ -1660,23 +1970,39 @@
         float rotation = (u_time * 1.15) + a_phase;
         float cosAngle = cos(rotation);
         float sinAngle = sin(rotation);
-        vec3 rotated = vec3(
-          (a_position.x * cosAngle) + (a_position.z * sinAngle),
-          a_position.y,
-          (-a_position.x * sinAngle) + (a_position.z * cosAngle)
-        );
-        vec3 rotatedNormal = normalize(vec3(
-          (a_normal.x * cosAngle) + (a_normal.z * sinAngle),
-          a_normal.y,
-          (-a_normal.x * sinAngle) + (a_normal.z * cosAngle)
-        ));
         float tilt = -0.18;
-        vec2 modelScreen = vec2(
-          rotated.x,
-          -((rotated.y * cos(tilt)) - (rotated.z * sin(tilt)))
-        );
+        vec3 rotated = rotateBolt(a_position, cosAngle, sinAngle);
+        vec3 rotatedNormal = normalize(rotateBolt(a_normal, cosAngle, sinAngle));
+        vec2 modelScreen = projectBolt(rotated, tilt);
         float hoverScale = 1.0 + (a_hover * u_glowPass * 0.32);
         vec2 offsetPixels = modelScreen * a_size * u_scale * pulse * hoverScale;
+        v_traceVisible = 1.0;
+        v_traceCoord = vec2(0.0);
+        v_traceLength = 0.0;
+        v_traceHalfWidth = 0.0;
+        if (u_outlineOnly > 0.5) {
+          vec3 edgeStart = rotateBolt(a_edgeStart, cosAngle, sinAngle);
+          vec3 edgeEnd = rotateBolt(a_edgeEnd, cosAngle, sinAngle);
+          vec3 edgeNormalA = rotateBolt(a_edgeNormalA, cosAngle, sinAngle);
+          vec3 edgeNormalB = rotateBolt(a_edgeNormalB, cosAngle, sinAngle);
+          float facingA = (edgeNormalA.y * sin(tilt)) + (edgeNormalA.z * cos(tilt));
+          float facingB = (edgeNormalB.y * sin(tilt)) + (edgeNormalB.z * cos(tilt));
+          v_traceVisible = step(facingA * facingB, 0.0001);
+
+          vec2 startPixels = projectBolt(edgeStart, tilt) * a_size * pulse;
+          vec2 endPixels = projectBolt(edgeEnd, tilt) * a_size * pulse;
+          vec2 edgeVector = endPixels - startPixels;
+          float edgeLength = max(length(edgeVector), 0.001);
+          vec2 edgeDirection = edgeVector / edgeLength;
+          vec2 edgeNormal = vec2(-edgeDirection.y, edgeDirection.x);
+          float halfWidth = u_outlineWidth * mix(1.0, 1.2, a_hover);
+          float outerWidth = halfWidth + 1.0;
+          float along = mix(-outerWidth, edgeLength + outerWidth, a_edgeCorner.x);
+          offsetPixels = startPixels + (edgeDirection * along) + (edgeNormal * a_edgeCorner.y * outerWidth);
+          v_traceCoord = vec2(along, a_edgeCorner.y * outerWidth);
+          v_traceLength = edgeLength;
+          v_traceHalfWidth = halfWidth;
+        }
         vec2 offsetClip = vec2(
           (offsetPixels.x / u_viewportSize.x) * 2.0 * clip.w,
           (-offsetPixels.y / u_viewportSize.y) * 2.0 * clip.w
@@ -1688,20 +2014,31 @@
         v_hover = a_hover;
         v_fillY = a_position.y;
         v_fillFraction = a_fillFraction;
+        v_normal = rotatedNormal;
+        v_modelPosition = a_position;
       }
     `;
     const fragmentSource = `
       precision mediump float;
+      uniform highp float u_time;
       uniform mediump float u_fillMinY;
       uniform mediump float u_fillMaxY;
       uniform mediump float u_glowPass;
       uniform mediump float u_outlineOnly;
+      uniform mediump float u_materialMode;
+      uniform mediump float u_globalAlpha;
       varying vec3 v_accentColor;
       varying vec3 v_outlineColor;
       varying float v_light;
       varying float v_hover;
       varying float v_fillY;
       varying float v_fillFraction;
+      varying float v_traceVisible;
+      varying vec2 v_traceCoord;
+      varying float v_traceLength;
+      varying float v_traceHalfWidth;
+      varying vec3 v_normal;
+      varying vec3 v_modelPosition;
 
       void main() {
         vec3 energizedColor = mix(v_accentColor, vec3(1.0), 0.3);
@@ -1710,18 +2047,70 @@
         float fillCutoff = mix(u_fillMinY, u_fillMaxY, fillFraction);
         float filled = step(v_fillY, fillCutoff);
         if (u_outlineOnly > 0.5) {
+          if (v_traceVisible < 0.5) discard;
+          vec2 centered = vec2(v_traceCoord.x - (v_traceLength * 0.5), v_traceCoord.y);
+          vec2 distanceToBox = abs(centered) - vec2((v_traceLength * 0.5) + v_traceHalfWidth, v_traceHalfWidth);
+          float traceDistance = length(max(distanceToBox, 0.0)) + min(max(distanceToBox.x, distanceToBox.y), 0.0);
+          float coverage = 1.0 - smoothstep(-0.5, 0.5, traceDistance);
+          if (coverage <= 0.0) discard;
           vec3 outlineColor = min(vec3(1.0), v_outlineColor * mix(0.88, 1.08, v_hover));
-          gl_FragColor = vec4(outlineColor, mix(0.92, 1.0, v_hover));
+          gl_FragColor = vec4(outlineColor * coverage * u_globalAlpha, coverage * u_globalAlpha);
+          return;
+        }
+        vec3 normalColor = normalize(v_normal) * 0.5 + 0.5;
+        float fresnel = pow(1.0 - abs(normalize(v_normal).z), 2.2);
+        float metallicHighlight = pow(max(v_light, 0.0), 3.2);
+        float polishedHighlight = pow(max(v_light, 0.0), 6.0);
+        float pulse = 0.5 + 0.5 * sin((u_time * 2.4) + (v_modelPosition.y * 4.2));
+        float scan = 0.5 + 0.5 * sin((v_modelPosition.y * 16.0) - (u_time * 5.0));
+        vec3 rainbow = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + (v_modelPosition.y * 0.55) + (u_time * 0.08)));
+        float toonLight = step(0.3, v_light) * 0.38 + step(0.55, v_light) * 0.28 + step(0.8, v_light) * 0.22;
+        float grid = max(
+          1.0 - smoothstep(0.84, 0.96, abs(sin(v_modelPosition.x * 16.0))),
+          1.0 - smoothstep(0.84, 0.96, abs(sin(v_modelPosition.y * 11.0)))
+        );
+        vec3 materialColor = litColor;
+        float materialAlpha = 1.0;
+        if (u_materialMode < 0.5) {
+          materialColor = litColor;
+        } else if (u_materialMode < 1.5) {
+          materialColor = min(vec3(1.0), energizedColor * 0.78 + vec3(metallicHighlight * 0.7));
+        } else if (u_materialMode < 2.5) {
+          materialColor = min(vec3(1.0), energizedColor * 0.68 + vec3(polishedHighlight * 0.95 + fresnel * 0.2));
+        } else if (u_materialMode < 3.5) {
+          materialColor = mix(energizedColor, rainbow, 0.62);
+          materialColor = min(vec3(1.0), materialColor * (0.88 + polishedHighlight * 0.35));
+        } else if (u_materialMode < 4.5) {
+          materialColor = min(vec3(1.0), mix(energizedColor, vec3(1.0, 0.96, 0.98), 0.32) + rainbow * 0.12 + fresnel * 0.16);
+        } else if (u_materialMode < 5.5) {
+          materialColor = mix(energizedColor, vec3(0.92, 0.98, 1.0), 0.45);
+          materialAlpha = 0.4 + fresnel * 0.18;
+        } else if (u_materialMode < 6.5) {
+          materialColor = min(vec3(1.0), energizedColor * (1.2 + pulse * 0.45) + vec3(0.12, 0.12, 0.06));
+        } else if (u_materialMode < 7.5) {
+          materialColor = mix(energizedColor, rainbow, 0.7) * (0.7 + fresnel * 0.7 + scan * 0.22);
+          materialAlpha = 0.48 + fresnel * 0.24;
+        } else if (u_materialMode < 8.5) {
+          materialColor = mix(normalColor, energizedColor, 0.2);
+          materialAlpha = 0.24 + fresnel * 0.18;
+        } else if (u_materialMode < 9.5) {
+          materialColor = min(vec3(1.0), energizedColor * 0.74 + vec3(polishedHighlight * 0.9));
+        } else if (u_materialMode < 10.5) {
+          materialColor = energizedColor * (0.45 + toonLight);
+        } else if (u_materialMode < 11.5) {
+          materialColor = normalColor;
+        } else {
+          materialColor = min(vec3(1.0), energizedColor * 0.2 + vec3(grid));
+          materialAlpha = max(0.22, grid);
+        }
+        if (u_glowPass > 0.5) {
+          vec3 glowColor = mix(materialColor * 0.52, vec3(1.0), v_hover * 0.7);
+          float glowAlpha = mix(0.38, 0.92, v_hover) * max(0.42, materialAlpha);
+          gl_FragColor = vec4(glowColor * glowAlpha * u_globalAlpha, glowAlpha * u_globalAlpha);
           return;
         }
         if (filled < 0.5) discard;
-        if (u_glowPass > 0.5) {
-          vec3 glowColor = mix(energizedColor * 0.52, vec3(1.0), v_hover * 0.7);
-          float glowAlpha = mix(0.38, 0.92, v_hover);
-          gl_FragColor = vec4(glowColor * glowAlpha, glowAlpha);
-          return;
-        }
-        gl_FragColor = vec4(litColor, 1.0);
+        gl_FragColor = vec4(materialColor * materialAlpha * u_globalAlpha, materialAlpha * u_globalAlpha);
       }
     `;
 
@@ -1739,11 +2128,14 @@
       positionBuffer: null,
       normalBuffer: null,
       indexBuffer: null,
-      outlinePositionBuffer: null,
-      outlineNormalBuffer: null,
-      outlineIndexBuffer: null,
+      edgeStartBuffer: null,
+      edgeEndBuffer: null,
+      edgeNormalABuffer: null,
+      edgeNormalBBuffer: null,
+      edgeCornerBuffer: null,
       indexCount: 0,
-      outlineIndexCount: 0,
+      silhouetteEdgeCount: 0,
+      silhouetteVertexCount: 0,
       vertexCount: 0,
       renderCount: 0,
       lastGlError: null,
@@ -1776,6 +2168,11 @@
         state.attribs = {
           position: gl.getAttribLocation(state.program, 'a_position'),
           normal: gl.getAttribLocation(state.program, 'a_normal'),
+          edgeStart: gl.getAttribLocation(state.program, 'a_edgeStart'),
+          edgeEnd: gl.getAttribLocation(state.program, 'a_edgeEnd'),
+          edgeNormalA: gl.getAttribLocation(state.program, 'a_edgeNormalA'),
+          edgeNormalB: gl.getAttribLocation(state.program, 'a_edgeNormalB'),
+          edgeCorner: gl.getAttribLocation(state.program, 'a_edgeCorner'),
           anchor: gl.getAttribLocation(state.program, 'a_anchor'),
           accentColor: gl.getAttribLocation(state.program, 'a_accentColor'),
           outlineColor: gl.getAttribLocation(state.program, 'a_outlineColor'),
@@ -1791,8 +2188,11 @@
           scale: gl.getUniformLocation(state.program, 'u_scale'),
           fillMinY: gl.getUniformLocation(state.program, 'u_fillMinY'),
           fillMaxY: gl.getUniformLocation(state.program, 'u_fillMaxY'),
+          outlineWidth: gl.getUniformLocation(state.program, 'u_outlineWidth'),
           glowPass: gl.getUniformLocation(state.program, 'u_glowPass'),
           outlineOnly: gl.getUniformLocation(state.program, 'u_outlineOnly'),
+          materialMode: gl.getUniformLocation(state.program, 'u_materialMode'),
+          globalAlpha: gl.getUniformLocation(state.program, 'u_globalAlpha'),
         };
         state.antialiasSamples = gl.getParameter(gl.SAMPLES);
         state.instanceBuffer = gl.createBuffer();
@@ -1808,18 +2208,22 @@
           state.indexBuffer = gl.createBuffer();
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
           gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
-          state.outlinePositionBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlinePositionBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, mesh.outline.positions, gl.STATIC_DRAW);
-          state.outlineNormalBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlineNormalBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, mesh.outline.normals, gl.STATIC_DRAW);
-          state.outlineIndexBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.outlineIndexBuffer);
-          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.outline.indices, gl.STATIC_DRAW);
+          const edgeBuffers = [
+            ['edgeStartBuffer', mesh.silhouetteEdges.starts],
+            ['edgeEndBuffer', mesh.silhouetteEdges.ends],
+            ['edgeNormalABuffer', mesh.silhouetteEdges.normalAs],
+            ['edgeNormalBBuffer', mesh.silhouetteEdges.normalBs],
+            ['edgeCornerBuffer', mesh.silhouetteEdges.corners],
+          ];
+          edgeBuffers.forEach(([name, values]) => {
+            state[name] = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, state[name]);
+            gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);
+          });
           state.vertexCount = mesh.positions.length / 3;
           state.indexCount = mesh.indices.length;
-          state.outlineIndexCount = mesh.outline.indices.length;
+          state.silhouetteVertexCount = mesh.silhouetteEdges.vertexCount;
+          state.silhouetteEdgeCount = mesh.silhouetteEdges.vertexCount / 6;
           state.fillMinY = mesh.bounds.minY;
           state.fillMaxY = mesh.bounds.maxY;
           state.ready = true;
@@ -1831,7 +2235,7 @@
       },
       render(gl, options) {
         if (!state.ready || !state.entries.length) return;
-        const boltOutlineScale = normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale);
+        const boltOutlineWidth = normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth);
         if (state.dirty) {
           const payload = new Float32Array(state.entries.length * 12);
           state.entries.forEach((entry, index) => {
@@ -1861,6 +2265,10 @@
         const drawElementsInstanced = (mode, count, type, offset, instances) => {
           if (gl.drawElementsInstanced) gl.drawElementsInstanced(mode, count, type, offset, instances);
           else state.ext.drawElementsInstancedANGLE(mode, count, type, offset, instances);
+        };
+        const drawArraysInstanced = (mode, first, count, instances) => {
+          if (gl.drawArraysInstanced) gl.drawArraysInstanced(mode, first, count, instances);
+          else state.ext.drawArraysInstancedANGLE(mode, first, count, instances);
         };
 
         gl.useProgram(state.program);
@@ -1902,6 +2310,9 @@
         gl.uniform1f(state.uniforms.time, performance.now() * 0.001);
         gl.uniform1f(state.uniforms.fillMinY, state.fillMinY);
         gl.uniform1f(state.uniforms.fillMaxY, state.fillMaxY);
+        gl.uniform1f(state.uniforms.outlineWidth, boltOutlineWidth);
+        gl.uniform1f(state.uniforms.materialMode, powerPlantRenderMaterialMode(layerFilters.powerPlants.renderMaterial));
+        gl.uniform1f(state.uniforms.globalAlpha, layerCustomColorAlpha('power-plants'));
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -1923,21 +2334,35 @@
         gl.uniform1f(state.uniforms.scale, 1.16);
         drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
 
-        if (state.outlineIndexCount > 0) {
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlinePositionBuffer);
-          gl.vertexAttribPointer(state.attribs.position, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlineNormalBuffer);
-          gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.outlineIndexBuffer);
+        if (state.silhouetteVertexCount > 0) {
+          gl.disableVertexAttribArray(state.attribs.position);
+          gl.vertexAttrib3f(state.attribs.position, 0, 0, 0);
+          gl.disableVertexAttribArray(state.attribs.normal);
+          gl.vertexAttrib3f(state.attribs.normal, 0, 0, 1);
+          const edgeAttributes = [
+            [state.attribs.edgeStart, state.edgeStartBuffer, 3],
+            [state.attribs.edgeEnd, state.edgeEndBuffer, 3],
+            [state.attribs.edgeNormalA, state.edgeNormalABuffer, 3],
+            [state.attribs.edgeNormalB, state.edgeNormalBBuffer, 3],
+            [state.attribs.edgeCorner, state.edgeCornerBuffer, 2],
+          ];
+          edgeAttributes.forEach(([attribute, buffer, components]) => {
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.enableVertexAttribArray(attribute);
+            gl.vertexAttribPointer(attribute, components, gl.FLOAT, false, 0, 0);
+            divisor(attribute, 0);
+          });
           gl.uniform1f(state.uniforms.glowPass, 0.0);
           gl.uniform1f(state.uniforms.outlineOnly, 1.0);
-          gl.uniform1f(state.uniforms.scale, boltOutlineScale);
-          drawElementsInstanced(gl.TRIANGLES, state.outlineIndexCount, gl.UNSIGNED_INT, 0, state.entries.length);
+          gl.uniform1f(state.uniforms.scale, 1.0);
+          drawArraysInstanced(gl.TRIANGLES, 0, state.silhouetteVertexCount, state.entries.length);
+          edgeAttributes.forEach(([attribute]) => gl.disableVertexAttribArray(attribute));
           gl.bindBuffer(gl.ARRAY_BUFFER, state.positionBuffer);
+          gl.enableVertexAttribArray(state.attribs.position);
           gl.vertexAttribPointer(state.attribs.position, 3, gl.FLOAT, false, 0, 0);
           gl.bindBuffer(gl.ARRAY_BUFFER, state.normalBuffer);
+          gl.enableVertexAttribArray(state.attribs.normal);
           gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
         }
 
         gl.uniform1f(state.uniforms.glowPass, 0.0);
@@ -1960,9 +2385,11 @@
         if (state.positionBuffer) gl.deleteBuffer(state.positionBuffer);
         if (state.normalBuffer) gl.deleteBuffer(state.normalBuffer);
         if (state.indexBuffer) gl.deleteBuffer(state.indexBuffer);
-        if (state.outlinePositionBuffer) gl.deleteBuffer(state.outlinePositionBuffer);
-        if (state.outlineNormalBuffer) gl.deleteBuffer(state.outlineNormalBuffer);
-        if (state.outlineIndexBuffer) gl.deleteBuffer(state.outlineIndexBuffer);
+        if (state.edgeStartBuffer) gl.deleteBuffer(state.edgeStartBuffer);
+        if (state.edgeEndBuffer) gl.deleteBuffer(state.edgeEndBuffer);
+        if (state.edgeNormalABuffer) gl.deleteBuffer(state.edgeNormalABuffer);
+        if (state.edgeNormalBBuffer) gl.deleteBuffer(state.edgeNormalBBuffer);
+        if (state.edgeCornerBuffer) gl.deleteBuffer(state.edgeCornerBuffer);
         if (state.instanceBuffer) gl.deleteBuffer(state.instanceBuffer);
         if (state.program) gl.deleteProgram(state.program);
         state.ready = false;
@@ -1971,16 +2398,17 @@
         state.records = records;
         if (!records.some((record) => record.id === state.hoveredRecordId)) state.hoveredRecordId = null;
         const sizeFactors = pointScaleFactors(records, layerFilters.powerPlants.sizeBy);
+        const brightness = normalizeBrightness(layerFilters.powerPlants.brightness);
         state.entries = records.map((record, index) => {
           const coordinate = maplibregl.MercatorCoordinate.fromLngLat([record.longitude, record.latitude], 0);
           return {
             record,
             mercatorX: coordinate.x,
             mercatorY: coordinate.y,
-            accent: hexToRgb(markerAccentColor(record, layerFilters.powerPlants.colorBy)),
-            outline: hexToRgb(outlineColorForRecord(record, layerFilters.powerPlants.outlineBy)),
+            accent: hexToRgb(brightenedMarkerAccentColor(record, layerFilters.powerPlants.colorBy, brightness)),
+            outline: hexToRgb(adjustHexBrightness(outlineColorForRecord(record, layerFilters.powerPlants.outlineBy), brightness)),
             phase: (index * 2.399963229728653) % (Math.PI * 2),
-            size: 36 * sizeFactors.get(record),
+            size: 36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * sizeFactors.get(record),
             fillFraction: powerPlantFillFraction(record, layerFilters.powerPlants.fillBy, layerFilters.powerPlants.fillFraction),
           };
         }).sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
@@ -2002,16 +2430,18 @@
           instanceCount: state.entries.length,
           vertexCount: state.vertexCount,
           indexCount: state.indexCount,
-          outlineIndexCount: state.outlineIndexCount,
+          silhouetteEdgeCount: state.silhouetteEdgeCount,
           renderCount: state.renderCount,
           lastGlError: state.lastGlError,
           antialiasSamples: state.antialiasSamples,
-          outlineScale: normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale),
+          outlineWidth: normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth),
+          brightness: normalizeBrightness(layerFilters.powerPlants.brightness),
           alphaToCoverage: state.antialiasSamples > 1,
           hoveredRecordId: state.hoveredRecordId,
           sizeBy: layerFilters.powerPlants.sizeBy,
           fillBy: layerFilters.powerPlants.fillBy,
           fillFraction: layerFilters.powerPlants.fillFraction,
+          renderMaterial: normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial),
           minimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
           maximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
           drawOrderAscending: state.entries.every((entry, index) => index === 0 || state.entries[index - 1].size <= entry.size),
@@ -2064,30 +2494,34 @@
   function applyMarkerAppearance(record, element) {
     const colorBy = layerFilters.datacenters.colorBy;
     const outlineBy = layerFilters.datacenters.outlineBy;
+    const brightness = normalizeBrightness(layerFilters.datacenters.brightness);
     const glow = dataCenterGlow(record, layerFilters.datacenters.glowBy);
     const glowDistance = normalizeGlowDistance(layerFilters.datacenters.glowDistance);
     const glowBlur = normalizeGlowBlur(layerFilters.datacenters.glowBlur);
-    element.style.setProperty('--marker-icon-fill', iconFillForRecord(record, colorBy));
-    const outline = outlineColorForRecord(record, outlineBy);
+    element.style.setProperty('--marker-icon-fill', adjustHexBrightness(iconFillForRecord(record, colorBy), brightness));
+    const outline = adjustHexBrightness(outlineColorForRecord(record, outlineBy), brightness);
     element.style.setProperty('--marker-outline-color', outline);
-    element.style.setProperty('--marker-glow-color', glow.color);
+    element.style.setProperty('--marker-brightness', String(brightness));
+    element.style.opacity = String(layerCustomColorAlpha('datacenters'));
+    element.querySelector('.dc-map-icon')?.style.setProperty('filter', `brightness(${brightness})`);
+    element.style.setProperty('--marker-glow-color', adjustHexBrightness(glow.color, brightness));
     element.style.setProperty('--marker-glow-opacity', String(glow.opacity));
     element.style.setProperty('--marker-glow-scale', String(glow.scale * glowDistance));
     element.style.setProperty('--marker-glow-blur', String(glowBlur));
-    element.style.setProperty('--marker-glow-edge-color', glow.edgeColor || glow.color);
+    element.style.setProperty('--marker-glow-edge-color', adjustHexBrightness(glow.edgeColor || glow.color, brightness));
     element.style.setProperty('--marker-glow-edge-opacity', glow.edgeOpacity || '0%');
     element.style.setProperty('--marker-glow-edge-soft-opacity', glow.edgeSoftOpacity || '0%');
-    element.style.setProperty('--marker-glow-ring-width', String(glow.ringWidth || .045));
+    element.style.setProperty('--marker-glow-ring-width', String(glow.ringWidth ?? .045));
     element.style.setProperty('--marker-glow-edge-spread', String(glow.edgeSpread || .24));
     element.dataset.glow = glow.kind;
-    element.dataset.exportColors = JSON.stringify(stylePaletteForRecord(record, colorBy).map((entry) => entry.color));
+    element.dataset.exportColors = JSON.stringify(stylePaletteForRecord(record, colorBy).map((entry) => adjustHexBrightness(entry.color, brightness)));
     element.dataset.exportOutline = outline;
-    element.dataset.exportGlowColor = glow.color;
-    element.dataset.exportGlowEdgeColor = glow.edgeColor || glow.color;
+    element.dataset.exportGlowColor = adjustHexBrightness(glow.color, brightness);
+    element.dataset.exportGlowEdgeColor = adjustHexBrightness(glow.edgeColor || glow.color, brightness);
     element.dataset.exportGlowOpacity = String(glow.opacity);
     element.dataset.exportGlowScale = String(glow.scale * glowDistance);
     element.dataset.exportGlowBlur = String(glowBlur);
-    element.dataset.exportGlowRingWidth = String(glow.ringWidth || .045);
+    element.dataset.exportGlowRingWidth = String(glow.ringWidth ?? .045);
   }
 
   function dataCenterGlow(record, glowBy) {
@@ -2098,13 +2532,13 @@
       return { kind: 'contested', color: '#ff263f', edgeColor: '#ff263f', edgeOpacity: '0%', edgeSoftOpacity: '0%', opacity: 1, scale: 2.15 };
     }
     if (record.contestation_score === 3) {
-      return { kind: 'contested', color: '#ff4b5f', edgeColor: '#ff4b5f', edgeOpacity: '0%', edgeSoftOpacity: '0%', opacity: .68, scale: 1.9 };
+      return { kind: 'contested', color: '#ff4b5f', edgeColor: '#ff4b5f', edgeOpacity: '0%', edgeSoftOpacity: '0%', opacity: .68, scale: 2.15 };
     }
     if (record.contestation_score === 0) {
       if (isPlannedUncontestedDataCenter(record)) {
-        return { kind: 'planned-uncontested', color: '#fff15f', edgeColor: '#ffb000', edgeOpacity: '100%', edgeSoftOpacity: '80%', ringWidth: .12, edgeSpread: .5, opacity: 1, scale: 2.15 };
+        return { kind: 'planned-uncontested', color: '#fff15f', edgeColor: '#fff15f', edgeOpacity: '0%', edgeSoftOpacity: '0%', ringWidth: 0, edgeSpread: .34, opacity: .42, scale: 2.15 };
       }
-      return { kind: 'quiet', color: '#ffffff', edgeColor: '#32dfff', edgeOpacity: '100%', edgeSoftOpacity: '82%', ringWidth: .12, edgeSpread: .52, opacity: 1, scale: 2.1 };
+      return { kind: 'quiet', color: '#19c37d', edgeColor: '#19c37d', edgeOpacity: '0%', edgeSoftOpacity: '0%', ringWidth: 0, edgeSpread: .24, opacity: .26, scale: 2.15 };
     }
     return { kind: 'none', color: 'transparent', edgeColor: 'transparent', opacity: 0, scale: 1 };
   }
@@ -2212,24 +2646,85 @@
   let inspectorPinnedKey = null;
   let inspectorHoverLayerId = null;
   let inspectorPinnedLayerId = null;
+  let datacenterNewsItems = [];
   const mobileInspectorQuery = window.matchMedia(MOBILE_INSPECTOR_MEDIA);
   let hoveredDataCenterElement = null;
   let visibleDataCenterHoverEntries = [];
   let deckHoverTarget = null;
   let streetStyleLayerIds = [];
   const layerFilters = {
-    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'reported_power_capacity_mw' },
-    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, sizeBy: 'planning_sustained_output_mw', outlineScale: 1.04 },
-    neonStreets: { scope: 'i95', lineWidth: 1 },
-    enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
-    parcels: { text: '' },
+    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, iconScale: 1, brightness: 1, sizeBy: 'reported_power_capacity_mw' },
+    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', outlineWidth: 1.5, outlineScale: 1.04, renderMaterial: 'standard' },
+    neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 },
+    enviroscreen: { text: '', scoreBand: 'all', community: 'all', brightness: 1 },
+    parcels: { text: '', brightness: 1 },
   };
   let layerSearch = '';
   let layerOrder = [];
   let layerOrderDragId = null;
+  let remoteStyleRehydrateTimer = null;
+  let queryStateCompressionEnabled = false;
+  let compressedPersistSequence = 0;
   let activeLayerConfigId = null;
   let activeLayerColorId = null;
   let activeLayerContext = null;
+
+  function supportsCompressedQueryState() {
+    return typeof CompressionStream === 'function' && typeof DecompressionStream === 'function';
+  }
+
+  function syncCompressedQueryToggle() {
+    const toggle = document.getElementById('compress-query-state');
+    if (!toggle) return;
+    const supported = supportsCompressedQueryState();
+    toggle.checked = queryStateCompressionEnabled && supported;
+    toggle.disabled = !supported;
+    toggle.title = supported
+      ? 'Store map state in a compressed share URL'
+      : 'This browser does not support compressed share URLs';
+  }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+  }
+
+  function bytesToBase64Url(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+    }
+    return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+  }
+
+  function base64UrlToBytes(value) {
+    const padded = String(value || '').replaceAll('-', '+').replaceAll('_', '/').padEnd(Math.ceil(String(value || '').length / 4) * 4, '=');
+    return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+  }
+
+  async function compressUiStateForQuery(state) {
+    if (!supportsCompressedQueryState()) throw new Error('Compressed query state is not supported by this browser');
+    const stream = new Blob([JSON.stringify(state)]).stream().pipeThrough(new CompressionStream('gzip'));
+    return bytesToBase64Url(new Uint8Array(await new Response(stream).arrayBuffer()));
+  }
+
+  async function decompressUiStateFromQuery(value) {
+    if (!supportsCompressedQueryState()) throw new Error('Compressed query state is not supported by this browser');
+    const stream = new Blob([base64UrlToBytes(value)]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return JSON.parse(await new Response(stream).text());
+  }
 
   function defaultLayerZoomRange(layerId) {
     const bounded = (min, max) => normalizeZoomRange(min, max, { min: MAP_MIN_ZOOM, max: MAP_MAX_ZOOM });
@@ -2311,7 +2806,7 @@
       ['energy', 'Energy profile'],
     ],
     datacenterIconGlow: [
-      ['contestation', 'Contestation · red / planned yellow / quiet white'],
+      ['contestation', 'Contestation halos · red / planned yellow / peaceful green'],
       ['none', 'No glow'],
     ],
     plantIconColor: [
@@ -2330,6 +2825,7 @@
       ['resource-adjusted-utilization', 'Resource-adjusted annual utilization'],
       ['custom', 'Custom fraction from bottom'],
     ],
+    plantRenderMaterial: POWER_PLANT_RENDER_MATERIAL_OPTIONS,
     sentiment: [
       ['all', 'All public-response evidence'],
       ['opposed', 'Documented opposition'],
@@ -2366,9 +2862,24 @@
     return Number.isFinite(width) ? Math.max(.25, Math.min(5, width)) : 1;
   }
 
+  function defaultLineWidthBy(config) {
+    if (config?.geometry !== 'line') return 'zoom';
+    return config.defaultLineWidthBy || config.lineWidthFields?.[0]?.[0] || 'zoom';
+  }
+
   function normalizeLineWidthBy(config, value) {
-    const selected = String(value || 'zoom');
-    return lineWidthFieldOptions(config).some(([field]) => field === selected) ? selected : 'zoom';
+    const fallback = defaultLineWidthBy(config);
+    const selected = String(value || fallback);
+    return lineWidthFieldOptions(config).some(([field]) => field === selected) ? selected : fallback;
+  }
+
+  function defaultLineColorTheme(config) {
+    return config?.geometry === 'line' ? 'uniform' : (config?.lineColorThemes ? 'uniform' : 'default');
+  }
+
+  function normalizePointRenderMode(config, value) {
+    if (!config || config.geometry !== 'point') return 'points';
+    return value === 'gpu-splat' ? 'gpu-splat' : 'points';
   }
 
   function normalizeGlowDistance(value) {
@@ -2381,9 +2892,19 @@
     return Number.isFinite(blur) ? Math.max(0, Math.min(2.5, blur)) : 1;
   }
 
-  function normalizeBoltOutlineScale(value) {
+  function normalizeIconScale(value) {
     const scale = Number(value);
-    return Number.isFinite(scale) ? Math.max(.5, Math.min(2, scale)) : 1.04;
+    return Number.isFinite(scale) ? Math.max(.25, Math.min(4, scale)) : 1;
+  }
+
+  function normalizeBrightness(value) {
+    const brightness = Number(value);
+    return Number.isFinite(brightness) ? Math.max(.25, Math.min(3, brightness)) : 1;
+  }
+
+  function normalizeBoltOutlineWidth(value) {
+    const width = Number(value);
+    return Number.isFinite(width) ? Math.max(.5, Math.min(5, width)) : 1.5;
   }
 
   function scaledLineWidth(expression, multiplier) {
@@ -2455,11 +2976,37 @@
   }
 
   function normalizePowerPlantLayerFilters(filters) {
-    filters.outlineScale = normalizeBoltOutlineScale(filters.outlineScale);
+    filters.iconScale = normalizeIconScale(filters.iconScale);
+    filters.brightness = normalizeBrightness(filters.brightness);
+    filters.outlineWidth = normalizeBoltOutlineWidth(filters.outlineWidth);
+    filters.renderMaterial = normalizePowerPlantRenderMaterial(filters.renderMaterial);
     if (filters.fillBy === 'resource-adjusted-utilization' && (!filters.sizeBy || filters.sizeBy === 'none')) {
       filters.sizeBy = 'planning_sustained_output_mw';
     }
     return filters;
+  }
+
+  function normalizePowerPlantRenderMaterial(value) {
+    const normalized = String(value || 'standard');
+    return POWER_PLANT_RENDER_MATERIAL_OPTIONS.some(([option]) => option === normalized) ? normalized : 'standard';
+  }
+
+  function powerPlantRenderMaterialMode(value) {
+    switch (normalizePowerPlantRenderMaterial(value)) {
+      case 'brushed-metal': return 1;
+      case 'polished-metal': return 2;
+      case 'iridescent': return 3;
+      case 'pearl': return 4;
+      case 'glass': return 5;
+      case 'emissive': return 6;
+      case 'hologram': return 7;
+      case 'xray': return 8;
+      case 'phong': return 9;
+      case 'toon': return 10;
+      case 'normal': return 11;
+      case 'wireframe': return 12;
+      default: return 0;
+    }
   }
 
   function layerOrderIds() {
@@ -2521,14 +3068,7 @@
     });
   }
 
-  function readUiState() {
-    let state = cloneDefaultUiState();
-    try {
-      state = { ...state, ...JSON.parse(localStorage.getItem(UI_STATE_STORAGE_KEY) || '{}') };
-    } catch (_error) {
-      state = cloneDefaultUiState();
-    }
-    const parameters = new URLSearchParams(window.location.search);
+  function applyExpandedQueryState(state, parameters) {
     if (parameters.has('theme')) state.theme = parameters.get('theme');
     if (parameters.has('base')) state.baseLayer = parameters.get('base');
     if (parameters.has('layers')) state.layers = parameters.get('layers').split(',').filter(Boolean);
@@ -2613,6 +3153,38 @@
     window.location.assign(cleanUrl);
   }
 
+  async function readUiState() {
+    let state = cloneDefaultUiState();
+    try {
+      const storedState = JSON.parse(localStorage.getItem(UI_STATE_STORAGE_KEY) || '{}');
+      state = {
+        ...state,
+        ...storedState,
+        filters: { ...state.filters, ...(storedState.filters || {}) },
+      };
+    } catch (_error) {
+      state = cloneDefaultUiState();
+    }
+    const parameters = new URLSearchParams(window.location.search);
+    queryStateCompressionEnabled = parameters.has(COMPRESSED_STATE_QUERY_PARAM) || parameters.get(COMPACT_STATE_QUERY_PARAM) === '1';
+    syncCompressedQueryToggle();
+    if (parameters.has(COMPRESSED_STATE_QUERY_PARAM)) {
+      try {
+        const compressedState = await decompressUiStateFromQuery(parameters.get(COMPRESSED_STATE_QUERY_PARAM));
+        if (compressedState && typeof compressedState === 'object') {
+          state = {
+            ...state,
+            ...compressedState,
+            filters: { ...state.filters, ...(compressedState.filters || {}) },
+          };
+        }
+      } catch (_error) {
+        // Fall back to local storage and any expanded query parameters below.
+      }
+    }
+    return applyExpandedQueryState(state, parameters);
+  }
+
   function applyUiState(state, themeSelect) {
     if (state.theme && BASEMAP_STYLES[state.theme]) themeSelect.value = state.theme;
     if (Array.isArray(state.layers)) {
@@ -2636,17 +3208,29 @@
       Object.assign(layerFilters.datacenters, state.filters.datacenters);
       layerFilters.datacenters.glowDistance = normalizeGlowDistance(layerFilters.datacenters.glowDistance);
       layerFilters.datacenters.glowBlur = normalizeGlowBlur(layerFilters.datacenters.glowBlur);
+      layerFilters.datacenters.iconScale = normalizeIconScale(layerFilters.datacenters.iconScale);
+      layerFilters.datacenters.brightness = normalizeBrightness(layerFilters.datacenters.brightness);
     }
     if (state.filters?.powerPlants) {
       Object.assign(layerFilters.powerPlants, state.filters.powerPlants);
       normalizePowerPlantLayerFilters(layerFilters.powerPlants);
     }
-    if (state.filters?.neonStreets) Object.assign(layerFilters.neonStreets, state.filters.neonStreets);
-    if (state.filters?.enviroscreen) Object.assign(layerFilters.enviroscreen, state.filters.enviroscreen);
-    if (state.filters?.parcels) Object.assign(layerFilters.parcels, state.filters.parcels);
+    if (state.filters?.neonStreets) {
+      Object.assign(layerFilters.neonStreets, state.filters.neonStreets);
+      layerFilters.neonStreets.brightness = normalizeBrightness(layerFilters.neonStreets.brightness);
+    }
+    if (state.filters?.enviroscreen) {
+      Object.assign(layerFilters.enviroscreen, state.filters.enviroscreen);
+      layerFilters.enviroscreen.brightness = normalizeBrightness(layerFilters.enviroscreen.brightness);
+    }
+    if (state.filters?.parcels) {
+      Object.assign(layerFilters.parcels, state.filters.parcels);
+      layerFilters.parcels.brightness = normalizeBrightness(layerFilters.parcels.brightness);
+    }
     layerCustomColors.clear();
     Object.entries(state.colors || {}).forEach(([layerId, color]) => {
-      if (/^#[0-9a-f]{6}$/i.test(String(color))) layerCustomColors.set(layerId, String(color).toLowerCase());
+      const normalized = normalizeLayerColorSetting(color);
+      if (normalized) layerCustomColors.set(layerId, normalized);
     });
     layerZoomRanges.clear();
     Object.entries(state.filters?.zoomRanges || {}).forEach(([layerId, range]) => {
@@ -2664,7 +3248,10 @@
       const savedFilter = state.filters?.remote?.[config.id] || {};
       remoteState.text = String(savedFilter.text || '').trim().toLowerCase();
       remoteState.sizeBy = String(savedFilter.sizeBy || config.defaultSizeBy || 'none');
-      remoteState.colorTheme = String(savedFilter.colorTheme || (config.lineColorThemes ? 'uniform' : 'default'));
+      remoteState.iconScale = normalizeIconScale(savedFilter.iconScale);
+      remoteState.brightness = normalizeBrightness(savedFilter.brightness);
+      remoteState.pointRenderMode = normalizePointRenderMode(config, savedFilter.pointRenderMode);
+      remoteState.colorTheme = String(savedFilter.colorTheme || defaultLineColorTheme(config));
       remoteState.lineWidth = normalizeLineWidthMultiplier(savedFilter.lineWidth);
       remoteState.lineWidthBy = normalizeLineWidthBy(config, savedFilter.lineWidthBy);
     });
@@ -2698,11 +3285,15 @@
     REMOTE_LAYERS.forEach((config) => {
       const text = remoteLayerStates.get(config.id)?.text || '';
       const remoteState = remoteLayerStates.get(config.id);
-      const defaultColorTheme = config.lineColorThemes ? 'uniform' : 'default';
-      if (text || remoteState?.sizeBy !== 'none' || remoteState?.colorTheme !== defaultColorTheme || remoteState?.lineWidth !== 1 || remoteState?.lineWidthBy !== 'zoom') {
+      const defaultColorTheme = defaultLineColorTheme(config);
+      const defaultWidthBy = defaultLineWidthBy(config);
+      if (text || remoteState?.sizeBy !== 'none' || remoteState?.iconScale !== 1 || remoteState?.brightness !== 1 || remoteState?.pointRenderMode !== 'points' || remoteState?.colorTheme !== defaultColorTheme || remoteState?.lineWidth !== 1 || remoteState?.lineWidthBy !== defaultWidthBy) {
         remoteFilters[config.id] = {
           text,
           sizeBy: remoteState?.sizeBy || 'none',
+          iconScale: normalizeIconScale(remoteState?.iconScale),
+          brightness: normalizeBrightness(remoteState?.brightness),
+          pointRenderMode: normalizePointRenderMode(config, remoteState?.pointRenderMode),
           colorTheme: remoteState?.colorTheme || defaultColorTheme,
           lineWidth: normalizeLineWidthMultiplier(remoteState?.lineWidth),
           lineWidthBy: normalizeLineWidthBy(config, remoteState?.lineWidthBy),
@@ -2745,14 +3336,7 @@
     };
   }
 
-  function persistUiState(map = activeLayerContext?.map || null) {
-    const state = currentUiState(map);
-    try {
-      localStorage.setItem(UI_STATE_STORAGE_KEY, JSON.stringify(state));
-    } catch (_error) {
-      // URL state remains available when storage is disabled or full.
-    }
-    const url = new URL(window.location.href);
+  function writeExpandedUiStateToUrl(url, state) {
     url.searchParams.set('theme', state.theme);
     url.searchParams.set('base', state.baseLayer);
     url.searchParams.set('layers', state.layers.join(','));
@@ -2771,8 +3355,164 @@
     if (Number.isFinite(state.zoom)) url.searchParams.set('z', String(state.zoom));
     if (state.orientation) url.searchParams.set('o', `${state.orientation.bearing},${state.orientation.pitch}`);
     url.searchParams.set('filters', JSON.stringify(state.filters));
+  }
+
+  async function buildShareUrl(map = activeLayerContext?.map || null, options = {}) {
+    const { preferCompressed = true } = options;
+    const state = currentUiState(map);
+    const url = new URL(window.location.href);
+    url.search = '';
+    if (preferCompressed && supportsCompressedQueryState()) {
+      url.searchParams.set(COMPRESSED_STATE_QUERY_PARAM, await compressUiStateForQuery(state));
+      return url.toString();
+    }
+    writeExpandedUiStateToUrl(url, state);
+    return url.toString();
+  }
+
+  function shareTitle() {
+    return document.getElementById('map-title-input')?.value.trim() || 'Maryland Data Centers and Energy';
+  }
+
+  function shareText() {
+    return `${shareTitle()} · Maryland data centers and energy map`;
+  }
+
+  function setShareStatus(message) {
+    const status = document.getElementById('map-share-status');
+    if (status) status.textContent = message;
+  }
+
+  function setShareSheetOpen(open) {
+    const trigger = document.getElementById('open-share-sheet');
+    const sheet = document.getElementById('map-share-sheet');
+    if (!trigger || !sheet) return;
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    sheet.hidden = !open;
+  }
+
+  async function populateShareTargets(map = activeLayerContext?.map || null) {
+    const url = await buildShareUrl(map, { preferCompressed: true });
+    const title = shareTitle();
+    const text = shareText();
+    const encodedUrl = encodeURIComponent(url);
+    const encodedTitle = encodeURIComponent(title);
+    const encodedText = encodeURIComponent(`${text} ${url}`);
+    document.getElementById('share-x').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodedUrl}`;
+    document.getElementById('share-bluesky').href = `https://bsky.app/intent/compose?text=${encodedText}`;
+    document.getElementById('share-linkedin').href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+    document.getElementById('share-facebook').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    document.getElementById('share-email').href = `mailto:?subject=${encodedTitle}&body=${encodedText}`;
+    return { url, title, text };
+  }
+
+  function setupShareSheet(map) {
+    const trigger = document.getElementById('open-share-sheet');
+    const sheet = document.getElementById('map-share-sheet');
+    const copyButton = document.getElementById('copy-compressed-url');
+    const nativeShareButton = document.getElementById('native-share-url');
+    if (!trigger || !sheet || !copyButton || !nativeShareButton) return;
+    nativeShareButton.hidden = typeof navigator.share !== 'function';
+    setShareSheetOpen(false);
+    trigger.addEventListener('click', async () => {
+      const opening = trigger.getAttribute('aria-expanded') !== 'true';
+      if (!opening) {
+        setShareSheetOpen(false);
+        return;
+      }
+      try {
+        await populateShareTargets(map);
+        setShareStatus('Share links updated.');
+        setShareSheetOpen(true);
+      } catch (_error) {
+        setShareStatus('Unable to build the share URL.');
+      }
+    });
+    copyButton.addEventListener('click', async () => {
+      try {
+        const { url } = await populateShareTargets(map);
+        await copyTextToClipboard(url);
+        setShareStatus('Compact share URL copied to clipboard.');
+        setShareSheetOpen(false);
+      } catch (_error) {
+        setShareStatus('Unable to copy the share URL.');
+      }
+    });
+    nativeShareButton.addEventListener('click', async () => {
+      try {
+        const { url, title, text } = await populateShareTargets(map);
+        await navigator.share({ title, text, url });
+        setShareStatus('Share sheet opened.');
+        setShareSheetOpen(false);
+      } catch (_error) {
+        setShareStatus('Unable to open the native share sheet.');
+      }
+    });
+    sheet.querySelectorAll('a.dc-map-share-link').forEach((link) => {
+      link.addEventListener('pointerdown', () => setShareSheetOpen(false));
+      link.addEventListener('click', () => setShareSheetOpen(false));
+    });
+    document.addEventListener('click', (event) => {
+      if (sheet.hidden) return;
+      if (event.target === trigger || trigger.contains(event.target) || sheet.contains(event.target)) return;
+      setShareSheetOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setShareSheetOpen(false);
+    });
+    window.addEventListener('blur', () => setShareSheetOpen(false));
+    window.addEventListener('pagehide', () => setShareSheetOpen(false));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') setShareSheetOpen(false);
+    });
+  }
+
+  async function writeCompressedUiStateToUrl(state, sequence) {
+    try {
+      const compressed = await compressUiStateForQuery(state);
+      if (sequence !== compressedPersistSequence) return;
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set(COMPRESSED_STATE_QUERY_PARAM, compressed);
+      history.replaceState(null, '', `${url.pathname}?${url.searchParams}${url.hash}`);
+    } catch (_error) {
+      const url = new URL(window.location.href);
+      url.search = '';
+      writeExpandedUiStateToUrl(url, state);
+      history.replaceState(null, '', `${url.pathname}?${url.searchParams}${url.hash}`);
+    }
+  }
+
+  function persistUiState(map = activeLayerContext?.map || null) {
+    const state = currentUiState(map);
+    try {
+      localStorage.setItem(UI_STATE_STORAGE_KEY, JSON.stringify(state));
+    } catch (_error) {
+      // URL state remains available when storage is disabled or full.
+    }
+    if (queryStateCompressionEnabled && supportsCompressedQueryState()) {
+      compressedPersistSequence += 1;
+      writeCompressedUiStateToUrl(state, compressedPersistSequence);
+      syncCompressedQueryToggle();
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.delete(COMPRESSED_STATE_QUERY_PARAM);
+    url.searchParams.delete(COMPACT_STATE_QUERY_PARAM);
+    writeExpandedUiStateToUrl(url, state);
     history.replaceState(null, '', `${url.pathname}?${url.searchParams}${url.hash}`);
+    syncCompressedQueryToggle();
     updatePageStateIndicator(map);
+  }
+
+  function setupCompressedQueryToggle(map) {
+    const toggle = document.getElementById('compress-query-state');
+    if (!toggle) return;
+    syncCompressedQueryToggle();
+    toggle.addEventListener('change', () => {
+      queryStateCompressionEnabled = Boolean(toggle.checked);
+      persistUiState(map);
+    });
   }
 
   function setupUiStatePersistence(map) {
@@ -2821,14 +3561,14 @@
 
   function syncDataCenterMarkerZOrder() {
     const z = layerZIndex('datacenters');
-    document.querySelectorAll('.dc-map-marker--center').forEach((element) => {
+    const elements = [...document.querySelectorAll('.dc-map-marker--center')]
+      .sort((left, right) => Number(left.dataset.renderSize || 0) - Number(right.dataset.renderSize || 0));
+    elements.forEach((element, index) => {
       if (z < 0 || element.hidden) {
         element.style.zIndex = '';
         return;
       }
-      const markerSize = Number.parseFloat(element.style.getPropertyValue('--marker-size')) || 22;
-      const markerPriority = Math.round(markerSize * 10);
-      element.style.zIndex = String(1000 + (z * 1000) + markerPriority);
+      element.style.zIndex = String(1000 + (z * 1000) + index);
     });
   }
 
@@ -3030,7 +3770,8 @@
     if (!map.getSource('openmaptiles')) return;
 
     const firstLabel = style.layers.find((layer) => layer.type === 'symbol' && streetStyleLayerIds.includes(layer.id))?.id;
-    const color = layerCustomColors.get('neon-streets') || '#00eaff';
+    const brightness = normalizeBrightness(layerFilters.neonStreets.brightness);
+    const color = adjustHexBrightness(layerCustomColorHex('neon-streets') || '#00eaff', brightness);
     const filter = neonStreetFilter();
     if (!map.getLayer(NEON_STREET_GLOW_LAYER_ID)) {
       map.addLayer({
@@ -3044,7 +3785,7 @@
           'line-color': color,
           'line-width': scaledLineWidth(['interpolate', ['exponential', 1.35], ['zoom'], 5, 3, 9, 5, 13, 10, 17, 22], layerFilters.neonStreets.lineWidth),
           'line-blur': ['interpolate', ['linear'], ['zoom'], 5, 2, 12, 4, 17, 8],
-          'line-opacity': .72,
+          'line-opacity': Math.min(1, .72 * brightness * layerCustomColorAlpha('neon-streets')),
         },
       }, firstLabel);
     }
@@ -3057,9 +3798,9 @@
         filter,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#e8ffff',
+          'line-color': adjustHexBrightness('#e8ffff', brightness),
           'line-width': scaledLineWidth(['interpolate', ['exponential', 1.3], ['zoom'], 5, .8, 9, 1.15, 13, 2.2, 17, 5], layerFilters.neonStreets.lineWidth),
-          'line-opacity': .98,
+          'line-opacity': Math.min(1, .98 * brightness * layerCustomColorAlpha('neon-streets')),
         },
       }, firstLabel);
     }
@@ -3080,7 +3821,7 @@
           'text-keep-upright': true,
         },
         paint: {
-          'text-color': '#f2ffff',
+          'text-color': adjustHexBrightness('#f2ffff', brightness),
           'text-halo-color': color,
           'text-halo-width': 2.4,
           'text-halo-blur': 1.2,
@@ -3091,6 +3832,12 @@
       map.setFilter(layerId, filter);
       map.setLayoutProperty(layerId, 'visibility', enabled && shownAtZoom ? 'visible' : 'none');
     });
+    map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-color', color);
+    map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-opacity', Math.min(1, .72 * brightness * layerCustomColorAlpha('neon-streets')));
+    map.setPaintProperty(NEON_STREET_CORE_LAYER_ID, 'line-color', adjustHexBrightness('#e8ffff', brightness));
+    map.setPaintProperty(NEON_STREET_CORE_LAYER_ID, 'line-opacity', Math.min(1, .98 * brightness * layerCustomColorAlpha('neon-streets')));
+    map.setPaintProperty(NEON_STREET_LABEL_LAYER_ID, 'text-color', adjustHexBrightness('#f2ffff', brightness));
+    map.setPaintProperty(NEON_STREET_LABEL_LAYER_ID, 'text-halo-color', color);
     applyMapLayerOrder(map);
     map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-color', color);
     map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-width', scaledLineWidth(['interpolate', ['exponential', 1.35], ['zoom'], 5, 3, 9, 5, 13, 10, 17, 22], layerFilters.neonStreets.lineWidth));
@@ -3381,10 +4128,13 @@
       document.getElementById('record-detail').innerHTML = `<h2>Data unavailable</h2><p>${escapeHtml(error.message)}</p>`;
     });
 
-  function initialize(data) {
+  async function initialize(data) {
     const sourceById = new Map(data.sources.map((source) => [source.id, source]));
+    datacenterNewsItems = Array.isArray(data.datacenterNews?.items) ? data.datacenterNews.items : [];
+    setupNewsHoverTargets();
+    renderIdleInspectorNews(true);
     const themeSelect = document.getElementById('map-theme');
-    const restoredUiState = readUiState();
+    const restoredUiState = await readUiState();
     document.getElementById('close-record-detail').addEventListener('click', closePinnedInspector);
     document.getElementById('reset-page-state').addEventListener('click', () => {
       document.getElementById('reset-page-modal').showModal();
@@ -3417,6 +4167,8 @@
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
     document.getElementById('download-map-png').addEventListener('click', () => downloadMapPng(map));
+    setupCompressedQueryToggle(map);
+    setupShareSheet(map);
     map.on('style.load', () => {
       streetStyleLayerIds = map.getStyle().layers.map((layer) => layer.id);
       if (themeSelect.value === 'collective') applyCollectiveTheme(map);
@@ -3429,6 +4181,7 @@
       powerPlantBoltLayer?.setRecords(allRecords.filter((record) => record.record_type === 'power_plant' && matchesFilters(record)));
       renderLayerOrderControls(map);
     });
+    map.on('styledata', () => scheduleRemoteLayerRehydrate(map));
     themeSelect.addEventListener('change', () => {
       map.setStyle(BASEMAP_STYLES[themeSelect.value]);
     });
@@ -3510,6 +4263,7 @@
         clearTimeout(parcelHoverTimer);
         parcelHoverAbort?.abort();
         clearParcelHighlight(map);
+        clearInspectorHover('parcel:');
         map.getCanvas().style.cursor = '';
       }
       updateParcelStatus(map);
@@ -3566,8 +4320,9 @@
 
   function remoteRenderLayerIds(config) {
     const sourceId = remoteSourceId(config);
-    if (config.geometry === 'point') return [`${sourceId}-point`];
+    if (config.geometry === 'point') return [`${sourceId}-splat`, `${sourceId}-point`];
     if (config.geometry === 'line') return [`${sourceId}-line`];
+    if (config.geometry === 'label') return [`${sourceId}-label`];
     return [`${sourceId}-fill`, `${sourceId}-line`];
   }
 
@@ -3611,7 +4366,7 @@
 
   function remoteMaxAllowableOffset(config, zoom) {
     const normalizedZoom = Math.max(0, zoom - 6);
-    if (config.geometry === 'polygon') return Math.max(.00005, .012 / (2 ** normalizedZoom));
+    if (config.geometry === 'polygon' || config.geometry === 'label') return Math.max(.00005, .012 / (2 ** normalizedZoom));
     if (config.geometry === 'line') return Math.max(.00002, .006 / (2 ** normalizedZoom));
     return Math.max(.000005, .003 / (2 ** Math.max(0, zoom - 7)));
   }
@@ -3622,6 +4377,57 @@
     if (zoom < 5) return '1200';
     if (zoom < 8) return '1600';
     return '2000';
+  }
+
+  function geojsonExceededTransferLimit(data) {
+    return Boolean(data?.exceededTransferLimit || data?.properties?.exceededTransferLimit);
+  }
+
+  function remoteFeatureIdentity(feature, index) {
+    const properties = feature?.properties || {};
+    return feature?.id
+      ?? properties.OBJECTID
+      ?? properties.OBJECTID_1
+      ?? properties.FID
+      ?? properties.ID
+      ?? properties.MAP_NAME
+      ?? `feature-${index}`;
+  }
+
+  async function fetchRemoteLayerData(service, parameters, signal, pageSize, maxPages = 8) {
+    const allFeatures = [];
+    const seen = new Set();
+    let exceededTransferLimit = false;
+    let responseTemplate = null;
+    for (let pageIndex = 0; pageIndex < maxPages; pageIndex += 1) {
+      const pageParameters = new URLSearchParams(parameters);
+      if (pageIndex > 0) pageParameters.set('resultOffset', String(pageIndex * pageSize));
+      const response = await fetch(`${service}/query?${pageParameters}`, { signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const responseData = await response.json();
+      if (responseData.error) throw new Error(responseData.error.message || 'Service query failed');
+      const pageFeatures = (responseData.features || []).filter((feature) => feature.geometry);
+      pageFeatures.forEach((feature, index) => {
+        const identity = remoteFeatureIdentity(feature, allFeatures.length + index);
+        if (seen.has(identity)) return;
+        seen.add(identity);
+        allFeatures.push(feature);
+      });
+      exceededTransferLimit = exceededTransferLimit || geojsonExceededTransferLimit(responseData);
+      responseTemplate = responseTemplate || responseData;
+      if (!geojsonExceededTransferLimit(responseData) && pageFeatures.length < pageSize) {
+        return {
+          ...responseData,
+          features: allFeatures,
+          exceededTransferLimit,
+        };
+      }
+    }
+    return {
+      ...(responseTemplate || { type: 'FeatureCollection' }),
+      features: allFeatures,
+      exceededTransferLimit: true,
+    };
   }
 
   async function loadShardApiLayer(map, config, state, status) {
@@ -3720,9 +4526,12 @@
         requestKey: '',
         text: '',
         sizeBy: config.defaultSizeBy || 'none',
-        colorTheme: config.lineColorThemes ? 'uniform' : 'default',
+        iconScale: 1,
+        brightness: 1,
+        pointRenderMode: 'points',
+        colorTheme: defaultLineColorTheme(config),
         lineWidth: 1,
-        lineWidthBy: 'zoom',
+        lineWidthBy: defaultLineWidthBy(config),
       });
       layerPreviewSearchIndex.set(config.id, [
         config.name,
@@ -3966,15 +4775,51 @@
   }
 
   function remoteLineColor(config) {
-    const selectedTheme = remoteLayerStates.get(config.id)?.colorTheme || (config.lineColorThemes ? 'uniform' : 'default');
-    if (selectedTheme === 'uniform') return layerCustomColors.get(config.id) || config.lineColor || config.color;
+    const selectedTheme = remoteLayerStates.get(config.id)?.colorTheme || defaultLineColorTheme(config);
+    if (selectedTheme === 'uniform') return adjustHexBrightness(layerCustomColorHex(config.id) || config.color, remoteLayerStates.get(config.id)?.brightness);
     return config.lineColorThemes?.find((theme) => theme.id === selectedTheme)?.expression
-      || config.lineColor
-      || config.color;
+      || adjustHexBrightness(layerCustomColorHex(config.id) || config.color, remoteLayerStates.get(config.id)?.brightness);
   }
 
   function remoteLayerColor(config) {
-    return layerCustomColors.get(config.id) || config.color;
+    return adjustHexBrightness(layerCustomColorHex(config.id) || config.color, remoteLayerStates.get(config.id)?.brightness);
+  }
+
+  function remoteLayerPaintColor(config, color) {
+    return Array.isArray(color) ? color : adjustHexBrightness(color, remoteLayerStates.get(config.id)?.brightness);
+  }
+
+  function brightnessScaledOpacity(config, opacity) {
+    return Math.max(0, Math.min(1, Number(opacity) * normalizeBrightness(remoteLayerStates.get(config.id)?.brightness) * layerCustomColorAlpha(config.id)));
+  }
+
+  function remotePointSplatPaint(config) {
+    const color = remoteLayerColor(config);
+    const iconScale = normalizeIconScale(remoteLayerStates.get(config.id)?.iconScale);
+    const brightness = normalizeBrightness(remoteLayerStates.get(config.id)?.brightness);
+    return {
+      'heatmap-weight': ['coalesce', ['get', '_dcPointScale'], 1],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, .7 * brightness, 12, 1.25 * brightness, 16, 1.8 * brightness],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8 * iconScale, 10, 22 * iconScale, 14, 42 * iconScale, 18, 68 * iconScale],
+      'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 0, Math.min(1, .72 * brightness), 16, Math.min(1, .42 * brightness)],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0, 'rgba(0, 0, 0, 0)',
+        .18, color,
+        .48, '#8fe8ff',
+        .72, '#f3c969',
+        1, '#ff263f',
+      ],
+    };
+  }
+
+  function remotePointSizeExpression(config) {
+    const factor = ['coalesce', ['get', '_dcPointScale'], 1];
+    const iconScale = normalizeIconScale(remoteLayerStates.get(config.id)?.iconScale);
+    if (config.pointSymbol === 'interchange-arrow') {
+      return ['interpolate', ['linear'], factor, .5, 14 * iconScale, 1, 22 * iconScale, 2, 34 * iconScale];
+    }
+    return ['interpolate', ['linear'], factor, .5, 3.5 * iconScale, 1, 5.5 * iconScale, 2, 9 * iconScale];
   }
 
   function transmissionStatusExpression() {
@@ -3988,7 +4833,7 @@
   function transmissionLineColorExpression(config) {
     const baseColor = remoteLineColor(config);
     return config.id.includes('transmission')
-      ? ['case', transmissionProposalExpression(), '#ff263f', baseColor]
+      ? ['case', transmissionProposalExpression(), adjustHexBrightness('#ff263f', remoteLayerStates.get(config.id)?.brightness), baseColor]
       : baseColor;
   }
 
@@ -4002,8 +4847,10 @@
   }
 
   function transmissionLineOpacityExpression(config) {
-    if (!config.id.includes('transmission')) return .88;
-    return ['case', transmissionProposalExpression(), 1, .88];
+    const brightness = normalizeBrightness(remoteLayerStates.get(config.id)?.brightness);
+    const alpha = layerCustomColorAlpha(config.id);
+    if (!config.id.includes('transmission')) return Math.min(1, .88 * brightness * alpha);
+    return ['case', transmissionProposalExpression(), Math.min(1, brightness * alpha), Math.min(1, .88 * brightness * alpha)];
   }
 
   function transmissionLineBlurExpression(config) {
@@ -4012,7 +4859,7 @@
   }
 
   function addRemoteLayer(map, config, data) {
-    if (!map.isStyleLoaded()) {
+    if (!map.getStyle?.()?.layers?.length) {
       window.setTimeout(() => addRemoteLayer(map, config, data), 250);
       return;
     }
@@ -4032,6 +4879,15 @@
     const firstLabel = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id;
     if (config.geometry === 'point') {
       const layerId = `${sourceId}-point`;
+      const splatLayerId = `${sourceId}-splat`;
+      if (!map.getLayer(splatLayerId)) {
+        map.addLayer({
+          id: splatLayerId,
+          type: 'heatmap',
+          source: sourceId,
+          paint: remotePointSplatPaint(config),
+        }, firstLabel);
+      }
       if (!map.getLayer(layerId)) {
         map.addLayer(config.pointSymbol === 'interchange-arrow' ? {
           id: layerId,
@@ -4039,10 +4895,8 @@
           source: sourceId,
           layout: {
             'text-field': '➤',
-            'text-size': ['interpolate', ['linear'], ['zoom'],
-              5, ['*', 15, ['coalesce', ['get', '_dcPointScale'], 1]],
-              9, ['*', 22, ['coalesce', ['get', '_dcPointScale'], 1]],
-              14, ['*', 30, ['coalesce', ['get', '_dcPointScale'], 1]]],
+            'text-size': remotePointSizeExpression(config),
+            'symbol-sort-key': ['coalesce', ['get', '_dcPointScale'], 1],
             'text-rotate': ['+',
               ['coalesce', ['get', 'axis_rotation_degrees'], 0],
               ['case', ['==', ['downcase', ['coalesce', ['get', 'statewide_flow_direction'], '']], 'net import'], 0, 180]],
@@ -4061,16 +4915,54 @@
           id: layerId,
           type: 'circle',
           source: sourceId,
+          layout: { 'circle-sort-key': ['coalesce', ['get', '_dcPointScale'], 1] },
           paint: {
-            'circle-radius': ['*', ['interpolate', ['linear'], ['zoom'], config.minZoom, 3.5, 14, 7], ['coalesce', ['get', '_dcPointScale'], 1]],
+            'circle-radius': remotePointSizeExpression(config),
             'circle-color': remoteLayerColor(config),
             'circle-stroke-color': '#ffffff',
             'circle-stroke-width': 1.2,
-            'circle-opacity': .84,
+            'circle-opacity': brightnessScaledOpacity(config, .84),
           },
         });
       }
       map.setPaintProperty(layerId, config.pointSymbol === 'interchange-arrow' ? 'text-color' : 'circle-color', remoteLayerColor(config));
+      if (config.pointSymbol === 'interchange-arrow') map.setPaintProperty(layerId, 'text-opacity', brightnessScaledOpacity(config, .94));
+      if (config.pointSymbol !== 'interchange-arrow') map.setPaintProperty(layerId, 'circle-opacity', brightnessScaledOpacity(config, .84));
+      if (config.pointSymbol === 'interchange-arrow') map.setLayoutProperty(layerId, 'text-size', remotePointSizeExpression(config));
+      else map.setPaintProperty(layerId, 'circle-radius', remotePointSizeExpression(config));
+      map.setLayoutProperty(layerId, config.pointSymbol === 'interchange-arrow' ? 'symbol-sort-key' : 'circle-sort-key', ['coalesce', ['get', '_dcPointScale'], 1]);
+      Object.entries(remotePointSplatPaint(config)).forEach(([property, value]) => {
+        map.setPaintProperty(splatLayerId, property, value);
+      });
+      const renderMode = normalizePointRenderMode(config, state?.pointRenderMode);
+      map.setLayoutProperty(layerId, 'visibility', renderMode === 'points' ? 'visible' : 'none');
+      map.setLayoutProperty(splatLayerId, 'visibility', renderMode === 'gpu-splat' ? 'visible' : 'none');
+    } else if (config.geometry === 'label') {
+      const labelId = `${sourceId}-label`;
+      if (!map.getLayer(labelId)) {
+        map.addLayer({
+          id: labelId,
+          type: 'symbol',
+          source: sourceId,
+          layout: {
+            'text-field': ['coalesce', ['get', 'COUNTY'], ['get', 'county'], ['get', 'name'], 'County'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 8, 13, 12, 18],
+            'text-letter-spacing': .08,
+            'text-transform': 'uppercase',
+            'text-allow-overlap': false,
+            'text-ignore-placement': false,
+          },
+          paint: {
+            'text-color': remoteLayerColor(config),
+            'text-halo-color': '#002a61',
+            'text-halo-width': 2.4,
+            'text-halo-blur': .6,
+          },
+        });
+      }
+      map.setLayoutProperty(labelId, 'text-size', ['interpolate', ['linear'], ['zoom'], 5, 10, 8, 13, 12, 18]);
+      map.setPaintProperty(labelId, 'text-color', remoteLayerColor(config));
+      map.setPaintProperty(labelId, 'text-opacity', brightnessScaledOpacity(config, .94));
     } else if (config.geometry === 'line') {
       const lineId = `${sourceId}-line`;
       if (!map.getLayer(lineId)) {
@@ -4098,7 +4990,7 @@
           id: fillId,
           type: 'fill',
           source: sourceId,
-          paint: { 'fill-color': layerCustomColors.get(config.id) || config.fillColor || config.color, 'fill-opacity': config.fillOpacity ?? .3 },
+          paint: { 'fill-color': remoteLayerPaintColor(config, config.fillColor || config.color), 'fill-opacity': brightnessScaledOpacity(config, config.fillOpacity ?? .3) },
         }, firstLabel);
       }
       if (!map.getLayer(lineId)) {
@@ -4107,20 +4999,29 @@
           type: 'line',
           source: sourceId,
           paint: {
-            'line-color': layerCustomColors.get(config.id) || config.lineColor || config.color,
+            'line-color': remoteLayerPaintColor(config, config.lineColor || config.color),
             'line-width': config.lineWidth || 0,
-            'line-opacity': config.lineOpacity ?? 0,
+            'line-opacity': brightnessScaledOpacity(config, config.lineOpacity ?? 0),
           },
         }, firstLabel);
       }
-      map.setPaintProperty(fillId, 'fill-color', layerCustomColors.get(config.id) || config.fillColor || config.color);
-      map.setPaintProperty(lineId, 'line-color', layerCustomColors.get(config.id) || config.lineColor || config.color);
+      map.setPaintProperty(fillId, 'fill-color', remoteLayerPaintColor(config, config.fillColor || config.color));
+      map.setPaintProperty(fillId, 'fill-opacity', brightnessScaledOpacity(config, config.fillOpacity ?? .3));
+      map.setPaintProperty(lineId, 'line-color', remoteLayerPaintColor(config, config.lineColor || config.color));
+      map.setPaintProperty(lineId, 'line-opacity', brightnessScaledOpacity(config, config.lineOpacity ?? 0));
     }
     remoteRenderLayerIds(config).forEach((layerId) => {
       if (!map.getLayer(layerId)) return;
       const range = zoomRangeForLayer(config.id);
       if (map.setLayerZoomRange) map.setLayerZoomRange(layerId, range.min, range.max);
-      map.setLayoutProperty(layerId, 'visibility', layerShownAtZoom(config.id, map.getZoom()) ? 'visible' : 'none');
+      const shownAtZoom = layerShownAtZoom(config.id, map.getZoom());
+      if (config.geometry === 'point') {
+        const renderMode = normalizePointRenderMode(config, state?.pointRenderMode);
+        const isSplatLayer = layerId.endsWith('-splat');
+        map.setLayoutProperty(layerId, 'visibility', shownAtZoom && ((renderMode === 'gpu-splat') === isSplatLayer) ? 'visible' : 'none');
+      } else {
+        map.setLayoutProperty(layerId, 'visibility', shownAtZoom ? 'visible' : 'none');
+      }
     });
     applyMapLayerOrder(map);
   }
@@ -4136,24 +5037,43 @@
   }
 
   function rehydrateRemoteLayerAfterStyleSettles(map, config) {
-    [0, 250, 1000].forEach((delay) => {
+    const rehydrate = () => {
+      const state = remoteLayerStates.get(config.id);
+      if (!state?.enabled || !state.data) return;
+      if (!map.getStyle?.()?.layers?.length) return;
+      if (!remoteLayerRendered(map, config)) addRemoteLayer(map, config, state.data);
+    };
+    [0, 250, 1000, 2500].forEach((delay) => {
       window.setTimeout(() => {
-        const state = remoteLayerStates.get(config.id);
-        if (!state?.enabled || !state.data) return;
-        if (!map.isStyleLoaded()) return;
-        if (!remoteLayerRendered(map, config)) addRemoteLayer(map, config, state.data);
+        rehydrate();
       }, delay);
     });
+    map.once('idle', rehydrate);
+  }
+
+  function scheduleRemoteLayerRehydrate(map) {
+    window.clearTimeout(remoteStyleRehydrateTimer);
+    remoteStyleRehydrateTimer = window.setTimeout(() => {
+      if (!map.getStyle?.()?.layers?.length) return;
+      REMOTE_LAYERS.forEach((config) => {
+        const state = remoteLayerStates.get(config.id);
+        if (!state?.enabled || !state.data || remoteLayerRendered(map, config)) return;
+        addRemoteLayer(map, config, state.data);
+      });
+    }, 80);
   }
 
   function staticLayerLoadingText(config) {
+    if (config.id === 'baltimore-red-line') return 'Loading Baltimore Red Line alignment…';
     if (config.id === 'power-interchanges') return 'Loading documented transmission crossings…';
     if (config.id === 'county-power-estimates') return 'Loading county residential power estimates…';
+    if (config.id === 'county-total-power-estimates') return 'Loading county total power planning estimates…';
     return `Loading ${config.name.toLowerCase()}…`;
   }
 
   function staticLayerStatus(config, data) {
     const featureCount = data?.features?.length || 0;
+    if (config.id === 'baltimore-red-line') return `${number(featureCount)} Red Line alignment segments`;
     if (config.id === 'power-interchanges') {
       const lineCount = data?.metadata?.line_crossing_count;
       return lineCount
@@ -4165,12 +5085,19 @@
       const averageText = Number.isFinite(Number(averageMw)) ? ` · ${number(Number(averageMw), 1)} MW statewide residential average` : '';
       return `${number(featureCount)} counties · residential demand estimates${averageText}`;
     }
+    if (config.id === 'county-total-power-estimates') {
+      const averageMw = data?.metadata?.statewide_all_sector_average_mw;
+      const averageText = Number.isFinite(Number(averageMw)) ? ` · ${number(Number(averageMw), 1)} MW statewide all-sector average` : '';
+      return `${number(featureCount)} counties · total demand planning estimates${averageText}`;
+    }
     return `${number(featureCount)} features`;
   }
 
   function staticLayerErrorText(config, error) {
+    if (config.id === 'baltimore-red-line') return `Baltimore Red Line alignment unavailable · ${error.message}`;
     if (config.id === 'power-interchanges') return `Crossing inventory unavailable · ${error.message}`;
     if (config.id === 'county-power-estimates') return `County power estimates unavailable · ${error.message}`;
+    if (config.id === 'county-total-power-estimates') return `County total power estimates unavailable · ${error.message}`;
     return `${config.name} unavailable · ${error.message}`;
   }
 
@@ -4251,10 +5178,8 @@
       f: 'geojson',
     });
     try {
-      const response = await fetch(`${service}/query?${parameters}`, { signal: state.abort.signal });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const responseData = await response.json();
-      if (responseData.error) throw new Error(responseData.error.message || 'Service query failed');
+      const pageSize = Number(remoteResultRecordCount(config, zoom));
+      const responseData = await fetchRemoteLayerData(service, parameters, state.abort.signal, pageSize);
       const returnedCount = responseData.features?.length || 0;
       const features = (responseData.features || []).filter((feature) => feature.geometry);
       if (returnedCount && !features.length) throw new Error('service returned records without map geometry');
@@ -4265,7 +5190,7 @@
       addRemoteLayer(map, config, data);
       rehydrateRemoteLayerAfterStyleSettles(map, config);
       const count = data.features.length;
-      status.textContent = data.exceededTransferLimit || count >= Number(remoteResultRecordCount(config, zoom))
+      status.textContent = geojsonExceededTransferLimit(data) || count >= pageSize
         ? `${number(count)} features · zoom in for complete results`
         : `${number(count)} features in current view`;
     } catch (error) {
@@ -4381,11 +5306,11 @@
 
   function refreshLayerColorSwatches() {
     document.querySelectorAll('[data-layer-color]').forEach((button) => {
-      const color = layerCustomColors.get(button.dataset.layerColor);
+      const color = layerCustomColorSetting(button.dataset.layerColor);
       button.classList.toggle('has-custom-color', Boolean(color));
-      if (color) button.style.setProperty('--layer-custom-color', color);
+      if (color) button.style.setProperty('--layer-custom-color', colorValueString(color.color, color.alpha));
       else button.style.removeProperty('--layer-custom-color');
-      button.title = color ? `Custom layer color ${color.toUpperCase()}` : 'Change layer color';
+      button.title = color ? `Custom layer color ${formatLayerColorValue(color.color, color.alpha)}` : 'Change layer color';
     });
   }
 
@@ -4407,7 +5332,8 @@
       addEnviroScreenLayers(map, enviroScreenData || { type: 'FeatureCollection', features: [] });
     }
     if (layerId === 'parcels' && map.getLayer(PARCEL_LAYER_ID)) {
-      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', layerCustomColors.get('parcels') || 'rgba(121, 207, 241, .82)');
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#79cff1', layerFilters.parcels.brightness));
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-opacity', Math.min(1, .82 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')));
       ensureParcelHoverLayers(map, map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id);
     }
     const remoteConfig = REMOTE_LAYERS.find((config) => config.id === layerId);
@@ -4420,10 +5346,12 @@
     const config = layerColorConfig(layerId);
     if (!config) return;
     activeLayerColorId = layerId;
-    const color = layerCustomColors.get(layerId) || defaultLayerColor(layerId);
+    const color = layerCustomColorSetting(layerId) || { color: defaultLayerColor(layerId), alpha: 1 };
     document.getElementById('layer-color-title').textContent = `${config.name} color`;
-    document.getElementById('layer-color-input').value = color;
-    document.getElementById('layer-color-value').value = color.toUpperCase();
+    document.getElementById('layer-color-input').value = color.color;
+    document.getElementById('layer-alpha-input').value = String(color.alpha);
+    document.getElementById('layer-color-value').value = formatLayerColorValue(color.color, color.alpha);
+    document.getElementById('layer-alpha-value').value = `${Math.round(color.alpha * 100)}%`;
     document.getElementById('layer-color-help').textContent = layerCustomColors.has(layerId)
       ? 'A custom color overrides the source or semantic palette. Use source colors to restore the original styling.'
       : 'Choosing a color overrides the source or semantic palette for this layer.';
@@ -4436,9 +5364,13 @@
     });
     const modal = document.getElementById('layer-color-modal');
     const input = document.getElementById('layer-color-input');
-    input.addEventListener('input', () => {
-      document.getElementById('layer-color-value').value = input.value.toUpperCase();
-    });
+    const alphaInput = document.getElementById('layer-alpha-input');
+    const updateColorOutputs = () => {
+      document.getElementById('layer-color-value').value = formatLayerColorValue(input.value, alphaInput.value);
+      document.getElementById('layer-alpha-value').value = `${Math.round(normalizeLayerAlpha(alphaInput.value) * 100)}%`;
+    };
+    input.addEventListener('input', updateColorOutputs);
+    alphaInput.addEventListener('input', updateColorOutputs);
     modal.addEventListener('click', (event) => {
       if (event.target === modal) modal.close('cancel');
     });
@@ -4454,8 +5386,11 @@
         modal.close('cancel');
         return;
       }
-      if (activeLayerColorId && /^#[0-9a-f]{6}$/i.test(input.value)) {
-        layerCustomColors.set(activeLayerColorId, input.value.toLowerCase());
+      if (activeLayerColorId && isLayerColorHex(input.value)) {
+        layerCustomColors.set(activeLayerColorId, {
+          color: input.value.toLowerCase(),
+          alpha: normalizeLayerAlpha(alphaInput.value),
+        });
         applyLayerColor(activeLayerColorId);
       }
       modal.close('apply');
@@ -4476,6 +5411,10 @@
       applyAllLayerFilters();
     });
     const modal = document.getElementById('layer-filter-modal');
+    modal.addEventListener('input', (event) => {
+      if (!event.target.matches('[data-icon-scale-range]')) return;
+      event.target.closest('.dc-modal-scale')?.querySelector('output')?.replaceChildren(`${normalizeIconScale(event.target.value)}×`);
+    });
     modal.addEventListener('click', (event) => {
       if (event.target === modal) modal.close('cancel');
     });
@@ -4507,6 +5446,11 @@
 
   function numberFieldMarkup(label, name, value, { min = 0, max = 1, step = 0.01, help = '' } = {}) {
     return `<label class="dc-modal-field">${escapeHtml(label)}<input name="${escapeHtml(name)}" type="number" min="${escapeHtml(min)}" max="${escapeHtml(max)}" step="${escapeHtml(step)}" value="${escapeHtml(value)}"></label>${help ? `<p class="dc-modal-help">${escapeHtml(help)}</p>` : ''}`;
+  }
+
+  function scaleFieldMarkup(label, name, value) {
+    const scale = normalizeIconScale(value);
+    return `<label class="dc-modal-field dc-modal-scale"><span>${escapeHtml(label)} <output>${escapeHtml(`${scale}×`)}</output></span><input data-icon-scale-range name="${escapeHtml(name)}" type="range" min="0.25" max="4" step="0.05" value="${escapeHtml(scale)}"></label>`;
   }
 
   function zoomRangeMarkup(layerId) {
@@ -4541,9 +5485,11 @@
         + fieldMarkup('Power scale', 'powerScale', filters.powerScale, FILTER_OPTIONS.powerScale, 'Uses reported grid demand when available; otherwise a published capacity envelope is labeled as a proxy. Backup generation is excluded.')
         + fieldMarkup('Icon color uses', 'colorBy', filters.colorBy, FILTER_OPTIONS.datacenterIconColor)
         + fieldMarkup('Icon outline uses', 'outlineBy', filters.outlineBy, FILTER_OPTIONS.datacenterIconOutline)
-        + fieldMarkup('Icon glow uses', 'glowBy', filters.glowBy, FILTER_OPTIONS.datacenterIconGlow, 'Strongly contested facilities glow red. Planned or developing facilities with no documented contestation glow yellow; quiet operating facilities glow white. Intermediate and unknown scores do not glow.')
+        + fieldMarkup('Icon glow uses', 'glowBy', filters.glowBy, FILTER_OPTIONS.datacenterIconGlow, 'Only the halo changes here. Planned or developing facilities with no documented contestation keep their normal icon colors and get a yellow halo; operational unopposed facilities get a faint green halo. Intermediate and unknown scores do not glow.')
         + numberFieldMarkup('Glow distance', 'glowDistance', normalizeGlowDistance(filters.glowDistance), { min: .35, max: 2.5, step: .05, help: 'Scales how far the glow extends from each data center icon.' })
         + numberFieldMarkup('Glow blur', 'glowBlur', normalizeGlowBlur(filters.glowBlur), { min: 0, max: 2.5, step: .05, help: 'Scales the softness of the glow edge.' })
+        + scaleFieldMarkup('Icon scale', 'iconScale', filters.iconScale)
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(filters.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens rendered data-center icons and halos.' })
         + fieldMarkup('Icon size uses', 'sizeBy', filters.sizeBy, dataCenterPointScaleOptions(records), 'Projected demand applies only to unbuilt facilities and uses planning estimates with explicit confidence. Net draw uses published normal grid demand. Total draw uses projected demand for unbuilt facilities and the best published capacity envelope otherwise; it is not measured consumption. Icons without the selected value use the smallest size.');
     } else if (layerId === 'power-plants') {
       title = 'Power plant layer filters';
@@ -4554,8 +5500,11 @@
         + fieldMarkup('Icon color uses', 'colorBy', layerFilters.powerPlants.colorBy, FILTER_OPTIONS.plantIconColor)
         + fieldMarkup('Bolt outline uses', 'outlineBy', layerFilters.powerPlants.outlineBy, FILTER_OPTIONS.plantBoltOutline, 'A real silhouette outline is drawn independently from the fill. Choose Neutral light outline for a fixed pale border.')
         + fieldMarkup('Bolt fill uses', 'fillBy', layerFilters.powerPlants.fillBy || 'none', FILTER_OPTIONS.plantBoltFill, 'Fill the bolt from the bottom. Resource-adjusted annual utilization compares annual output to a technology-specific planning envelope, so solar and wind are not judged as if they should run at nameplate all year.')
+        + fieldMarkup('Render material', 'renderMaterial', normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial), FILTER_OPTIONS.plantRenderMaterial, 'Reuses the full AgnuQuena appearance menu for the WebGL bolt renderer.')
         + numberFieldMarkup('Custom fill fraction', 'fillFraction', layerFilters.powerPlants.fillFraction ?? 1, { min: 0, max: 1, step: 0.01, help: 'Only used when Bolt fill uses is set to Custom fraction from bottom.' })
-        + numberFieldMarkup('Bolt outline size', 'outlineScale', normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale), { min: .5, max: 2, step: 0.01, help: 'Scales the WebGL outline pass with fractional values. 1.04 is the compact default; use values below 1 for inset outlines or above 1 for stronger separation from imagery.' })
+        + numberFieldMarkup('Bolt outline width', 'outlineWidth', normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth), { min: .5, max: 5, step: .25, help: 'Sets the silhouette trace width in screen pixels.' })
+        + scaleFieldMarkup('Icon scale', 'iconScale', layerFilters.powerPlants.iconScale)
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(layerFilters.powerPlants.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens the WebGL bolt fill, glow, and outline colors.' })
         + fieldMarkup('Icon size uses', 'sizeBy', layerFilters.powerPlants.sizeBy, numericPointScaleOptions(records, [['planning_sustained_output_mw', 'Planning output · annual average (MW)'], ['average_generation_mwh', 'Average generation / output (MWh)']]), 'Choose annual-average planning output to scale bolts by year-round production rather than spikes.');
     } else if (layerId === 'neon-streets') {
       title = 'Neon streets layer filters';
@@ -4566,18 +5515,21 @@
         ['major', 'Interstates and major roads'],
         ['all', 'All streets'],
       ], 'I-95 is the default. Broader modes reuse the same vector tiles without downloading a second road dataset.')
-        + numberFieldMarkup('Line width', 'lineWidth', layerFilters.neonStreets.lineWidth, { min: .25, max: 5, step: .25, help: 'Scales both the bright road core and its glow while preserving zoom-dependent widths.' });
+        + numberFieldMarkup('Line width', 'lineWidth', layerFilters.neonStreets.lineWidth, { min: .25, max: 5, step: .25, help: 'Scales both the bright road core and its glow while preserving zoom-dependent widths.' })
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(layerFilters.neonStreets.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens the neon road core and glow.' });
     } else if (layerId === 'enviroscreen') {
       title = 'EnviroScreen layer filters';
       const filters = layerFilters.enviroscreen;
       body.innerHTML = zoomRangeMarkup(layerId)
         + fieldMarkup('Tract text match', 'text', filters.text)
         + fieldMarkup('Minimum EJ score', 'scoreBand', filters.scoreBand, FILTER_OPTIONS.enviroScoreBand)
-        + fieldMarkup('Community flag', 'community', filters.community, FILTER_OPTIONS.enviroCommunity);
+        + fieldMarkup('Community flag', 'community', filters.community, FILTER_OPTIONS.enviroCommunity)
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(filters.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens the rendered EnviroScreen fill.' });
     } else if (layerId === 'parcels') {
       title = 'Parcel layer filters';
       body.innerHTML = zoomRangeMarkup(layerId)
-        + fieldMarkup('Account ID text match', 'text', layerFilters.parcels.text, null, 'Filters currently loaded parcel boundaries by public account ID.');
+        + fieldMarkup('Account ID text match', 'text', layerFilters.parcels.text, null, 'Filters currently loaded parcel boundaries by public account ID.')
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(layerFilters.parcels.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens rendered parcel boundaries.' });
     } else if (layerId === ESRI_BUILDINGS.id) {
       title = `${ESRI_BUILDINGS.name} layer settings`;
       body.innerHTML = zoomRangeMarkup(layerId)
@@ -4588,6 +5540,14 @@
       title = `${config.name} layer filters`;
       body.innerHTML = zoomRangeMarkup(layerId)
         + fieldMarkup('Feature text match', 'text', remoteLayerStates.get(config.id)?.text || '', null, 'Matches the fields returned from the official live service for the current map view.')
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(remoteLayerStates.get(config.id)?.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens this layer using color and opacity where supported by the renderer.' })
+        + (config.geometry === 'point' ? fieldMarkup(
+          'Point rendering',
+          'pointRenderMode',
+          normalizePointRenderMode(config, remoteLayerStates.get(config.id)?.pointRenderMode),
+          POINT_RENDER_OPTIONS,
+          'GPU Splat uses a WebGL heatmap pass to show smoother point density from the same filtered features.',
+        ) : '')
         + (config.geometry === 'point' ? fieldMarkup(
           'Point size uses',
           'sizeBy',
@@ -4598,6 +5558,7 @@
           ),
           'Numeric values are normalized to a bounded screen-space size.',
         ) : '')
+        + (config.geometry === 'point' ? scaleFieldMarkup('Icon scale', 'iconScale', remoteLayerStates.get(config.id)?.iconScale) : '')
         + (config.lineColorThemes ? fieldMarkup(
           'Line color theme',
           'colorTheme',
@@ -4616,7 +5577,7 @@
           'lineWidthBy',
           normalizeLineWidthBy(config, remoteLayerStates.get(config.id)?.lineWidthBy),
           lineWidthFieldOptions(config),
-          'Voltage class is a capacity proxy; utility load and hosting layers use published MW/kW capacity fields. These controls do not estimate live line flow.',
+          'By default, line width carries the available flow, electrical capacity, gas segment, or liquid/water magnitude when the source exposes a usable field. These controls do not estimate live flow.',
         ) : '')
         + `<p class="dc-modal-note">${escapeHtml(config.description)}</p>`;
     }
@@ -4638,6 +5599,8 @@
         glowBy: String(formData.get('glowBy') || 'contestation'),
         glowDistance: normalizeGlowDistance(formData.get('glowDistance')),
         glowBlur: normalizeGlowBlur(formData.get('glowBlur')),
+        iconScale: normalizeIconScale(formData.get('iconScale')),
+        brightness: normalizeBrightness(formData.get('brightness')),
         sizeBy: String(formData.get('sizeBy') || 'none'),
       };
     } else if (activeLayerConfigId === 'power-plants') {
@@ -4648,29 +5611,38 @@
         outlineBy: String(formData.get('outlineBy') || 'technology'),
         fillBy: String(formData.get('fillBy') || 'none'),
         fillFraction: Math.max(0, Math.min(1, Number(formData.get('fillFraction') || 1))),
-        outlineScale: normalizeBoltOutlineScale(formData.get('outlineScale')),
+        outlineWidth: normalizeBoltOutlineWidth(formData.get('outlineWidth')),
+        iconScale: normalizeIconScale(formData.get('iconScale')),
+        brightness: normalizeBrightness(formData.get('brightness')),
         sizeBy: String(formData.get('sizeBy') || 'none'),
+        renderMaterial: normalizePowerPlantRenderMaterial(formData.get('renderMaterial')),
       };
       normalizePowerPlantLayerFilters(layerFilters.powerPlants);
     } else if (activeLayerConfigId === 'neon-streets') {
       const scope = String(formData.get('scope') || 'i95');
       layerFilters.neonStreets.scope = ['i95', 'interstates', 'major', 'all'].includes(scope) ? scope : 'i95';
       layerFilters.neonStreets.lineWidth = normalizeLineWidthMultiplier(formData.get('lineWidth'));
+      layerFilters.neonStreets.brightness = normalizeBrightness(formData.get('brightness'));
     } else if (activeLayerConfigId === 'enviroscreen') {
       layerFilters.enviroscreen = {
         text: String(formData.get('text') || '').trim().toLowerCase(),
         scoreBand: String(formData.get('scoreBand') || 'all'),
         community: String(formData.get('community') || 'all'),
+        brightness: normalizeBrightness(formData.get('brightness')),
       };
     } else if (activeLayerConfigId === 'parcels') {
       layerFilters.parcels.text = String(formData.get('text') || '').trim().toLowerCase();
+      layerFilters.parcels.brightness = normalizeBrightness(formData.get('brightness'));
     } else {
       const config = REMOTE_LAYERS.find((candidate) => candidate.id === activeLayerConfigId);
       const state = remoteLayerStates.get(activeLayerConfigId);
       if (state) {
         state.text = String(formData.get('text') || '').trim().toLowerCase();
         state.sizeBy = String(formData.get('sizeBy') || 'none');
-        state.colorTheme = String(formData.get('colorTheme') || (config?.lineColorThemes ? 'uniform' : 'default'));
+        state.iconScale = config?.geometry === 'point' ? normalizeIconScale(formData.get('iconScale')) : 1;
+        state.brightness = normalizeBrightness(formData.get('brightness'));
+        state.pointRenderMode = normalizePointRenderMode(config, formData.get('pointRenderMode'));
+        state.colorTheme = String(formData.get('colorTheme') || defaultLineColorTheme(config));
         state.lineWidth = normalizeLineWidthMultiplier(formData.get('lineWidth'));
         state.lineWidthBy = normalizeLineWidthBy(config, formData.get('lineWidthBy'));
       }
@@ -4681,24 +5653,27 @@
   function resetActiveLayerFilter() {
     layerZoomRanges.delete(activeLayerConfigId);
     if (activeLayerConfigId === 'datacenters') {
-      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'reported_power_capacity_mw' };
+      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, iconScale: 1, brightness: 1, sizeBy: 'reported_power_capacity_mw' };
     } else if (activeLayerConfigId === 'power-plants') {
-      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineScale: 1.04, sizeBy: 'planning_sustained_output_mw' };
+      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineWidth: 1.5, outlineScale: 1.04, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', renderMaterial: 'standard' };
     } else if (activeLayerConfigId === 'neon-streets') {
-      layerFilters.neonStreets = { scope: 'i95', lineWidth: 1 };
+      layerFilters.neonStreets = { scope: 'i95', lineWidth: 1, brightness: 1 };
     } else if (activeLayerConfigId === 'enviroscreen') {
-      layerFilters.enviroscreen = { text: '', scoreBand: 'all', community: 'all' };
+      layerFilters.enviroscreen = { text: '', scoreBand: 'all', community: 'all', brightness: 1 };
     } else if (activeLayerConfigId === 'parcels') {
-      layerFilters.parcels = { text: '' };
+      layerFilters.parcels = { text: '', brightness: 1 };
     } else {
       const config = REMOTE_LAYERS.find((candidate) => candidate.id === activeLayerConfigId);
       const state = remoteLayerStates.get(activeLayerConfigId);
       if (state) {
         state.text = '';
         state.sizeBy = 'none';
-        state.colorTheme = config?.lineColorThemes ? 'uniform' : 'default';
+        state.iconScale = 1;
+        state.brightness = 1;
+        state.pointRenderMode = 'points';
+        state.colorTheme = defaultLineColorTheme(config);
         state.lineWidth = 1;
-        state.lineWidthBy = 'zoom';
+        state.lineWidthBy = defaultLineWidthBy(config);
       }
     }
   }
@@ -4874,6 +5849,16 @@
     if (!map.getSource(ENVIROSCREEN_SOURCE_ID)) {
       map.addSource(ENVIROSCREEN_SOURCE_ID, { type: 'geojson', data });
     }
+    const enviroscreenBrightness = normalizeBrightness(layerFilters.enviroscreen.brightness);
+    const enviroscreenFillColor = layerCustomColorHex('enviroscreen')
+      ? adjustHexBrightness(layerCustomColorHex('enviroscreen'), enviroscreenBrightness)
+      : [
+        'step', ['coalesce', ['get', 'P_EJ'], 0],
+        '#01856f', 25,
+        '#81ccbf', 50,
+        '#dec17e', 75,
+        '#a6601b',
+      ];
     const firstLabel = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id;
     if (!map.getLayer(ENVIROSCREEN_FILL_ID)) {
       map.addLayer({
@@ -4881,14 +5866,8 @@
         type: 'fill',
         source: ENVIROSCREEN_SOURCE_ID,
         paint: {
-          'fill-color': layerCustomColors.get('enviroscreen') || [
-            'step', ['coalesce', ['get', 'P_EJ'], 0],
-            '#01856f', 25,
-            '#81ccbf', 50,
-            '#dec17e', 75,
-            '#a6601b',
-          ],
-          'fill-opacity': .48,
+          'fill-color': enviroscreenFillColor,
+          'fill-opacity': Math.min(1, .48 * enviroscreenBrightness * layerCustomColorAlpha('enviroscreen')),
         },
       }, firstLabel);
     }
@@ -4906,13 +5885,8 @@
     const visibility = layerShownAtZoom('enviroscreen', map.getZoom()) ? 'visible' : 'none';
     map.setLayoutProperty(ENVIROSCREEN_FILL_ID, 'visibility', visibility);
     map.setLayoutProperty(ENVIROSCREEN_LINE_ID, 'visibility', visibility);
-    map.setPaintProperty(ENVIROSCREEN_FILL_ID, 'fill-color', layerCustomColors.get('enviroscreen') || [
-      'step', ['coalesce', ['get', 'P_EJ'], 0],
-      '#01856f', 25,
-      '#81ccbf', 50,
-      '#dec17e', 75,
-      '#a6601b',
-    ]);
+    map.setPaintProperty(ENVIROSCREEN_FILL_ID, 'fill-color', enviroscreenFillColor);
+    map.setPaintProperty(ENVIROSCREEN_FILL_ID, 'fill-opacity', Math.min(1, .48 * enviroscreenBrightness * layerCustomColorAlpha('enviroscreen')));
     applyMapLayerOrder(map);
   }
 
@@ -4977,14 +5951,16 @@
           minzoom: parcelRange.min,
           maxzoom: parcelRange.max,
           paint: {
-            'line-color': layerCustomColors.get('parcels') || 'rgba(121, 207, 241, .82)',
+            'line-color': adjustHexBrightness(layerCustomColorHex('parcels') || '#79cff1', layerFilters.parcels.brightness),
             'line-width': ['interpolate', ['linear'], ['zoom'], 13, .7, 16, 1.2, 19, 1.8],
+            'line-opacity': Math.min(1, .82 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')),
           },
         }, firstLabel);
       }
       const parcelRange = zoomRangeForLayer('parcels');
       if (map.getLayer(PARCEL_LAYER_ID) && map.setLayerZoomRange) map.setLayerZoomRange(PARCEL_LAYER_ID, parcelRange.min, parcelRange.max);
-      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', layerCustomColors.get('parcels') || 'rgba(121, 207, 241, .82)');
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#79cff1', layerFilters.parcels.brightness));
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-opacity', Math.min(1, .82 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')));
       map.setLayoutProperty(PARCEL_LAYER_ID, 'visibility', 'visible');
       ensureParcelHoverLayers(map, firstLabel);
       loadParcelBoundaries(map);
@@ -5006,7 +5982,7 @@
         id: PARCEL_HOVER_FILL_ID,
         type: 'fill',
         source: PARCEL_HOVER_SOURCE_ID,
-        paint: { 'fill-color': layerCustomColors.get('parcels') || '#f3a712', 'fill-opacity': .16 },
+        paint: { 'fill-color': adjustHexBrightness(layerCustomColorHex('parcels') || '#f3a712', layerFilters.parcels.brightness), 'fill-opacity': Math.min(1, .16 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')) },
       }, firstLabel);
     }
     if (!map.getLayer(PARCEL_HOVER_LINE_ID)) {
@@ -5014,13 +5990,15 @@
         id: PARCEL_HOVER_LINE_ID,
         type: 'line',
         source: PARCEL_HOVER_SOURCE_ID,
-        paint: { 'line-color': layerCustomColors.get('parcels') || '#ffd582', 'line-width': 2 },
+        paint: { 'line-color': adjustHexBrightness(layerCustomColorHex('parcels') || '#ffd582', layerFilters.parcels.brightness), 'line-width': 2, 'line-opacity': layerCustomColorAlpha('parcels') },
       }, firstLabel);
     }
     map.setLayoutProperty(PARCEL_HOVER_FILL_ID, 'visibility', 'visible');
     map.setLayoutProperty(PARCEL_HOVER_LINE_ID, 'visibility', 'visible');
-    map.setPaintProperty(PARCEL_HOVER_FILL_ID, 'fill-color', layerCustomColors.get('parcels') || '#f3a712');
-    map.setPaintProperty(PARCEL_HOVER_LINE_ID, 'line-color', layerCustomColors.get('parcels') || '#ffd582');
+    map.setPaintProperty(PARCEL_HOVER_FILL_ID, 'fill-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#f3a712', layerFilters.parcels.brightness));
+    map.setPaintProperty(PARCEL_HOVER_FILL_ID, 'fill-opacity', Math.min(1, .16 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')));
+    map.setPaintProperty(PARCEL_HOVER_LINE_ID, 'line-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#ffd582', layerFilters.parcels.brightness));
+    map.setPaintProperty(PARCEL_HOVER_LINE_ID, 'line-opacity', layerCustomColorAlpha('parcels'));
     if (hoveredParcel) map.getSource(PARCEL_HOVER_SOURCE_ID).setData(hoveredParcel);
     applyMapLayerOrder(map);
   }
@@ -5338,7 +6316,7 @@
     const selectedThemeId = remoteLayerStates.get(config.id)?.colorTheme || (config.lineColorThemes ? 'uniform' : 'default');
     const selectedTheme = config.lineColorThemes?.find((theme) => theme.id === selectedThemeId);
     if (selectedTheme?.id === 'uniform') {
-      const color = layerCustomColors.get(config.id) || config.lineColor || config.color;
+      const color = colorValueString(layerCustomColorHex(config.id) || config.lineColor || config.color, layerCustomColorAlpha(config.id));
       return `<section class="dc-feature-color-key" aria-label="${escapeHtml(config.name)} uniform color"><span class="dc-color-key-swatch" style="--dc-key-color:${escapeHtml(color)}" aria-hidden="true"></span><span><strong>Uniform line color</strong><small>${escapeHtml(selectedTheme.label)}</small></span></section>`;
     }
     if (selectedTheme && selectedTheme.id !== 'default') {
@@ -5516,12 +6494,14 @@
     const matchedIds = new Set(matches.map((record) => record.id));
     const matchingDataCenters = matches.filter((record) => record.record_type === 'data_center');
     const dataCenterSizeFactors = pointScaleFactors(matchingDataCenters, layerFilters.datacenters.sizeBy);
+    const dataCenterIconScale = normalizeIconScale(layerFilters.datacenters.iconScale);
     records.forEach((record) => {
       const marker = markerById.get(record.id);
       if (!marker) return;
       applyMarkerAppearance(record, marker.getElement());
-      const size = 22 * (dataCenterSizeFactors.get(record) || 1);
+      const size = 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1);
       marker.getElement().style.setProperty('--marker-size', `${size}px`);
+      marker.getElement().dataset.renderSize = String(size);
       marker.getElement().hidden = !matchedIds.has(record.id);
     });
     syncDataCenterMarkerZOrder();
@@ -5529,7 +6509,7 @@
       .filter((record) => Number.isFinite(record.latitude) && Number.isFinite(record.longitude) && markerById.has(record.id))
       .map((record) => ({
         record,
-        size: 22 * (dataCenterSizeFactors.get(record) || 1),
+        size: 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1),
       }))
       .sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
     powerPlantBoltLayer?.setRecords(matches.filter((record) => record.record_type === 'power_plant'));
@@ -5550,6 +6530,87 @@
       : '<h2>Hover a map icon</h2><p>Move over a visible icon or map feature to see what it represents.</p>';
   }
 
+  function renderIdleInspectorNews(force = false) {
+    if (inspectorPinnedKey || inspectorHoverKey) return false;
+    const detail = prepareInspectorDetail();
+    if (mobileInspectorMode()) {
+      detail.dataset.inspectorMode = 'default';
+      detail.innerHTML = defaultInspectorMarkup();
+      return true;
+    }
+    if (!force && detail.dataset.inspectorMode === 'news') return false;
+    const news = [...datacenterNewsItems]
+      .filter((item) => item?.title && item?.url)
+      .sort((left, right) => String(right.published_date || '').localeCompare(String(left.published_date || '')))
+      .slice(0, 6);
+    detail.dataset.inspectorMode = 'news';
+    if (!news.length) {
+      detail.innerHTML = '<h2>Hover a map icon</h2><p>Move over a visible icon or map feature to see what it represents.</p>';
+      return true;
+    }
+    detail.innerHTML = `
+      <h2>Latest data-center news</h2>
+      <p class="dc-type">Idle inspector · Maryland-first policy, permitting, grid, and development coverage</p>
+      <div class="dc-news-list">
+        ${news.map((item) => `
+          <article class="dc-news-card" data-news-id="${escapeHtml(item.id)}" data-target-record-id="${escapeHtml(item.target_record_id || '')}" data-target-longitude="${escapeHtml(item.target?.longitude ?? '')}" data-target-latitude="${escapeHtml(item.target?.latitude ?? '')}" data-target-zoom="${escapeHtml(item.target?.zoom ?? '')}">
+            <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">
+              <span>${escapeHtml(formatNewsDate(item.published_date))} · ${escapeHtml(item.publisher || 'Source')}</span>
+              <strong>${escapeHtml(item.title)}</strong>
+            </a>
+            <p>${escapeHtml(item.summary || '')}</p>
+            ${item.tags?.length ? `<div class="dc-news-tags">${item.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
+          </article>
+        `).join('')}
+      </div>
+      <p class="dc-record-note">This is a dated public-news snapshot for orientation. Facility facts on the map remain tied to the source register and record-specific evidence.</p>
+    `;
+    return true;
+  }
+
+  function newsTargetForElement(element) {
+    const recordId = element?.dataset?.targetRecordId;
+    if (recordId && activeLayerContext?.records) {
+      const record = activeLayerContext.records.find((candidate) => candidate.id === recordId);
+      if (record && Number.isFinite(record.longitude) && Number.isFinite(record.latitude)) {
+        return {
+          center: [record.longitude, record.latitude],
+          zoom: record.record_type === 'data_center' ? 11.6 : 9.2,
+        };
+      }
+    }
+    const longitude = Number(element?.dataset?.targetLongitude);
+    const latitude = Number(element?.dataset?.targetLatitude);
+    if (Number.isFinite(longitude) && Number.isFinite(latitude)) {
+      const zoom = Number(element.dataset.targetZoom);
+      return { center: [longitude, latitude], zoom: Number.isFinite(zoom) ? zoom : 8.5 };
+    }
+    return null;
+  }
+
+  function shiftMapToNewsTarget(element) {
+    const map = activeLayerContext?.map;
+    if (!map || inspectorPinnedKey) return;
+    const target = newsTargetForElement(element);
+    if (!target) return;
+    map.easeTo({
+      center: target.center,
+      zoom: Math.max(map.getZoom(), target.zoom),
+      duration: 650,
+      essential: true,
+    });
+  }
+
+  function setupNewsHoverTargets() {
+    const detail = document.getElementById('record-detail');
+    const hover = (event) => {
+      const card = event.target.closest?.('.dc-news-card');
+      if (card && detail.contains(card)) shiftMapToNewsTarget(card);
+    };
+    detail.addEventListener('pointerover', hover);
+    detail.addEventListener('focusin', hover);
+  }
+
   function renderHoveredInspector(key, render, layerId = null) {
     if (mobileInspectorMode()) return false;
     if (inspectorPinnedKey) return false;
@@ -5558,6 +6619,7 @@
     inspectorHoverLayerId = layerId;
     updateLayerSelectionHighlight();
     render();
+    document.getElementById('record-detail').dataset.inspectorMode = 'detail';
     return true;
   }
 
@@ -5567,6 +6629,7 @@
     inspectorHoverKey = null;
     inspectorHoverLayerId = null;
     updateLayerSelectionHighlight();
+    renderIdleInspectorNews();
   }
 
   function pinInspector(key, render, layerId = null) {
@@ -5576,6 +6639,7 @@
     inspectorHoverLayerId = layerId;
     updateLayerSelectionHighlight();
     render();
+    document.getElementById('record-detail').dataset.inspectorMode = 'detail';
     document.querySelector('.dc-detail').classList.add('is-pinned');
     document.getElementById('close-record-detail').hidden = false;
     return true;
@@ -5589,8 +6653,7 @@
     updateLayerSelectionHighlight();
     document.querySelector('.dc-detail').classList.remove('is-pinned');
     document.getElementById('close-record-detail').hidden = true;
-    const detail = prepareInspectorDetail();
-    detail.innerHTML = defaultInspectorMarkup();
+    renderIdleInspectorNews(true);
   }
 
   function pinHoverTarget(target) {
@@ -5709,7 +6772,7 @@
   }
 
   function contestationColor(record) {
-    return ['#668096', '#89a9bc', '#e0b052', '#e77b45', '#d94b50'][record.contestation_score] || '#668096';
+    return ['#19c37d', '#89a9bc', '#e0b052', '#e77b45', '#d94b50'][record.contestation_score] || '#19c37d';
   }
 
   function iconStyleDescription(record) {
@@ -5811,6 +6874,8 @@
           ['UPS energy', known(record.ups_energy_mwh, ' MWh')],
           ['Cooling/water', known(record.cooling_water_detail)],
         ])}
+        ${renderFundingBreakdown(record, sourceById)}
+        ${renderOperationalFinance(record, sourceById)}
         ${renderFactGroup('Permits, finance, and public response', [
           ['Permit status', known(record.permit_status)],
           ['Air permit', known(record.air_permit_status)],
@@ -6266,6 +7331,93 @@
       </div>
       ${links ? `<div class="dc-salient-news"><span>Salient coverage</span>${links}</div>` : '<small>No salient facility-specific news article was identified.</small>'}
       <p><b>${escapeHtml(record.contestation_category)}</b> · ${escapeHtml(record.contestation_basis)}</p>
+    </section>`;
+  }
+
+  function fundingAmountLabel(item) {
+    if (Number.isFinite(item?.amount_usd)) return `$${number(item.amount_usd)}`;
+    if (Number.isFinite(item?.aggregate_amount_usd)) return `$${number(item.aggregate_amount_usd)} aggregate`;
+    return 'Amount not isolated';
+  }
+
+  function pieSlicePath(start, end) {
+    const radius = 47;
+    const center = 50;
+    const startX = center + radius * Math.cos(start);
+    const startY = center + radius * Math.sin(start);
+    const endX = center + radius * Math.cos(end);
+    const endY = center + radius * Math.sin(end);
+    const largeArc = end - start > Math.PI ? 1 : 0;
+    return `M ${center} ${center} L ${startX.toFixed(3)} ${startY.toFixed(3)} A ${radius} ${radius} 0 ${largeArc} 1 ${endX.toFixed(3)} ${endY.toFixed(3)} Z`;
+  }
+
+  function renderFundingPie(items) {
+    const funded = items
+      .filter((item) => Number.isFinite(item?.amount_usd) && item.amount_usd > 0);
+    const total = funded.reduce((sum, item) => sum + item.amount_usd, 0);
+    if (!funded.length || total <= 0) return '';
+    const colors = ['#8bd7ff', '#f6c85f', '#7bd88f', '#f17c67', '#b89cff', '#64e5d2'];
+    let cursor = -Math.PI / 2;
+    const slices = funded.map((item, index) => {
+      const next = cursor + (Math.PI * 2 * item.amount_usd / total);
+      const slice = `<path d="${pieSlicePath(cursor, next)}" fill="${colors[index % colors.length]}"><title>${escapeHtml(item.funder)} · ${fundingAmountLabel(item)}</title></path>`;
+      cursor = next;
+      return slice;
+    }).join('');
+    return `<svg class="dc-funding-pie" viewBox="0 0 100 100" role="img" aria-label="Known funder breakdown">${slices}<circle cx="50" cy="50" r="47" fill="none" stroke="rgba(255,255,255,.74)" stroke-width="1.2"></circle></svg>`;
+  }
+
+  function renderFundingBreakdown(record, sourceById) {
+    const items = Array.isArray(record.funding_breakdown) ? record.funding_breakdown : [];
+    const sourceIds = new Set(record.funding_source_ids || []);
+    items.forEach((item) => (item.source_ids || []).forEach((id) => sourceIds.add(id)));
+    const list = items.length
+      ? items.map((item, index) => `
+        <li>
+          <span class="dc-funding-swatch" style="--dc-funding-color: ${['#8bd7ff', '#f6c85f', '#7bd88f', '#f17c67', '#b89cff', '#64e5d2'][index % 6]}" aria-hidden="true"></span>
+          <span><strong>${escapeHtml(item.funder || 'Unnamed funder')}</strong><small>${escapeHtml(fundingAmountLabel(item))}${item.amount_status ? ` · ${escapeHtml(item.amount_status)}` : ''}</small>${item.basis ? `<em>${escapeHtml(item.basis)}</em>` : ''}</span>
+        </li>`).join('')
+      : '<li><span><strong>No named funder breakdown found</strong><small>Amounts and responsible funders were not isolated in reviewed records.</small></span></li>';
+    return `<section class="dc-funding" aria-label="Financial data and funders">
+      <div class="dc-funding-head">
+        <h3>Financial data</h3>
+        <strong>${record.funding_total_known_usd == null ? 'No chartable total' : `$${number(record.funding_total_known_usd)}`}</strong>
+      </div>
+      <p>${escapeHtml(record.funding_summary || 'No facility-specific funder breakdown was identified in the reviewed records.')}</p>
+      <div class="dc-funding-body">
+        ${renderFundingPie(items)}
+        <ul>${list}</ul>
+      </div>
+      ${renderRecordSources([...sourceIds], sourceById)}
+    </section>`;
+  }
+
+  function renderOperationalFinance(record, sourceById) {
+    const sourceIds = new Set(record.operational_finance_source_ids || []);
+    const items = Array.isArray(record.operational_finance_items) ? record.operational_finance_items : [];
+    items.forEach((item) => (item.source_ids || []).forEach((id) => sourceIds.add(id)));
+    const rows = [
+      ['Estimated annual electricity use', record.estimated_annual_electricity_use_mwh == null ? known(null) : `${number(record.estimated_annual_electricity_use_mwh, 1)} MWh`],
+      ['Estimated annual electricity cost', record.estimated_annual_electricity_cost_usd == null ? known(null) : `$${number(record.estimated_annual_electricity_cost_usd)}`],
+      ['Electricity price proxy', record.electricity_cost_rate_cents_per_kwh == null ? known(null) : `${number(record.electricity_cost_rate_cents_per_kwh, 2)}¢/kWh`],
+      ['Cost basis', known(record.electricity_cost_basis)],
+    ];
+    const itemList = items.length ? `
+      <ul class="dc-operational-finance-list">
+        ${items.map((item) => `
+          <li>
+            <strong>${escapeHtml(item.label || 'Operational finance item')}</strong>
+            <span>${item.amount_usd == null ? escapeHtml(item.amount_status || 'Amount not isolated') : `$${number(item.amount_usd)} · ${escapeHtml(item.amount_status || 'estimate')}`}</span>
+            <em>${escapeHtml(item.basis || '')}</em>
+          </li>
+        `).join('')}
+      </ul>` : '';
+    return `<section class="dc-operational-finance" aria-label="Operational finance">
+      <h3>Operational finance</h3>
+      <p>${escapeHtml(record.operational_finance_summary || 'No facility-specific operational finance was isolated in the reviewed records.')}</p>
+      <dl class="dc-facts">${rows.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${value}</dd>`).join('')}</dl>
+      ${itemList}
+      ${renderRecordSources([...sourceIds], sourceById)}
     </section>`;
   }
 

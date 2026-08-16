@@ -17,6 +17,11 @@ from pathlib import Path
 import pandas as pd
 
 
+MARYLAND_ALL_SECTOR_PRICE_CENTS_PER_KWH_2024 = 15.04
+MARYLAND_ALL_SECTOR_PRICE_SOURCE_ID = "eia-retail-sales-md-all-sectors-2024"
+HOURS_IN_2024 = 8784
+
+
 def clean_number(value, digits=3):
     if pd.isna(value):
         return None
@@ -95,6 +100,17 @@ def curated_data_center(**values):
         "capital_investment_usd": None,
         "tax_incentive_detail": None,
         "public_funding_detail": None,
+        "funding_summary": "No facility-specific funder breakdown was identified in the reviewed records.",
+        "funding_total_known_usd": None,
+        "funding_breakdown": [],
+        "funding_source_ids": [],
+        "operational_finance_summary": "No facility-specific operating-cost, revenue, or tax-payment detail was isolated in the reviewed records.",
+        "estimated_annual_electricity_use_mwh": None,
+        "estimated_annual_electricity_cost_usd": None,
+        "electricity_cost_rate_cents_per_kwh": None,
+        "electricity_cost_basis": None,
+        "operational_finance_items": [],
+        "operational_finance_source_ids": [],
         "public_opposition_status": "no facility-specific evidence identified",
         "public_sentiment_score": None,
         "public_sentiment_label": "insufficient evidence",
@@ -122,6 +138,10 @@ def curated_data_center(**values):
             "UPS energy duration",
             "current and committed site employment",
             "facility-specific tax benefits",
+            "facility-specific funder breakdown",
+            "facility-specific operating revenue",
+            "facility-specific tax payments",
+            "facility-specific power purchase agreement or tariff",
         ],
         "notes": "Building age and total property area do not establish the age or footprint of the data-center installation within the structure.",
     }
@@ -442,6 +462,162 @@ CURATED_DATA_CENTER_ADDITIONS = [
         source_ids=["datacentermap-baltimore-2026", "openstreetmap-nominatim-geocoder"],
         notes="Shares the 111 Market Place / Candler Building location with other provider listings; retained because DataCenterMap lists it separately.",
     ),
+    curated_data_center(
+        id="fannie-mae-urbana-tech-center",
+        name="Fannie Mae Urbana Technology Center",
+        operator="Fannie Mae",
+        owner="Fannie Mae",
+        year_built=2004,
+        year_built_status="documented",
+        year_built_basis="JLL sale materials for the Fannie Mae Tech Center list original construction in 2004.",
+        development_status="operating / offered for sale",
+        status="operating / offered for sale",
+        permit_status="operating facility; no current expansion permit decision identified in the reviewed records",
+        legal_status="no project-specific legal dispute identified in the reviewed records",
+        status_tags=["Built 2004", "Operating", "Offered for sale 2026"],
+        year_built_source_ids=["jll-fannie-mae-tech-center-2026"],
+        status_source_ids=["frederick-oed-data-centers-2026", "fannie-mae-contact-urbana-tech-center", "jll-fannie-mae-tech-center-2026"],
+        plan_detail="Existing Tier III-equivalent enterprise data center with expansion capacity in the existing improvements and an adjacent undeveloped parcel marketed for possible future data-center development.",
+        permit_detail="No current facility-specific government expansion permit was identified; JLL describes expansion potential and near-term power availability rather than an issued construction approval.",
+        financing_detail="JLL states Fannie Mae is migrating operations to the cloud and intends to divest the Tech Center by year-end 2026; no facility-specific public financing was identified.",
+        street_address="9107 Bennett Creek Boulevard",
+        city="Frederick",
+        county="Frederick",
+        postal_code="21704",
+        latitude=39.322492,
+        longitude=-77.34973,
+        coordinate_method="U.S. Census Geocoder street-segment match",
+        coordinate_checked_date="2026-08-10",
+        building_count=1,
+        site_acres=37.26,
+        reported_power_capacity_mw=9.8,
+        reported_power_capacity_basis="JLL reports 4.3 MW installed critical capacity plus 5.5 MW expansion capacity in existing improvements; this is a facility capacity envelope, not metered demand.",
+        backup_generation_fuel="diesel (reported by earlier technical coverage; current official sale materials reviewed here do not enumerate generators)",
+        backup_generator_detail="Earlier specialist coverage reported six 2 MW generators; current Fannie Mae and JLL materials reviewed for this update do not publish a generator schedule.",
+        ups_technology="UPS system present by data-center design implication; topology and rating not disclosed in the reviewed owner/broker materials.",
+        cooling_water_detail="Frederick OED describes redundant utility feeds including water; detailed water consumption was not disclosed.",
+        hardware_detail="Frederick OED describes a 220,000-square-foot facility with 90,000 square feet of office space, 60,000 square feet of data-center space, and a 70,000-square-foot MEP facility. JLL lists 245,000 gross square feet, Tier III-equivalent rating, 4.3 MW installed critical capacity, and 5.5 MW expansion capacity.",
+        likely_workflows_detail="Enterprise mortgage-finance technology operations and disaster-recovery workloads; JLL states Fannie Mae is migrating operations to the cloud before disposition.",
+        hardware_workflow_basis="Fannie Mae owns and lists the Urbana Technology Center; Frederick OED and JLL describe it as an existing data center.",
+        profile_source_ids=["frederick-oed-data-centers-2026", "fannie-mae-contact-urbana-tech-center", "jll-fannie-mae-tech-center-2026"],
+        source_ids=["frederick-oed-data-centers-2026", "fannie-mae-contact-urbana-tech-center", "jll-fannie-mae-tech-center-2026", "census-geocoder"],
+        notes="Frederick OED and JLL report different gross-area figures. Both are retained in the narrative rather than collapsed into a single asserted area.",
+    ),
+    curated_data_center(
+        id="ssa-national-support-center-urbana",
+        name="Social Security Administration National Support Center",
+        operator="Social Security Administration",
+        owner="U.S. General Services Administration",
+        year_built=2014,
+        year_built_status="documented",
+        year_built_basis="Public project profiles and 2014 opening coverage identify the facility as newly opened in 2014.",
+        development_status="operating",
+        status="operating",
+        permit_status="operating federal facility; no current local data-center expansion permit identified in the reviewed records",
+        legal_status="no project-specific legal dispute identified in the reviewed records",
+        status_tags=["Built 2014", "Operating", "Federal facility", "LEED Gold"],
+        year_built_source_ids=["southland-ssa-national-support-center", "som-ssa-national-support-center"],
+        status_source_ids=["frederick-oed-data-centers-2026", "southland-ssa-national-support-center"],
+        plan_detail="Federal Tier III National Support Center replacing the former National Computer Center and supporting core SSA data operations.",
+        permit_detail="No current facility-specific air-permit or development dispute was identified; this is an established federal facility.",
+        financing_detail="Federal facility delivered for the U.S. General Services Administration; no local data-center incentive award was identified in the reviewed records.",
+        street_address="8999 Bennett Creek Boulevard",
+        city="Frederick",
+        county="Frederick",
+        postal_code="21704",
+        latitude=39.316723,
+        longitude=-77.351526,
+        coordinate_method="U.S. Census Geocoder street-segment match",
+        coordinate_checked_date="2026-08-10",
+        building_count=1,
+        site_acres=63,
+        reported_power_capacity_mw=10,
+        reported_power_capacity_basis="Southland reports the facility supports approximately 10 MW of IT server load; this is a published IT-load figure, not metered utility demand.",
+        backup_generation_fuel="not disclosed in reviewed records",
+        backup_generator_detail="Project profiles identify an energy center and resilient federal data-center design but do not disclose a generator count or aggregate generator rating.",
+        ups_technology="Tier III data-center UPS equivalent expected; topology and rating not disclosed in reviewed records.",
+        cooling_water_detail="Southland reports five independent 100,000-gallon below-grade cooling-tower make-up-water sumps, designed to provide at least three days of cooling-tower make-up water if main water service fails.",
+        employees_current=80,
+        employees_committed=80,
+        hardware_detail="Southland describes a 275,000-square-foot Tier III data center with IT white space, office building, access-control center, approximately 10 MW of IT server load, and roughly 80 employees. SOM describes a 285,000-square-foot facility on 63 acres.",
+        likely_workflows_detail="Federal demographic, wage, earnings, benefits, and payment-support data processing for Social Security Administration operations.",
+        hardware_workflow_basis="Frederick OED and Southland state the facility maintains earnings, wage, demographic, and benefits information and processes high-volume SSA transactions.",
+        profile_source_ids=["frederick-oed-data-centers-2026", "southland-ssa-national-support-center", "som-ssa-national-support-center"],
+        source_ids=["frederick-oed-data-centers-2026", "southland-ssa-national-support-center", "som-ssa-national-support-center", "census-geocoder"],
+        notes="Frederick OED, Southland, DBIA, and SOM publish slightly different floor-area figures; this record uses Southland's 275,000-square-foot operational profile and retains SOM's 285,000-square-foot figure in the narrative.",
+    ),
+    curated_data_center(
+        id="rowan-bauxite-ii-frederick",
+        name="Rowan Bauxite II Data Center",
+        operator="Rowan Digital Infrastructure",
+        owner="Rowan Digital Infrastructure",
+        campus="Quantum Frederick",
+        status="site plan approved / planned",
+        development_status="site plan approved / planned",
+        permit_status="Frederick County Planning Commission agenda identified a site-plan decision for SP22-04 / AP SP276740 on December 11, 2024; no facility-specific MDE air permit package was identified in the reviewed records.",
+        legal_status="campus-wide referendum litigation resolved against referendum petitioners; no Bauxite II-specific legal dispute identified in the reviewed records",
+        status_tags=["Year unknown", "Planning approved", "Planned", "Quantum Frederick"],
+        status_source_ids=["frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "mde-frederick-data-center-hub"],
+        plan_detail="Frederick County Planning Commission agenda describes Bauxite II Data Center, Quantum Frederick Section 1, Lot 302, as an 822,620-square-foot Critical Digital Infrastructure Facility on a 111.50-acre site south and west of New Design Road and Manor Woods Road.",
+        permit_detail="Local site-plan decision documented; MDE's Frederick data-center hub lists Rowan Bauxite environmental documents but no Bauxite II air-permit decision in the reviewed index.",
+        financing_detail="No Bauxite II-specific public financing record was identified in the reviewed records; DCD attributes the project to Rowan at Quantum Frederick.",
+        street_address="New Design Road and Manor Woods Road",
+        city="Frederick",
+        county="Frederick",
+        postal_code="21703",
+        latitude=39.331036,
+        longitude=-77.454889,
+        coordinate_method="U.S. Census Geocoder intersection match for planning-agenda location",
+        coordinate_checked_date="2026-08-10",
+        site_acres=111.5,
+        building_count=4,
+        reported_power_capacity_mw=None,
+        reported_power_capacity_basis="No Bauxite II-specific power capacity was found in the reviewed official agenda or MDE hub.",
+        backup_generation_fuel="not disclosed in reviewed records",
+        backup_generator_detail="No facility-specific backup-generator count or rating was identified in the reviewed Bauxite II records.",
+        ups_technology="UPS likely for hyperscale data-center design, but topology and rating were not disclosed in the reviewed records.",
+        hardware_detail="Planned 822,620-square-foot critical digital infrastructure facility; DCD reports it as Rowan's second adjacent Bauxite project at Quantum Frederick.",
+        likely_workflows_detail="Likely hyperscale cloud or AI infrastructure for a large tenant; tenant and hardware inventory not disclosed.",
+        hardware_workflow_basis="Inferred from Rowan hyperscale campus context and critical digital infrastructure site-plan description.",
+        profile_source_ids=["frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "mde-frederick-data-center-hub"],
+        source_ids=["frederick-oed-data-centers-2026", "frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "mde-frederick-data-center-hub", "census-geocoder"],
+    ),
+    curated_data_center(
+        id="rowan-bauxite-iii-frederick",
+        name="Rowan Bauxite III Data Center",
+        operator="Rowan Digital Infrastructure",
+        owner="Rowan Digital Infrastructure",
+        campus="Quantum Frederick",
+        status="site plan approved / planned",
+        development_status="site plan approved / planned",
+        permit_status="Frederick County Planning Commission agenda identified a site-plan decision for SP22-04 / AP SP276843 on December 11, 2024; MDE lists Bauxite III environmental management and sampling documents.",
+        legal_status="campus-wide referendum litigation resolved against referendum petitioners; no Bauxite III-specific legal dispute identified in the reviewed records",
+        status_tags=["Year unknown", "Planning approved", "Planned", "Quantum Frederick", "Environmental management plan"],
+        status_source_ids=["frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "mde-frederick-data-center-hub"],
+        plan_detail="Frederick County Planning Commission agenda describes Bauxite III Data Center, Quantum Frederick Section 1, Lot 102, as a 591,913-square-foot Critical Digital Infrastructure Facility on a 55.08-acre site south and east of Ballenger Creek Pike and Manor Woods Road.",
+        permit_detail="Local site-plan decision documented. MDE states Bauxite III is the only Rowan Bauxite parcel within the former Eastalco operations boundary and has state-overseen environmental management plans for remediation and redevelopment.",
+        financing_detail="No Bauxite III-specific public financing record was identified in the reviewed records; DCD attributes the project to Rowan at Quantum Frederick.",
+        street_address="Ballenger Creek Pike and Manor Woods Road",
+        city="Frederick",
+        county="Frederick",
+        postal_code="21703",
+        latitude=39.321172,
+        longitude=-77.488391,
+        coordinate_method="Approximate intersection point from published Bauxite III vicinity descriptions and U.S. Census Geocoder",
+        coordinate_checked_date="2026-08-10",
+        site_acres=55.08,
+        building_count=3,
+        reported_power_capacity_mw=None,
+        reported_power_capacity_basis="No Bauxite III-specific power capacity was found in the reviewed official agenda or MDE hub.",
+        backup_generation_fuel="not disclosed in reviewed records",
+        backup_generator_detail="No facility-specific backup-generator count or rating was identified in the reviewed Bauxite III records.",
+        ups_technology="UPS likely for hyperscale data-center design, but topology and rating were not disclosed in the reviewed records.",
+        hardware_detail="Planned 591,913-square-foot critical digital infrastructure facility; DCD reports it as Rowan's third adjacent Bauxite project at Quantum Frederick.",
+        likely_workflows_detail="Likely hyperscale cloud or AI infrastructure for a large tenant; tenant and hardware inventory not disclosed.",
+        hardware_workflow_basis="Inferred from Rowan hyperscale campus context and critical digital infrastructure site-plan description.",
+        profile_source_ids=["frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "mde-frederick-data-center-hub"],
+        source_ids=["frederick-oed-data-centers-2026", "frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "mde-frederick-data-center-hub", "census-geocoder"],
+    ),
 ]
 
 
@@ -461,6 +637,22 @@ CONTESTATION_PROFILES = {
         "contestation_basis": "Amazon's Bauxite I permit for 99 diesel backup generators was highly contested, and the project lies within the Quantum Frederick campus that prompted a 21,000-signature referendum campaign, court proceedings, and a county pause. The referendum concerned the wider data-center zone, not only Amazon.",
         "contestation_source_ids": ["mde-amazon-final-determination-2026", "fnp-amazon-99-generators-2026", "wypr-frederick-referendum-ruling-2026"],
         "salient_news_source_ids": ["fnp-amazon-99-generators-2026", "wypr-frederick-referendum-ruling-2026"],
+    },
+    "rowan-bauxite-ii-frederick": {
+        "contestation_score": 3,
+        "contestation_label": "high",
+        "contestation_category": "campus-wide public and legal",
+        "contestation_basis": "No Bauxite II-specific litigation was identified, but it is part of the Quantum Frederick campus that generated a 21,000-signature referendum campaign, litigation, and county development restrictions. DCD also notes the applications advanced through a public Planning Commission process.",
+        "contestation_source_ids": ["frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "wypr-frederick-referendum-ruling-2026"],
+        "salient_news_source_ids": ["dcd-rowan-bauxite-ii-iii-approval-2024", "wypr-frederick-referendum-ruling-2026"],
+    },
+    "rowan-bauxite-iii-frederick": {
+        "contestation_score": 3,
+        "contestation_label": "high",
+        "contestation_category": "campus-wide public, legal, and environmental-management context",
+        "contestation_basis": "No Bauxite III-specific litigation was identified, but it is part of the Quantum Frederick campus that generated a 21,000-signature referendum campaign, litigation, and county development restrictions. MDE also identifies Bauxite III as the Rowan parcel within the former Eastalco operations boundary with environmental management plans.",
+        "contestation_source_ids": ["frederick-planning-bauxite-ii-iii-2024", "dcd-rowan-bauxite-ii-iii-approval-2024", "mde-frederick-data-center-hub", "wypr-frederick-referendum-ruling-2026"],
+        "salient_news_source_ids": ["dcd-rowan-bauxite-ii-iii-approval-2024", "wypr-frederick-referendum-ruling-2026"],
     },
     "annapolis-state-data-center": {
         "contestation_score": 1,
@@ -505,6 +697,45 @@ CONTESTATION_PROFILES = {
 }
 
 
+DATA_CENTER_RECORD_UPDATES = {
+    "aligned-iad04-frederick": {
+        "street_address": "5601 Manor Woods Road",
+        "postal_code": "21703",
+        "ups_technology": "Aligned markets 2 MW UPS line-ups for IAD-04; detailed topology and energy duration are not disclosed.",
+        "hardware_detail": (
+            "Planned hyperscale shells for high-density rack deployments. Aligned's Frederick County page identifies "
+            "IAD-04 at 5601 Manor Woods Road on a 75-acre campus designed to Tier III standards, with 3 MW backup "
+            "generators, 2 MW UPS line-ups, N+1 block redundancy, 500 kVA PDUs, 415V distribution, Delta3 air cooling, "
+            "and DeltaFlow liquid-cooling taps. Maryland permit records remain the source for the full backup-generator fleet."
+        ),
+        "profile_source_ids": ["aligned-maryland-data-centers", "mde-aligned-issued-air-permit-2025", "mde-aligned-air-permit-application", "mde-frederick-data-center-hub"],
+        "source_ids": ["aligned-maryland-data-centers", "frederick-oed-data-centers-2026", "mde-aligned-issued-air-permit-2025", "mde-aligned-final-determination-2025", "mde-aligned-air-permit-application", "frederick-planning-sp275110-2023", "esri-world-geocoder"],
+    },
+    "amazon-bwi150-153-frederick": {
+        "plan_detail": "Amazon Data Services BWI-150 through BWI-153 corresponds to Rowan's Bauxite I development phase within Quantum Frederick, documented in MDE air-permit records as a four-building data-center campus at 3250 Digital Drive.",
+        "source_ids": ["mde-amazon-issued-air-permit-2026", "mde-amazon-final-determination-2026", "mde-amazon-air-permit-application", "mde-frederick-data-center-hub", "frederick-oed-data-centers-2026", "esri-world-geocoder"],
+        "profile_source_ids": ["aws-global-infrastructure", "mde-amazon-issued-air-permit-2026", "mde-amazon-air-permit-application", "mde-frederick-data-center-hub", "frederick-oed-data-centers-2026"],
+    },
+    "atmosphere-dickerson": {
+        "building_count": 5,
+        "plan_detail": "Proposed 360 MW hyperscale campus at the former Dickerson Power Plant site. DCD reports five 226,850-square-foot data-center buildings, and the existing record also tracks the paired battery-energy-storage component described in county and state review materials.",
+        "permit_detail": "A Montgomery County conditional-use case and MDE NPDES application 26-DP-3903 entered review. DCD reports the moratorium stopped processing of the stormwater management concept plan and fire access plan; on July 28, 2026 the County Council approved ZTA 26-01 prohibiting large data centers countywide, including this proposal.",
+        "legal_status": "DCD reports Atmosphere challenged Montgomery County's six-month data-center permit moratorium after County Executive Marc Elrich issued it on June 12, 2026. Montgomery County also enacted Ordinance 20-35 prohibiting data centers in all zones effective August 17, 2026; its transition rule reaches applications without a building permit before that date.",
+        "hardware_detail": "Proposed 360 MW hyperscale campus with five 226,850-square-foot data-center buildings at the former Dickerson Power Plant. DCD reports the owner Terra Energy first submitted plans in 2023. Public filings reviewed do not disclose rack density, server classes, or cooling architecture.",
+        "profile_source_ids": ["montgomery-dickerson-case", "mde-atmosphere-npdes", "dcd-atmosphere-moratorium-challenge-2026"],
+        "source_ids": ["montgomery-dickerson-case", "mde-atmosphere-npdes", "montgomery-zta-26-01", "dcd-atmosphere-moratorium-challenge-2026", "montgomery-data-center-pause-2026", "esri-world-geocoder"],
+        "status_source_ids": ["montgomery-dickerson-case", "mde-atmosphere-npdes", "montgomery-zta-26-01", "dcd-atmosphere-moratorium-challenge-2026"],
+    },
+}
+
+
+def apply_record_update(record):
+    update = DATA_CENTER_RECORD_UPDATES.get(record["id"])
+    if update:
+        record.update(update)
+    return record
+
+
 def apply_contestation_profile(record):
     defaults = {
         "contestation_score": 0,
@@ -527,6 +758,8 @@ POWER_SCALE_SOURCE_IDS = {
     "databridge-silver-spring": ["databridge-home"],
     "cogent-elkridge": ["cogent-elkridge-wholesale-2025"],
     "ainet-cybernap-glen-burnie": ["ainet-cybernap"],
+    "fannie-mae-urbana-tech-center": ["jll-fannie-mae-tech-center-2026"],
+    "ssa-national-support-center-urbana": ["southland-ssa-national-support-center"],
 }
 
 
@@ -549,6 +782,42 @@ ESTIMATED_POWER_DRAWS = {
             "buildings. Backup nameplate is used only as an order-of-magnitude proxy, not as actual demand."
         ),
         "source_ids": ["mde-amazon-air-permit-application", "mde-amazon-issued-air-permit-2026"],
+    },
+    "fannie-mae-urbana-tech-center": {
+        "mw": 4.3,
+        "confidence": "medium",
+        "basis": (
+            "Uses JLL's published 4.3 MW installed critical capacity as the best public operating-load proxy. "
+            "The separate 5.5 MW expansion capacity is retained as facility capacity and is not treated as current draw."
+        ),
+        "source_ids": ["jll-fannie-mae-tech-center-2026"],
+    },
+    "ssa-national-support-center-urbana": {
+        "mw": 10,
+        "confidence": "medium",
+        "basis": (
+            "Uses Southland's published approximately 10 MW IT server-load figure as the best public load proxy. "
+            "This is not a metered utility-demand value."
+        ),
+        "source_ids": ["southland-ssa-national-support-center"],
+    },
+    "rowan-bauxite-ii-frederick": {
+        "mw": 205.7,
+        "confidence": "low",
+        "basis": (
+            "Estimated from the Frederick Planning Commission's 822,620-square-foot planned facility area using a "
+            "0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite II-specific public MW capacity or metered demand was found."
+        ),
+        "source_ids": ["frederick-planning-bauxite-ii-iii-2024"],
+    },
+    "rowan-bauxite-iii-frederick": {
+        "mw": 148.0,
+        "confidence": "low",
+        "basis": (
+            "Estimated from the Frederick Planning Commission's 591,913-square-foot planned facility area using a "
+            "0.25 kW-per-square-foot hyperscale planning proxy. No Bauxite III-specific public MW capacity or metered demand was found."
+        ),
+        "source_ids": ["frederick-planning-bauxite-ii-iii-2024"],
     },
     "annapolis-state-data-center": {
         "mw": 1,
@@ -751,6 +1020,160 @@ ESTIMATED_POWER_DRAWS = {
 }
 
 
+FUNDING_PROFILES = {
+    "tierpoint-baltimore-bwi": {
+        "summary": "TierPoint announced an initial facility investment exceeding $10 million. The public record reviewed does not identify a facility-specific government award.",
+        "total_known_usd": 10_000_000,
+        "source_ids": ["tierpoint-bwi-investment"],
+        "breakdown": [
+            {
+                "funder": "TierPoint",
+                "amount_usd": 10_000_000,
+                "amount_status": "reported minimum",
+                "basis": "Announced initial private facility investment exceeding $10 million; chart uses $10 million as a conservative floor.",
+                "source_ids": ["tierpoint-bwi-investment"],
+            },
+        ],
+    },
+    "expedient-tide-point": {
+        "summary": "Expedient reported more than $6 million of upgrades and expansions for its Baltimore data-center footprint during 2011–2013.",
+        "total_known_usd": 6_000_000,
+        "source_ids": ["expedient-baltimore-investment-2013"],
+        "breakdown": [
+            {
+                "funder": "Expedient",
+                "amount_usd": 6_000_000,
+                "amount_status": "reported minimum",
+                "basis": "Reported upgrades and expansions exceeded $6 million; chart uses $6 million as a conservative floor.",
+                "source_ids": ["expedient-baltimore-investment-2013"],
+            },
+        ],
+    },
+    "brightseat-tech-park-landover": {
+        "summary": "The former Landover Mall concept was reported as a $5 billion development proposal. The reviewed records do not name executed funders or a public award.",
+        "total_known_usd": 5_000_000_000,
+        "source_ids": ["wbj-landover-concept-2024"],
+        "breakdown": [
+            {
+                "funder": "Unnamed Brightseat Tech Park development sponsor",
+                "amount_usd": 5_000_000_000,
+                "amount_status": "reported concept value",
+                "basis": "Reported $5 billion development concept; not evidence of closed project financing.",
+                "source_ids": ["wbj-landover-concept-2024"],
+            },
+        ],
+    },
+    "jhu-bayview-research-data-center": {
+        "summary": "The project was reported at $196 million, including a $9 million Maryland capital grant approved by the Board of Public Works; the remainder is not broken down by funder in the reviewed record.",
+        "total_known_usd": 196_000_000,
+        "source_ids": ["jhu-bayview-state-grant-2026"],
+        "breakdown": [
+            {
+                "funder": "Maryland Board of Public Works / State of Maryland",
+                "amount_usd": 9_000_000,
+                "amount_status": "approved grant",
+                "basis": "Board of Public Works approval reported for a Maryland capital grant.",
+                "source_ids": ["jhu-bayview-state-grant-2026"],
+            },
+            {
+                "funder": "Johns Hopkins project funds and other non-itemized sources",
+                "amount_usd": 187_000_000,
+                "amount_status": "derived remainder",
+                "basis": "Reported total project cost less the identified $9 million Maryland grant; reviewed records did not publish a more specific funder split.",
+                "source_ids": ["jhu-bayview-state-grant-2026"],
+            },
+        ],
+    },
+    "cogent-elkridge": {
+        "summary": "Cogent sold this facility as part of a ten-property, $225 million portfolio sale to an I Squared Capital-sponsored entity. No Elkridge-specific allocation was disclosed.",
+        "total_known_usd": None,
+        "source_ids": ["cogent-elkridge-sale-closing-2026"],
+        "breakdown": [
+            {
+                "funder": "I Squared Capital-sponsored acquiring entity",
+                "amount_usd": None,
+                "amount_status": "portfolio amount not facility allocated",
+                "aggregate_amount_usd": 225_000_000,
+                "basis": "Aggregate ten-property transaction value was disclosed; no facility allocation was published.",
+                "source_ids": ["cogent-elkridge-sale-closing-2026"],
+            },
+        ],
+    },
+    "ssa-national-support-center-urbana": {
+        "summary": "Federal facility delivered for the U.S. General Services Administration; the reviewed records did not isolate a facility-level funding amount.",
+        "total_known_usd": None,
+        "source_ids": ["southland-ssa-national-support-center", "som-ssa-national-support-center"],
+        "breakdown": [
+            {
+                "funder": "U.S. General Services Administration",
+                "amount_usd": None,
+                "amount_status": "amount not isolated",
+                "basis": "Responsible federal owner/delivery agency identified; facility-level funding amount not isolated in reviewed sources.",
+                "source_ids": ["southland-ssa-national-support-center", "som-ssa-national-support-center"],
+            },
+        ],
+    },
+    "annapolis-state-data-center": {
+        "summary": "State-owned and operated Maryland facility; reviewed records did not isolate facility-level capital or operating funding.",
+        "total_known_usd": None,
+        "source_ids": ["maryland-dgs-annapolis-data-center", "maryland-doit-cloud-hosting"],
+        "breakdown": [
+            {
+                "funder": "Maryland Department of General Services / Maryland DoIT",
+                "amount_usd": None,
+                "amount_status": "amount not isolated",
+                "basis": "Responsible state agencies identified; facility-level budget amount not isolated in reviewed sources.",
+                "source_ids": ["maryland-dgs-annapolis-data-center", "maryland-doit-cloud-hosting"],
+            },
+        ],
+    },
+}
+
+
+def apply_funding_profile(record):
+    profile = FUNDING_PROFILES.get(record["id"])
+    if profile:
+        record.update(
+            {
+                "funding_summary": profile["summary"],
+                "funding_total_known_usd": profile["total_known_usd"],
+                "funding_breakdown": profile["breakdown"],
+                "funding_source_ids": profile["source_ids"],
+            }
+        )
+        return record
+
+    if record.get("capital_investment_usd"):
+        source_ids = record.get("profile_source_ids", [])
+        record.update(
+            {
+                "funding_summary": "Facility-specific capital investment is published, but reviewed records do not identify a more detailed funder split.",
+                "funding_total_known_usd": record["capital_investment_usd"],
+                "funding_breakdown": [
+                    {
+                        "funder": record.get("owner") or record.get("operator") or "Project sponsor",
+                        "amount_usd": record["capital_investment_usd"],
+                        "amount_status": "reported facility value",
+                        "basis": record.get("financing_detail") or "Capital investment figure carried from the source-backed facility record.",
+                        "source_ids": source_ids,
+                    }
+                ],
+                "funding_source_ids": source_ids,
+            }
+        )
+        return record
+
+    record.update(
+        {
+            "funding_summary": record.get("financing_detail") or "No facility-specific funder breakdown was identified in the reviewed records.",
+            "funding_total_known_usd": None,
+            "funding_breakdown": [],
+            "funding_source_ids": [],
+        }
+    )
+    return record
+
+
 def apply_estimated_power_draw(record):
     demand = record.get("reported_grid_demand_mw")
     if isinstance(demand, (int, float)):
@@ -794,6 +1217,107 @@ def apply_estimated_power_draw(record):
                 ),
             }
         )
+    return record
+
+
+def apply_operational_finance(record):
+    source_ids = set(record.get("estimated_power_draw_source_ids") or record.get("profile_source_ids") or [])
+    source_ids.add(MARYLAND_ALL_SECTOR_PRICE_SOURCE_ID)
+    annual_mwh = record.get("reported_annual_energy_mwh")
+    if isinstance(annual_mwh, (int, float)):
+        energy_mwh = float(annual_mwh)
+        energy_basis = "Uses published annual energy use from the facility record."
+    elif isinstance(record.get("estimated_power_draw_mw"), (int, float)):
+        energy_mwh = round(float(record["estimated_power_draw_mw"]) * HOURS_IN_2024, 1)
+        energy_basis = (
+            f"Estimated as {record['estimated_power_draw_mw']} MW average draw multiplied by {HOURS_IN_2024:,} hours "
+            "in 2024. This is a planning proxy, not metered consumption."
+        )
+    else:
+        record.update(
+            {
+                "operational_finance_summary": (
+                    "No facility-specific operating-cost, revenue, tax-payment, or electricity-cost estimate could be "
+                    "computed because neither metered annual energy nor a usable demand proxy is public."
+                ),
+                "estimated_annual_electricity_use_mwh": None,
+                "estimated_annual_electricity_cost_usd": None,
+                "electricity_cost_rate_cents_per_kwh": MARYLAND_ALL_SECTOR_PRICE_CENTS_PER_KWH_2024,
+                "electricity_cost_basis": (
+                    "Maryland 2024 all-sector average retail electricity price retained for context; no facility load "
+                    "basis was available."
+                ),
+                "operational_finance_items": [],
+                "operational_finance_source_ids": [MARYLAND_ALL_SECTOR_PRICE_SOURCE_ID],
+            }
+        )
+        return record
+
+    electricity_cost = round(energy_mwh * MARYLAND_ALL_SECTOR_PRICE_CENTS_PER_KWH_2024 * 10)
+    unbuilt = any(
+        term in str(record.get("status") or "").lower()
+        for term in ("development", "proposed", "concept", "planned")
+    )
+    scenario = "if built / fully energized" if unbuilt else "operating planning proxy"
+    items = [
+        {
+            "label": "Electricity energy charge proxy",
+            "amount_usd": electricity_cost,
+            "amount_status": scenario,
+            "basis": (
+                f"{energy_basis} Cost applies Maryland's 2024 all-sector average retail electricity price of "
+                f"{MARYLAND_ALL_SECTOR_PRICE_CENTS_PER_KWH_2024}¢/kWh. It excludes demand charges, riders, taxes, "
+                "capacity charges, transmission-service terms, negotiated tariffs, and power-purchase agreements."
+            ),
+            "source_ids": sorted(source_ids),
+        }
+    ]
+    if isinstance(record.get("employees_current"), (int, float)) and record["employees_current"] > 0:
+        items.append(
+            {
+                "label": "Published site personnel",
+                "amount_usd": None,
+                "amount_status": f"{record['employees_current']} people; payroll cost not published",
+                "basis": "Headcount is carried from the facility profile; wages, benefits, contractors, and operating payroll were not isolated.",
+                "source_ids": record.get("profile_source_ids", []),
+            }
+        )
+    if record.get("tax_incentive_detail"):
+        items.append(
+            {
+                "label": "Tax incentive / exemption context",
+                "amount_usd": None,
+                "amount_status": "amount not isolated",
+                "basis": record["tax_incentive_detail"],
+                "source_ids": record.get("source_ids", []),
+            }
+        )
+    if record.get("public_funding_detail"):
+        items.append(
+            {
+                "label": "Public budget or grant context",
+                "amount_usd": None,
+                "amount_status": "capital context; not operating cost",
+                "basis": record["public_funding_detail"],
+                "source_ids": record.get("funding_source_ids") or record.get("source_ids", []),
+            }
+        )
+
+    record.update(
+        {
+            "operational_finance_summary": (
+                f"Estimated annual electricity energy-charge proxy is ${electricity_cost:,} "
+                f"({scenario}). Facility-specific operating revenue, property-tax payments, demand charges, negotiated "
+                "utility tariffs, and power-purchase terms were not isolated in reviewed records."
+            ),
+            "estimated_annual_electricity_use_mwh": energy_mwh,
+            "estimated_annual_electricity_cost_usd": electricity_cost,
+            "electricity_cost_rate_cents_per_kwh": MARYLAND_ALL_SECTOR_PRICE_CENTS_PER_KWH_2024,
+            "electricity_cost_basis": items[0]["basis"],
+            "operational_finance_items": items,
+            "operational_finance_source_ids": sorted(source_ids),
+        }
+    )
     return record
 
 
@@ -1005,7 +1529,11 @@ def load_data_centers(output):
     return [
         classify_data_center_power(
             apply_projected_power_demand(
-                apply_estimated_power_draw(apply_contestation_profile(record))
+                apply_operational_finance(
+                    apply_estimated_power_draw(
+                        apply_funding_profile(apply_contestation_profile(apply_record_update(record)))
+                    )
+                )
             )
         )
         for record in merged

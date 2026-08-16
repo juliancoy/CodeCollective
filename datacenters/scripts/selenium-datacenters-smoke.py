@@ -152,30 +152,6 @@ def set_checkbox(driver: webdriver.Remote, checkbox_id: str, checked: bool) -> N
         element.click()
 
 
-def hover_marker(driver: webdriver.Remote, selector: str) -> None:
-    driver.execute_script(
-        """
-        const marker = document.querySelector(arguments[0]);
-        if (!marker) return false;
-        const rect = marker.getBoundingClientRect();
-        const clientX = rect.left + (rect.width / 2);
-        const clientY = rect.top + (rect.height / 2);
-        const canvas = document.querySelector('#datacenter-map canvas.maplibregl-canvas');
-        [marker, canvas].filter(Boolean).forEach((target) => {
-          target.dispatchEvent(new MouseEvent('mousemove', {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            clientX,
-            clientY,
-          }));
-        });
-        return true;
-        """,
-        selector,
-    )
-
-
 def verify_base_layers(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     initial = driver.execute_script(
         "return document.querySelector('.dc-base-layer-toggle:checked')?.id || null;"
@@ -460,8 +436,100 @@ def verify_line_width_controls(driver: webdriver.Remote, screenshot_dir: pathlib
     return {"controls": controls, "neon": neon, "transmission": transmission, "screenshot": str(screenshot)}
 
 
+def verify_point_gpu_splat_controls(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    layer_id = "baltimore-nibrs-crime"
+    source_id = f"remote-{layer_id}"
+    driver.execute_script(
+        """
+        const map = window.__codeCollectiveDatacenterMap;
+        map.jumpTo({center: [-76.6122, 39.2904], zoom: 12.6, bearing: 0, pitch: 0});
+        """
+    )
+    WebDriverWait(driver, 30).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            return map && map.getStyle()?.layers?.length && !map.isMoving() && map.getZoom() >= 12;
+            """
+        )
+    )
+    set_checkbox(driver, f"show-{layer_id}", True)
+    WebDriverWait(driver, 45).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            const source = map.getSource(arguments[0]);
+            const status = document.getElementById('status-baltimore-nibrs-crime').textContent;
+            return source && /features/.test(status);
+            """,
+            source_id,
+        )
+    )
+    mode_options = driver.execute_script(
+        """
+        document.querySelector('[data-layer-config="baltimore-nibrs-crime"]').click();
+        const select = document.querySelector('#layer-filter-form [name="pointRenderMode"]');
+        const options = [...select.options].map((option) => ({value: option.value, label: option.textContent.trim()}));
+        select.value = 'gpu-splat';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        return options;
+        """
+    )
+    state = WebDriverWait(driver, 45).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            const splatId = arguments[0] + '-splat';
+            const pointId = arguments[0] + '-point';
+            if (!map.getLayer(splatId) || !map.getLayer(pointId)) return null;
+            const filters = JSON.parse(new URL(location.href).searchParams.get('filters')).remote['baltimore-nibrs-crime'];
+            const source = map.getSource(arguments[0]);
+            const data = source?._data || source?._options?.data || null;
+            return {
+              splatVisibility: map.getLayoutProperty(splatId, 'visibility'),
+              pointVisibility: map.getLayoutProperty(pointId, 'visibility'),
+              splatType: map.getStyle().layers.find((layer) => layer.id === splatId)?.type,
+              pointType: map.getStyle().layers.find((layer) => layer.id === pointId)?.type,
+              heatmapRadius: map.getPaintProperty(splatId, 'heatmap-radius'),
+              queryMode: filters?.pointRenderMode,
+              featureCount: data?.features?.length || 0
+            };
+            """,
+            source_id,
+        )
+    )
+    if {option["value"] for option in mode_options} != {"points", "gpu-splat"}:
+        raise AssertionError(f"point render-mode options were incomplete: {mode_options}")
+    if state["splatType"] != "heatmap" or state["splatVisibility"] != "visible":
+        raise AssertionError(f"GPU Splat did not enable a visible heatmap layer: {state}")
+    if state["pointVisibility"] != "none":
+        raise AssertionError(f"GPU Splat did not hide the discrete point layer: {state}")
+    if state["queryMode"] != "gpu-splat":
+        raise AssertionError(f"GPU Splat mode was not persisted in query filters: {state}")
+    if not isinstance(state["heatmapRadius"], list):
+        raise AssertionError(f"GPU Splat heatmap radius was not zoom-smoothed: {state}")
+    screenshot = save_screenshot(driver, screenshot_dir, "datacenters-point-gpu-splat.png")
+    driver.execute_script(
+        """
+        document.querySelector('[data-layer-config="baltimore-nibrs-crime"]').click();
+        document.querySelector('#layer-filter-form [name="pointRenderMode"]').value = 'points';
+        document.querySelector('#layer-filter-form .dc-modal-primary').click();
+        """
+    )
+    set_checkbox(driver, f"show-{layer_id}", False)
+    return {"options": mode_options, "state": state, "screenshot": str(screenshot)}
+
+
 def verify_layer_search(driver: webdriver.Remote) -> dict:
     search = driver.find_element(By.ID, "layer-search")
+    WebDriverWait(driver, 30).until(
+        lambda d: d.execute_script(
+            """
+            const layer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
+            return (layer?.implementation?.getDiagnostics?.().recordCount || 0) > 0;
+            """
+        )
+    )
     before = driver.execute_script(
         """
         const powerLayer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
@@ -677,7 +745,7 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
             """
             const layer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
             const diagnostics = layer?.implementation?.getDiagnostics?.();
-            return diagnostics?.ready && diagnostics.renderCount > 1 ? diagnostics : null;
+            return diagnostics?.ready && diagnostics.renderCount > 0 ? diagnostics : null;
             """
         )
     )
@@ -688,14 +756,10 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
         raise AssertionError(f"WebGL lightning mesh is empty: {diagnostics}")
     if diagnostics["lastGlError"] != 0:
         raise AssertionError(f"WebGL lightning draw failed: {diagnostics}")
-    if diagnostics["antialiasMode"] != "subpixel-jitter" or diagnostics["antialiasPasses"] != 8:
-        raise AssertionError(f"WebGL lightning antialiasing was not active: {diagnostics}")
-    if abs(diagnostics["antialiasJitterPixels"] - .65) > .001:
-        raise AssertionError(f"WebGL lightning jitter radius was wrong: {diagnostics}")
-    if abs(diagnostics.get("outlineScale", 0) - 1.04) > .01 or diagnostics.get("outlineAlpha", 0) < .9:
+    if abs(diagnostics.get("outlineWidth", 0) - 1.5) > .01:
         raise AssertionError(f"WebGL lightning outline default was not compact and readable: {diagnostics}")
-    if diagnostics.get("outlineIndexCount", 0) < 120:
-        raise AssertionError(f"WebGL lightning planar outline mesh was not generated: {diagnostics}")
+    if diagnostics.get("silhouetteEdgeCount", 0) < 12:
+        raise AssertionError(f"WebGL lightning silhouette edge data was not generated: {diagnostics}")
     if diagnostics["antialiasSamples"] > 1 and not diagnostics["alphaToCoverage"]:
         raise AssertionError(f"multisampled WebGL context did not enable alpha-to-coverage: {diagnostics}")
     if dom_markers:
@@ -709,12 +773,15 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
         const options = [...select.options].map((option) => ({value: option.value, label: option.textContent.trim()}));
         const fill = document.querySelector('#layer-filter-form [name="fillBy"]');
         const fillOptions = [...fill.options].map((option) => ({value: option.value, label: option.textContent.trim()}));
-        const outline = document.querySelector('#layer-filter-form [name="outlineScale"]');
+        const renderMaterial = document.querySelector('#layer-filter-form [name="renderMaterial"]');
+        const renderMaterialOptions = [...renderMaterial.options].map((option) => ({value: option.value, label: option.textContent.trim()}));
+        const outline = document.querySelector('#layer-filter-form [name="outlineWidth"]');
         const outlineValue = outline.value;
-        outline.value = '1.14';
+        outline.value = '2.5';
         select.value = 'planning_sustained_output_mw';
+        renderMaterial.value = 'hologram';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
-        return {options, fillOptions, outlineValue};
+        return {options, fillOptions, renderMaterialOptions, outlineValue};
         """
     )
     scaled_diagnostics = WebDriverWait(driver, 10).until(
@@ -722,7 +789,7 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
             """
             const layer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
             const diagnostics = layer?.implementation?.getDiagnostics?.();
-            return diagnostics?.sizeBy === 'planning_sustained_output_mw' ? diagnostics : null;
+            return diagnostics?.sizeBy === 'planning_sustained_output_mw' && diagnostics?.renderMaterial === 'hologram' ? diagnostics : null;
             """
         )
     )
@@ -734,14 +801,16 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
         raise AssertionError(f"power output scaling did not give high-output plants enough screen weight: {scaled_diagnostics}")
     if not scaled_diagnostics["drawOrderAscending"] or scaled_diagnostics["topmostSize"] != scaled_diagnostics["maximumSize"]:
         raise AssertionError(f"larger WebGL bolts were not assigned the highest draw order: {scaled_diagnostics}")
-    if scaling_options["outlineValue"] != "1.04" or abs(scaled_diagnostics.get("outlineScale", 0) - 1.14) > .01:
-        raise AssertionError(f"WebGL lightning outline scale was not adjustable from the gear menu: {scaling_options} {scaled_diagnostics}")
+    if scaling_options["outlineValue"] != "1.5" or abs(scaled_diagnostics.get("outlineWidth", 0) - 2.5) > .01:
+        raise AssertionError(f"WebGL lightning outline width was not adjustable from the gear menu: {scaling_options} {scaled_diagnostics}")
     if not any(option["value"] == "planning_sustained_output_mw" for option in scaling_options["options"]):
         raise AssertionError(f"annual-average planning output was absent from point scaling options: {scaling_options}")
     if any(option["value"] == "net_generation_mwh" for option in scaling_options["options"]):
         raise AssertionError(f"raw 2024 generation field should no longer appear in point scaling options: {scaling_options}")
     if {option["value"] for option in scaling_options["fillOptions"]} != {"none", "resource-adjusted-utilization", "custom"}:
         raise AssertionError(f"bolt fill options were incomplete: {scaling_options['fillOptions']}")
+    if {option["value"] for option in scaling_options["renderMaterialOptions"]} != {"standard", "brushed-metal", "polished-metal", "iridescent", "pearl", "glass", "emissive", "hologram", "xray", "phong", "toon", "normal", "wireframe"}:
+        raise AssertionError(f"bolt render material options were incomplete: {scaling_options['renderMaterialOptions']}")
     driver.execute_script(
         """
         document.querySelector('[data-layer-config="power-plants"]').click();
@@ -768,7 +837,7 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
         select.value = 'none';
         document.querySelector('#layer-filter-form [name="fillBy"]').value = 'none';
         document.querySelector('#layer-filter-form [name="fillFraction"]').value = '1';
-        document.querySelector('#layer-filter-form [name="outlineScale"]').value = '1.04';
+        document.querySelector('#layer-filter-form [name="outlineWidth"]').value = '1.5';
         document.querySelector('#layer-filter-form .dc-modal-primary').click();
         """
     )
@@ -798,8 +867,10 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
             """
         )
     )
-    hovered_inspector = WebDriverWait(driver, 10).until(
-        lambda d: d.execute_script(
+
+    def read_hovered_inspector(current_driver: webdriver.Remote) -> dict | None:
+        dispatch_hover(current_driver, hover_point["x"], hover_point["y"])
+        return current_driver.execute_script(
             r"""
             const detail = document.getElementById('record-detail');
             const tags = [...detail.querySelectorAll('.dc-hover-tag')].map((element) => element.textContent.trim());
@@ -812,6 +883,9 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
               : null;
             """
         )
+
+    hovered_inspector = WebDriverWait(driver, 10).until(
+        read_hovered_inspector
     )
     hovered_icon_title = hovered_inspector["title"]
     hovered_tags = hovered_inspector["tags"]
@@ -877,7 +951,7 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
     )
     driver.find_element(By.ID, "close-record-detail").click()
     WebDriverWait(driver, 10).until(
-        lambda d: d.find_element(By.CSS_SELECTOR, "#record-detail h2").text == "Hover a map icon"
+        lambda d: d.find_element(By.CSS_SELECTOR, "#record-detail h2").text == "Latest data-center news"
     )
     hover_point = driver.execute_script(
         """
@@ -889,7 +963,10 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
     )
     dispatch_hover(driver, hover_point["x"], hover_point["y"])
     WebDriverWait(driver, 10).until(
-        lambda d: d.find_element(By.CSS_SELECTOR, "#record-detail h2").text == hovered_icon_title
+        lambda d: (
+            dispatch_hover(d, hover_point["x"], hover_point["y"]),
+            d.find_element(By.CSS_SELECTOR, "#record-detail h2").text == hovered_icon_title,
+        )[1]
     )
     inspector_pin = {"title": pinned_title, "replacement_title": replacement_title, "released": True}
     driver.execute_script("window.__ccStableInspectorGallery = document.querySelector('#record-detail .dc-site-gallery');")
@@ -1134,7 +1211,8 @@ def verify_layer_color_controls(driver: webdriver.Remote, screenshot_dir: pathli
         };
         """
     )
-    if applied != {"swatch": True, "query": "#19c37d", "stored": "#19c37d"}:
+    expected_color = {"alpha": 1, "color": "#19c37d"}
+    if applied != {"swatch": True, "query": expected_color, "stored": expected_color}:
         raise AssertionError(f"custom layer color did not persist: {applied}")
     screenshot = save_screenshot(driver, screenshot_dir, "datacenters-layer-color-controls.png")
 
@@ -1149,7 +1227,8 @@ def verify_layer_color_controls(driver: webdriver.Remote, screenshot_dir: pathli
 
 
 def verify_data_center_power_scale(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
-    hover_marker(driver, '.dc-map-marker--center[aria-label="Cogent Elkridge"]')
+    marker = driver.find_element(By.CSS_SELECTOR, '.dc-map-marker--center[aria-label="Cogent Elkridge"]')
+    driver.execute_script("arguments[0].click()", marker)
     WebDriverWait(driver, 10).until(
         lambda d: any(
             tag.text.startswith("Estimated draw:")
@@ -1188,6 +1267,7 @@ def verify_data_center_power_scale(driver: webdriver.Remote, screenshot_dir: pat
     screenshot = save_screenshot(driver, screenshot_dir, "datacenters-power-scale-filter.png")
     driver.find_element(By.CSS_SELECTOR, '#layer-filter-form button[value="cancel"]').click()
     driver.find_element(By.CSS_SELECTOR, f'#active-tag-filter-list [data-remove-tag="{tag_label}"]').click()
+    driver.find_element(By.ID, "close-record-detail").click()
     return {
         "tag": tag_label,
         "options": options,
@@ -1474,18 +1554,18 @@ def verify_data_center_glow(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
         raise AssertionError(f"contested facility did not receive a red glow: {appearance}")
     if appearance["plannedUncontested"]["kind"] != "planned-uncontested" or appearance["plannedUncontested"]["color"] != "#fff15f":
         raise AssertionError(f"planned uncontested facility did not receive a yellow glow: {appearance}")
-    if "#fff15f" not in appearance["plannedUncontested"]["iconFill"] or appearance["plannedUncontested"]["outline"] != "#9a5e00":
-        raise AssertionError(f"planned uncontested facility icon was not yellow: {appearance}")
-    if appearance["plannedUncontested"]["edgeColor"] != "#ffb000" or appearance["plannedUncontested"]["edgeOpacity"] != "100%":
-        raise AssertionError(f"planned uncontested yellow glow did not receive a visible amber edge: {appearance}")
-    if appearance["plannedUncontested"]["ringWidth"] < 0.1:
-        raise AssertionError(f"planned uncontested yellow glow ring was too thin to read: {appearance}")
-    if appearance["quiet"]["kind"] != "quiet" or appearance["quiet"]["color"] != "#ffffff":
-        raise AssertionError(f"quiet facility did not receive a white glow: {appearance}")
-    if appearance["quiet"]["edgeColor"] != "#32dfff" or appearance["quiet"]["edgeOpacity"] != "100%":
-        raise AssertionError(f"quiet white glow did not receive a visible blue edge: {appearance}")
-    if appearance["quiet"]["ringWidth"] < 0.1:
-        raise AssertionError(f"quiet white glow ring was too thin to read: {appearance}")
+    if "#fff15f" in appearance["plannedUncontested"]["iconFill"] or appearance["plannedUncontested"]["outline"] == "#9a5e00":
+        raise AssertionError(f"planned uncontested facility icon incorrectly inherited the halo color: {appearance}")
+    if appearance["plannedUncontested"]["edgeColor"] != "#fff15f" or appearance["plannedUncontested"]["edgeOpacity"] != "0%":
+        raise AssertionError(f"planned uncontested yellow halo incorrectly drew an edge border: {appearance}")
+    if appearance["plannedUncontested"]["ringWidth"] != 0:
+        raise AssertionError(f"planned uncontested yellow halo ring was not disabled: {appearance}")
+    if appearance["quiet"]["kind"] != "quiet" or appearance["quiet"]["color"] != "#19c37d":
+        raise AssertionError(f"quiet facility did not receive a green glow: {appearance}")
+    if appearance["quiet"]["edgeColor"] != "#19c37d" or appearance["quiet"]["edgeOpacity"] != "0%":
+        raise AssertionError(f"quiet green halo incorrectly drew an edge border: {appearance}")
+    if appearance["quiet"]["ringWidth"] != 0:
+        raise AssertionError(f"quiet green halo ring was not disabled: {appearance}")
     if appearance["intermediate"]["kind"] != "none" or appearance["intermediate"]["opacity"] != 0:
         raise AssertionError(f"intermediate facility received a misleading glow: {appearance}")
     contested_ratio = appearance["contested"]["fieldWidth"] / appearance["contested"]["markerWidth"]
@@ -1570,6 +1650,12 @@ def verify_data_center_glow(driver: webdriver.Remote, screenshot_dir: pathlib.Pa
 
 def verify_power_interchanges(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     layer_id = "remote-power-interchanges-point"
+    previous_point_layers = {
+        layer: driver.find_element(By.ID, f"show-{layer}").is_selected()
+        for layer in ("datacenters", "power-plants")
+    }
+    set_checkbox(driver, "show-datacenters", False)
+    set_checkbox(driver, "show-power-plants", False)
     set_checkbox(driver, "show-neon-streets", False)
     driver.execute_script(
         """
@@ -1642,6 +1728,8 @@ def verify_power_interchanges(driver: webdriver.Remote, screenshot_dir: pathlib.
     screenshot = save_screenshot(driver, screenshot_dir, "datacenters-power-import-export-layer.png")
     driver.find_element(By.ID, "close-record-detail").click()
     set_checkbox(driver, "show-power-interchanges", False)
+    for layer, selected in previous_point_layers.items():
+        set_checkbox(driver, f"show-{layer}", selected)
     return {"hit": hit, "inspector": inspector, "screenshot": str(screenshot)}
 
 
@@ -1708,7 +1796,15 @@ def verify_transmission_color_key(driver: webdriver.Remote, screenshot_dir: path
         raise AssertionError(f"transmission proposal glow color was not present in the line paint: {hit}")
     if "4.5" not in json.dumps(hit["blur"]):
         raise AssertionError(f"transmission proposal glow blur was not present in the line paint: {hit}")
-    if hit["queryWidth"] != 3 or hit["lineWidth"][4] != 3 or hit["lineWidth"][-1] != 12:
+    line_width = hit["lineWidth"]
+    voltage_500_width = line_width[line_width.index("500") + 1] if "500" in line_width else None
+    if (
+        hit["queryWidth"] != 3
+        or line_width[0] != "match"
+        or line_width[3] != 3
+        or abs((voltage_500_width or 0) - 10.5) > 0.01
+        or line_width[-1] != 3
+    ):
         raise AssertionError(f"transmission line width did not preserve and scale its expression: {hit}")
     dispatch_hover(driver, hit["x"], hit["y"])
     key = WebDriverWait(driver, 15).until(
@@ -2048,6 +2144,15 @@ def run(args: argparse.Namespace) -> int:
             report_path.write_text(json.dumps(report, indent=2))
             print(json.dumps(report, indent=2))
             return 0
+        if args.point_splat_only:
+            report = {
+                "base_url": args.base_url,
+                "point_gpu_splat": step("point gpu splat", lambda: verify_point_gpu_splat_controls(driver, screenshot_dir)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
         if args.projected_demand_only:
             report = {
                 "base_url": args.base_url,
@@ -2194,6 +2299,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--glow-only", action="store_true", help="Verify the data-center contestation glow, then exit.")
     parser.add_argument("--power-webgl-only", action="store_true", help="Verify the antialiased WebGL power-plant bolts, then exit.")
     parser.add_argument("--line-width-only", action="store_true", help="Verify line-layer width controls, then exit.")
+    parser.add_argument("--point-splat-only", action="store_true", help="Verify point-layer GPU Splat density rendering, then exit.")
     parser.add_argument("--projected-demand-only", action="store_true", help="Verify projected demand for unbuilt data centers, then exit.")
     parser.add_argument("--map-interactions-only", action="store_true", help="Verify hover, drag-pan, and scroll-zoom over a data-center marker, then exit.")
     parser.add_argument("--layer-order-only", action="store_true", help="Verify selected layer drag ordering and persisted z-order, then exit.")

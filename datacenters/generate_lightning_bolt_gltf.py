@@ -314,9 +314,6 @@ def build_gltf(
         "meshes": [
             {
                 "name": "LightningBoltMesh",
-                "extras": {
-                    "outline2d": [[point.x, point.y] for point in outline_2d],
-                },
                 "primitives": [
                     {
                         "attributes": {
