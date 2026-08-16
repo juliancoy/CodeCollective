@@ -142,6 +142,60 @@
     };
   }
 
+  function parseScrapeTime(value) {
+    if (!value) return null;
+    let text = String(value).trim();
+    if (!text) return null;
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(text)) {
+      text = `${text.replace(' ', 'T')}Z`;
+    }
+    const date = new Date(text);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function getCalendarDataFreshness(events) {
+    return (events || []).reduce((latest, event) => {
+      const scrapedAt = parseScrapeTime(event.scrapeTime);
+      if (!scrapedAt) return latest;
+      return !latest || scrapedAt > latest ? scrapedAt : latest;
+    }, null);
+  }
+
+  function formatCalendarFreshness(date) {
+    if (!date) return 'Calendar data freshness unavailable.';
+    const absolute = new Intl.DateTimeFormat(CONFIG.locale, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    }).format(date);
+
+    const diffMs = Date.now() - date.getTime();
+    if (diffMs < 0) return `Calendar data updated ${absolute}.`;
+
+    const minutes = Math.floor(diffMs / 60000);
+    let relative = 'just now';
+    if (minutes >= 60 * 24) {
+      const days = Math.floor(minutes / (60 * 24));
+      relative = `${days} day${days === 1 ? '' : 's'} ago`;
+    } else if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      relative = `${hours} hour${hours === 1 ? '' : 's'} ago`;
+    } else if (minutes >= 1) {
+      relative = `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+    }
+
+    return `Calendar data updated ${relative} (${absolute}).`;
+  }
+
+  function updateCalendarFreshness(events) {
+    const el = document.getElementById('mobileFreshness');
+    if (!el) return;
+    el.textContent = formatCalendarFreshness(getCalendarDataFreshness(events));
+  }
+
   // --- Data shaping ----------------------------------------------------------
   /**
    * Convert server events to our internal shape.
@@ -409,8 +463,10 @@
         const res = await fetch(CONFIG.dataUrl, { credentials: 'same-origin' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const events = await res.json();
+        updateCalendarFreshness(events);
         ALL_EVENTS = processEvents(events);
       } else {
+        updateCalendarFreshness(rawEvents);
         ALL_EVENTS = processEvents(rawEvents);
       }
 
