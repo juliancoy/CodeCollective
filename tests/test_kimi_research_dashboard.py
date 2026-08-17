@@ -176,3 +176,62 @@ def test_service_settings_store_api_key_without_returning_secret(tmp_path):
     assert "sk-test-secret-123" not in json.dumps(result)
     assert env_file.read_text() == "MOONSHOT_API_KEY=sk-test-secret-123\n"
     assert oct(env_file.stat().st_mode & 0o777) == "0o600"
+
+
+def test_workflow_runner_builds_best_practice_data_center_commands(tmp_path):
+    env_file = tmp_path / ".env.kimi"
+    runner = dashboard.WorkflowRunner(tmp_path, env_file, "http://127.0.0.1:8765")
+
+    options = runner._normalize_options(
+        {
+            "record_type": "data_center",
+            "workers": 4,
+            "max_searches": 5,
+            "max_tier": "escalation",
+            "audit_workers": 8,
+            "judge_workers": 4,
+            "apply_promotion": False,
+        }
+    )
+    commands = runner._commands(options)
+
+    assert [phase for phase, _ in commands] == ["research", "audit", "promote"]
+    research_command = commands[0][1]
+    assert "datacenters/research_inventory_with_kimi.py" in research_command
+    assert research_command[research_command.index("--record-type") + 1] == "data_center"
+    assert research_command[research_command.index("--max-tier") + 1] == "escalation"
+    assert research_command[research_command.index("--control-port") + 1] == "8765"
+    audit_command = commands[1][1]
+    assert "datacenters/audit_kimi_research.py" in audit_command
+    assert "--judge" in audit_command
+    promote_command = commands[2][1]
+    assert promote_command == [dashboard.sys.executable, "datacenters/promote_kimi_research.py"]
+
+
+def test_workflow_options_are_bounded_and_explicit(tmp_path):
+    runner = dashboard.WorkflowRunner(tmp_path, tmp_path / ".env.kimi", "http://127.0.0.1:8765")
+
+    options = runner._normalize_options({"run_research": "false", "run_audit": "true"})
+    assert options["run_research"] is False
+    assert options["run_audit"] is True
+
+    try:
+        runner._normalize_options({"record_type": "facility"})
+    except ValueError as exc:
+        assert "record_type" in str(exc)
+    else:
+        raise AssertionError("invalid record_type was accepted")
+
+    try:
+        runner._normalize_options({"apply_promotion": "maybe"})
+    except ValueError as exc:
+        assert "apply_promotion" in str(exc)
+    else:
+        raise AssertionError("invalid boolean value was accepted")
+
+    try:
+        runner._normalize_options({"workers": 99})
+    except ValueError as exc:
+        assert "workers" in str(exc)
+    else:
+        raise AssertionError("invalid workers value was accepted")

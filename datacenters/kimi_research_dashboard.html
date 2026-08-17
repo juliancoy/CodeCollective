@@ -58,6 +58,7 @@
     .panel { background: var(--panel); border: 1px solid var(--line); box-shadow: 4px 5px 0 rgba(20,33,25,.09); padding: 1.1rem; }
     .hero { grid-column: span 8; }
     .controls { grid-column: span 4; }
+    .workflow { grid-column: span 12; }
     .metric { grid-column: span 3; min-height: 8.5rem; display: flex; flex-direction: column; justify-content: space-between; }
     .chart { grid-column: span 8; }
     .activity { grid-column: span 4; grid-row: span 2; }
@@ -78,6 +79,13 @@
     button.stop { background: var(--danger); color: white; }
     .control-row { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; }
     input { width: 4.2rem; }
+    .workflow-grid { display:grid; grid-template-columns:repeat(6,minmax(7rem,1fr)); gap:.65rem; align-items:end; margin-top:.8rem; }
+    .workflow-grid label { display:flex; flex-direction:column; gap:.3rem; color:var(--muted); font:.68rem "Courier New",monospace; text-transform:uppercase; letter-spacing:.06em; }
+    .workflow-grid input, .workflow-grid select { width:100%; border:1px solid var(--ink); background:#fffdf6; color:var(--ink); padding:.62rem; font:.72rem "Courier New",monospace; text-transform:none; letter-spacing:0; }
+    .workflow-checks { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:.8rem; }
+    .workflow-checks label { display:inline-flex; align-items:center; gap:.4rem; color:var(--ink); font:.72rem "Courier New",monospace; }
+    .workflow-checks input { width:auto; }
+    .workflow-log { max-height:210px; overflow:auto; margin-top:.8rem; border:1px solid var(--line); background:#fffdf6; padding:.65rem; font:.68rem/1.4 "Courier New",monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
     canvas { width: 100%; height: 230px; margin-top: .8rem; }
     .legend { display:flex; gap:1rem; color:var(--muted); font: .72rem "Courier New", monospace; }
     .swatch { display:inline-block; width:.8rem; height:.18rem; margin-right:.35rem; vertical-align:middle; }
@@ -141,12 +149,12 @@
     .empty { padding:1.5rem; color:var(--muted); text-align:center; font:italic 1rem Georgia,serif; }
     @keyframes pulse { 50% { transform: scale(.75); opacity:.65; } }
     @media (max-width: 900px) {
-      .hero,.controls,.chart,.activity,.flight,.received { grid-column:span 12; }
+      .hero,.controls,.workflow,.chart,.activity,.flight,.received { grid-column:span 12; }
       .metric { grid-column:span 6; }
       .activity { grid-row:auto; }
     }
-    @media (max-width: 700px) { .filters { grid-template-columns:1fr 1fr; } .record-table th:nth-child(3),.record-table td:nth-child(3),.record-table th:nth-child(5),.record-table td:nth-child(5) { display:none; } .attempt { grid-template-columns:1fr 1fr; } }
-    @media (max-width: 520px) { .metric { grid-column:span 12; } header { align-items:start; flex-direction:column; } .flight-list { grid-template-columns:1fr; } .filters { grid-template-columns:1fr; } }
+    @media (max-width: 700px) { .filters,.workflow-grid { grid-template-columns:1fr 1fr; } .record-table th:nth-child(3),.record-table td:nth-child(3),.record-table th:nth-child(5),.record-table td:nth-child(5) { display:none; } .attempt { grid-template-columns:1fr 1fr; } }
+    @media (max-width: 520px) { .metric { grid-column:span 12; } header { align-items:start; flex-direction:column; } .flight-list { grid-template-columns:1fr; } .filters,.workflow-grid { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -181,6 +189,28 @@
         <div class="control-row"><label class="sub">Workers <input id="workers" type="number" min="1" value="1"></label><button id="applyWorkers">Apply</button></div>
         <div class="control-row"><button id="verbosity">Toggle verbose</button></div>
         <p class="sub">Controls apply at facility and tier boundaries. Active HTTP calls drain safely.</p>
+      </section>
+      <section class="panel workflow">
+        <div class="received-head">
+          <div><div class="label">Evidence Workflow</div><p class="sub">Run research, audit, and promotion gates from the local inspector.</p></div>
+          <div class="received-actions"><span id="workflowState" class="badge">idle</span><button id="startWorkflow" class="primary">Start workflow</button><button id="stopWorkflow" class="stop">Stop workflow</button></div>
+        </div>
+        <div class="workflow-grid">
+          <label>Record type <select id="workflowRecordType"><option value="data_center">Data center</option><option value="power_plant">Power plant</option></select></label>
+          <label>Max tier <select id="workflowTier"><option value="escalation">Escalation</option><option value="retry">Retry</option><option value="primary">Primary</option></select></label>
+          <label>Workers <input id="workflowWorkers" type="number" min="1" max="16" value="4"></label>
+          <label>Searches <input id="workflowSearches" type="number" min="1" max="20" value="5"></label>
+          <label>Audit workers <input id="workflowAuditWorkers" type="number" min="1" max="32" value="8"></label>
+          <label>Judge workers <input id="workflowJudgeWorkers" type="number" min="1" max="16" value="4"></label>
+        </div>
+        <div class="workflow-checks">
+          <label><input id="workflowResearch" type="checkbox" checked> Research</label>
+          <label><input id="workflowAudit" type="checkbox" checked> Audit</label>
+          <label><input id="workflowPromote" type="checkbox" checked> Promote dry run</label>
+          <label><input id="workflowReuseAudit" type="checkbox" checked> Reuse source audit</label>
+          <label><input id="workflowApply" type="checkbox"> Apply promotion</label>
+        </div>
+        <div id="workflowLog" class="workflow-log">No local workflow has run in this dashboard session.</div>
       </section>
       <section class="panel metric"><span class="label">Current Spend</span><span id="cost" class="big">$0.00</span><span id="costRate" class="sub">$0.00 / record</span></section>
       <section class="panel metric"><span class="label">Forecast Total</span><span id="forecastCost" class="big">$0.00</span><span id="remainingCost" class="sub">$0.00 remaining</span></section>
@@ -244,6 +274,52 @@
     $('applyWorkers').onclick = () => control({workers:Number($('workers').value)});
     $('verbosity').onclick = () => control({verbose:!window.currentStatus?.verbose});
     $('stop').onclick = () => confirm('Stop dispatching new facilities and drain active work?') && control({stop:true});
+    async function workflowRequest(body) {
+      const response = await fetch('/api/workflow', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const value = await response.json();
+      if (!response.ok) throw new Error(value.error || 'Workflow request failed');
+      renderWorkflow(value);
+    }
+    function workflowOptions() {
+      return {
+        action:'start',
+        record_type:$('workflowRecordType').value,
+        max_tier:$('workflowTier').value,
+        workers:Number($('workflowWorkers').value),
+        max_searches:Number($('workflowSearches').value),
+        audit_workers:Number($('workflowAuditWorkers').value),
+        judge_workers:Number($('workflowJudgeWorkers').value),
+        run_research:$('workflowResearch').checked,
+        run_audit:$('workflowAudit').checked,
+        run_promote:$('workflowPromote').checked,
+        reuse_source_audit:$('workflowReuseAudit').checked,
+        apply_promotion:$('workflowApply').checked,
+      };
+    }
+    $('startWorkflow').onclick = async () => {
+      if ($('workflowApply').checked && !confirm('Apply promotion can edit canonical data files after the audit gate passes. Continue?')) return;
+      try { await workflowRequest(workflowOptions()); $('error').style.display='none'; }
+      catch (error) { $('error').textContent=`Workflow failed to start: ${error.message}`; $('error').style.display='block'; }
+    };
+    $('stopWorkflow').onclick = async () => {
+      try { await workflowRequest({action:'stop'}); }
+      catch (error) { $('error').textContent=`Workflow stop failed: ${error.message}`; $('error').style.display='block'; }
+    };
+    function renderWorkflow(workflow) {
+      const state=workflow?.state||'idle', phase=workflow?.phase||'idle';
+      $('workflowState').textContent=`${state} / ${phase}`;
+      $('workflowState').className=`badge ${state==='failed'?'error':state==='succeeded'?'ok':state==='running'?'medium':''}`;
+      $('startWorkflow').disabled=state==='running';
+      $('stopWorkflow').disabled=state!=='running';
+      const lines=(workflow?.log||[]).slice(-80).map(item=>`[${new Date(item.timestamp*1000).toLocaleTimeString()}] ${item.message}`);
+      $('workflowLog').textContent=lines.join('\n') || 'No local workflow has run in this dashboard session.';
+    }
+    async function refreshWorkflow() {
+      try {
+        const response=await fetch('/api/workflow',{cache:'no-store'});
+        if (response.ok) renderWorkflow(await response.json());
+      } catch {}
+    }
     function drawChart(history) {
       const canvas = $('chart'), dpr = devicePixelRatio || 1, rect = canvas.getBoundingClientRect();
       canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
@@ -348,7 +424,7 @@
     $('closeInspector').onclick=closeInspector; $('inspectorShade').onclick=closeInspector; addEventListener('keydown',event=>{if(event.key==='Escape')closeInspector();});
     ['recordSearch','statusFilter','typeFilter','confidenceFilter'].forEach(id=>$(id).addEventListener('input',renderRecordList));
     $('recordScope').addEventListener('change',()=>{lastRecordCount=-1; loadRecords(); refresh();});
-    async function refresh(){try{const r=await fetch(`/api/snapshot?scope=${encodeURIComponent(recordScope())}`,{cache:'no-store'});render(await r.json());}catch(e){$('connection').textContent='DASHBOARD ERROR';}}
+    async function refresh(){try{const r=await fetch(`/api/snapshot?scope=${encodeURIComponent(recordScope())}`,{cache:'no-store'});render(await r.json());refreshWorkflow();}catch(e){$('connection').textContent='DASHBOARD ERROR';}}
     refresh(); setInterval(refresh,2000); addEventListener('resize',refresh);
   </script>
 </body>
