@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -21,6 +23,7 @@ DEFAULT_UPSTREAM = "http://127.0.0.1:8765"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8766
 DEFAULT_CHECKPOINT = Path(__file__).with_name("research") / "kimi-research.jsonl"
+ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_FILE = Path(__file__).resolve().parent.parent / ".env.kimi"
 PILOT_COST_PER_RECORD = 0.320834 / 10
 PILOT_SEARCHES_PER_RECORD = 36 / 10
@@ -33,6 +36,224 @@ QUALITY_WEIGHTS = {
     "unknown": 0.0,
 }
 QUALITY_ORDER = ("high", "medium", "low", "insufficient", "unknown")
+WORKFLOW_RECORD_TYPES = {"data_center", "power_plant"}
+WORKFLOW_TIERS = {"primary", "retry", "escalation"}
+
+
+class WorkflowRunner:
+    def __init__(self, root: Path, env_file: Path, upstream: str):
+        self.root = root
+        self.env_file = env_file
+        self.upstream = upstream
+        self.lock = threading.Lock()
+        self.thread: threading.Thread | None = None
+        self.process: subprocess.Popen[str] | None = None
+        self.stop_requested = False
+        self.status: dict[str, Any] = self._idle_status()
+
+    @staticmethod
+    def _idle_status() -> dict[str, Any]:
+        return {
+            "state": "idle",
+            "phase": "idle",
+            "started_at": None,
+            "finished_at": None,
+            "returncode": None,
+            "error": None,
+            "commands": [],
+            "log": [],
+            "options": {},
+        }
+
+    def current(self) -> dict[str, Any]:
+        with self.lock:
+            return json.loads(json.dumps(self.status))
+
+    def start(self, options: dict[str, Any]) -> dict[str, Any]:
+        normalized = self._normalize_options(options)
+        with self.lock:
+            if self.thread and self.thread.is_alive():
+                raise ValueError("workflow is already running")
+            self.stop_requested = False
+            self.status = {
+                "state": "running",
+                "phase": "starting",
+                "started_at": time.time(),
+                "finished_at": None,
+                "returncode": None,
+                "error": None,
+                "commands": [],
+                "log": [],
+                "options": normalized,
+            }
+            self.thread = threading.Thread(
+                target=self._run_workflow,
+                args=(normalized,),
+                name="kimi-workflow",
+                daemon=True,
+            )
+            self.thread.start()
+            return self.current()
+
+    def stop(self) -> dict[str, Any]:
+        with self.lock:
+            self.stop_requested = True
+            process = self.process
+            self._append_log_locked("Stop requested; terminating active command after current cleanup.")
+        if process and process.poll() is None:
+            process.terminate()
+        return self.current()
+
+    def _normalize_options(self, options: dict[str, Any]) -> dict[str, Any]:
+        record_type = str(options.get("record_type") or "data_center")
+        if record_type not in WORKFLOW_RECORD_TYPES:
+            raise ValueError("record_type must be data_center or power_plant")
+        max_tier = str(options.get("max_tier") or "escalation")
+        if max_tier not in WORKFLOW_TIERS:
+            raise ValueError("max_tier must be primary, retry, or escalation")
+        workers = bounded_int(options.get("workers", 4), 1, 16, "workers")
+        max_searches = bounded_int(options.get("max_searches", 5), 1, 20, "max_searches")
+        audit_workers = bounded_int(options.get("audit_workers", 8), 1, 32, "audit_workers")
+        judge_workers = bounded_int(options.get("judge_workers", 4), 1, 16, "judge_workers")
+        return {
+            "record_type": record_type,
+            "workers": workers,
+            "max_searches": max_searches,
+            "max_tier": max_tier,
+            "audit_workers": audit_workers,
+            "judge_workers": judge_workers,
+            "run_research": bounded_bool(options.get("run_research", True), "run_research"),
+            "run_audit": bounded_bool(options.get("run_audit", True), "run_audit"),
+            "run_promote": bounded_bool(options.get("run_promote", True), "run_promote"),
+            "apply_promotion": bounded_bool(options.get("apply_promotion", False), "apply_promotion"),
+            "reuse_source_audit": bounded_bool(
+                options.get("reuse_source_audit", True),
+                "reuse_source_audit",
+            ),
+        }
+
+    def _run_workflow(self, options: dict[str, Any]) -> None:
+        try:
+            commands = self._commands(options)
+            for phase, command in commands:
+                self._set_phase(phase)
+                self._run_command(command)
+                if self.stop_requested:
+                    raise RuntimeError("workflow stopped")
+            self._finish("succeeded", None, 0)
+        except Exception as exc:
+            returncode = self.process.returncode if self.process else 1
+            self._finish("failed", str(exc), returncode if returncode is not None else 1)
+        finally:
+            with self.lock:
+                self.process = None
+
+    def _commands(self, options: dict[str, Any]) -> list[tuple[str, list[str]]]:
+        host, port = upstream_host_port(self.upstream)
+        commands: list[tuple[str, list[str]]] = []
+        if options["run_research"]:
+            commands.append(
+                (
+                    "research",
+                    [
+                        sys.executable,
+                        "datacenters/research_inventory_with_kimi.py",
+                        "--record-type",
+                        options["record_type"],
+                        "--env-file",
+                        str(self.env_file),
+                        "--workers",
+                        str(options["workers"]),
+                        "--max-searches",
+                        str(options["max_searches"]),
+                        "--max-tier",
+                        options["max_tier"],
+                        "--control-host",
+                        host,
+                        "--control-port",
+                        str(port),
+                        "--verbose",
+                    ],
+                )
+            )
+        audit_path = self.root / "datacenters" / "research" / "kimi-evidence-audit.jsonl"
+        if options["run_audit"]:
+            audit_command = [
+                sys.executable,
+                "datacenters/audit_kimi_research.py",
+                "--judge",
+                "--workers",
+                str(options["audit_workers"]),
+                "--judge-workers",
+                str(options["judge_workers"]),
+                "--env-file",
+                str(self.env_file),
+            ]
+            if options["reuse_source_audit"] and audit_path.exists():
+                audit_command.extend(["--reuse-source-audit", str(audit_path)])
+            commands.append(("audit", audit_command))
+        if options["run_promote"]:
+            promote_command = [sys.executable, "datacenters/promote_kimi_research.py"]
+            if options["apply_promotion"]:
+                promote_command.append("--apply")
+            commands.append(("promote", promote_command))
+        if not commands:
+            raise ValueError("at least one workflow stage must be enabled")
+        return commands
+
+    def _run_command(self, command: list[str]) -> None:
+        self._append_command(command)
+        process = subprocess.Popen(
+            command,
+            cwd=self.root,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+        with self.lock:
+            self.process = process
+        assert process.stdout
+        for line in process.stdout:
+            self._append_log(line.rstrip())
+        returncode = process.wait()
+        with self.lock:
+            self.process = None
+        if returncode != 0:
+            raise RuntimeError(f"command failed with exit code {returncode}: {command[1]}")
+        if self.stop_requested:
+            raise RuntimeError("workflow stopped")
+
+    def _append_command(self, command: list[str]) -> None:
+        with self.lock:
+            self.status["commands"].append(command)
+            self._append_log_locked("$ " + " ".join(command))
+
+    def _append_log(self, message: str) -> None:
+        with self.lock:
+            self._append_log_locked(message)
+
+    def _append_log_locked(self, message: str) -> None:
+        self.status["log"].append({"timestamp": time.time(), "message": message})
+        self.status["log"] = self.status["log"][-250:]
+
+    def _set_phase(self, phase: str) -> None:
+        with self.lock:
+            self.status["phase"] = phase
+            self._append_log_locked(f"Starting {phase} stage.")
+
+    def _finish(self, state: str, error: str | None, returncode: int) -> None:
+        with self.lock:
+            self.status["state"] = state
+            self.status["phase"] = "complete" if state == "succeeded" else "failed"
+            self.status["finished_at"] = time.time()
+            self.status["error"] = error
+            self.status["returncode"] = returncode
+            self._append_log_locked(
+                "Workflow completed successfully."
+                if state == "succeeded"
+                else f"Workflow failed: {error}"
+            )
 
 
 class ResearchRecords:
@@ -166,6 +387,38 @@ def increment(values: dict[str, int], key: str) -> None:
     values[key] = values.get(key, 0) + 1
 
 
+def bounded_int(value: Any, minimum: int, maximum: int, name: str) -> int:
+    try:
+        result = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+    if not minimum <= result <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}")
+    return result
+
+
+def bounded_bool(value: Any, name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "1", "yes", "on"}:
+            return True
+        if lowered in {"false", "0", "no", "off"}:
+            return False
+    raise ValueError(f"{name} must be a boolean")
+
+
+def upstream_host_port(upstream: str) -> tuple[str, int]:
+    parsed = urllib.parse.urlparse(upstream)
+    host = parsed.hostname or "127.0.0.1"
+    if host == "localhost":
+        host = "127.0.0.1"
+    if host not in {"127.0.0.1", "::1"}:
+        raise ValueError("workflow control upstream must be loopback")
+    return host, parsed.port or 8765
+
+
 def env_value(path: Path, key: str) -> str | None:
     if not path.exists():
         return None
@@ -239,6 +492,7 @@ class DashboardState:
         self.stop_event = threading.Event()
         self.records = ResearchRecords(checkpoint)
         self.env_file = DEFAULT_ENV_FILE
+        self.workflow = WorkflowRunner(ROOT, self.env_file, self.upstream)
 
     def request(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
         data = json.dumps(body).encode() if body is not None else None
@@ -386,6 +640,7 @@ class DashboardState:
         if len(api_key) < 12 or any(char.isspace() for char in api_key):
             raise ValueError("moonshot_api_key does not look valid")
         write_env_value(self.env_file, "MOONSHOT_API_KEY", api_key)
+        self.workflow.env_file = self.env_file
         return self.service_settings()
 
 
@@ -444,6 +699,8 @@ def make_handler(state: DashboardState, html: bytes) -> type[BaseHTTPRequestHand
                 )
             elif parsed.path == "/api/service-settings":
                 self.send_value(200, state.service_settings(), "application/json")
+            elif parsed.path == "/api/workflow":
+                self.send_value(200, state.workflow.current(), "application/json")
             elif parsed.path == "/api/record":
                 facility_id = query.get("id", [""])[0]
                 exact_run_id = query.get("run_id", [""])[0]
@@ -463,7 +720,7 @@ def make_handler(state: DashboardState, html: bytes) -> type[BaseHTTPRequestHand
 
         def do_POST(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
-            if parsed.path not in {"/api/control", "/api/service-settings"}:
+            if parsed.path not in {"/api/control", "/api/service-settings", "/api/workflow"}:
                 self.send_value(404, {"error": "not found"}, "application/json")
                 return
             try:
@@ -475,6 +732,14 @@ def make_handler(state: DashboardState, html: bytes) -> type[BaseHTTPRequestHand
                     raise ValueError("request body must be a JSON object")
                 if parsed.path == "/api/service-settings":
                     result = state.update_service_settings(body)
+                elif parsed.path == "/api/workflow":
+                    action = str(body.get("action") or "start")
+                    if action == "start":
+                        result = state.workflow.start(body)
+                    elif action == "stop":
+                        result = state.workflow.stop()
+                    else:
+                        raise ValueError("workflow action must be start or stop")
                 else:
                     result = state.request("/control", body)
                     state.record(result)
@@ -510,6 +775,7 @@ def main() -> int:
     html = Path(__file__).with_name("kimi_research_dashboard.html").read_bytes()
     state = DashboardState(args.upstream, args.interval, args.checkpoint)
     state.env_file = args.env_file
+    state.workflow.env_file = args.env_file
     poller = threading.Thread(target=state.poll, name="kimi-dashboard-poller", daemon=True)
     poller.start()
     server = ThreadingHTTPServer((args.host, args.port), make_handler(state, html))
