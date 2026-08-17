@@ -35,11 +35,15 @@ datacenters/
   css/datacenters.css                    # page-only presentation
   js/datacenters.js                      # loading, filtering, markers, detail panel
   data/infrastructure.json               # flat data-center and EIA power-plant records
+  data/research-overrides.json            # reviewed values reapplied after generation
   data/residential-electricity-rates.json# flat state/utility/year rate records
   data/sources.json                      # source and archive register
+  history/infrastructure-history.jsonl   # append-only promotion transactions
   downloads/                             # modest-size primary source documents
-scripts/
   generate_datacenter_energy_data.py     # reproducible EIA-860/EIA-923 transform
+  research_inventory_with_kimi.py        # resumable Kimi web research for unresolved facets
+  audit_kimi_research.py                  # evidence retrieval and quality gate
+  promote_kimi_research.py                # single-writer canonical publication
 ```
 
 Do not put facts directly into `datacenters.html` or `datacenters.js`. The HTML renders the JSON and contains only explanatory text.
@@ -62,6 +66,121 @@ This is a defensible seed, not a claim that only two data centers exist in Maryl
 ## 4. Canonical data-center schema
 
 Every data-center object in `infrastructure.json` must carry the same type-specific keys, even when their values are `null`. Every infrastructure object also carries `id`, `record_type`, `name`, coordinates, and `technology_tags`.
+
+### Kimi research queue
+
+Use the research script to group every unresolved facet for one facility into a
+single staged research job. It starts with Kimi K2.6 in non-thinking mode and one
+required web search. Invalid or incomplete output may use a second K2.6
+non-thinking pass. K3 is an explicit exception for difficult identity or evidence
+conflicts, not the default path. Validated results and completed query strings flow forward,
+and tier search minimums are cumulative, so later models reuse citations and search
+only materially different evidence gaps. Non-thinking K2.6 constrains tool choice
+to Formula web search until the cumulative minimum is met, then switches back to
+automatic tool choice for JSON synthesis. Reasoning-enabled K3 always uses automatic
+tool choice because its API rejects forced named tools. It uses Moonshot's Formula web-search
+tool, requires source URLs per facet, retries transient failures, and appends each
+result immediately so a long run can resume. Every tier's output and search
+queries remain in the checkpoint for review.
+Complete valid results that already satisfy the next tier's cumulative search
+minimum skip a synthesis-only retry. If one returned facet is malformed, valid
+facets are retained independently and the retry focuses on unresolved facets;
+the final checkpoint remains review-required until every requested facet validates.
+It deliberately does not edit `infrastructure.json`. After collection,
+`audit_kimi_research.py` retrieves cited pages, records response hashes and bounded
+excerpts, checks facility and facet identity, and routes findings into promotion,
+targeted repair, or human/regulatory review. A source-constrained K2.6 judgment is
+required before automatic promotion and may approve only URLs present in the
+retrieved evidence. `promote_kimi_research.py` is the sole writer to
+`infrastructure.json`; it updates `sources.json`, persists
+`research-overrides.json`, records a prepared/committed transaction in history,
+and rolls back the complete publication if canonical tests fail.
+
+```bash
+python3 datacenters/research_inventory_with_kimi.py --dry-run
+
+printf '%s\n' 'MOONSHOT_API_KEY=replace-with-real-key' > .env.kimi
+chmod 600 .env.kimi
+python3 datacenters/research_inventory_with_kimi.py --workers 3
+```
+
+The script reads `MOONSHOT_API_KEY` from the process environment first, then
+falls back to the repository-root `.env.kimi`. Use `--env-file PATH` to select a
+different file. `.env.kimi` is covered by the repository's `.env*` ignore rule;
+the key is never copied into checkpoints or event logs.
+
+Useful controls include `--record-type power_plant`, repeated `--id FACILITY_ID`,
+`--limit N`, `--max-tier retry`, `--confidence-threshold medium`, and `--force`.
+The default append-only checkpoint is
+`datacenters/research/kimi-research.jsonl`; accepted and review-required entries
+are skipped only when their pipeline configuration and input fingerprint still
+match, while failed entries are retried.
+
+Operational analysis is written separately to
+`datacenters/research/kimi-events.jsonl`. It contains compact run-start,
+facility-complete, and run-complete events with run and pipeline IDs, per-stage
+latency, HTTP retries and backoff, request and Formula Fiber IDs/status, raw token
+usage, incremental and prior search counts, escalation outcomes, and a pricing-snapshot-based cost
+estimate. It excludes API keys, request bodies, and encrypted search payloads.
+The console prints aggregate progress every 25 completions and a heartbeat every
+30 seconds; use `--verbose` for one line per facility or configure
+`--progress-every` and `--heartbeat-seconds`.
+
+For a long run, enable the loopback-only REST control API. The scheduler keeps
+only the configured number of facilities in flight, so pause, worker throttling,
+and graceful stop affect undispatched work. Pause takes effect at facility and
+tier boundaries; an HTTP request already in progress is allowed to finish.
+
+```bash
+python3 datacenters/research_inventory_with_kimi.py \
+  --workers 2 --max-workers 8 --max-tier retry --control-port 8765 --verbose
+
+curl -s http://127.0.0.1:8765/status | python3 -m json.tool
+curl -s -X POST http://127.0.0.1:8765/control \
+  -H 'Content-Type: application/json' -d '{"paused":true}'
+curl -s -X POST http://127.0.0.1:8765/control \
+  -H 'Content-Type: application/json' -d '{"paused":false,"workers":1}'
+curl -s -X POST http://127.0.0.1:8765/control \
+  -H 'Content-Type: application/json' -d '{"verbose":false}'
+curl -s -X POST http://127.0.0.1:8765/control \
+  -H 'Content-Type: application/json' -d '{"stop":true}'
+```
+
+`GET /status` reports queue, in-flight facility and tier, completed status counts,
+searches, retries, and estimated cost. `POST /control` accepts `paused`, `workers`,
+`verbose`, and one-way `stop`. The server refuses non-loopback bind addresses, and
+every successful mutation is appended as a `control_update` operations event.
+`--workers` is the initial active concurrency; `--max-workers` reserves the executor
+capacity that REST may scale up to without restarting. Reducing workers drains
+already-active facilities and limits subsequent dispatch rather than cancelling
+requests mid-flight.
+
+Attach the separate browser dashboard to a running control API without restarting
+the research process:
+
+```bash
+python3 datacenters/kimi_research_dashboard.py \
+  --upstream http://127.0.0.1:8765 --port 8766
+```
+
+Open `http://127.0.0.1:8766`. The dashboard polls every two seconds and retains a
+rolling in-memory time series. It shows processed, queued, and in-flight facilities;
+stage transitions; throughput and ETA; searches and current spend; and a total-cost
+forecast that blends live results with the measured 10-record pilot until enough
+current-run records have completed. Its controls proxy to the research process, so
+pause, resume, worker throttling, verbosity, and graceful stop remain available in
+the browser. The append-only research event log remains the durable record after
+the dashboard exits.
+
+The received-data inspector follows the inventory map's detail conventions: grouped
+facts, explicit unknown/confidence states, evidence beside the claim it supports,
+and deeper provenance behind disclosures. Filter records by facility/facet text,
+outcome, record type, or confidence, then open a row to inspect inventory-ready
+findings, evidence basis, source links and support statements, tier queries and
+costs, validation errors, invalid structured responses, and the raw checkpoint
+record. Aggregate chips show record type, outcome, confidence, facet, and source
+coverage. If the control API exits, the inspector remains usable and isolates the
+latest run found in the checkpoint instead of mixing historical pilots.
 
 ### Identity and location
 

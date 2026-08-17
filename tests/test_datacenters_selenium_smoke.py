@@ -37,6 +37,16 @@ def test_datacenter_selenium_probe_targets_sdat_parcel_hover_metrics():
     assert "hover_to_detail_ms" in script
 
 
+def test_datacenter_selenium_probe_verifies_every_source_is_visible():
+    script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
+
+    assert "def verify_source_visibility" in script
+    assert "#source-list .dc-source-card" in script
+    assert "missingReferencedCards" in script
+    assert "cardsWithoutLinks" in script
+    assert 'parser.add_argument("--sources-only"' in script
+
+
 def test_datacenter_selenium_probe_verifies_webgl_power_plant_meshes():
     script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
 

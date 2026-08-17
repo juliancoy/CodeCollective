@@ -167,6 +167,8 @@ const STANDARD_NAV_LINKS = [
 
 const PROJECT_NAV_LINKS = [
     { href: '/datacenters.html', label: 'Data Centers & Energy' },
+    { href: '/kimi-inspector.html', label: 'Kimi Inspector' },
+    { href: '/branding.html', label: 'Branding' },
     { href: '/newsletter/', label: 'Newsletter Archive' },
     { href: '/mdbills.html', label: 'Maryland Bills Tracker' },
     { href: '/balticonomy/', label: 'Balticonomy' },

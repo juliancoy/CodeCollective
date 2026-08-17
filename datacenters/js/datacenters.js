@@ -6897,17 +6897,8 @@
 
   function renderDetail(record, sourceById) {
     const detail = prepareInspectorDetail();
+    const recordSourceIds = collectRecordSourceIds(record);
     if (record.record_type === 'data_center') {
-      const recordSourceIds = [...new Set([
-        ...(record.source_ids || []),
-        ...(record.profile_source_ids || []),
-        ...(record.year_built_source_ids || []),
-        ...(record.status_source_ids || []),
-        ...(record.power_scale_source_ids || []),
-        ...(record.projected_power_demand_source_ids || []),
-        ...(record.contestation_source_ids || []),
-        ...(record.salient_news_source_ids || []),
-      ])];
       detail.innerHTML = `
         ${renderHoveredIconHeading(record)}
         ${renderEnergySummary(record)}
@@ -7002,12 +6993,7 @@
           ['Legal status', known(record.legal_status)],
         ])}
         <p class="dc-record-note">${escapeHtml(record.coordinate_confidence_basis)}</p>
-        ${renderRecordSources([...new Set([
-          record.capacity_source_id,
-          record.generation_source_id,
-          ...(record.year_built_source_ids || []),
-          ...(record.status_source_ids || []),
-        ].filter(Boolean))], sourceById)}
+        ${renderRecordSources(recordSourceIds, sourceById)}
       `;
     }
     bindInspectorTagFilters(detail);
@@ -7505,9 +7491,25 @@
     return links ? `<div class="dc-record-sources"><strong>Sources</strong><ul>${links}</ul></div>` : '';
   }
 
+  function collectRecordSourceIds(record) {
+    const ids = new Set();
+    const visit = (value, key = '') => {
+      if (key.endsWith('_source_id') && typeof value === 'string') ids.add(value);
+      if ((key === 'source_ids' || key.endsWith('_source_ids')) && Array.isArray(value)) {
+        value.filter((item) => typeof item === 'string').forEach((item) => ids.add(item));
+      }
+      if (Array.isArray(value)) value.forEach((item) => visit(item));
+      else if (value && typeof value === 'object') {
+        Object.entries(value).forEach(([childKey, childValue]) => visit(childValue, childKey));
+      }
+    };
+    visit(record);
+    return [...ids];
+  }
+
   function renderSources(sources) {
     document.getElementById('source-list').innerHTML = sources.map((source) => `
-      <article class="dc-source-card">
+      <article class="dc-source-card" data-source-id="${escapeHtml(source.id)}">
         <h3>${escapeHtml(source.title)}</h3>
         <p>${escapeHtml(source.publisher)} · ${escapeHtml(source.source_tier)} · retrieved ${escapeHtml(source.retrieved_date)}</p>
         <p>${escapeHtml(source.used_for)}</p>

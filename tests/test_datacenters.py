@@ -536,6 +536,22 @@ def test_source_references_and_archived_file_hashes_resolve():
     }
     assert all(required <= set(source) for source in sources)
     source_by_id = {source["id"]: source for source in sources}
+    def referenced_source_ids(value, key=""):
+        found = set()
+        if key.endswith("_source_id") and isinstance(value, str):
+            found.add(value)
+        if (key == "source_ids" or key.endswith("_source_ids")) and isinstance(value, list):
+            found.update(item for item in value if isinstance(item, str))
+        if isinstance(value, dict):
+            for child_key, child_value in value.items():
+                found.update(referenced_source_ids(child_value, child_key))
+        elif isinstance(value, list):
+            for child_value in value:
+                found.update(referenced_source_ids(child_value))
+        return found
+
+    for record in load("infrastructure.json"):
+        assert referenced_source_ids(record) <= set(source_by_id)
     for record in infrastructure("data_center"):
         assert record["source_ids"]
         assert set(record["source_ids"]) <= set(source_by_id)
@@ -561,6 +577,16 @@ def test_source_references_and_archived_file_hashes_resolve():
         path = ROOT / source["local_path"].lstrip("/")
         assert path.is_file()
         assert hashlib.sha256(path.read_bytes()).hexdigest() == source["local_sha256"]
+
+
+def test_inspector_renders_every_record_source_reference():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+
+    assert "function collectRecordSourceIds(record)" in script
+    assert "key.endsWith('_source_id')" in script
+    assert "key.endsWith('_source_ids')" in script
+    assert "const recordSourceIds = collectRecordSourceIds(record);" in script
+    assert script.count("renderRecordSources(recordSourceIds, sourceById)") == 2
 
 
 def test_capacity_is_not_presented_as_reported_grid_demand():
@@ -863,7 +889,7 @@ def test_data_center_power_scale_is_filterable_and_explained_in_inspector():
     assert "record.power_scale_class !== powerScaleFilter" in script
     assert "['Power class'" in script
     assert "['Classification basis', known(record.power_scale_detail)]" in script
-    assert "record.power_scale_source_ids" in script
+    assert "const recordSourceIds = collectRecordSourceIds(record);" in script
     assert "Never present a backup-generator-derived estimate as measured operating load." in plan
     assert "...colorPalette.map" in script
     assert "...outlinePalette.map" in script
