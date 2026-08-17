@@ -408,6 +408,18 @@ sources = [
         "tags": ["Water", "Tech Community"],
     },
     {
+        "name": "Greater Baltimore Climate Initiative",
+        "url": "https://www.thecctfoundation.org/event",
+        "source_kind": "gbci_events",
+        "orgImageUrl": "https://www.google.com/s2/favicons?domain=www.thecctfoundation.org&sz=256",
+        "tags": [
+            "Environment",
+            "Climate & Energy",
+            "Community Organizing",
+            "Policy",
+        ],
+    },
+    {
         "name": "BLK Tech Connect Luma",
         "url": "https://luma.com/blk-tech-connect-baltimore",
         "tags": ["Economic Development", "Tech Community", "Community Organizing"],
