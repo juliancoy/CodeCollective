@@ -146,6 +146,26 @@ def test_negative_on_site_generation_claim_requires_review():
     assert "negative or absence finding requires human review" in decision["reasons"]
 
 
+def test_financing_claim_cannot_be_promoted_as_permit_status():
+    facet = {
+        "value": "Conditional use approved; PILOT agreement authorized in 2023.",
+        "confidence": "high",
+        "basis": "The county approved both actions.",
+        "sources": [source()],
+    }
+    cache = {
+        quality.normalize_url(source()["url"]): fetched(
+            "Example Solar Plant conditional use permit approved and PILOT agreement authorized."
+        )
+    }
+
+    decision = quality.audit_facet("permit_status", facet, facility(), cache)
+
+    assert decision["promotion_ready"] is False
+    assert decision["recommended_action"] == "human_review"
+    assert "out-of-scope financing" in decision["reasons"][0]
+
+
 def test_excerpt_prefers_closest_facility_and_facet_passage():
     text = (
         "Example Solar Plant navigation " + "unrelated " * 200
@@ -325,3 +345,38 @@ def test_review_queue_contains_human_and_regulatory_actions_only():
 def test_research_container_is_a_finite_job():
     runner = (ROOT / "run.py").read_text()
     assert 'research["restart_policy"] = {"Name": "no"}' in runner
+
+
+def test_audit_merges_latest_facets_into_one_facility():
+    rows = [
+        {
+            "facility_id": "eia-123",
+            "facility_name": "Example Solar Plant",
+            "pipeline_id": "pipeline-1",
+            "run_id": "run-1",
+            "input_fingerprint": "original",
+            "requested_facets": ["permit_status", "legal_status"],
+            "final_result": {"facets": {
+                "permit_status": {"value": "Old permit"},
+                "legal_status": {"value": "Human review"},
+            }},
+        },
+        {
+            "facility_id": "eia-123",
+            "facility_name": "Example Solar Plant",
+            "pipeline_id": "pipeline-1",
+            "run_id": "run-2",
+            "input_fingerprint": "repair",
+            "requested_facets": ["permit_status"],
+            "final_result": {"facets": {"permit_status": {"value": "New permit"}}},
+        },
+    ]
+
+    selected, pipeline_id = auditor.select_records(rows, None, None)
+
+    assert pipeline_id == "pipeline-1"
+    assert len(selected) == 1
+    assert selected[0]["final_result"]["facets"]["permit_status"]["value"] == "New permit"
+    assert selected[0]["final_result"]["facets"]["legal_status"]["value"] == "Human review"
+    assert selected[0]["_facet_origins"]["permit_status"]["input_fingerprint"] == "repair"
+    assert selected[0]["_facet_origins"]["legal_status"]["input_fingerprint"] == "original"

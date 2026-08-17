@@ -132,12 +132,19 @@ def main() -> int:
             stale.append(f"{facility_id}: facility missing from canonical inventory")
             continue
         facets = tuple(audit.get("facets", {}))
-        fingerprint = hashlib.sha256(canonical_json(target_context(record, facets)).encode()).hexdigest()
-        if fingerprint != audit.get("input_fingerprint"):
-            stale.append(f"{facility_id}: canonical input changed after research")
-            continue
         for facet_name, decision in audit.get("facets", {}).items():
             if not decision.get("promotion_ready"):
+                continue
+            origin = decision.get("research_origin") or {
+                "input_fingerprint": audit.get("input_fingerprint"),
+                "requested_facets": facets,
+            }
+            origin_facets = tuple(origin.get("requested_facets") or (facet_name,))
+            fingerprint = hashlib.sha256(
+                canonical_json(target_context(record, origin_facets)).encode()
+            ).hexdigest()
+            if fingerprint != origin.get("input_fingerprint"):
+                stale.append(f"{facility_id} {facet_name}: canonical input changed after research")
                 continue
             source_field = SOURCE_ARRAY_BY_FACET[facet_name]
             if source_field not in record:
