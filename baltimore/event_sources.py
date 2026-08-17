@@ -840,7 +840,8 @@ sources = [
     # Phase 5 Maryland and local government source expansion
     {
         "name": "Maryland Department of the Environment Events",
-        "url": "https://mde.maryland.gov/Pages/default.aspx",
+        "url": "https://www.doit.state.md.us/ActiveDataCalendar/RSSSyndicator.aspx?category=76-0&location=&type=N&binary=Y",
+        "source_kind": "active_data_calendar_rss",
         "tags": ["Government", "MarylandGov", "Politics", "Environment", "Water", "Purpose"],
     },
     {

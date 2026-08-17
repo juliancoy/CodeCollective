@@ -15,6 +15,7 @@ import scrape_partiful
 import scrape_timely
 import scrape_tribe
 import scrape_biotrac
+import scrape_active_data_calendar
 import scrape_web_events
 import scrape_legistar
 import scrape_thread_helpcenter
@@ -83,6 +84,7 @@ SOURCE_KIND_CONCURRENCY = {
     "timely": 2,
     "tribe_events": 2,
     "biotrac": 1,
+    "active_data_calendar_rss": 1,
     "unknown": 2,
 }
 
@@ -515,6 +517,10 @@ def fetch_events_from_source(source, city):
         "biotrac": (
             "Fetching events from",
             lambda: scrape_biotrac.scrape(source_url),
+        ),
+        "active_data_calendar_rss": (
+            "Fetching events from",
+            lambda: scrape_active_data_calendar.scrape(source_url),
         ),
         "web_events_page": (
             "Fetching events from",
