@@ -70,17 +70,36 @@ def select_records(
     rows: list[dict[str, Any]], run_id: str | None, pipeline_id: str | None
 ) -> tuple[list[dict[str, Any]], str | None]:
     if run_id:
-        selected = [row for row in rows if row.get("run_id") == run_id]
-        return selected, selected[-1].get("pipeline_id") if selected else pipeline_id
-    if pipeline_id is None:
-        pipeline_id = next(
-            (row.get("pipeline_id") for row in reversed(rows) if row.get("pipeline_id")),
-            None,
-        )
-    filtered = [row for row in rows if row.get("pipeline_id") == pipeline_id]
-    latest: dict[tuple[str, str], dict[str, Any]] = {}
+        filtered = [row for row in rows if row.get("run_id") == run_id]
+        pipeline_id = filtered[-1].get("pipeline_id") if filtered else pipeline_id
+    else:
+        if pipeline_id is None:
+            pipeline_id = next(
+                (row.get("pipeline_id") for row in reversed(rows) if row.get("pipeline_id")),
+                None,
+            )
+        filtered = [row for row in rows if row.get("pipeline_id") == pipeline_id]
+    latest: dict[str, dict[str, Any]] = {}
     for row in filtered:
-        latest[(str(row.get("facility_id")), str(row.get("input_fingerprint")))] = row
+        facility_id = str(row.get("facility_id"))
+        prior = latest.get(facility_id, {})
+        merged_facets = dict(prior.get("final_result", {}).get("facets", {}) or {})
+        origins = dict(prior.get("_facet_origins", {}))
+        result_facets = row.get("final_result", {}).get("facets", {}) or {}
+        requested = row.get("requested_facets", [])
+        for facet in requested:
+            merged_facets[facet] = result_facets.get(facet)
+            origins[facet] = {
+                "input_fingerprint": row.get("input_fingerprint"),
+                "requested_facets": list(requested),
+                "run_id": row.get("run_id"),
+                "finished_at": row.get("finished_at"),
+            }
+        merged = dict(row)
+        merged["requested_facets"] = list(merged_facets)
+        merged["final_result"] = {**(row.get("final_result") or {}), "facets": merged_facets}
+        merged["_facet_origins"] = origins
+        latest[facility_id] = merged
     return list(latest.values()), pipeline_id
 
 
@@ -120,17 +139,25 @@ def build_audit(
     record: dict[str, Any],
     fetched: dict[str, FetchResult],
     audited_at: str,
-    reused_sources: dict[tuple[str, str], list[dict[str, Any]]] | None = None,
+    reused_sources: dict[tuple[str, str, str], list[dict[str, Any]]] | None = None,
 ) -> dict[str, Any]:
     result_facets = row.get("final_result", {}).get("facets", {}) or {}
     decisions = {}
     for facet in row.get("requested_facets", []):
         value = result_facets.get(facet)
-        reused = (reused_sources or {}).get((row["facility_id"], facet))
+        origin = row.get("_facet_origins", {}).get(facet, {
+            "input_fingerprint": row.get("input_fingerprint"),
+            "requested_facets": row.get("requested_facets", []),
+            "run_id": row.get("run_id"),
+        })
+        reused = (reused_sources or {}).get(
+            (row["facility_id"], facet, str(origin.get("input_fingerprint")))
+        )
         if reused is not None and isinstance(value, dict):
             decisions[facet] = evaluate_facet(facet, value, reused)
         else:
             decisions[facet] = audit_facet(facet, value, record, fetched)
+        decisions[facet]["research_origin"] = origin
     counts = Counter(decision["state"] for decision in decisions.values())
     return {
         "audit_version": 1,
@@ -238,7 +265,7 @@ def apply_judgments(
     model: str,
     workers: int,
     timeout: float,
-    reused_judgments: dict[tuple[str, str], dict[str, Any]] | None = None,
+    reused_judgments: dict[tuple[str, str, str], dict[str, Any]] | None = None,
 ) -> None:
     candidates = []
     for audit in audits:
@@ -249,7 +276,10 @@ def apply_judgments(
             decision["promotion_ready"] = False
             decision["state"] = "candidate"
             decision["recommended_action"] = "judge"
-            prior_judgment = (reused_judgments or {}).get((audit["facility_id"], facet_name))
+            fingerprint = str((decision.get("research_origin") or {}).get("input_fingerprint"))
+            prior_judgment = (reused_judgments or {}).get(
+                (audit["facility_id"], facet_name, fingerprint)
+            )
             if prior_judgment is not None:
                 finish_judgment(decision, prior_judgment)
             else:
@@ -365,12 +395,20 @@ def main() -> int:
     if args.reuse_source_audit is not None:
         reused_rows = load_jsonl(args.reuse_source_audit)
         reused_sources = {
-            (row["facility_id"], facet): decision.get("sources", [])
+            (
+                row["facility_id"],
+                facet,
+                str((decision.get("research_origin") or {}).get("input_fingerprint", row.get("input_fingerprint"))),
+            ): decision.get("sources", [])
             for row in reused_rows
             for facet, decision in row.get("facets", {}).items()
         }
         reused_judgments = {
-            (row["facility_id"], facet): decision["judge"]
+            (
+                row["facility_id"],
+                facet,
+                str((decision.get("research_origin") or {}).get("input_fingerprint", row.get("input_fingerprint"))),
+            ): decision["judge"]
             for row in reused_rows
             for facet, decision in row.get("facets", {}).items()
             if decision.get("judge")

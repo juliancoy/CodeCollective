@@ -331,6 +331,12 @@ def evaluate_facet(
     if confidence not in {"high", "medium"}:
         reasons.append(f"confidence {confidence or 'missing'} is below the promotion threshold")
     negative = is_negative_claim(value)
+    out_of_scope = bool(
+        facet_name in {"permit_status", "air_permit_status"}
+        and re.search(r"\b(?:PILOT|payment in lieu of taxes|tax (?:agreement|credit|incentive))\b", value, re.I)
+    )
+    if out_of_scope:
+        reasons.append("permit facet contains an out-of-scope financing or tax claim")
     if negative:
         if facet_name == "legal_status":
             reasons.append("negative legal findings require human review")
@@ -343,13 +349,21 @@ def evaluate_facet(
     ]
     if not usable_primary:
         reasons.append("no reachable facility-specific primary source text supports the facet")
-    evidence_valid = schema_valid and confidence in {"high", "medium"} and bool(usable_primary) and not negative
+    evidence_valid = (
+        schema_valid
+        and confidence in {"high", "medium"}
+        and bool(usable_primary)
+        and not negative
+        and not out_of_scope
+    )
     promotion_ready = evidence_valid and not reasons
     if promotion_ready:
         recommended_action = "promote"
     elif negative and facet_name == "air_permit_status":
         recommended_action = "regulatory_rule"
     elif negative:
+        recommended_action = "human_review"
+    elif out_of_scope:
         recommended_action = "human_review"
     else:
         recommended_action = "research"
@@ -361,6 +375,7 @@ def evaluate_facet(
         "promotion_ready": promotion_ready,
         "confidence": confidence,
         "negative_claim": negative,
+        "out_of_scope": out_of_scope,
         "reasons": list(dict.fromkeys(reasons)),
         "value": value,
         "basis": facet.get("basis"),

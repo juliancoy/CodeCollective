@@ -37,6 +37,10 @@ rsync -a \
   --exclude='r8-rowhome/' \
   --exclude='cloudflare/' \
   --exclude='scripts/' \
+  --exclude='datacenters/research/' \
+  --exclude='datacenters/history/' \
+  --exclude='datacenters/kimi_research_dashboard.html' \
+  --exclude='kimi-inspector.html' \
   --exclude='usa/data/usajobs.json' \
   --exclude='usa/data/usajobs.json.gz' \
   --exclude='usa/data/usajobs-lite.json' \
