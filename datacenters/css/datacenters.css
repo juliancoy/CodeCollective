@@ -643,6 +643,90 @@ body.datacenter-page::before {
   font: .63rem/1.4 Georgia, serif;
 }
 
+.dc-map-share {
+  position: relative;
+}
+
+.dc-map-share-trigger {
+  min-height: 2rem;
+  padding: .35rem .7rem;
+  border: 1px solid rgba(143, 210, 237, .58);
+  border-radius: .4rem;
+  color: var(--dc-white);
+  background: linear-gradient(145deg, #0d5a8f, #062f53);
+  font: 700 .64rem NectoMono, monospace;
+  cursor: pointer;
+}
+
+.dc-map-share-trigger:hover,
+.dc-map-share-trigger:focus-visible {
+  color: var(--dc-navy-deep);
+  background: var(--dc-sky);
+}
+
+.dc-map-share-sheet {
+  position: absolute;
+  top: calc(100% + .45rem);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  gap: .7rem;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: .8rem;
+  border: 1px solid var(--dc-line-strong);
+  border-radius: .8rem;
+  background:
+    linear-gradient(180deg, rgba(143, 210, 237, .08), rgba(143, 210, 237, 0) 35%),
+    rgba(0, 19, 44, .96);
+  box-shadow: 0 .75rem 2rem rgba(0, 0, 0, .45);
+}
+
+.dc-map-share-sheet[hidden] {
+  display: none;
+}
+
+.dc-map-share-actions,
+.dc-map-share-links {
+  display: grid;
+  gap: .45rem;
+}
+
+.dc-map-share-action,
+.dc-map-share-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.15rem;
+  padding: .48rem .65rem;
+  border: 1px solid var(--dc-line);
+  border-radius: .5rem;
+  color: var(--dc-white);
+  background: rgba(255, 255, 255, .05);
+  font: 700 .64rem/1.2 NectoMono, ui-monospace, monospace;
+  letter-spacing: .03em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.dc-map-share-action:hover,
+.dc-map-share-action:focus-visible,
+.dc-map-share-link:hover,
+.dc-map-share-link:focus-visible {
+  border-color: var(--dc-sky);
+  color: var(--dc-sky);
+  background: rgba(18, 127, 193, .16);
+}
+
+.dc-map-share-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dc-map-share-note {
+  margin: 0;
+  color: var(--dc-muted);
+  font: .63rem/1.4 Georgia, serif;
+}
+
 .dc-map-download {
   min-height: 2rem;
   padding: .35rem .65rem;

@@ -20,12 +20,36 @@ import pandas as pd
 MARYLAND_ALL_SECTOR_PRICE_CENTS_PER_KWH_2024 = 15.04
 MARYLAND_ALL_SECTOR_PRICE_SOURCE_ID = "eia-retail-sales-md-all-sectors-2024"
 HOURS_IN_2024 = 8784
+DEFAULT_RESEARCH_OVERRIDES = Path(__file__).with_name("data") / "research-overrides.json"
 
 
 def clean_number(value, digits=3):
     if pd.isna(value):
         return None
     return round(float(value), digits)
+
+
+def apply_research_overrides(records, path):
+    if not path.exists():
+        return records
+    payload = json.loads(path.read_text())
+    facilities = payload.get("facilities") if isinstance(payload, dict) else None
+    if not isinstance(facilities, dict):
+        raise ValueError(f"Invalid research overrides file: {path}")
+    by_id = {record["id"]: record for record in records}
+    for facility_id, fields in facilities.items():
+        if facility_id not in by_id:
+            raise ValueError(f"Research override facility is missing: {facility_id}")
+        if not isinstance(fields, dict):
+            raise ValueError(f"Research override for {facility_id} must be an object")
+        unknown = set(fields) - set(by_id[facility_id])
+        if unknown:
+            raise ValueError(
+                f"Research override for {facility_id} has unknown fields: "
+                + ", ".join(sorted(unknown))
+            )
+        by_id[facility_id].update(fields)
+    return records
 
 
 GENERATOR_STATUS_LABELS = {
@@ -1548,6 +1572,11 @@ def main() -> None:
     parser.add_argument("--year", type=int)
     parser.add_argument("--state", default="MD")
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument(
+        "--research-overrides",
+        type=Path,
+        default=DEFAULT_RESEARCH_OVERRIDES,
+    )
     parser.add_argument("--curated-only", action="store_true", help="refresh curated data-center fields without EIA workbooks")
     args = parser.parse_args()
 
@@ -1558,7 +1587,8 @@ def main() -> None:
             for record in existing
             if record.get("record_type") == "power_plant"
         ]
-        args.output.write_text(json.dumps(load_data_centers(args.output) + plants, indent=2) + "\n")
+        refreshed = apply_research_overrides(load_data_centers(args.output) + plants, args.research_overrides)
+        args.output.write_text(json.dumps(refreshed, indent=2) + "\n")
         return
 
     if not all((args.plant_workbook, args.generator_workbook, args.generation_workbook, args.year)):
@@ -1668,6 +1698,7 @@ def main() -> None:
 
     add_coordinate_confidence(records)
     infrastructure = load_data_centers(args.output) + records
+    infrastructure = apply_research_overrides(infrastructure, args.research_overrides)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(infrastructure, indent=2, ensure_ascii=False) + "\n")
     technologies = Counter(record["primary_technology"] for record in records)

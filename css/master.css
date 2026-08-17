@@ -1584,9 +1584,310 @@ button:focus {
   transform: translateY(-2px);
 }
 
+.brand-page {
+  max-width: 1100px;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+#wrapper .brand-page p {
+  font-size: clamp(1rem, 1.7vw, 1.2rem);
+}
+
+#wrapper .brand-page h1 {
+  font-size: clamp(2.2rem, 4vw, 3.25rem);
+  line-height: 1.05;
+  margin: 0 0 0.7rem;
+  overflow-wrap: normal;
+}
+
+#wrapper .brand-page h2 {
+  font-size: clamp(1.8rem, 3.4vw, 3rem);
+}
+
+.brand-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 0.85fr);
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.brand-hero img {
+  width: 100%;
+  max-height: 18rem;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.brand-kicker {
+  color: #87ceeb;
+  font-family: NectoMono, monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.brand-section {
+  margin-top: 2rem;
+}
+
+.brand-color-grid,
+.brand-asset-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.brand-color-grid {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.brand-color-card,
+.brand-asset {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 1rem;
+}
+
+.brand-color-card {
+  display: flex;
+  gap: 0.85rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.brand-swatch {
+  width: 4rem;
+  height: 4rem;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 8px;
+  background: var(--brand-swatch-color);
+}
+
+.brand-asset-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.brand-asset--wide {
+  grid-column: span 2;
+}
+
+#wrapper .brand-color-card h3,
+#wrapper .brand-asset h3 {
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  margin: 0 0 0.25rem;
+}
+
+#wrapper .brand-color-card p,
+#wrapper .brand-asset p {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.brand-asset-preview {
+  display: grid;
+  place-items: center;
+  min-height: 10rem;
+  margin-bottom: 0.85rem;
+  border-radius: 8px;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.08) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.08) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.08) 75%);
+  background-color: rgba(0, 18, 42, 0.72);
+  background-position: 0 0, 0 0.75rem, 0.75rem -0.75rem, -0.75rem 0;
+  background-size: 1.5rem 1.5rem;
+  overflow: hidden;
+}
+
+.brand-asset-preview img {
+  display: block;
+  width: 100%;
+  max-height: 18rem;
+  object-fit: contain;
+  padding: 0.75rem;
+}
+
+.brand-asset-preview--logo img {
+  width: min(100%, 15rem);
+}
+
+.brand-asset p,
+.brand-color-card p {
+  overflow-wrap: anywhere;
+}
+
+.kimi-page {
+  max-width: 1180px;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.kimi-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 0.42fr);
+  gap: 1.25rem;
+  align-items: stretch;
+}
+
+#wrapper .kimi-page h1 {
+  font-size: clamp(2.2rem, 4vw, 3.35rem);
+  line-height: 1.05;
+  margin: 0 0 0.7rem;
+}
+
+#wrapper .kimi-page h2 {
+  font-size: clamp(1.45rem, 2.6vw, 2.15rem);
+  line-height: 1.1;
+}
+
+#wrapper .kimi-page p,
+#wrapper .kimi-page label,
+#wrapper .kimi-page input,
+#wrapper .kimi-page textarea {
+  font-size: clamp(0.95rem, 1.4vw, 1.08rem);
+}
+
+.kimi-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.kimi-panel,
+.kimi-status-card {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  padding: 1rem;
+}
+
+.kimi-status-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.kimi-status-dot {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #a5332b;
+  box-shadow: 0 0 0 5px rgba(165, 51, 43, 0.18);
+}
+
+.kimi-status-dot.is-live {
+  background: #2d6048;
+  box-shadow: 0 0 0 5px rgba(45, 96, 72, 0.2);
+}
+
+.kimi-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.kimi-form label {
+  font-family: NectoMono, monospace;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.kimi-form input,
+.kimi-form textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(0, 18, 42, 0.65);
+  color: #fff;
+  padding: 0.75rem;
+  font-family: NectoMono, monospace;
+}
+
+.kimi-form textarea {
+  min-height: 12rem;
+  resize: vertical;
+}
+
+.kimi-form button,
+.kimi-open-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 2.7rem;
+  border: 1px solid rgba(135, 206, 235, 0.65);
+  border-radius: 8px;
+  background: rgba(135, 206, 235, 0.16);
+  color: #fff;
+  padding: 0.7rem 1rem;
+  font-family: NectoMono, monospace;
+  font-weight: 700;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.kimi-form button:hover,
+.kimi-form button:focus-visible,
+.kimi-open-link:hover,
+.kimi-open-link:focus-visible {
+  background: rgba(135, 206, 235, 0.28);
+}
+
+.kimi-message {
+  min-height: 1.5rem;
+  color: #87ceeb;
+  overflow-wrap: anywhere;
+}
+
+.kimi-dashboard-panel {
+  margin-top: 1rem;
+}
+
+.kimi-dashboard-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.kimi-dashboard-frame {
+  width: 100%;
+  height: min(78vh, 54rem);
+  min-height: 34rem;
+  margin-top: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: #f2efe6;
+}
+
 @media (max-width: 700px) {
   .info-grid {
     grid-template-columns: 1fr;
+  }
+
+  .brand-hero,
+  .brand-asset-grid,
+  .kimi-hero,
+  .kimi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-asset--wide {
+    grid-column: auto;
+  }
+
+  .kimi-dashboard-head {
+    display: grid;
   }
 }
 

@@ -1,0 +1,10 @@
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /workspace
+
+RUN pip install --no-cache-dir beautifulsoup4 pypdf requests
+
+CMD ["python3", "datacenters/research_inventory_with_kimi.py", "--help"]

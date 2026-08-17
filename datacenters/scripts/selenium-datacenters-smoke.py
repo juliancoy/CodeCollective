@@ -139,6 +139,51 @@ def install_instrumentation(driver: webdriver.Remote) -> None:
     )
 
 
+def verify_source_visibility(driver: webdriver.Remote) -> dict:
+    WebDriverWait(driver, 30).until(
+        lambda d: len(d.find_elements(By.CSS_SELECTOR, "#source-list .dc-source-card")) > 0
+    )
+    result = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        Promise.all([
+          fetch('/datacenters/data/sources.json', {cache: 'no-store'}).then((response) => response.json()),
+          fetch('/datacenters/data/infrastructure.json', {cache: 'no-store'}).then((response) => response.json()),
+        ]).then(([sources, records]) => {
+          const cards = [...document.querySelectorAll('#source-list .dc-source-card')];
+          const rendered = new Map(cards.map((card) => [card.dataset.sourceId, card]));
+          const referenced = new Set();
+          const visit = (value, key = '') => {
+            if (key.endsWith('_source_id') && typeof value === 'string') referenced.add(value);
+            if ((key === 'source_ids' || key.endsWith('_source_ids')) && Array.isArray(value)) {
+              value.filter((item) => typeof item === 'string').forEach((item) => referenced.add(item));
+            }
+            if (Array.isArray(value)) value.forEach((item) => visit(item));
+            else if (value && typeof value === 'object') {
+              Object.entries(value).forEach(([childKey, childValue]) => visit(childValue, childKey));
+            }
+          };
+          records.forEach((record) => visit(record));
+          done({
+            sourceCount: sources.length,
+            cardCount: cards.length,
+            referencedCount: referenced.size,
+            missingCards: sources.map((source) => source.id).filter((id) => !rendered.has(id)),
+            missingReferencedCards: [...referenced].filter((id) => !rendered.has(id)),
+            cardsWithoutLinks: cards.filter((card) => !card.querySelector('a[href]')).map((card) => card.dataset.sourceId),
+          });
+        }).catch((error) => done({error: String(error)}));
+        """
+    )
+    if result.get("error"):
+        raise AssertionError(f"source visibility request failed: {result['error']}")
+    if result["cardCount"] != result["sourceCount"]:
+        raise AssertionError(f"source register did not render every source: {result}")
+    if result["missingCards"] or result["missingReferencedCards"] or result["cardsWithoutLinks"]:
+        raise AssertionError(f"source register has missing or unlinked sources: {result}")
+    return result
+
+
 def save_screenshot(driver: webdriver.Remote, directory: pathlib.Path, name: str) -> pathlib.Path:
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / name
@@ -2195,6 +2240,15 @@ def run(args: argparse.Namespace) -> int:
         wait_for_map_ready(driver)
         stage = "install instrumentation"
         install_instrumentation(driver)
+        if args.sources_only:
+            report = {
+                "base_url": args.base_url,
+                "source_visibility": step("source visibility", lambda: verify_source_visibility(driver)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
         if args.mobile_only:
             report = {
                 "base_url": args.base_url,
@@ -2390,6 +2444,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--hover-samples", type=int, default=int(os.environ.get("DATACENTERS_HOVER_SAMPLES", "5")))
     parser.add_argument("--max-zoom-clicks", type=int, default=int(os.environ.get("DATACENTERS_MAX_ZOOM_CLICKS", "8")))
     parser.add_argument("--point-search-limit", type=int, default=int(os.environ.get("DATACENTERS_POINT_SEARCH_LIMIT", "20")))
+    parser.add_argument("--sources-only", action="store_true", help="Verify every registered and record-referenced source is rendered with a link, then exit.")
     parser.add_argument("--zoning-only", action="store_true", help="Verify Baltimore zoning rendering and hover, then exit.")
     parser.add_argument("--mobile-only", action="store_true", help="Verify the touch layout and mobile inspector, then exit.")
     parser.add_argument("--glow-only", action="store_true", help="Verify the data-center contestation glow, then exit.")
