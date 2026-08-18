@@ -25,6 +25,7 @@ on:
       - "tests/calendar_filtering.test.cjs"
       - "tests/test_calendar_*.py"
       - "tests/test_city_source_taxonomy.py"
+      - "tests/test_scrape_*.py"
   workflow_dispatch:  # Allows manual trigger from the Actions tab
 
 permissions:
@@ -59,7 +60,10 @@ jobs:
 
       - name: Run calendar regression tests
         run: |
-          python -m pytest tests
+          python -m pytest \
+            tests/test_calendar_*.py \
+            tests/test_city_source_taxonomy.py \
+            tests/test_scrape_*.py
           node --test tests/calendar_filtering.test.cjs
           python tests/calendar/validate_source_tag_mappings.py
           python tests/calendar/validate_source_lens_minimums.py
