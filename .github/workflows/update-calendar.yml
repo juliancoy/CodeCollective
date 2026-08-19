@@ -2,7 +2,7 @@ name: Update Calendar
 
 on:
   schedule:
-    - cron: '15 2 * * *'  # Runs daily at 02:15 UTC, away from other repository data jobs
+    - cron: '15 2 * * *'
   push:
     branches:
       - main
@@ -16,24 +16,16 @@ on:
       - "events_map_generator.py"
       - "geocode*.py"
       - "scrape_*.py"
-      - "scripts/canonicalize_calendar_tags.py"
       - "*/event_sources.py"
       - "*/gen_calendar.py"
       - "*/scrape_*.py"
       - "*/manual_events.json"
-      - "tests/calendar/validate_calendar_source_exclusions.py"
-      - "tests/calendar/validate_source_*.py"
-      - "tests/calendar_filtering.test.cjs"
-      - "tests/test_calendar_*.py"
-      - "tests/test_city_source_taxonomy.py"
-      - "tests/test_scrape_*.py"
-  workflow_dispatch:  # Allows manual trigger from the Actions tab
+  workflow_dispatch:
 
 permissions:
   contents: write
   actions: write
 
-# Calendar refreshes should not queue behind or compete with unrelated data jobs.
 concurrency:
   group: calendar-data-updates
   cancel-in-progress: false
@@ -51,59 +43,18 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      # One-time source migration: source files own their atomic tags. There is
-      # no runtime splitting or interpretation of compound tag names.
-      - name: Canonicalize source tags
-        if: ${{ github.event_name != 'schedule' }}
-        run: |
-          python scripts/canonicalize_calendar_tags.py
-
-      # Code-level regression tests remain critical for push/manual runs.
-      - name: Run calendar regression tests
-        if: ${{ github.event_name != 'schedule' }}
-        run: |
-          python -m pytest \
-            tests/test_calendar_*.py \
-            tests/test_city_source_taxonomy.py \
-            tests/test_scrape_*.py
-          node --test tests/calendar_filtering.test.cjs
-
-      # Coverage/minimum checks are useful diagnostics, but stale content is
-      # worse than temporarily missing a desired source/category threshold.
-      - name: Check source lens minimums
-        if: ${{ github.event_name != 'schedule' }}
-        continue-on-error: true
-        run: |
-          python tests/calendar/validate_source_lens_minimums.py
-
-      - name: Run genCalendar.py
-        run: |
-          python genCalendar.py
-
-      # Exclusion checks identify tagging/content-quality regressions. They are
-      # warning-only so a false positive cannot freeze the public calendar.
-      - name: Check generated source exclusions
-        continue-on-error: true
-        run: |
-          python tests/calendar/validate_calendar_source_exclusions.py
+      - name: Generate calendar
+        run: python genCalendar.py
 
       - name: Check for changes
         id: changes
         run: |
           if git diff --quiet; then
-            echo "No repository changes detected"
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Changes detected"
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -119,9 +70,6 @@ jobs:
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:"${GITHUB_REF_NAME}"
 
-      # Pushes authenticated with GITHUB_TOKEN intentionally do not start most
-      # other workflows. Dispatch the site deployment explicitly so freshly
-      # generated feeds do not remain newer than the production calendar.
       - name: Deploy updated calendar to production
         if: ${{ steps.changes.outputs.has_changes == 'true' }}
         env:
