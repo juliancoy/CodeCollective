@@ -1,0 +1,80 @@
+name: Calendar CI
+
+on:
+  pull_request:
+    paths:
+      - "requirements.txt"
+      - "genCalendar.py"
+      - "genSimpleCalendar.py"
+      - "calendar_*.py"
+      - "city_source_taxonomy.py"
+      - "events_map_generator.py"
+      - "geocode*.py"
+      - "scrape_*.py"
+      - "*/event_sources.py"
+      - "*/gen_calendar.py"
+      - "*/scrape_*.py"
+      - "*/manual_events.json"
+      - "tests/calendar/**"
+      - "tests/calendar_filtering.test.cjs"
+      - "tests/test_calendar_*.py"
+      - "tests/test_city_source_taxonomy.py"
+      - "tests/test_scrape_*.py"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/calendar-ci.yml"
+      - "requirements.txt"
+      - "genCalendar.py"
+      - "genSimpleCalendar.py"
+      - "calendar_*.py"
+      - "city_source_taxonomy.py"
+      - "events_map_generator.py"
+      - "geocode*.py"
+      - "scrape_*.py"
+      - "*/event_sources.py"
+      - "*/gen_calendar.py"
+      - "*/scrape_*.py"
+      - "*/manual_events.json"
+      - "tests/calendar/**"
+      - "tests/calendar_filtering.test.cjs"
+      - "tests/test_calendar_*.py"
+      - "tests/test_city_source_taxonomy.py"
+      - "tests/test_scrape_*.py"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Python calendar tests
+        run: |
+          python -m pytest \
+            tests/test_calendar_*.py \
+            tests/test_city_source_taxonomy.py \
+            tests/test_scrape_*.py
+
+      - name: Run calendar filtering tests
+        run: node --test tests/calendar_filtering.test.cjs
+
+      - name: Check source lens minimums
+        continue-on-error: true
+        run: python tests/calendar/validate_source_lens_minimums.py
