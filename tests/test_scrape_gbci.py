@@ -55,7 +55,7 @@ def test_gbci_source_dispatch_adds_baltimore_metadata(scrape):
         "name": "Greater Baltimore Climate Initiative",
         "url": "https://www.thecctfoundation.org/event",
         "source_kind": "gbci_events",
-        "tags": ["Environment", "Climate & Energy"],
+        "tags": ["Environment", "Climate", "Energy"],
     }
 
     events, unmatched, errors = fetch_events_from_source(source, "baltimore")
