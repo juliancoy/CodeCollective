@@ -59,6 +59,13 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      # One-time source migration: source files own their atomic tags. There is
+      # no runtime splitting or interpretation of compound tag names.
+      - name: Canonicalize source tags
+        if: ${{ github.event_name != 'schedule' }}
+        run: |
+          python scripts/canonicalize_calendar_tags.py
+
       # Regression tests protect code changes, but nightly freshness should not
       # be blocked by a test regression unrelated to the generated feed itself.
       - name: Run calendar regression tests
@@ -69,7 +76,6 @@ jobs:
             tests/test_city_source_taxonomy.py \
             tests/test_scrape_*.py
           node --test tests/calendar_filtering.test.cjs
-          python tests/calendar/validate_source_tag_mappings.py
           python tests/calendar/validate_source_lens_minimums.py
 
       - name: Run genCalendar.py
