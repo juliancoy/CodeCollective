@@ -10,6 +10,8 @@ on:
       - ".github/workflows/update-calendar.yml"
       - "requirements.txt"
       - "genCalendar.py"
+      - "run_calendar.py"
+      - "http_client.py"
       - "genSimpleCalendar.py"
       - "calendar_*.py"
       - "city_source_taxonomy.py"
@@ -43,11 +45,19 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Restore conditional HTTP cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/codecollective-http
+          key: calendar-http-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            calendar-http-${{ runner.os }}-
+
       - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Generate calendar
-        run: python genCalendar.py
+        run: python run_calendar.py
 
       - name: Check for changes
         id: changes
