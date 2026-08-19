@@ -59,6 +59,15 @@ jobs:
       - name: Generate calendar
         run: python run_calendar.py
 
+      - name: Upload scrape telemetry
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: calendar-scrape-telemetry-${{ github.run_id }}
+          path: .cache/codecollective-scrape-telemetry.json
+          if-no-files-found: warn
+          retention-days: 30
+
       - name: Check for changes
         id: changes
         run: |
