@@ -33,6 +33,19 @@ def replace_compound_string_literals(path: Path) -> None:
         print(f"updated {path.relative_to(ROOT)}")
 
 
+def update_pratt_source() -> None:
+    """Pratt is not an Environment source; do not seed Environment-derived tags."""
+    path = ROOT / "baltimore/event_sources.py"
+    text = path.read_text()
+    original = text
+    old = '''        "name": "Enoch Pratt Free Library Events",\n        "url": "https://www.prattlibrary.org/events",\n        "tags": ["Government", "MarylandGov", "Politics", "Community", "Infrastructure", "Purpose"],\n        "excluded_org_tags": ["Environment"],\n'''
+    new = '''        "name": "Enoch Pratt Free Library Events",\n        "url": "https://www.prattlibrary.org/events",\n        "tags": ["Government", "MarylandGov", "Politics", "Community", "Purpose"],\n        "excluded_org_tags": ["Environment"],\n'''
+    text = text.replace(old, new)
+    if text != original:
+        path.write_text(text)
+        print("updated baltimore/event_sources.py (Pratt)")
+
+
 def update_taxonomy() -> None:
     path = ROOT / "city_source_taxonomy.py"
     text = path.read_text()
@@ -61,6 +74,10 @@ def update_tests() -> None:
         '''    def test_compound_source_tags_are_split_before_taxonomy_expansion(self):\n        sources = [{"name": "Crypto meetup", "tags": ["Crypto & Web3", "Tech Community"]}]\n\n        apply_city_source_taxonomy(sources)\n\n        tags = sources[0]["tags"]\n        self.assertIn("Crypto", tags)\n        self.assertIn("Web3", tags)\n        self.assertNotIn("Crypto & Web3", tags)\n        self.assertIn("Finance", tags)\n        self.assertIn("Safety", tags)\n''',
         '''    def test_atomic_source_tags_expand_without_compound_processing(self):\n        sources = [{"name": "Crypto meetup", "tags": ["Crypto", "Web3", "Tech Community"]}]\n\n        apply_city_source_taxonomy(sources)\n\n        tags = sources[0]["tags"]\n        self.assertIn("Crypto", tags)\n        self.assertIn("Web3", tags)\n        self.assertIn("Finance", tags)\n        self.assertIn("Safety", tags)\n''',
     )
+    text = text.replace(
+        '''        self.assertNotIn("Environment", pratt["tags"])\n        self.assertNotIn("Infrastructure", pratt["tags"])\n''',
+        '''        self.assertNotIn("Environment", pratt["tags"])\n        self.assertNotIn("Infrastructure", pratt["tags"])\n        self.assertNotIn("Safety", pratt["tags"])\n        self.assertNotIn("Water", pratt["tags"])\n''',
+    )
     path.write_text(text)
     print("updated tests/test_city_source_taxonomy.py")
 
@@ -69,6 +86,7 @@ def main() -> None:
     for path in ROOT.glob("*/event_sources.py"):
         replace_compound_string_literals(path)
     replace_compound_string_literals(ROOT / "data/category_maps/community_sectors.json")
+    update_pratt_source()
     update_taxonomy()
     update_tests()
 
