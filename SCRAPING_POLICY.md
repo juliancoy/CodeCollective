@@ -18,6 +18,9 @@ Keep event ingestion reliable without getting blocked, banned, or causing undue 
   - Do not disable certificate verification (`verify=False` is disallowed).
 - Robots:
   - Perform robots.txt-aware preflight checks before fetches (enabled in shared client).
+- Conditional requests:
+  - Revalidate cached responses with `ETag` / `If-None-Match` and `Last-Modified` / `If-Modified-Since` when the source supports them.
+  - Reuse cached bodies after `304 Not Modified` responses instead of downloading and reparsing unchanged content.
 
 ## Implementation Rule
 - New or updated scrapers should use shared helpers in `http_client.py`:
@@ -37,6 +40,6 @@ Keep event ingestion reliable without getting blocked, banned, or causing undue 
 - Re-enable only after validating source stability.
 
 ## Professionalization Backlog
-1. Add ETag/Last-Modified conditional request support in the shared client.
-2. Add centralized scrape telemetry dashboards (status code, latency, fail rate).
-3. Add per-domain failure budgets and automatic cooldown windows.
+1. Add centralized scrape telemetry dashboards (status code, latency, fail rate, cache revalidation rate).
+2. Add per-domain failure budgets and automatic cooldown windows.
+3. Continue migrating legacy scraper modules that still call `requests.get(...)` directly to the shared polite HTTP client.
