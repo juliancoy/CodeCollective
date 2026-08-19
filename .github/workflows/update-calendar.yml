@@ -58,6 +58,8 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      # Keep this suite scoped to calendar generation so unrelated project tests
+      # cannot prevent fresh calendar data from being published.
       - name: Run calendar regression tests
         run: |
           python -m pytest \
