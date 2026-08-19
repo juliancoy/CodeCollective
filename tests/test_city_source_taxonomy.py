@@ -5,10 +5,10 @@ from city_source_taxonomy import apply_city_source_taxonomy, normalize_tags
 
 
 class CitySourceTaxonomyTests(unittest.TestCase):
-    def test_normalize_tags_splits_ampersand_labels(self):
+    def test_normalize_tags_does_not_interpret_tag_names(self):
         self.assertEqual(
-            normalize_tags(["Crypto & Web3", "Cloud & Platform", "Crypto"]),
-            ["Crypto", "Web3", "Cloud", "Platform"],
+            normalize_tags(["Crypto", "Web3", "Crypto", " Cloud "]),
+            ["Crypto", "Web3", "Cloud"],
         )
 
     def test_sector_exclusion_removes_sector_and_mapped_source_tags(self):
@@ -38,15 +38,14 @@ class CitySourceTaxonomyTests(unittest.TestCase):
         self.assertIn("Infrastructure", sources[0]["tags"])
         self.assertIn("Environment", sources[0]["tags"])
 
-    def test_compound_source_tags_are_split_before_taxonomy_expansion(self):
-        sources = [{"name": "Crypto meetup", "tags": ["Crypto & Web3", "Tech Community"]}]
+    def test_atomic_source_tags_expand_without_compound_processing(self):
+        sources = [{"name": "Crypto meetup", "tags": ["Crypto", "Web3", "Tech Community"]}]
 
         apply_city_source_taxonomy(sources)
 
         tags = sources[0]["tags"]
         self.assertIn("Crypto", tags)
         self.assertIn("Web3", tags)
-        self.assertNotIn("Crypto & Web3", tags)
         self.assertIn("Finance", tags)
         self.assertIn("Safety", tags)
 
