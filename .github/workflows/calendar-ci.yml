@@ -5,6 +5,8 @@ on:
     paths:
       - "requirements.txt"
       - "genCalendar.py"
+      - "run_calendar.py"
+      - "http_client.py"
       - "genSimpleCalendar.py"
       - "calendar_*.py"
       - "city_source_taxonomy.py"
@@ -27,6 +29,8 @@ on:
       - ".github/workflows/calendar-ci.yml"
       - "requirements.txt"
       - "genCalendar.py"
+      - "run_calendar.py"
+      - "http_client.py"
       - "genSimpleCalendar.py"
       - "calendar_*.py"
       - "city_source_taxonomy.py"
@@ -78,3 +82,13 @@ jobs:
       - name: Check source lens minimums
         continue-on-error: true
         run: python tests/calendar/validate_source_lens_minimums.py
+
+      - name: Report direct requests usage in scraper code
+        continue-on-error: true
+        run: |
+          matches=$(grep -RIn --include='scrape*.py' --include='scrape_*.py' 'requests\.get(' . \
+            --exclude-dir=.git --exclude-dir=node_modules || true)
+          if [ -n "$matches" ]; then
+            echo "::warning::Some legacy scrapers still call requests.get() directly; migrate them to http_client.polite_get() when touched."
+            echo "$matches"
+          fi
