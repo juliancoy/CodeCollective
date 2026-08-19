@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Run calendar generation with one globally bounded source-scrape pool.
+"""Run calendar generation with bounded, polite source fetching.
 
-`genCalendar.py` owns parsing and output behavior. This runner only replaces its
-source scheduler so total concurrent source fetches are bounded while retaining
-per-source-kind limits.
+`genCalendar.py` owns parsing and output behavior. This runner adds operational
+controls around it: one global source-fetch pool, per-source-kind limits, and a
+compatibility shim that routes legacy ``requests.get`` calls through the shared
+polite HTTP client during calendar generation.
 """
 
 from __future__ import annotations
@@ -12,10 +13,39 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+import requests
+
 import genCalendar
+import http_client
 
 
 DEFAULT_MAX_WORKERS = 6
+_ORIGINAL_REQUESTS_GET = requests.get
+_LEGACY_SESSION = http_client.build_session()
+
+
+def install_legacy_polite_requests() -> None:
+    """Route legacy module-level requests.get calls through polite_get.
+
+    New scraper code should call http_client.polite_get directly. This shim
+    keeps older scraper modules subject to the same host pacing, retries,
+    robots checks, and conditional cache until they are migrated individually.
+    """
+
+    def polite_requests_get(url, **kwargs):
+        timeout = kwargs.pop("timeout", http_client.DEFAULT_TIMEOUT)
+        return http_client.polite_get(
+            _LEGACY_SESSION,
+            url,
+            timeout=timeout,
+            **kwargs,
+        )
+
+    requests.get = polite_requests_get
+
+
+def restore_requests_get() -> None:
+    requests.get = _ORIGINAL_REQUESTS_GET
 
 
 def bounded_fetch_all_sources(sources, city, max_workers=DEFAULT_MAX_WORKERS):
@@ -24,6 +54,7 @@ def bounded_fetch_all_sources(sources, city, max_workers=DEFAULT_MAX_WORKERS):
 
     worker_count = max(1, min(int(max_workers or DEFAULT_MAX_WORKERS), len(sources)))
     kind_semaphores: dict[str, threading.Semaphore] = {}
+    semaphore_lock = threading.Lock()
 
     def source_kind(source):
         return (
@@ -32,8 +63,7 @@ def bounded_fetch_all_sources(sources, city, max_workers=DEFAULT_MAX_WORKERS):
             or "unknown"
         )
 
-    def run_one(index, source):
-        kind = source_kind(source)
+    def kind_semaphore(kind):
         limit = max(
             1,
             int(
@@ -43,8 +73,12 @@ def bounded_fetch_all_sources(sources, city, max_workers=DEFAULT_MAX_WORKERS):
                 )
             ),
         )
-        semaphore = kind_semaphores.setdefault(kind, threading.Semaphore(limit))
-        with semaphore:
+        with semaphore_lock:
+            return kind_semaphores.setdefault(kind, threading.Semaphore(limit))
+
+    def run_one(index, source):
+        kind = source_kind(source)
+        with kind_semaphore(kind):
             events, unmatched, errors = genCalendar.fetch_events_from_source(source, city)
         return index, events, unmatched, errors
 
@@ -71,14 +105,18 @@ def bounded_fetch_all_sources(sources, city, max_workers=DEFAULT_MAX_WORKERS):
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     genCalendar.fetch_all_sources = bounded_fetch_all_sources
+    install_legacy_polite_requests()
 
-    cities = [genCalendar.MULTICITY_BUCKET, *genCalendar.CALENDAR_CITIES]
-    if argv:
-        cities = argv
+    try:
+        cities = [genCalendar.MULTICITY_BUCKET, *genCalendar.CALENDAR_CITIES]
+        if argv:
+            cities = argv
 
-    for city in cities:
-        genCalendar.main(city)
-    genCalendar.write_root_aggregate(cities)
+        for city in cities:
+            genCalendar.main(city)
+        genCalendar.write_root_aggregate(cities)
+    finally:
+        restore_requests_get()
 
 
 if __name__ == "__main__":
