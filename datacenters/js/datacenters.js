@@ -1542,6 +1542,7 @@
   const DEFAULT_UI_STATE = {
     theme: 'collective',
     baseLayer: 'street-map',
+    powerPlantScope: 'MD',
     layers: ['datacenters', 'power-plants', 'neon-streets', 'data-center-moratoriums'],
     layerOrder: [
       'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
@@ -3378,6 +3379,7 @@
   function applyExpandedQueryState(state, parameters) {
     if (parameters.has('theme')) state.theme = parameters.get('theme');
     if (parameters.has('base')) state.baseLayer = parameters.get('base');
+    if (parameters.has('powerScope')) state.powerPlantScope = parameters.get('powerScope');
     if (parameters.has('layers')) state.layers = parameters.get('layers').split(',').filter(Boolean);
     if (parameters.has('order')) state.layerOrder = parameters.get('order').split(',').filter(Boolean);
     if (parameters.has('hover')) state.hover = parameters.get('hover').split(',').filter(Boolean);
@@ -3494,6 +3496,8 @@
 
   function applyUiState(state, themeSelect) {
     if (state.theme && BASEMAP_STYLES[state.theme]) themeSelect.value = state.theme;
+    powerPlantScope = state.powerPlantScope === 'US' ? 'US' : 'MD';
+    document.getElementById('power-plant-scope').value = powerPlantScope;
     if (Array.isArray(state.layers)) {
       document.querySelectorAll('input[id^="show-"]:not(.dc-base-layer-toggle):not(#show-map-title)').forEach((input) => {
         input.checked = state.layers.includes(input.id.slice(5));
@@ -3620,6 +3624,7 @@
     return {
       theme: document.getElementById('map-theme').value,
       baseLayer: selectedBaseLayer ? selectedBaseLayer.id.slice(5) : 'none',
+      powerPlantScope,
       layers: checkedIds('show-'),
       layerOrder: normalizeLayerOrder(layerOrder),
       hover: checkedIds('hover-'),
@@ -3646,6 +3651,7 @@
   function writeExpandedUiStateToUrl(url, state) {
     url.searchParams.set('theme', state.theme);
     url.searchParams.set('base', state.baseLayer);
+    url.searchParams.set('powerScope', state.powerPlantScope);
     url.searchParams.set('layers', state.layers.join(','));
     url.searchParams.set('order', state.layerOrder.join(','));
     url.searchParams.set('hover', state.hover.join(','));
@@ -3791,7 +3797,6 @@
   }
 
   function persistUiState(map = activeLayerContext?.map || null) {
-    if (powerPlantScope !== 'MD') return;
     const state = currentUiState(map);
     try {
       localStorage.setItem(UI_STATE_STORAGE_KEY, JSON.stringify(state));
@@ -4583,14 +4588,17 @@
       persistUiState();
     });
     setupLayerFilterUi(map, allRecords, markerById);
-    document.getElementById('power-plant-scope').addEventListener('change', async (event) => {
-      const select = event.target;
+    const powerPlantScopeSelect = document.getElementById('power-plant-scope');
+    const applyPowerPlantScope = async (requestedScope, { recenter = false, save = false } = {}) => {
+      const select = powerPlantScopeSelect;
       const status = document.getElementById('power-plant-scope-status');
       const nationwideConfig = REMOTE_LAYERS.find((config) => config.id === 'nationwide-eia-power-plants');
       const nationwideState = remoteLayerStates.get(nationwideConfig.id);
+      const scope = requestedScope === 'US' ? 'US' : 'MD';
+      select.value = scope;
       select.disabled = true;
       try {
-        if (select.value === 'US') {
+        if (scope === 'US') {
           status.textContent = 'Loading nationwide final 2024 EIA inventory…';
           nationwidePowerPlantsPromise ||= fetch(NATIONWIDE_POWER_PLANTS_URL, { cache: 'no-store' })
             .then((response) => {
@@ -4610,18 +4618,19 @@
           addRemoteLayer(map, nationwideConfig, nationwide);
           rehydrateRemoteLayerAfterStyleSettles(map, nationwideConfig);
           document.getElementById('power-plant-layer-count').textContent = number(nationwide.metadata.record_count);
-          status.textContent = `${number(nationwide.metadata.record_count)} nationwide plants · final EIA 2024 · Maryland remains the default after reload`;
-          map.easeTo({ center: [-98.5, 38.5], zoom: 3.1, duration: 850 });
+          status.textContent = `${number(nationwide.metadata.record_count)} nationwide plants · final EIA 2024`;
+          if (recenter) map.easeTo({ center: [-98.5, 38.5], zoom: 3.1, duration: 850 });
         } else {
           powerPlantScope = 'MD';
           nationwideState.enabled = false;
           hideRemoteLayer(map, nationwideConfig);
           document.getElementById('power-plant-layer-count').textContent = number(powerPlants.length);
           status.textContent = `${number(powerPlants.length)} Maryland plants · final EIA 2024`;
-          map.easeTo({ center: [-76.75, 39.05], zoom: 7.25, duration: 650 });
+          if (recenter) map.easeTo({ center: [-76.75, 39.05], zoom: 7.25, duration: 650 });
         }
         closePinnedInspector();
         renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
       } catch (error) {
         nationwidePowerPlantsPromise = null;
         select.value = 'MD';
@@ -4631,10 +4640,15 @@
         document.getElementById('power-plant-layer-count').textContent = number(powerPlants.length);
         status.textContent = `Nationwide inventory unavailable · ${error.message}`;
         renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
       } finally {
         select.disabled = false;
       }
+    };
+    powerPlantScopeSelect.addEventListener('change', async (event) => {
+      await applyPowerPlantScope(event.target.value, { recenter: true, save: true });
     });
+    await applyPowerPlantScope(powerPlantScope);
     setupLayerColorUi();
     setupTagFilterUi();
     setupUiStatePersistence(map);
