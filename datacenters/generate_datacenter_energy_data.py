@@ -9,12 +9,17 @@ and pass their plant, generator, and generation/fuel workbooks to this script.
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 from collections import Counter
 from decimal import Decimal
+import re
 from pathlib import Path
 
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:  # pragma: no cover - required only for full EIA regeneration
+    pd = None
 
 
 MARYLAND_ALL_SECTOR_PRICE_CENTS_PER_KWH_2024 = 15.04
@@ -22,9 +27,303 @@ MARYLAND_ALL_SECTOR_PRICE_SOURCE_ID = "eia-retail-sales-md-all-sectors-2024"
 HOURS_IN_2024 = 8784
 DEFAULT_RESEARCH_OVERRIDES = Path(__file__).with_name("data") / "research-overrides.json"
 
+STATE_NAMES = {
+    "AL": "Alabama",
+    "AK": "Alaska",
+    "AZ": "Arizona",
+    "AR": "Arkansas",
+    "CA": "California",
+    "CO": "Colorado",
+    "CT": "Connecticut",
+    "DE": "Delaware",
+    "DC": "District of Columbia",
+    "FL": "Florida",
+    "GA": "Georgia",
+    "HI": "Hawaii",
+    "ID": "Idaho",
+    "IL": "Illinois",
+    "IN": "Indiana",
+    "IA": "Iowa",
+    "KS": "Kansas",
+    "KY": "Kentucky",
+    "LA": "Louisiana",
+    "ME": "Maine",
+    "MD": "Maryland",
+    "MA": "Massachusetts",
+    "MI": "Michigan",
+    "MN": "Minnesota",
+    "MS": "Mississippi",
+    "MO": "Missouri",
+    "MT": "Montana",
+    "NE": "Nebraska",
+    "NV": "Nevada",
+    "NH": "New Hampshire",
+    "NJ": "New Jersey",
+    "NM": "New Mexico",
+    "NY": "New York",
+    "NC": "North Carolina",
+    "ND": "North Dakota",
+    "OH": "Ohio",
+    "OK": "Oklahoma",
+    "OR": "Oregon",
+    "PA": "Pennsylvania",
+    "RI": "Rhode Island",
+    "SC": "South Carolina",
+    "SD": "South Dakota",
+    "TN": "Tennessee",
+    "TX": "Texas",
+    "UT": "Utah",
+    "VT": "Vermont",
+    "VA": "Virginia",
+    "WA": "Washington",
+    "WV": "West Virginia",
+    "WI": "Wisconsin",
+    "WY": "Wyoming",
+}
+
+STATE_FIPS = {
+    "AL": "01",
+    "AK": "02",
+    "AZ": "04",
+    "AR": "05",
+    "CA": "06",
+    "CO": "08",
+    "CT": "09",
+    "DE": "10",
+    "DC": "11",
+    "FL": "12",
+    "GA": "13",
+    "HI": "15",
+    "ID": "16",
+    "IL": "17",
+    "IN": "18",
+    "IA": "19",
+    "KS": "20",
+    "KY": "21",
+    "LA": "22",
+    "ME": "23",
+    "MD": "24",
+    "MA": "25",
+    "MI": "26",
+    "MN": "27",
+    "MS": "28",
+    "MO": "29",
+    "MT": "30",
+    "NE": "31",
+    "NV": "32",
+    "NH": "33",
+    "NJ": "34",
+    "NM": "35",
+    "NY": "36",
+    "NC": "37",
+    "ND": "38",
+    "OH": "39",
+    "OK": "40",
+    "OR": "41",
+    "PA": "42",
+    "RI": "44",
+    "SC": "45",
+    "SD": "46",
+    "TN": "47",
+    "TX": "48",
+    "UT": "49",
+    "VT": "50",
+    "VA": "51",
+    "WA": "53",
+    "WV": "54",
+    "WI": "55",
+    "WY": "56",
+}
+
+MARYLAND_COUNTY_FIPS = {
+    "allegany": "001",
+    "anne arundel": "003",
+    "baltimore": "005",
+    "calvert": "009",
+    "caroline": "011",
+    "carroll": "013",
+    "cecil": "015",
+    "charles": "017",
+    "dorchester": "019",
+    "frederick": "021",
+    "garrett": "023",
+    "harford": "025",
+    "howard": "027",
+    "kent": "029",
+    "montgomery": "031",
+    "prince george's": "033",
+    "prince georges": "033",
+    "prince george s": "033",
+    "queen anne's": "035",
+    "queen annes": "035",
+    "queen anne s": "035",
+    "somerset": "037",
+    "st. mary's": "039",
+    "saint mary's": "039",
+    "st marys": "039",
+    "st mary s": "039",
+    "talbot": "041",
+    "washington": "043",
+    "wicomico": "045",
+    "worcester": "047",
+    "baltimore city": "510",
+    "city of baltimore": "510",
+}
+
+PJM_STATES = {
+    "DC", "DE", "IL", "IN", "KY", "MD", "MI", "NJ", "NC", "OH", "PA", "TN", "VA", "WV",
+}
+
+
+def normalize_text(value):
+    return re.sub(r"[^a-z0-9]+", " ", str(value).lower()).strip()
+
+
+def unique_values(values):
+    return list(dict.fromkeys(value for value in values if value not in (None, "")))
+
+
+def facility_location_key(record):
+    address = normalize_text(record.get("street_address") or "")
+    city = normalize_text(record.get("city") or "")
+    state = normalize_text(record.get("state") or "")
+    postal_code = normalize_text(record.get("postal_code") or "")
+    if address or city or state or postal_code:
+        return "|".join([address, city, state, postal_code])
+    latitude = record.get("latitude")
+    longitude = record.get("longitude")
+    if isinstance(latitude, (int, float)) and isinstance(longitude, (int, float)):
+        return f"{latitude:.5f}|{longitude:.5f}"
+    return record["id"]
+
+
+def record_specificity_score(record):
+    populated = 0
+    for value in record.values():
+        if value not in (None, "", [], {}, ()):
+            populated += 1
+    source_bonus = len(record.get("source_ids") or []) + len(record.get("profile_source_ids") or []) + len(record.get("status_source_ids") or [])
+    return populated * 2 + source_bonus
+
+
+def merge_record_metadata(base, record, list_fields):
+    already_merged = record["id"] in (base.get("facility_alias_ids") or [])
+    for field in list_fields:
+        base[field] = unique_values((base.get(field) or []) + (record.get(field) or []))
+    if already_merged:
+        return base
+    note_fragments = [base.get("notes"), record.get("notes")]
+    alias_note = f"Merged physical facility alias: {record['id']} ({record.get('name')})."
+    note_fragments.append(alias_note)
+    base["notes"] = " ".join(fragment for fragment in note_fragments if fragment)
+    for field in ("operator", "owner"):
+        values = unique_values([base.get(field), record.get(field)])
+        if values:
+            base[field] = " / ".join(values)
+    if record.get("name") and record.get("name") != base.get("name"):
+        base["location_tags"] = unique_values((base.get("location_tags") or []) + [record.get("name")])
+    base["facility_alias_ids"] = unique_values(
+        (base.get("facility_alias_ids") or [])
+        + (record.get("facility_alias_ids") or [])
+        + [record["id"]]
+    )
+    return base
+
+
+def dedupe_physical_facilities(records):
+    data_centers = [record for record in records if record.get("record_type") == "data_center"]
+    other_records = [record for record in records if record.get("record_type") != "data_center"]
+    grouped = {}
+    for record in data_centers:
+        grouped.setdefault(facility_location_key(record), []).append(record)
+    merged = []
+    merge_list_fields = (
+        "year_built_source_ids",
+        "status_source_ids",
+        "profile_source_ids",
+        "sentiment_source_ids",
+        "contestation_source_ids",
+        "salient_news_source_ids",
+        "funding_source_ids",
+        "operational_finance_source_ids",
+        "estimated_power_draw_source_ids",
+        "power_scale_source_ids",
+        "source_ids",
+        "technology_tags",
+        "status_tags",
+        "not_disclosed_fields",
+        "location_tags",
+        "facility_alias_ids",
+    )
+    for group in grouped.values():
+        group = sorted(group, key=lambda record: (record_specificity_score(record), record["id"]))
+        canonical = copy.deepcopy(group[-1])
+        canonical["facility_alias_ids"] = unique_values(canonical.get("facility_alias_ids") or [])
+        aliases = group[:-1]
+        new_aliases = [
+            alias for alias in aliases
+            if alias["id"] not in canonical["facility_alias_ids"]
+        ]
+        for alias in aliases:
+            canonical = merge_record_metadata(canonical, alias, merge_list_fields)
+        canonical["location_tags"] = unique_values(canonical.get("location_tags") or [])
+        if new_aliases:
+            canonical["notes"] = " ".join(
+                fragment
+                for fragment in [
+                    canonical.get("notes"),
+                    "Collapsed duplicate tenant/provider listings into one physical facility record.",
+                    "Aliases: " + ", ".join(alias["id"] for alias in aliases),
+                ]
+                if fragment
+            )
+        merged.append(canonical)
+    return merged + other_records
+
+
+def location_metadata(record):
+    state = str(record.get("state") or "").upper()
+    county = str(record.get("county") or "").strip()
+    county_key = normalize_text(county)
+    state_name = STATE_NAMES.get(state)
+    state_fips = STATE_FIPS.get(state)
+    county_fips = MARYLAND_COUNTY_FIPS.get(county_key) if state == "MD" else None
+    census_county = f"{state_fips}{county_fips}" if state_fips and county_fips else None
+    iso_region = "PJM" if state in PJM_STATES else None
+    location_tags = []
+    if state_name:
+        location_tags.append(state_name)
+    elif state:
+        location_tags.append(state)
+    if county:
+        location_tags.append(f"{county} County" if "city" not in county.lower() else county)
+    if record.get("city"):
+        location_tags.append(str(record["city"]))
+    if state_fips:
+        location_tags.append(f"Census state {state_fips}")
+    if census_county:
+        location_tags.append(f"Census county {census_county}")
+    if iso_region:
+        location_tags.append(f"ISO {iso_region}")
+    return {
+        "census_state_fips": state_fips,
+        "census_county_fips": census_county,
+        "census_place_fips": None,
+        "iso_region": iso_region,
+        "iso_zone": None,
+        "location_tags": unique_values(location_tags),
+    }
+
+
+def apply_location_metadata(record):
+    record.update(location_metadata(record))
+    return record
+
 
 def clean_number(value, digits=3):
-    if pd.isna(value):
+    if value is None:
+        return None
+    if pd is not None and pd.isna(value):
         return None
     return round(float(value), digits)
 
@@ -63,6 +362,7 @@ GENERATOR_STATUS_LABELS = {
 def curated_data_center(**values):
     record = {
         "id": None,
+        "facility_alias_ids": [],
         "record_type": "data_center",
         "technology_tags": ["Colocation", "Carrier connectivity", "Diesel backup generation"],
         "name": None,
@@ -88,6 +388,12 @@ def curated_data_center(**values):
         "county": None,
         "state": "MD",
         "postal_code": None,
+        "census_state_fips": None,
+        "census_county_fips": None,
+        "census_place_fips": None,
+        "iso_region": None,
+        "iso_zone": None,
+        "location_tags": [],
         "latitude": None,
         "longitude": None,
         "coordinate_method": "Esri World Geocoding Service point-address match",
@@ -1547,20 +1853,37 @@ def load_data_centers(output):
         if record.get("record_type") == "data_center"
     ]
     additions_by_id = {record["id"]: record for record in CURATED_DATA_CENTER_ADDITIONS}
-    merged = [additions_by_id.get(record["id"], record) for record in records]
+    merged = []
+    for record in records:
+        replacement = copy.deepcopy(additions_by_id.get(record["id"], record))
+        replacement["facility_alias_ids"] = unique_values(
+            (record.get("facility_alias_ids") or [])
+            + (replacement.get("facility_alias_ids") or [])
+        )
+        if replacement["facility_alias_ids"]:
+            replacement["notes"] = record.get("notes") or replacement.get("notes")
+            replacement["operator"] = record.get("operator") or replacement.get("operator")
+            replacement["owner"] = record.get("owner") or replacement.get("owner")
+            for field, value in record.items():
+                if isinstance(value, list) and all(not isinstance(item, (dict, list)) for item in value):
+                    replacement[field] = unique_values(value + (replacement.get(field) or []))
+        merged.append(replacement)
     existing_ids = {record["id"] for record in records}
     merged.extend(record for record in CURATED_DATA_CENTER_ADDITIONS if record["id"] not in existing_ids)
+    deduped = dedupe_physical_facilities(merged)
     return [
-        classify_data_center_power(
-            apply_projected_power_demand(
-                apply_operational_finance(
-                    apply_estimated_power_draw(
-                        apply_funding_profile(apply_contestation_profile(apply_record_update(record)))
+        apply_location_metadata(
+            classify_data_center_power(
+                apply_projected_power_demand(
+                    apply_operational_finance(
+                        apply_estimated_power_draw(
+                            apply_funding_profile(apply_contestation_profile(apply_record_update(record)))
+                        )
                     )
                 )
             )
         )
-        for record in merged
+        for record in deduped
     ]
 
 
@@ -1570,7 +1893,7 @@ def main() -> None:
     parser.add_argument("--generator-workbook", type=Path)
     parser.add_argument("--generation-workbook", type=Path)
     parser.add_argument("--year", type=int)
-    parser.add_argument("--state", default="MD")
+    parser.add_argument("--state", default="ALL", help="two-letter state code or ALL for nationwide EIA plants")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument(
         "--research-overrides",
@@ -1579,17 +1902,21 @@ def main() -> None:
     )
     parser.add_argument("--curated-only", action="store_true", help="refresh curated data-center fields without EIA workbooks")
     args = parser.parse_args()
+    args.state = str(args.state).upper()
 
     if args.curated_only:
         existing = json.loads(args.output.read_text())
         plants = [
-            enrich_power_plant_planning_output(record)
+            apply_location_metadata(enrich_power_plant_planning_output(record))
             for record in existing
             if record.get("record_type") == "power_plant"
         ]
         refreshed = apply_research_overrides(load_data_centers(args.output) + plants, args.research_overrides)
         args.output.write_text(json.dumps(refreshed, indent=2) + "\n")
         return
+
+    if pd is None:
+        raise SystemExit("pandas is required for EIA workbook regeneration; use --curated-only to refresh the curated records")
 
     if not all((args.plant_workbook, args.generator_workbook, args.generation_workbook, args.year)):
         parser.error("EIA workbook paths and --year are required unless --curated-only is used")
@@ -1602,9 +1929,10 @@ def main() -> None:
         header=5,
     )
 
-    plants = plants[plants["State"] == args.state].copy()
-    generators = generators[generators["State"] == args.state].copy()
-    generation = generation[generation["Plant State"] == args.state].copy()
+    if args.state != "ALL":
+        plants = plants[plants["State"] == args.state].copy()
+        generators = generators[generators["State"] == args.state].copy()
+        generation = generation[generation["Plant State"] == args.state].copy()
 
     generator_summary = {}
     for plant_code, rows in generators.groupby("Plant Code"):
@@ -1651,12 +1979,13 @@ def main() -> None:
     records = []
     for _, plant in plants.sort_values(["County", "Plant Name"]).iterrows():
         plant_code = int(plant["Plant Code"])
+        plant_state = str(plant["State"]).strip().upper()
         generator = generator_summary.get(plant_code, {})
         produced = generation_summary.get(plant_code, {})
         if not generator:
             continue
         records.append(
-            enrich_power_plant_planning_output({
+            apply_location_metadata(enrich_power_plant_planning_output({
                 "id": f"eia-{plant_code}",
                 "record_type": "power_plant",
                 "eia_plant_code": plant_code,
@@ -1665,7 +1994,7 @@ def main() -> None:
                 "street_address": None if pd.isna(plant["Street Address"]) else str(plant["Street Address"]).strip(),
                 "city": None if pd.isna(plant["City"]) else str(plant["City"]).strip(),
                 "county": None if pd.isna(plant["County"]) else str(plant["County"]).strip(),
-                "state": args.state,
+                "state": plant_state,
                 "postal_code": None if pd.isna(plant["Zip"]) else str(plant["Zip"]).strip(),
                 "latitude": clean_number(plant["Latitude"], 6),
                 "longitude": clean_number(plant["Longitude"], 6),
@@ -1693,7 +2022,7 @@ def main() -> None:
                 "status_source_ids": [f"eia-860-{args.year}-final"],
                 "capacity_source_id": f"eia-860-{args.year}-final",
                 "generation_source_id": f"eia-923-{args.year}-final",
-            })
+            }))
         )
 
     add_coordinate_confidence(records)

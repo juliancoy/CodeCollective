@@ -570,11 +570,15 @@ def find_targets(
     records: list[dict[str, Any]],
     record_types: set[str],
     ids: set[str],
+    states: set[str] | None = None,
     facet_overrides: dict[str, dict[str, Any]] | None = None,
 ) -> list[Target]:
     targets: list[Target] = []
+    states = states or set()
     for record in records:
         if record_types and record.get("record_type") not in record_types:
+            continue
+        if states and str(record.get("state") or "").upper() not in states:
             continue
         if ids and record.get("id") not in ids:
             continue
@@ -625,6 +629,12 @@ def target_context(record: dict[str, Any], facets: tuple[str, ...]) -> dict[str,
         "status",
         "source_ids",
         "status_source_ids",
+        "census_state_fips",
+        "census_county_fips",
+        "census_place_fips",
+        "iso_region",
+        "iso_zone",
+        "location_tags",
     )
     context = {field: record.get(field) for field in fields if record.get(field) is not None}
     context["unresolved_facets"] = {field: record.get(field) for field in facets}
@@ -1264,6 +1274,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default=os.getenv("MOONSHOT_BASE_URL", DEFAULT_BASE_URL))
     parser.add_argument("--formula-uri", default=DEFAULT_FORMULA)
     parser.add_argument("--record-type", action="append", choices=("power_plant", "data_center"), default=[])
+    parser.add_argument(
+        "--state",
+        action="append",
+        type=str.upper,
+        default=[],
+        help="restrict research to these state abbreviations; repeatable",
+    )
     parser.add_argument("--id", action="append", default=[], help="research only this facility ID; repeatable")
     parser.add_argument("--limit", type=int, help="maximum number of pending facilities")
     parser.add_argument("--workers", type=int, default=3)
@@ -1392,6 +1409,7 @@ def main() -> int:
         records,
         set(args.record_type),
         set(args.id),
+        states=set(args.state),
         facet_overrides=facet_overrides,
     )
     completed = (

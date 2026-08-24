@@ -44,6 +44,14 @@ def test_find_targets_honors_type_and_id_filters():
     assert [target.record["id"] for target in targets] == ["dc-1"]
 
 
+def test_find_targets_honors_state_filters():
+    records = [record(id="md-1", state="MD"), record(id="va-1", state="VA")]
+
+    targets = research.find_targets(records, set(), set(), states={"VA"})
+
+    assert [target.record["id"] for target in targets] == ["va-1"]
+
+
 def test_find_targets_uses_repair_queue_facet_overrides():
     repair = {
         "eia-123": {
