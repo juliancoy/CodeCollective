@@ -1613,6 +1613,7 @@
         outlineWidth: 1.5,
         outlineScale: 1.04,
         renderMaterial: 'standard',
+        adaptiveLod: true,
       },
       neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 },
       enviroscreen: { text: '', scoreBand: 'all', community: 'all', brightness: 1 },
@@ -2244,6 +2245,7 @@
       uniform float u_fillMinY;
       uniform float u_fillMaxY;
       uniform float u_outlineWidth;
+      uniform mediump float u_lodMode;
       uniform mediump float u_glowPass;
       uniform mediump float u_outlineOnly;
       varying vec3 v_accentColor;
@@ -2273,11 +2275,12 @@
 
       void main() {
         vec4 clip = u_matrix * vec4(a_anchor, 0.0, 1.0);
-        float pulse = 1.0 + (sin((u_time * 2.1) + (a_phase * 1.7)) * 0.04);
-        float rotation = (u_time * 1.15) + a_phase;
+        float animated = 1.0 - step(0.5, u_lodMode);
+        float pulse = 1.0 + (sin((u_time * 2.1) + (a_phase * 1.7)) * 0.04 * animated);
+        float rotation = ((u_time * 1.15) + a_phase) * animated;
         float cosAngle = cos(rotation);
         float sinAngle = sin(rotation);
-        float tilt = -0.18;
+        float tilt = -0.18 * animated;
         vec3 rotated = rotateBolt(a_position, cosAngle, sinAngle);
         vec3 rotatedNormal = normalize(rotateBolt(a_normal, cosAngle, sinAngle));
         vec2 modelScreen = projectBolt(rotated, tilt);
@@ -2432,6 +2435,8 @@
       ext: null,
       program: null,
       instanceBuffer: null,
+      lodPositionBuffer: null,
+      lodVertexCount: 0,
       positionBuffer: null,
       normalBuffer: null,
       indexBuffer: null,
@@ -2447,6 +2452,7 @@
       renderCount: 0,
       lastGlError: null,
       antialiasSamples: 0,
+      lastLod: 'full',
       fillMinY: 0,
       fillMaxY: 1,
       attribs: {},
@@ -2496,6 +2502,7 @@
           fillMinY: gl.getUniformLocation(state.program, 'u_fillMinY'),
           fillMaxY: gl.getUniformLocation(state.program, 'u_fillMaxY'),
           outlineWidth: gl.getUniformLocation(state.program, 'u_outlineWidth'),
+          lodMode: gl.getUniformLocation(state.program, 'u_lodMode'),
           glowPass: gl.getUniformLocation(state.program, 'u_glowPass'),
           outlineOnly: gl.getUniformLocation(state.program, 'u_outlineOnly'),
           materialMode: gl.getUniformLocation(state.program, 'u_materialMode'),
@@ -2503,6 +2510,16 @@
         };
         state.antialiasSamples = gl.getParameter(gl.SAMPLES);
         state.instanceBuffer = gl.createBuffer();
+        const lodPositions = new Float32Array([
+          -.16, .5, 0, .32, .5, 0, -.02, .02, 0,
+          -.16, .5, 0, -.02, .02, 0, -.38, .02, 0,
+          -.02, .08, 0, .32, .08, 0, -.28, -.55, 0,
+          -.02, .08, 0, -.28, -.55, 0, -.14, -.08, 0,
+        ]);
+        state.lodPositionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, state.lodPositionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, lodPositions, gl.STATIC_DRAW);
+        state.lodVertexCount = lodPositions.length / 3;
         state.dirty = true;
         loadLightningBoltMesh().then((mesh) => {
           if (state.removed) return;
@@ -2543,6 +2560,12 @@
       render(gl, options) {
         if (!state.ready || !state.entries.length) return;
         const boltOutlineWidth = normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth);
+        const adaptiveLod = layerFilters.powerPlants.adaptiveLod !== false;
+        const zoom = map.getZoom();
+        const lod = !adaptiveLod || zoom >= 8 ? 'full' : zoom >= 5 ? 'regional' : 'national';
+        const simpleGeometry = lod === 'national';
+        const lodScale = lod === 'national' ? .14 : lod === 'regional' ? .45 : 1;
+        state.lastLod = lod;
         if (state.dirty) {
           const payload = new Float32Array(state.entries.length * 12);
           state.entries.forEach((entry, index) => {
@@ -2579,14 +2602,19 @@
         };
 
         gl.useProgram(state.program);
-        gl.bindBuffer(gl.ARRAY_BUFFER, state.positionBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, simpleGeometry ? state.lodPositionBuffer : state.positionBuffer);
         gl.enableVertexAttribArray(state.attribs.position);
         gl.vertexAttribPointer(state.attribs.position, 3, gl.FLOAT, false, 0, 0);
         divisor(state.attribs.position, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, state.normalBuffer);
-        gl.enableVertexAttribArray(state.attribs.normal);
-        gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
-        divisor(state.attribs.normal, 0);
+        if (simpleGeometry) {
+          gl.disableVertexAttribArray(state.attribs.normal);
+          gl.vertexAttrib3f(state.attribs.normal, 0, 0, 1);
+        } else {
+          gl.bindBuffer(gl.ARRAY_BUFFER, state.normalBuffer);
+          gl.enableVertexAttribArray(state.attribs.normal);
+          gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
+          divisor(state.attribs.normal, 0);
+        }
 
         gl.bindBuffer(gl.ARRAY_BUFFER, state.instanceBuffer);
         const stride = 12 * 4;
@@ -2615,9 +2643,10 @@
         gl.uniformMatrix4fv(state.uniforms.matrix, false, options.defaultProjectionData.mainMatrix);
         gl.uniform2f(state.uniforms.viewportSize, map.getCanvas().clientWidth, map.getCanvas().clientHeight);
         gl.uniform1f(state.uniforms.time, performance.now() * 0.001);
-        gl.uniform1f(state.uniforms.fillMinY, state.fillMinY);
-        gl.uniform1f(state.uniforms.fillMaxY, state.fillMaxY);
+        gl.uniform1f(state.uniforms.fillMinY, simpleGeometry ? -.55 : state.fillMinY);
+        gl.uniform1f(state.uniforms.fillMaxY, simpleGeometry ? .5 : state.fillMaxY);
         gl.uniform1f(state.uniforms.outlineWidth, boltOutlineWidth);
+        gl.uniform1f(state.uniforms.lodMode, lod === 'full' ? 0 : 1);
         gl.uniform1f(state.uniforms.materialMode, powerPlantRenderMaterialMode(layerFilters.powerPlants.renderMaterial));
         gl.uniform1f(state.uniforms.globalAlpha, layerCustomColorAlpha('power-plants'));
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
@@ -2632,16 +2661,22 @@
         gl.disable(gl.DEPTH_TEST);
         gl.depthMask(false);
         if (state.antialiasSamples > 1) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-        gl.enable(gl.CULL_FACE);
-        gl.cullFace(gl.BACK);
-        gl.frontFace(gl.CCW);
+        if (simpleGeometry) {
+          gl.disable(gl.CULL_FACE);
+        } else {
+          gl.enable(gl.CULL_FACE);
+          gl.cullFace(gl.BACK);
+          gl.frontFace(gl.CCW);
+        }
 
-        gl.uniform1f(state.uniforms.glowPass, 1.0);
-        gl.uniform1f(state.uniforms.outlineOnly, 0.0);
-        gl.uniform1f(state.uniforms.scale, 1.16);
-        drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
+        if (lod !== 'national') {
+          gl.uniform1f(state.uniforms.glowPass, 1.0);
+          gl.uniform1f(state.uniforms.outlineOnly, 0.0);
+          gl.uniform1f(state.uniforms.scale, 1.16 * lodScale);
+          drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
+        }
 
-        if (state.silhouetteVertexCount > 0) {
+        if (lod === 'full' && state.silhouetteVertexCount > 0) {
           gl.disableVertexAttribArray(state.attribs.position);
           gl.vertexAttrib3f(state.attribs.position, 0, 0, 0);
           gl.disableVertexAttribArray(state.attribs.normal);
@@ -2674,18 +2709,20 @@
 
         gl.uniform1f(state.uniforms.glowPass, 0.0);
         gl.uniform1f(state.uniforms.outlineOnly, 0.0);
-        gl.uniform1f(state.uniforms.scale, 1.0);
-        drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
+        gl.uniform1f(state.uniforms.scale, lodScale);
+        if (simpleGeometry) drawArraysInstanced(gl.TRIANGLES, 0, state.lodVertexCount, state.entries.length);
+        else drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
 
         if (!alphaToCoverageEnabled) gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
         gl.cullFace(cullFaceMode);
         gl.frontFace(frontFaceMode);
-        if (!cullFaceEnabled) gl.disable(gl.CULL_FACE);
+        if (cullFaceEnabled) gl.enable(gl.CULL_FACE);
+        else gl.disable(gl.CULL_FACE);
         gl.depthMask(depthWriteEnabled);
         if (depthTestEnabled) gl.enable(gl.DEPTH_TEST);
         state.renderCount += 1;
         state.lastGlError = gl.getError();
-        map.triggerRepaint();
+        if (lod === 'full') map.triggerRepaint();
       },
       onRemove(_map, gl) {
         state.removed = true;
@@ -2698,6 +2735,7 @@
         if (state.edgeNormalBBuffer) gl.deleteBuffer(state.edgeNormalBBuffer);
         if (state.edgeCornerBuffer) gl.deleteBuffer(state.edgeCornerBuffer);
         if (state.instanceBuffer) gl.deleteBuffer(state.instanceBuffer);
+        if (state.lodPositionBuffer) gl.deleteBuffer(state.lodPositionBuffer);
         if (state.program) gl.deleteProgram(state.program);
         state.ready = false;
       },
@@ -2749,6 +2787,9 @@
           fillBy: layerFilters.powerPlants.fillBy,
           fillFraction: layerFilters.powerPlants.fillFraction,
           renderMaterial: normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial),
+          adaptiveLod: layerFilters.powerPlants.adaptiveLod !== false,
+          lod: state.lastLod,
+          lodVertexCount: state.lodVertexCount,
           minimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
           maximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
           drawOrderAscending: state.entries.every((entry, index) => index === 0 || state.entries[index - 1].size <= entry.size),
@@ -2768,22 +2809,31 @@
       },
       hitTest(point) {
         let best = null;
+        const adaptiveLod = layerFilters.powerPlants.adaptiveLod !== false;
+        const zoom = map.getZoom();
+        const hitScale = !adaptiveLod || zoom >= 8 ? 1 : zoom >= 5 ? .45 : .14;
+        const maximumSize = state.entries.length ? Math.max(...state.entries.map((entry) => entry.size * hitScale), 1) : 1;
+        const northWest = map.unproject([point.x - maximumSize, point.y - maximumSize]);
+        const southEast = map.unproject([point.x + maximumSize, point.y + maximumSize]);
         state.entries.forEach((entry) => {
           const { record } = entry;
+          if (record.longitude < northWest.lng || record.longitude > southEast.lng
+            || record.latitude > northWest.lat || record.latitude < southEast.lat) return;
           const projected = map.project([record.longitude, record.latitude]);
           const dx = projected.x - point.x;
           const dy = projected.y - point.y;
           const distance = Math.hypot(dx, dy);
-          if (distance > entry.size && !(Math.abs(dx) <= entry.size * .67 && Math.abs(dy) <= entry.size)) return;
-          if (!best || entry.size > best.size || (entry.size === best.size && distance < best.distance)) {
-            best = { record, distance, size: entry.size };
+          const renderedSize = entry.size * hitScale;
+          if (distance > renderedSize && !(Math.abs(dx) <= renderedSize * .67 && Math.abs(dy) <= renderedSize)) return;
+          if (!best || renderedSize > best.size || (renderedSize === best.size && distance < best.distance)) {
+            best = { record, distance, size: renderedSize };
           }
         });
         return best
           ? {
             record: best.record,
             size: best.size,
-            zOffset: state.entries.length ? best.size / Math.max(...state.entries.map((entry) => entry.size), 1) : 0,
+            zOffset: best.size / maximumSize,
           }
           : null;
       },
@@ -2949,6 +2999,7 @@
   let aerialAnimationSettings = { speed: 1, distance: 1 };
   let activeTagFilters = [];
   let powerPlantScope = 'MD';
+  let nationwidePowerPlantRecords = [];
   let tagFilterMode = 'and';
   let inspectorHoverKey = null;
   let inspectorPinnedKey = null;
@@ -3288,6 +3339,7 @@
     filters.brightness = normalizeBrightness(filters.brightness);
     filters.outlineWidth = normalizeBoltOutlineWidth(filters.outlineWidth);
     filters.renderMaterial = normalizePowerPlantRenderMaterial(filters.renderMaterial);
+    filters.adaptiveLod = filters.adaptiveLod !== false;
     if (filters.fillBy === 'resource-adjusted-utilization' && (!filters.sizeBy || filters.sizeBy === 'none')) {
       filters.sizeBy = 'planning_sustained_output_mw';
     }
@@ -4491,7 +4543,7 @@
       restoreRemoteLayers(map);
       updateEsriBuildingsLayer(map);
       ensurePowerPlantBoltLayer(map);
-      powerPlantBoltLayer?.setRecords(allRecords.filter((record) => record.record_type === 'power_plant' && matchesFilters(record)));
+      renderResults(allRecords, markerById);
       renderLayerOrderControls(map);
     });
     map.on('styledata', () => scheduleRemoteLayerRehydrate(map));
@@ -4613,10 +4665,16 @@
             });
           const nationwide = await nationwidePowerPlantsPromise;
           powerPlantScope = 'US';
-          nationwideState.enabled = true;
+          nationwidePowerPlantRecords = nationwide.features.map((feature) => ({
+            ...feature.properties,
+            id: feature.id || feature.properties.id,
+            latitude: feature.geometry.coordinates[1],
+            longitude: feature.geometry.coordinates[0],
+            record_type: 'power_plant',
+          }));
+          nationwideState.enabled = false;
           nationwideState.data = nationwide;
-          addRemoteLayer(map, nationwideConfig, nationwide);
-          rehydrateRemoteLayerAfterStyleSettles(map, nationwideConfig);
+          hideRemoteLayer(map, nationwideConfig);
           document.getElementById('power-plant-layer-count').textContent = number(nationwide.metadata.record_count);
           status.textContent = `${number(nationwide.metadata.record_count)} nationwide plants · final EIA 2024`;
           if (recenter) map.easeTo({ center: [-98.5, 38.5], zoom: 3.1, duration: 850 });
@@ -4670,6 +4728,7 @@
       showHoverTarget(map, target);
       return window.__lastHoverArbitration;
     };
+    window.__powerPlantBoltDiagnostics = () => powerPlantBoltLayer?.getDiagnostics() || null;
     map.on('click', (event) => handleMapClick(map, event, sourceById));
     map.getCanvas().addEventListener('mouseleave', () => {
       if (mobileInspectorMode()) return;
@@ -4687,7 +4746,7 @@
       if (document.getElementById('show-parcels').checked) setParcelVisibility(map, true);
       restoreRemoteLayers(map);
       ensurePowerPlantBoltLayer(map);
-      powerPlantBoltLayer?.setRecords(allRecords.filter((record) => record.record_type === 'power_plant' && matchesFilters(record)));
+      renderResults(allRecords, markerById);
       renderLayerOrderControls(map);
     }
     persistUiState(map);
@@ -5872,6 +5931,10 @@
     return `<label class="dc-modal-field">${escapeHtml(label)}<input name="${escapeHtml(name)}" type="number" min="${escapeHtml(min)}" max="${escapeHtml(max)}" step="${escapeHtml(step)}" value="${escapeHtml(value)}"></label>${help ? `<p class="dc-modal-help">${escapeHtml(help)}</p>` : ''}`;
   }
 
+  function checkboxFieldMarkup(label, name, checked, help = '') {
+    return `<label class="dc-modal-field"><span><input name="${escapeHtml(name)}" type="checkbox"${checked ? ' checked' : ''}> ${escapeHtml(label)}</span></label>${help ? `<p class="dc-modal-help">${escapeHtml(help)}</p>` : ''}`;
+  }
+
   function scaleFieldMarkup(label, name, value) {
     const scale = normalizeIconScale(value);
     return `<label class="dc-modal-field dc-modal-scale"><span>${escapeHtml(label)} <output>${escapeHtml(`${scale}×`)}</output></span><input data-icon-scale-range name="${escapeHtml(name)}" type="range" min="0.25" max="4" step="0.05" value="${escapeHtml(scale)}"></label>`;
@@ -5925,6 +5988,7 @@
         + fieldMarkup('Bolt outline uses', 'outlineBy', layerFilters.powerPlants.outlineBy, FILTER_OPTIONS.plantBoltOutline, 'A real silhouette outline is drawn independently from the fill. Choose Neutral light outline for a fixed pale border.')
         + fieldMarkup('Bolt fill uses', 'fillBy', layerFilters.powerPlants.fillBy || 'none', FILTER_OPTIONS.plantBoltFill, 'Fill the bolt from the bottom. Resource-adjusted annual utilization compares annual output to a technology-specific planning envelope, so solar and wind are not judged as if they should run at nameplate all year.')
         + fieldMarkup('Render material', 'renderMaterial', normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial), FILTER_OPTIONS.plantRenderMaterial, 'Reuses the full AgnuQuena appearance menu for the WebGL bolt renderer.')
+        + checkboxFieldMarkup('Adaptive level of detail', 'adaptiveLod', layerFilters.powerPlants.adaptiveLod !== false, 'Uses a simplified one-pass instanced bolt nationally, adds effects regionally, and reserves the full mesh, outline, and animation for local zooms. Disable to force the full treatment at every zoom; this can be substantially slower nationwide.')
         + numberFieldMarkup('Custom fill fraction', 'fillFraction', layerFilters.powerPlants.fillFraction ?? 1, { min: 0, max: 1, step: 0.01, help: 'Only used when Bolt fill uses is set to Custom fraction from bottom.' })
         + numberFieldMarkup('Bolt outline width', 'outlineWidth', normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth), { min: .5, max: 5, step: .25, help: 'Sets the silhouette trace width in screen pixels.' })
         + scaleFieldMarkup('Icon scale', 'iconScale', layerFilters.powerPlants.iconScale)
@@ -6040,6 +6104,7 @@
         brightness: normalizeBrightness(formData.get('brightness')),
         sizeBy: String(formData.get('sizeBy') || 'none'),
         renderMaterial: normalizePowerPlantRenderMaterial(formData.get('renderMaterial')),
+        adaptiveLod: formData.has('adaptiveLod'),
       };
       normalizePowerPlantLayerFilters(layerFilters.powerPlants);
     } else if (activeLayerConfigId === 'neon-streets') {
@@ -6079,7 +6144,7 @@
     if (activeLayerConfigId === 'datacenters') {
       layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, iconScale: 1, brightness: 1, sizeBy: 'reported_power_capacity_mw' };
     } else if (activeLayerConfigId === 'power-plants') {
-      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineWidth: 1.5, outlineScale: 1.04, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', renderMaterial: 'standard' };
+      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineWidth: 1.5, outlineScale: 1.04, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', renderMaterial: 'standard', adaptiveLod: true };
     } else if (activeLayerConfigId === 'neon-streets') {
       layerFilters.neonStreets = { scope: 'i95', lineWidth: 1, brightness: 1 };
     } else if (activeLayerConfigId === 'enviroscreen') {
@@ -6953,7 +7018,21 @@
         size: 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1),
       }))
       .sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
-    powerPlantBoltLayer?.setRecords(matches.filter((record) => record.record_type === 'power_plant'));
+    const nationwidePowerPlantsVisible = document.getElementById('show-power-plants').checked
+      && (!map || layerShownAtZoom('power-plants', map.getZoom()));
+    const cullNationwideBolts = Boolean(map && layerFilters.powerPlants.adaptiveLod !== false && map.getZoom() >= 5);
+    const nationwideBounds = cullNationwideBolts ? map.getBounds() : null;
+    const nationwideLongitudePadding = nationwideBounds ? (nationwideBounds.getEast() - nationwideBounds.getWest()) * .15 : 0;
+    const nationwideLatitudePadding = nationwideBounds ? (nationwideBounds.getNorth() - nationwideBounds.getSouth()) * .15 : 0;
+    const nationwideRecordInViewport = (record) => !nationwideBounds
+      || (record.longitude >= nationwideBounds.getWest() - nationwideLongitudePadding
+        && record.longitude <= nationwideBounds.getEast() + nationwideLongitudePadding
+        && record.latitude >= nationwideBounds.getSouth() - nationwideLatitudePadding
+        && record.latitude <= nationwideBounds.getNorth() + nationwideLatitudePadding);
+    const matchingPowerPlants = powerPlantScope === 'US'
+      ? (nationwidePowerPlantsVisible ? nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false)) : [])
+      : matches.filter((record) => record.record_type === 'power_plant');
+    powerPlantBoltLayer?.setRecords(matchingPowerPlants);
     applyMapLayerOrder(activeLayerContext?.map);
   }
 
@@ -7138,8 +7217,8 @@
     });
   }
 
-  function matchesFilters(record) {
-      if (!visibleType(record)) return false;
+  function matchesFilters(record, requireVisible = true) {
+      if (requireVisible && !visibleType(record)) return false;
       const isDataCenter = record.record_type === 'data_center';
       const statusFilter = isDataCenter ? layerFilters.datacenters.status : 'all';
       const energyFilter = isDataCenter ? layerFilters.datacenters.energy : layerFilters.powerPlants.energy;

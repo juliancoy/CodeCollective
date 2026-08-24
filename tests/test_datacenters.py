@@ -1191,7 +1191,8 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert "gl.enable(gl.CULL_FACE);" in script
     assert "gl.cullFace(gl.BACK);" in script
     assert "gl.frontFace(gl.CCW);" in script
-    assert "if (!cullFaceEnabled) gl.disable(gl.CULL_FACE);" in script
+    assert "if (cullFaceEnabled) gl.enable(gl.CULL_FACE);" in script
+    assert "else gl.disable(gl.CULL_FACE);" in script
     assert "setHoveredRecord(record)" in script
     assert "setHoveredRecord(target?.kind === 'power-plant' ? target.record : null)" in script
     assert "function createLightningBoltTextureCanvas" not in script
@@ -1203,7 +1204,26 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert ".sort((left, right) => left.size - right.size" in script
     assert "gl.disable(gl.DEPTH_TEST)" in script
     assert "entry.size > best.size" in script
-    assert "zOffset: state.entries.length ? best.size / Math.max(...state.entries.map((entry) => entry.size), 1) : 0" in script
+    assert "zOffset: best.size / maximumSize" in script
+    assert "const northWest = map.unproject" in script
+
+
+def test_nationwide_power_plants_use_disableable_instanced_lod_bolts():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "adaptiveLod: true" in script
+    assert "Adaptive level of detail" in script
+    assert "adaptiveLod: formData.has('adaptiveLod')" in script
+    assert "const lod = !adaptiveLod || zoom >= 8 ? 'full' : zoom >= 5 ? 'regional' : 'national'" in script
+    assert "const lodPositions = new Float32Array" in script
+    assert "drawArraysInstanced(gl.TRIANGLES, 0, state.lodVertexCount" in script
+    assert "if (lod !== 'national')" in script
+    assert "if (lod === 'full' && state.silhouetteVertexCount > 0)" in script
+    assert "if (lod === 'full') map.triggerRepaint()" in script
+    assert "nationwidePowerPlantRecords = nationwide.features.map" in script
+    assert "nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false))" in script
+    assert "const cullNationwideBolts" in script
+    assert "const nationwideRecordInViewport" in script
+    assert "window.__powerPlantBoltDiagnostics" in script
     assert "z: layerZ + Math.min(.99, Math.max(0, hit.zOffset || 0))" in script
     assert "topmostSize: state.entries.at(-1)?.size || 0" in script
 
@@ -1351,7 +1371,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260824-national-power-state" in page
+    assert "20260824-national-bolt-lod" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -1679,7 +1699,7 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
     assert "Power estimates JSON" in page
     assert "not utility-metered county load" in page
     assert "not utility-metered county load or coincident peak demand" in page
-    assert "20260824-national-power-state" in page
+    assert "20260824-national-bolt-lod" in page
     assert {
         "eia-retail-sales-md-residential-2024",
         "eia-retail-sales-md-all-sectors-2024",
