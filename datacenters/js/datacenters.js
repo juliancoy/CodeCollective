@@ -5,6 +5,7 @@
     sources: '/datacenters/data/sources.json',
     datacenterNews: '/datacenters/data/datacenter-news.json',
   };
+  const NATIONWIDE_POWER_PLANTS_URL = '/datacenters/data/power-plants-us.json';
   const MOBILE_INSPECTOR_MEDIA = '(max-width: 760px), (hover: none) and (pointer: coarse)';
   const POWER_PLANT_WEBGL_LAYER_ID = 'power-plant-bolt-webgl';
   const NEON_STREET_GLOW_LAYER_ID = 'neon-streets-glow';
@@ -255,6 +256,33 @@
     },
   };
   const REMOTE_LAYERS = [
+    {
+      id: 'nationwide-eia-power-plants',
+      name: 'Nationwide EIA power plants',
+      description: 'Final 2024 EIA operable power-plant inventory for all 50 states and the District of Columbia',
+      category: 'Generation inventory',
+      tags: ['power plants', 'EIA', 'nationwide', 'United States'],
+      staticDataUrl: NATIONWIDE_POWER_PLANTS_URL,
+      sourceUrl: 'https://www.eia.gov/electricity/data/eia860/',
+      sourceLabel: 'U.S. EIA-860 and EIA-923 final 2024 data',
+      attribution: 'U.S. Energy Information Administration',
+      geometry: 'point',
+      color: '#6fd3ff',
+      minZoom: 0,
+      titleFields: ['name', 'operator'],
+      facts: [
+        ['Operator', 'operator'], ['City', 'city'], ['County', 'county'], ['State', 'state'],
+        ['Primary technology', 'primary_technology'], ['Primary fuel', 'primary_energy_source_code'],
+        ['Nameplate capacity', 'nameplate_capacity_mw', ' MW'], ['2024 net generation', 'net_generation_mwh', ' MWh'],
+        ['Generators', 'generator_count'], ['Earliest operating year', 'year_built'],
+        ['Census state FIPS', 'census_state_fips'], ['Census county FIPS', 'census_county_fips'],
+        ['Census place FIPS', 'census_place_fips'], ['NERC region', 'nerc_region'],
+        ['Balancing authority', 'balancing_authority_code'], ['ISO/RTO', 'iso_region'],
+      ],
+      provenanceNote: 'This compact nationwide baseline uses final annual EIA records and Census geographic identifiers. Maryland remains the default detailed view.',
+      statusOffText: 'Off · select Nationwide in the Power plants Scope control',
+      hiddenControl: true,
+    },
     {
       id: 'maryland-state-boundary',
       name: 'Maryland state boundary',
@@ -2919,6 +2947,7 @@
   let esriBuildingsEnabled = false;
   let aerialAnimationSettings = { speed: 1, distance: 1 };
   let activeTagFilters = [];
+  let powerPlantScope = 'MD';
   let tagFilterMode = 'and';
   let inspectorHoverKey = null;
   let inspectorPinnedKey = null;
@@ -3762,6 +3791,7 @@
   }
 
   function persistUiState(map = activeLayerContext?.map || null) {
+    if (powerPlantScope !== 'MD') return;
     const state = currentUiState(map);
     try {
       localStorage.setItem(UI_STATE_STORAGE_KEY, JSON.stringify(state));
@@ -4473,6 +4503,7 @@
     }));
     const dataCenters = allRecords.filter((record) => record.record_type === 'data_center');
     const powerPlants = allRecords.filter((record) => record.record_type === 'power_plant');
+    let nationwidePowerPlantsPromise = null;
     setupRemoteLayerControls(map);
     setupEsriBuildingsControl(map);
     setupBaseLayerControls(map);
@@ -4552,6 +4583,58 @@
       persistUiState();
     });
     setupLayerFilterUi(map, allRecords, markerById);
+    document.getElementById('power-plant-scope').addEventListener('change', async (event) => {
+      const select = event.target;
+      const status = document.getElementById('power-plant-scope-status');
+      const nationwideConfig = REMOTE_LAYERS.find((config) => config.id === 'nationwide-eia-power-plants');
+      const nationwideState = remoteLayerStates.get(nationwideConfig.id);
+      select.disabled = true;
+      try {
+        if (select.value === 'US') {
+          status.textContent = 'Loading nationwide final 2024 EIA inventory…';
+          nationwidePowerPlantsPromise ||= fetch(NATIONWIDE_POWER_PLANTS_URL, { cache: 'no-store' })
+            .then((response) => {
+              if (!response.ok) throw new Error(`Nationwide inventory returned HTTP ${response.status}`);
+              return response.json();
+            })
+            .then((payload) => {
+              if (!Array.isArray(payload.features) || payload.features.length !== payload.metadata?.record_count) {
+                throw new Error('Nationwide inventory failed its record-count check');
+              }
+              return payload;
+            });
+          const nationwide = await nationwidePowerPlantsPromise;
+          powerPlantScope = 'US';
+          nationwideState.enabled = true;
+          nationwideState.data = nationwide;
+          addRemoteLayer(map, nationwideConfig, nationwide);
+          rehydrateRemoteLayerAfterStyleSettles(map, nationwideConfig);
+          document.getElementById('power-plant-layer-count').textContent = number(nationwide.metadata.record_count);
+          status.textContent = `${number(nationwide.metadata.record_count)} nationwide plants · final EIA 2024 · Maryland remains the default after reload`;
+          map.easeTo({ center: [-98.5, 38.5], zoom: 3.1, duration: 850 });
+        } else {
+          powerPlantScope = 'MD';
+          nationwideState.enabled = false;
+          hideRemoteLayer(map, nationwideConfig);
+          document.getElementById('power-plant-layer-count').textContent = number(powerPlants.length);
+          status.textContent = `${number(powerPlants.length)} Maryland plants · final EIA 2024`;
+          map.easeTo({ center: [-76.75, 39.05], zoom: 7.25, duration: 650 });
+        }
+        closePinnedInspector();
+        renderResults(allRecords, markerById);
+      } catch (error) {
+        nationwidePowerPlantsPromise = null;
+        select.value = 'MD';
+        powerPlantScope = 'MD';
+        nationwideState.enabled = false;
+        hideRemoteLayer(map, nationwideConfig);
+        document.getElementById('power-plant-layer-count').textContent = number(powerPlants.length);
+        status.textContent = `Nationwide inventory unavailable · ${error.message}`;
+        renderResults(allRecords, markerById);
+      } finally {
+        select.disabled = false;
+      }
+    });
     setupLayerColorUi();
     setupTagFilterUi();
     setupUiStatePersistence(map);
@@ -4784,7 +4867,7 @@
   function setupRemoteLayerControls(map) {
     const container = document.getElementById('remote-layer-controls');
     container.innerHTML = REMOTE_LAYERS.map((config) => `
-      <div class="dc-layer-option dc-layer-option--remote" data-layer-preview="${escapeHtml(config.id)}">
+      <div class="dc-layer-option dc-layer-option--remote" data-layer-preview="${escapeHtml(config.id)}"${config.hiddenControl ? ' hidden' : ''}>
         <div class="dc-layer-toprow">
           <span class="dc-layer-name"><strong>${escapeHtml(config.name)}</strong><small>${escapeHtml(config.description)}</small></span>
           <span class="dc-layer-controls-row">
@@ -6497,7 +6580,8 @@
       }));
     }
     REMOTE_LAYERS.forEach((config) => {
-      if (!remoteLayerStates.get(config.id)?.enabled || !document.getElementById(`hover-${config.id}`).checked || !layerShownAtZoom(config.id, map.getZoom())) return;
+      const hoverEnabled = config.hiddenControl || document.getElementById(`hover-${config.id}`).checked;
+      if (!remoteLayerStates.get(config.id)?.enabled || !hoverEnabled || !layerShownAtZoom(config.id, map.getZoom())) return;
       remoteRenderLayerIds(config).forEach((layerId) => {
         if (!map.getLayer(layerId)) return;
         layerTargets.set(layerId, (feature) => ({
@@ -6786,6 +6870,7 @@
   }
 
   function visibleType(record) {
+    if (record.record_type === 'power_plant' && powerPlantScope !== 'MD') return false;
     const layerId = record.record_type === 'data_center' ? 'datacenters' : 'power-plants';
     if (!document.getElementById(`show-${layerId}`).checked) return false;
     const map = activeLayerContext?.map;
@@ -6829,9 +6914,14 @@
     const dataCenterIconScale = normalizeIconScale(layerFilters.datacenters.iconScale);
     const map = activeLayerContext?.map || null;
     const cullToViewport = Boolean(map && records.length > LARGE_INVENTORY_MARKER_THRESHOLD);
-    const viewport = cullToViewport ? map.getBounds().pad(LARGE_INVENTORY_VIEW_PADDING) : null;
-    const recordInViewport = (record) => !viewport || !Number.isFinite(record.latitude) || !Number.isFinite(record.longitude)
-      || viewport.contains([record.longitude, record.latitude]);
+    const bounds = cullToViewport ? map.getBounds() : null;
+    const longitudePadding = bounds ? (bounds.getEast() - bounds.getWest()) * LARGE_INVENTORY_VIEW_PADDING : 0;
+    const latitudePadding = bounds ? (bounds.getNorth() - bounds.getSouth()) * LARGE_INVENTORY_VIEW_PADDING : 0;
+    const recordInViewport = (record) => !bounds || !Number.isFinite(record.latitude) || !Number.isFinite(record.longitude)
+      || (record.longitude >= bounds.getWest() - longitudePadding
+        && record.longitude <= bounds.getEast() + longitudePadding
+        && record.latitude >= bounds.getSouth() - latitudePadding
+        && record.latitude <= bounds.getNorth() + latitudePadding);
     records.forEach((record) => {
       const marker = markerById.get(record.id);
       if (!marker) return;
@@ -7464,10 +7554,10 @@
       image.classList.remove('is-aerial-ready');
       image.closest('.dc-aerial-motion')?.classList.remove('is-aerial-ready');
       image.alt = `Generated infrastructure illustration for ${record.name}`;
-      const figure = image.closest('.dc-plant-image');
-      figure.classList.remove('dc-plant-image--aerial');
-      figure.classList.add('dc-plant-image--illustration');
-      const label = figure.querySelector('[data-aerial-status]');
+      const figure = image.closest('.dc-plant-image, .dc-entity-image');
+      figure?.classList.remove('dc-plant-image--aerial');
+      figure?.classList.add('dc-plant-image--illustration');
+      const label = figure?.querySelector('[data-aerial-status]');
       if (label) label.textContent = 'Aerial imagery unavailable';
     }
   }

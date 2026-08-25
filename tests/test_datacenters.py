@@ -226,6 +226,57 @@ def test_nationwide_eia_generator_uses_each_plant_state():
     assert '"state": args.state' not in script
 
 
+def test_nationwide_power_plant_scope_is_visible_and_maryland_is_default():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert 'id="power-plant-scope"' in page
+    assert '<option value="MD" selected>Maryland only</option>' in page
+    assert '<option value="US">Nationwide</option>' in page
+    assert "NATIONWIDE_POWER_PLANTS_URL" in script
+    assert "nationwidePowerPlantsPromise ||= fetch" in script
+    assert "Maryland remains the default after reload" in script
+    assert "payload.features.length !== payload.metadata?.record_count" in script
+    assert "id: 'nationwide-eia-power-plants'" in script
+    assert "hiddenControl: true" in script
+    assert "if (powerPlantScope !== 'MD') return" in script
+    assert "const hoverEnabled = config.hiddenControl" in script
+    assert "if (record.record_type === 'power_plant' && powerPlantScope !== 'MD') return false" in script
+    assert ".getBounds().pad(" not in script
+
+
+def test_nationwide_power_plant_inventory_is_complete_compact_and_geotagged():
+    path = DATA / "power-plants-us.json"
+    data = load("power-plants-us.json")
+    features = data["features"]
+    assert data["metadata"]["year"] == 2024
+    assert data["type"] == "FeatureCollection"
+    assert data["metadata"]["record_count"] == len(features) == 13_370
+    assert data["metadata"]["state_counts"]["MD"] == 209
+    assert len(data["metadata"]["state_counts"]) == 51
+    assert len({feature["id"] for feature in features}) == len(features)
+    assert path.stat().st_size < 25 * 1024 * 1024
+    for feature in features:
+        record = feature["properties"]
+        longitude, latitude = feature["geometry"]["coordinates"]
+        assert record["record_type"] == "power_plant"
+        assert record["state"]
+        assert record["census_state_fips"]
+        assert record["location_tags"]
+        assert -180 <= longitude <= -60
+        assert 15 <= latitude <= 75
+
+
+def test_nationwide_generator_uses_final_eia_and_census_sources():
+    script = (ROOT / "datacenters" / "generate_nationwide_power_plant_data.py").read_text()
+    assert "eia8602024.zip" in script
+    assert "f923_2024.zip" in script
+    assert "2025_Gaz_place_national.zip" in script
+    assert "2025_Gaz_counties_national.zip" in script
+    assert "download_eia_workbooks" in script
+    assert 'default=2024' in script
+    assert '"inventory": "final annual EIA nationwide operable power plants"' in script
+
+
 def test_curated_infrastructure_refresh_is_idempotent(tmp_path):
     output = tmp_path / "infrastructure.json"
     output.write_bytes((DATA / "infrastructure.json").read_bytes())
@@ -428,11 +479,12 @@ def test_power_plant_year_and_status_come_from_final_eia_860():
     assert by_id["eia-59026"]["generator_status_codes"] == ["OP", "OS"]
 
 
-def test_browser_fetches_only_the_unified_infrastructure_inventory():
+def test_browser_starts_with_unified_maryland_inventory_and_lazily_loads_nationwide_plants():
     page = (ROOT / "datacenters.html").read_text()
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
     assert "infrastructure: '/datacenters/data/infrastructure.json'" in script
     assert "const allRecords = data.infrastructure.map" in script
+    assert "nationwidePowerPlantsPromise ||= fetch" in script
     assert "record.technology_tags" in script
     assert "/datacenters/data/datacenters.json" not in page + script
     assert "/datacenters/data/power-plants.json" not in page + script
@@ -1297,7 +1349,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260816-operating-environment" in page
+    assert "20260824-national-power" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -1625,7 +1677,7 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
     assert "Power estimates JSON" in page
     assert "not utility-metered county load" in page
     assert "not utility-metered county load or coincident peak demand" in page
-    assert "20260816-operating-environment" in page
+    assert "20260824-national-power" in page
     assert {
         "eia-retail-sales-md-residential-2024",
         "eia-retail-sales-md-all-sectors-2024",
