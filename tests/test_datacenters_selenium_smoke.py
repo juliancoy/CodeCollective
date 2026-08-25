@@ -80,6 +80,19 @@ def test_datacenter_selenium_probe_verifies_webgl_power_plant_meshes():
     assert 'parser.add_argument("--power-webgl-only"' in script
 
 
+def test_datacenter_selenium_probe_verifies_separate_international_sources_and_animation():
+    script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
+
+    assert "def verify_international_power_plant_layers" in script
+    assert '"U.S. EIA power plants", "WRI Global Power Plant Database", "NRCan / SENER / DOE NACEI"' in script
+    assert 'diagnostics_with_count(38_473, "national")' in script
+    assert 'diagnostics_with_count(38_852)' in script
+    assert 'diagnostics_with_count(13_749)' in script
+    assert 'worldwide capacity sizing was not visually meaningful' in script
+    assert 'worldwide animation was not responsive' in script
+    assert 'parser.add_argument("--international-only"' in script
+
+
 def test_datacenter_selenium_probe_verifies_neon_i95_default_and_broader_street_scope():
     script = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
 

@@ -105,13 +105,13 @@
             </div>
             <div class="dc-layer-option" data-layer-preview="power-plants">
               <div class="dc-layer-toprow">
-                <span class="dc-layer-name"><strong>Power plants</strong><small>EIA generation facilities</small></span>
+                <span class="dc-layer-name"><strong>U.S. EIA power plants</strong><small>Final 2024 EIA-860 and EIA-923</small></span>
                 <span class="dc-layer-controls-row">
                   <span id="power-plant-layer-count" class="dc-layer-count" aria-label="Power plant count">—</span>
                   <label class="dc-layer-scope">Scope
                     <select id="power-plant-scope" aria-label="Power plant geographic scope">
                       <option value="MD" selected>Maryland only</option>
-                      <option value="US">Nationwide</option>
+                      <option value="US">United States</option>
                     </select>
                   </label>
                   <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change Power plants color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
@@ -121,7 +121,41 @@
                   <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure power plant layer">⚙</button>
                 </span>
               </div>
-              <p id="power-plant-scope-status" class="dc-layer-status" aria-live="polite">Maryland default · switch Scope to Nationwide for the final 2024 EIA inventory</p>
+              <p id="power-plant-scope-status" class="dc-layer-status" aria-live="polite">Maryland default · switch Scope to United States for the complete final EIA inventory</p>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="global-power-plants">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>WRI Global Power Plant Database</strong><small>v1.3.0 research baseline · source years vary</small></span>
+                <span class="dc-layer-controls-row">
+                  <span id="global-power-plant-layer-count" class="dc-layer-count" aria-label="WRI global power plant count">—</span>
+                  <label class="dc-layer-scope">Scope
+                    <select id="global-power-plant-scope" aria-label="WRI global power plant geographic scope">
+                      <option value="NA" selected>Canada + Mexico</option>
+                      <option value="WORLD">Worldwide except U.S.</option>
+                    </select>
+                  </label>
+                  <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change WRI power plants color" title="Uses the shared power-plant style"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="global-power-plants">z 0–18</span>
+                  <label class="dc-layer-toggle"><input id="show-global-power-plants" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-global-power-plants" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure shared power plant style">⚙</button>
+                </span>
+              </div>
+              <p id="global-power-plant-scope-status" class="dc-layer-status" aria-live="polite">Off · WRI records load only when Render is enabled; source year and original source are retained per plant</p>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="nacei-power-plants">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>NRCan / SENER / DOE NACEI</strong><small>Official Canada + Mexico comparison · ≥100 MW · August 2017</small></span>
+                <span class="dc-layer-controls-row">
+                  <span id="nacei-power-plant-layer-count" class="dc-layer-count" aria-label="NACEI power plant count">—</span>
+                  <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change NACEI power plants color" title="Uses the shared power-plant style"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="nacei-power-plants">z 0–18</span>
+                  <label class="dc-layer-toggle"><input id="show-nacei-power-plants" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-nacei-power-plants" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure shared power plant style">⚙</button>
+                </span>
+              </div>
+              <p id="nacei-power-plant-scope-status" class="dc-layer-status" aria-live="polite">Off · official threshold-limited comparison source, kept separate from WRI</p>
             </div>
             <div class="dc-layer-option" data-layer-preview="neon-streets">
               <div class="dc-layer-toprow">

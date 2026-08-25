@@ -1228,6 +1228,129 @@ def verify_power_plant_webgl(driver: webdriver.Remote, screenshot_dir: pathlib.P
     }
 
 
+def verify_international_power_plant_layers(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    def diagnostics():
+        return driver.execute_script(
+            """
+            const layer = window.__codeCollectiveDatacenterMap.getLayer('power-plant-bolt-webgl');
+            return layer?.implementation?.getDiagnostics?.() || null;
+            """
+        )
+
+    def diagnostics_with_count(expected_count: int, expected_lod: str | None = None):
+        value = diagnostics()
+        if not value or value["recordCount"] != expected_count:
+            return None
+        if expected_lod and value["lod"] != expected_lod:
+            return None
+        return value
+
+    labels = driver.execute_script(
+        """
+        return [...document.querySelectorAll('[data-layer-preview="power-plants"], [data-layer-preview="global-power-plants"], [data-layer-preview="nacei-power-plants"]')]
+          .map((card) => card.querySelector('.dc-layer-name strong').textContent.trim());
+        """
+    )
+    expected_labels = ["U.S. EIA power plants", "WRI Global Power Plant Database", "NRCan / SENER / DOE NACEI"]
+    if labels != expected_labels:
+        raise AssertionError(f"power-plant source layers were not separately labeled: {labels}")
+
+    driver.execute_script(
+        """
+        const select = document.getElementById('power-plant-scope');
+        select.value = 'US';
+        select.dispatchEvent(new Event('change', {bubbles: true}));
+        """
+    )
+    WebDriverWait(driver, 45).until(
+        lambda d: "13,370 U.S. plants" in d.find_element(By.ID, "power-plant-scope-status").get_attribute("textContent")
+    )
+    set_checkbox(driver, "show-global-power-plants", True)
+    WebDriverWait(driver, 45).until(
+        lambda d: "1,436 plants" in d.find_element(By.ID, "global-power-plant-scope-status").get_attribute("textContent")
+    )
+    north_america = WebDriverWait(driver, 30).until(
+        lambda _d: diagnostics_with_count(14_806)
+    )
+
+    driver.execute_script(
+        """
+        const select = document.getElementById('global-power-plant-scope');
+        select.value = 'WORLD';
+        select.dispatchEvent(new Event('change', {bubbles: true}));
+        """
+    )
+    WebDriverWait(driver, 45).until(
+        lambda d: "25,103 plants" in d.find_element(By.ID, "global-power-plant-scope-status").get_attribute("textContent")
+    )
+    worldwide = WebDriverWait(driver, 45).until(
+        lambda _d: diagnostics_with_count(38_473, "national")
+    )
+    if not worldwide.get("animated") or worldwide.get("lodVertexCount") != 12:
+        raise AssertionError(f"worldwide bolts did not use animated simplified instances: {worldwide}")
+    if worldwide.get("renderedMaximumSize", 0) <= worldwide.get("renderedMinimumSize", 0) * 4:
+        raise AssertionError(f"worldwide capacity sizing was not visually meaningful: {worldwide}")
+
+    driver.execute_script(
+        """
+        window.__internationalHeartbeat = 0;
+        window.__internationalHeartbeatTimer = setInterval(() => window.__internationalHeartbeat += 1, 50);
+        """
+    )
+    start_render_count = diagnostics()["renderCount"]
+    started = time.monotonic()
+    time.sleep(3)
+    elapsed = time.monotonic() - started
+    sustained = diagnostics()
+    heartbeat = driver.execute_script(
+        "clearInterval(window.__internationalHeartbeatTimer); return window.__internationalHeartbeat;"
+    )
+    rendered_frames = sustained["renderCount"] - start_render_count
+    if rendered_frames / elapsed < 5 or heartbeat < 20:
+        raise AssertionError(
+            f"worldwide animation was not responsive: {rendered_frames} frames, {heartbeat} heartbeats in {elapsed:.2f}s"
+        )
+
+    first = save_screenshot(driver, screenshot_dir, "datacenters-worldwide-power-plants-1.png")
+    time.sleep(.45)
+    second = save_screenshot(driver, screenshot_dir, "datacenters-worldwide-power-plants-2.png")
+    frame_hashes = [hashlib.sha256(path.read_bytes()).hexdigest() for path in (first, second)]
+    if frame_hashes[0] == frame_hashes[1]:
+        raise AssertionError("worldwide animated bolt frames were pixel-identical")
+
+    set_checkbox(driver, "show-nacei-power-plants", True)
+    WebDriverWait(driver, 30).until(
+        lambda d: "379 official comparison plants" in d.find_element(By.ID, "nacei-power-plant-scope-status").get_attribute("textContent")
+    )
+    all_sources = WebDriverWait(driver, 30).until(
+        lambda _d: diagnostics_with_count(38_852)
+    )
+    set_checkbox(driver, "show-global-power-plants", False)
+    separate_sources = WebDriverWait(driver, 30).until(
+        lambda _d: diagnostics_with_count(13_749)
+    )
+    query = driver.execute_script("return window.location.search;")
+    if "globalPowerScope=WORLD" not in query or "nacei-power-plants" not in query:
+        raise AssertionError(f"international source state was not persisted in the URL: {query}")
+
+    return {
+        "labels": labels,
+        "north_america": north_america,
+        "worldwide": worldwide,
+        "sustained_animation": {
+            "elapsed_seconds": round(elapsed, 3),
+            "rendered_frames": rendered_frames,
+            "frames_per_second": round(rendered_frames / elapsed, 2),
+            "heartbeat_ticks": heartbeat,
+        },
+        "all_sources_record_count": all_sources["recordCount"],
+        "after_wri_disabled_record_count": separate_sources["recordCount"],
+        "frame_hashes": frame_hashes,
+        "screenshots": [str(first), str(second)],
+        "query": query,
+    }
+
+
 def verify_baltimore_zoning(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
     layer_id = "remote-baltimore-city-zoning"
     set_checkbox(driver, "show-baltimore-city-zoning", True)
@@ -2276,6 +2399,18 @@ def run(args: argparse.Namespace) -> int:
             report_path.write_text(json.dumps(report, indent=2))
             print(json.dumps(report, indent=2))
             return 0
+        if args.international_only:
+            report = {
+                "base_url": args.base_url,
+                "international_power_plants": step(
+                    "international power plants",
+                    lambda: verify_international_power_plant_layers(driver, screenshot_dir),
+                ),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
         if args.line_width_only:
             report = {
                 "base_url": args.base_url,
@@ -2449,6 +2584,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--mobile-only", action="store_true", help="Verify the touch layout and mobile inspector, then exit.")
     parser.add_argument("--glow-only", action="store_true", help="Verify the data-center contestation glow, then exit.")
     parser.add_argument("--power-webgl-only", action="store_true", help="Verify the antialiased WebGL power-plant bolts, then exit.")
+    parser.add_argument("--international-only", action="store_true", help="Verify separate EIA, WRI, and NACEI layers plus worldwide instanced animation, then exit.")
     parser.add_argument("--line-width-only", action="store_true", help="Verify line-layer width controls, then exit.")
     parser.add_argument("--point-splat-only", action="store_true", help="Verify point-layer GPU Splat density rendering, then exit.")
     parser.add_argument("--projected-demand-only", action="store_true", help="Verify projected demand for unbuilt data centers, then exit.")
