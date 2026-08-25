@@ -38,6 +38,8 @@
   const PARCEL_HOVER_FILL_ID = 'mdp-sdat-parcel-hover-fill';
   const PARCEL_HOVER_LINE_ID = 'mdp-sdat-parcel-hover-line';
   const PARCEL_MIN_ZOOM = 13;
+  const LARGE_INVENTORY_MARKER_THRESHOLD = 400;
+  const LARGE_INVENTORY_VIEW_PADDING = 0.35;
   const MAP_MIN_ZOOM = 0;
   const MAP_MAX_ZOOM = 18;
   const PARCEL_MAX_FEATURES = 1000;
@@ -535,6 +537,212 @@
       outFields: ['CCNumber', 'CrimeDateTime', 'CrimeCode', 'Description', 'Inside_Outside', 'Weapon', 'Shooting', 'New_District', 'Neighborhood', 'PremiseType', 'Total_Incidents'],
       titleFields: ['Description', 'CrimeCode'],
       facts: [['Incident number', 'CCNumber'], ['Date and time', 'CrimeDateTime'], ['NIBRS code', 'CrimeCode'], ['Description', 'Description'], ['Inside / outside', 'Inside_Outside'], ['Weapon', 'Weapon'], ['Shooting', 'Shooting'], ['Police district', 'New_District'], ['Neighborhood', 'Neighborhood'], ['Premise type', 'PremiseType'], ['Incident count', 'Total_Incidents']],
+    },
+    {
+      id: 'community-flock-cameras',
+      name: 'Community-reported Flock cameras',
+      description: 'User-submitted Flock Safety ALPR camera reports; locations are not guaranteed complete or current',
+      category: 'Cameras, traffic & public safety',
+      tags: ['Flock Safety', 'ALPR', 'license plate readers', 'surveillance cameras', 'United States'],
+      viewportDataUrl: '/api/map-data/flock-cameras',
+      sourceUrl: 'https://flocklocations.com/',
+      sourceLabel: 'Flock Locations community dataset',
+      attribution: 'Flock Locations contributors, CC BY 4.0',
+      geometry: 'point',
+      color: '#ff7a90',
+      focus: { center: [-98.6, 39.8], zoom: 3.4 },
+      minZoom: 5,
+      maxFeatures: 5000,
+      titleFields: ['address', 'camera_type', 'id'],
+      facts: [['Camera type', 'camera_type'], ['Address', 'address'], ['City', 'city'], ['State', 'state'], ['Mounted on', 'mounted_on'], ['Community verified', 'verified'], ['Confirmations', 'confirm_count'], ['Reported', 'reported_at']],
+      recordSourceFields: ['camera_type', 'source_url'],
+      statusOffText: 'Off · community-reported locations · opt in',
+      provenanceNote: 'These are community reports, not a complete registry or a statement that a camera is currently active. Check the linked record before relying on a location.',
+    },
+    {
+      id: 'osm-alpr-cameras',
+      name: 'OpenStreetMap ALPR cameras',
+      description: 'Publicly mapped automated license plate readers of any brand in the current view',
+      category: 'Cameras, traffic & public safety',
+      tags: ['ALPR', 'license plate readers', 'surveillance cameras', 'OpenStreetMap', 'DeFlock'],
+      viewportDataUrl: '/api/map-data/alpr',
+      sourceUrl: 'https://wiki.openstreetmap.org/wiki/Tag:surveillance:type=ALPR',
+      sourceLabel: 'OpenStreetMap ALPR mapping',
+      attribution: '© OpenStreetMap contributors, ODbL',
+      geometry: 'point',
+      color: '#f3c969',
+      focus: { center: [-76.7, 39.05], zoom: 10 },
+      minZoom: 9,
+      maxFeatures: 5000,
+      titleFields: ['operator', 'brand', 'osm_id'],
+      facts: [['OSM feature', 'osm_id'], ['Operator', 'operator'], ['Brand', 'brand'], ['Manufacturer', 'manufacturer'], ['Direction', 'direction'], ['Mount', 'camera_mount'], ['Surveillance type', 'surveillance_type']],
+      recordSourceFields: ['osm_id', 'source_url'],
+      statusOffText: 'Off · community-mapped ALPR locations · zoom 9+',
+      provenanceNote: 'This viewport query includes public OpenStreetMap features tagged as ALPR. Coverage and tagging vary by community and do not establish current operation.',
+    },
+    {
+      id: 'eff-atlas-surveillance',
+      name: 'EFF Atlas of Surveillance',
+      description: 'Documented law-enforcement surveillance technologies, grouped by agency jurisdiction rather than device location',
+      category: 'Cameras, traffic & public safety',
+      tags: ['police technology', 'surveillance', 'ALPR', 'drones', 'face recognition', 'body cameras', 'United States'],
+      staticDataUrl: '/datacenters/data/atlas-surveillance.json',
+      recordType: 'derived public inventory',
+      sourceUrl: 'https://atlasofsurveillance.org/',
+      sourceLabel: 'Electronic Frontier Foundation Atlas of Surveillance',
+      attribution: 'EFF Atlas of Surveillance, CC BY; U.S. Census Bureau',
+      geometry: 'point',
+      color: '#c68cff',
+      defaultPointRenderMode: 'gpu-splat',
+      scaleFields: [['technology_count', 'Technology types'], ['records', 'Atlas records']],
+      defaultSizeBy: 'technology_count',
+      focus: { center: [-98.6, 39.8], zoom: 3.4 },
+      minZoom: 3,
+      titleFields: ['agency', 'city', 'county'],
+      facts: [['Agency', 'agency'], ['City', 'city'], ['County', 'county'], ['State', 'state'], ['Technologies', 'technologies'], ['Vendors', 'vendors'], ['Technology types', 'technology_count'], ['Atlas records', 'records'], ['Point precision', 'location_precision']],
+      recordSourceFields: ['agency', 'source_url'],
+      statusOffText: 'Off · 10,036 agency-jurisdiction points · opt in',
+      provenanceNote: 'Atlas records document technology use by agencies, not individual device positions. Points are Census place or county centroids; state-level fallbacks are explicitly labeled.',
+    },
+    {
+      id: 'maryland-traffic-cameras',
+      name: 'Maryland traffic cameras',
+      description: 'Official Maryland roadway camera locations and public feed links',
+      category: 'Cameras, traffic & public safety',
+      tags: ['traffic cameras', 'CCTV', 'roads', 'Maryland CHART'],
+      service: 'https://mdgeodata.md.gov/imap/rest/services/Transportation/MD_TrafficCameras/FeatureServer/0',
+      sourceUrl: 'https://chart.maryland.gov/InteractiveMap/GetInteractiveMap',
+      sourceLabel: 'Maryland CHART traffic cameras',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#62d8ff',
+      focus: { center: [-76.7, 39.05], zoom: 7.2 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'location', 'county', 'feedID', 'url', 'lat', 'long'],
+      titleFields: ['location', 'feedID'],
+      facts: [['Location', 'location'], ['County', 'county'], ['Feed ID', 'feedID'], ['Latitude', 'lat'], ['Longitude', 'long']],
+      recordSourceFields: ['location', 'url'],
+    },
+    {
+      id: 'baltimore-fixed-speed-cameras',
+      name: 'Baltimore fixed speed cameras',
+      description: 'Official Baltimore City fixed speed-camera inventory',
+      category: 'Cameras, traffic & public safety',
+      tags: ['speed cameras', 'automated enforcement', 'school zones', 'Baltimore'],
+      service: 'https://egisdata.baltimorecity.gov/egis/rest/services/CityView/Fixed_Speed_Cameras/MapServer/0',
+      sourceUrl: 'https://egisdata.baltimorecity.gov/egis/rest/services/CityView/Fixed_Speed_Cameras/MapServer/0',
+      sourceLabel: 'Baltimore City EGIS Fixed Speed Cameras',
+      attribution: 'Baltimore City',
+      geometry: 'point',
+      color: '#ffb347',
+      focus: { center: [-76.6122, 39.2904], zoom: 11.2 },
+      minZoom: 9,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'address', 'direction', 'street', 'crossStree', 'intersecti', 'created_date', 'last_edited_date'],
+      titleFields: ['address', 'intersecti', 'street'],
+      facts: [['Address', 'address'], ['Direction', 'direction'], ['Street', 'street'], ['Cross street', 'crossStree'], ['Intersection', 'intersecti'], ['Last edited', 'last_edited_date'], ['Object ID', 'OBJECTID']],
+      statusOffText: 'Off · 80 official fixed speed-camera records',
+    },
+    {
+      id: 'baltimore-citiwatch-cameras',
+      name: 'Baltimore CitiWatch cameras',
+      description: 'Official Baltimore City public-safety CCTV camera infrastructure',
+      category: 'Cameras, traffic & public safety',
+      tags: ['CitiWatch', 'CCTV', 'public safety cameras', 'Baltimore'],
+      service: 'https://geodata.baltimorecity.gov/egis/rest/services/CityView/CitiWatchCamera/FeatureServer/0',
+      sourceUrl: 'https://geodata.baltimorecity.gov/egis/rest/services/CityView/CitiWatchCamera/FeatureServer/0',
+      sourceLabel: 'Baltimore City EGIS CitiWatch Cameras',
+      attribution: 'Baltimore City',
+      geometry: 'point',
+      color: '#2dd4bf',
+      focus: { center: [-76.6122, 39.2904], zoom: 11.2 },
+      minZoom: 9,
+      maxFeatures: 2000,
+      outFields: ['OBJECTID', 'CAM_NUMBER', 'CAM_LOCATION', 'created_date', 'last_edited_date'],
+      titleFields: ['CAM_LOCATION', 'CAM_NUMBER'],
+      facts: [['Camera number', 'CAM_NUMBER'], ['Location', 'CAM_LOCATION'], ['Last edited', 'last_edited_date'], ['Object ID', 'OBJECTID']],
+      statusOffText: 'Off · 861 official CitiWatch camera records',
+      provenanceNote: 'This is the City’s public CitiWatch infrastructure layer. It does not expose the private-camera partnership registry or its owner information.',
+    },
+    {
+      id: 'baltimore-red-light-cameras',
+      name: 'Baltimore red-light cameras',
+      description: 'Baltimore City red-light enforcement intersections from the official January 2025 location document',
+      category: 'Cameras, traffic & public safety',
+      tags: ['red-light cameras', 'automated enforcement', 'Baltimore'],
+      staticDataUrl: '/datacenters/data/enforcement-cameras.json',
+      sourceUrl: 'https://www.baltimorecity.gov/transportation',
+      sourceLabel: 'Baltimore City DOT automated enforcement',
+      attribution: 'Baltimore City Department of Transportation',
+      geometry: 'point',
+      color: '#ff5252',
+      focus: { center: [-76.6122, 39.2904], zoom: 11.2 },
+      minZoom: 9,
+      titleFields: ['location', 'camera_type'],
+      facts: [['Type', 'camera_type'], ['Intersection', 'location'], ['Direction', 'direction'], ['Jurisdiction', 'jurisdiction'], ['Location precision', 'location_status'], ['Official source date', 'source_date'], ['Coordinate method', 'coordinate_method']],
+      recordSourceFields: ['camera_type', 'source_url'],
+      statusOffText: 'Off · 14 documented red-light camera directions',
+      provenanceNote: 'Each record is an official directional intersection entry. Coordinates are geocoded intersection points rather than surveyed camera-pole positions.',
+    },
+    {
+      id: 'maryland-road-speeds',
+      name: 'Maryland live roadway speeds',
+      description: 'Current valid speed readings from Maryland CHART traffic sensors',
+      category: 'Cameras, traffic & public safety',
+      tags: ['traffic speed', 'road sensors', 'congestion', 'Maryland CHART'],
+      viewportDataUrl: '/api/map-data/chart/speeds',
+      sourceUrl: 'https://chart.maryland.gov/DataFeeds/GetDataFeeds',
+      sourceLabel: 'Maryland CHART traffic speed sensors',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#43e6a8',
+      scaleFields: [['speed_mph', 'Measured speed']],
+      defaultSizeBy: 'speed_mph',
+      focus: { center: [-76.7, 39.05], zoom: 8 },
+      minZoom: 7,
+      titleFields: ['description', 'name'],
+      facts: [['Road location', 'description'], ['Sensor', 'name'], ['Speed', 'speed_mph', ' mph'], ['Directions', 'directions'], ['Operating status', 'operating_status'], ['Owner', 'owner'], ['Last updated', 'last_updated']],
+      statusOffText: 'Off · live roadway sensor feed · opt in',
+      provenanceNote: 'CHART sensor readings are live operational data. Invalid sentinel speeds are removed before display; a missing speed is shown as unknown.',
+    },
+    {
+      id: 'maryland-road-incidents',
+      name: 'Maryland roadway incidents',
+      description: 'Current public roadway events reported by Maryland CHART',
+      category: 'Cameras, traffic & public safety',
+      tags: ['traffic incidents', 'closures', 'crashes', 'road work', 'Maryland CHART'],
+      viewportDataUrl: '/api/map-data/chart/incidents',
+      sourceUrl: 'https://chart.maryland.gov/InteractiveMap/GetInteractiveMap',
+      sourceLabel: 'Maryland CHART roadway events',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#ff9f43',
+      focus: { center: [-76.7, 39.05], zoom: 8 },
+      minZoom: 7,
+      titleFields: ['name', 'incident_type'],
+      facts: [['Event', 'name'], ['Type', 'incident_type'], ['Description', 'description'], ['County', 'county'], ['Direction', 'direction'], ['Lane status', 'lanes_status'], ['Road closed', 'closed'], ['Traffic alert', 'traffic_alert'], ['Alert text', 'traffic_alert_text'], ['Started', 'started_at'], ['Last updated', 'last_updated']],
+      statusOffText: 'Off · live public incident feed · opt in',
+      provenanceNote: 'This is a public transportation incident feed, not a dispatch system or a complete record of police activity. Participant and operational-detail fields are not exposed.',
+    },
+    {
+      id: 'maryland-police-road-activity',
+      name: 'Maryland police roadway activity',
+      description: 'CHART roadway events publicly categorized as police activity',
+      category: 'Cameras, traffic & public safety',
+      tags: ['police activity', 'roads', 'traffic incidents', 'Maryland CHART'],
+      viewportDataUrl: '/api/map-data/chart/incidents?kind=police',
+      sourceUrl: 'https://chart.maryland.gov/InteractiveMap/GetInteractiveMap',
+      sourceLabel: 'Maryland CHART roadway events',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#a98cff',
+      focus: { center: [-76.7, 39.05], zoom: 8 },
+      minZoom: 7,
+      titleFields: ['name', 'incident_type'],
+      facts: [['Event', 'name'], ['Type', 'incident_type'], ['Description', 'description'], ['County', 'county'], ['Direction', 'direction'], ['Lane status', 'lanes_status'], ['Started', 'started_at'], ['Last updated', 'last_updated']],
+      statusOffText: 'Off · current CHART police-activity events · opt in',
+      provenanceNote: 'This only shows roadway events that Maryland CHART currently labels police activity. It is not a comprehensive police-activity map and excludes participant and operational-detail fields.',
     },
     {
       id: 'baltimore-vacant-lots',
@@ -1480,6 +1688,15 @@
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+
+  function safeExternalUrl(value) {
+    try {
+      const url = new URL(String(value));
+      return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+    } catch (_error) {
+      return null;
+    }
+  }
 
   const known = (value, suffix = '') => value === null || value === undefined || value === ''
     ? '<span class="dc-unknown">Not publicly disclosed</span>'
@@ -4594,7 +4811,7 @@
         sizeBy: config.defaultSizeBy || 'none',
         iconScale: 1,
         brightness: 1,
-        pointRenderMode: 'points',
+        pointRenderMode: config.defaultPointRenderMode || 'points',
         colorTheme: defaultLineColorTheme(config),
         lineWidth: 1,
         lineWidthBy: defaultLineWidthBy(config),
@@ -4634,6 +4851,7 @@
 
   function renderLayerCardSources(config) {
     const sources = [[config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
+      .map(([label, href]) => [label, safeExternalUrl(href)])
       .filter(([label, href]) => label && href);
     return `<div class="dc-record-sources"><strong>Sources</strong><ul>${sources.map(([label, href]) => `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul></div>`;
   }
@@ -5187,6 +5405,43 @@
       state.abort?.abort();
       hideRemoteLayer(map, config);
       status.textContent = `Visible only from zoom ${number(range.min, 2)} through ${number(range.max, 2)}`;
+      return;
+    }
+    if (config.viewportDataUrl) {
+      const bounds = map.getBounds();
+      const precision = remoteRequestPrecision(zoom);
+      const boundsKey = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
+        .map((value) => Number(value).toFixed(precision)).join(',');
+      const requestKey = `${config.viewportDataUrl}|${boundsKey}`;
+      if (requestKey === state.requestKey && state.data) {
+        addRemoteLayer(map, config, state.data);
+        rehydrateRemoteLayerAfterStyleSettles(map, config);
+        return;
+      }
+      state.abort?.abort();
+      state.abort = new AbortController();
+      status.textContent = 'Querying current map view…';
+      const endpoint = new URL(config.viewportDataUrl, window.location.origin);
+      endpoint.searchParams.set('bbox', boundsKey);
+      try {
+        const response = await fetch(endpoint, { cache: 'no-store', signal: state.abort.signal });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || `HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        if (!state.enabled) return;
+        state.data = { ...data, features: (data.features || []).filter((feature) => feature.geometry) };
+        state.requestKey = requestKey;
+        addRemoteLayer(map, config, state.data);
+        rehydrateRemoteLayerAfterStyleSettles(map, config);
+        const timestamp = data.metadata?.generated_at;
+        const freshness = timestamp ? ` · source ${new Date(timestamp).toLocaleString('en-US')}` : '';
+        status.textContent = `${number(state.data.features.length)} features in current view${freshness}`;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        status.textContent = `${config.name} unavailable · ${error.message}`;
+      }
       return;
     }
     if (config.staticDataUrl) {
@@ -6414,8 +6669,9 @@
       ? [[properties[config.recordSourceFields[0]], properties[config.recordSourceFields[1]]]]
       : [];
     const sources = [...recordSource, [config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
+      .map(([label, url]) => [label, safeExternalUrl(url)])
       .filter(([label, url]) => label && url);
-    const recordType = config.staticDataUrl ? 'derived official inventory' : 'live official service';
+    const recordType = config.recordType || (config.staticDataUrl ? 'derived official inventory' : 'live public service');
     const provenanceNote = config.provenanceNote || (config.staticDataUrl
       ? 'This point was generated from the cited official boundary and transmission geometry. It is stored locally for fast display and reproducible review.'
       : 'This feature was queried on demand for the current map view and is not stored by this site.');
@@ -6571,6 +6827,11 @@
     const matchingDataCenters = matches.filter((record) => record.record_type === 'data_center');
     const dataCenterSizeFactors = pointScaleFactors(matchingDataCenters, layerFilters.datacenters.sizeBy);
     const dataCenterIconScale = normalizeIconScale(layerFilters.datacenters.iconScale);
+    const map = activeLayerContext?.map || null;
+    const cullToViewport = Boolean(map && records.length > LARGE_INVENTORY_MARKER_THRESHOLD);
+    const viewport = cullToViewport ? map.getBounds().pad(LARGE_INVENTORY_VIEW_PADDING) : null;
+    const recordInViewport = (record) => !viewport || !Number.isFinite(record.latitude) || !Number.isFinite(record.longitude)
+      || viewport.contains([record.longitude, record.latitude]);
     records.forEach((record) => {
       const marker = markerById.get(record.id);
       if (!marker) return;
@@ -6578,11 +6839,11 @@
       const size = 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1);
       marker.getElement().style.setProperty('--marker-size', `${size}px`);
       marker.getElement().dataset.renderSize = String(size);
-      marker.getElement().hidden = !matchedIds.has(record.id);
+      marker.getElement().hidden = !matchedIds.has(record.id) || !recordInViewport(record);
     });
     syncDataCenterMarkerZOrder();
     visibleDataCenterHoverEntries = matchingDataCenters
-      .filter((record) => Number.isFinite(record.latitude) && Number.isFinite(record.longitude) && markerById.has(record.id))
+      .filter((record) => Number.isFinite(record.latitude) && Number.isFinite(record.longitude) && markerById.has(record.id) && recordInViewport(record))
       .map((record) => ({
         record,
         size: 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1),
@@ -6794,7 +7055,7 @@
         if (sentimentFilter === 'unknown' && score !== null) return false;
       }
       if (powerScaleFilter !== 'all' && record.power_scale_class !== powerScaleFilter) return false;
-      const haystack = [record.name, record.operator, record.county, record.city, record.primary_technology, ...(record.technology_tags || [])]
+      const haystack = [record.name, record.operator, record.county, record.city, record.primary_technology, ...(record.location_tags || []), ...(record.technology_tags || [])]
         .filter(Boolean).join(' ').toLowerCase();
       if (textFilter && !haystack.includes(textFilter)) return false;
       if (activeTagFilters.length) {
@@ -6832,6 +7093,7 @@
       ...(record.record_type === 'data_center' && record.contestation_label ? [`Contestation: ${record.contestation_label}`] : []),
       ...(record.status_tags || []),
       ...(record.technology_tags || []),
+      ...(record.location_tags || []),
     ].flatMap(splitTagLabel);
     return labels.filter((label, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === label.toLowerCase()) === index);
   }
@@ -6908,7 +7170,13 @@
         ${renderFactGroup('Facility', [
           ['Operator', known(record.operator)],
           ['Owner', known(record.owner)],
+          ['Facility aliases', known(record.facility_alias_ids?.join(', '))],
           ['Address', known([record.street_address, record.city, record.state, record.postal_code].filter(Boolean).join(', '))],
+          ['Location tags', known(record.location_tags?.join(', '))],
+          ['Census state FIPS', known(record.census_state_fips)],
+          ['Census county FIPS', known(record.census_county_fips)],
+          ['Census place FIPS', known(record.census_place_fips)],
+          ['ISO region', known(record.iso_region)],
           ['Year built', Number.isInteger(record.year_built) ? `${record.year_built} · ${escapeHtml(record.year_built_basis)}` : `${known(record.year_built_status)} · ${escapeHtml(record.year_built_basis)}`],
           ['Development status', known(record.development_status)],
           ['Plan', known(record.plan_detail)],
@@ -6969,6 +7237,11 @@
         ${renderFactGroup('Plant profile', [
           ['Operator', known(record.operator)],
           ['County', known(record.county)],
+          ['Location tags', known(record.location_tags?.join(', '))],
+          ['Census state FIPS', known(record.census_state_fips)],
+          ['Census county FIPS', known(record.census_county_fips)],
+          ['Census place FIPS', known(record.census_place_fips)],
+          ['ISO region', known(record.iso_region)],
           ['Earliest operating year', Number.isInteger(record.year_built) ? `${record.year_built} · ${escapeHtml(record.year_built_basis)}` : known(record.year_built_status)],
           ['Generator status', known(record.development_status)],
           ['EIA status codes', known(record.generator_status_codes?.join(', '))],

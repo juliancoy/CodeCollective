@@ -92,6 +92,167 @@ function jsonResponse(payload, status = 200, headers = {}) {
   });
 }
 
+const PUBLIC_MAP_FEEDS = {
+  flock: "https://flocklocations.com/api/cameras/export?format=geojson",
+  chartIncidents: "https://chartexp1.sha.maryland.gov/CHARTExportClientService/getEventMapDataJSON.do",
+  chartSpeeds: "https://chartexp1.sha.maryland.gov/CHARTExportClientService/getTSSMapDataJSON.do",
+};
+
+function parseMapBbox(url, { maxArea = Infinity } = {}) {
+  const values = (url.searchParams.get("bbox") || "").split(",").map(Number);
+  if (values.length !== 4 || values.some((value) => !Number.isFinite(value))) return null;
+  const [west, south, east, north] = values;
+  if (west < -180 || east > 180 || south < -90 || north > 90 || west >= east || south >= north) return null;
+  if ((east - west) * (north - south) > maxArea) return null;
+  return values;
+}
+
+function pointInBbox(longitude, latitude, bbox) {
+  return Number.isFinite(longitude) && Number.isFinite(latitude)
+    && longitude >= bbox[0] && longitude <= bbox[2]
+    && latitude >= bbox[1] && latitude <= bbox[3];
+}
+
+async function fetchPublicMapJson(url, cacheTtl) {
+  const response = await fetch(url, {
+    headers: { accept: "application/json", "user-agent": "CodeCollective public map/1.0" },
+    cf: { cacheEverything: true, cacheTtl },
+  });
+  if (!response.ok) throw new Error(`Upstream returned HTTP ${response.status}`);
+  return response.json();
+}
+
+function mapFeedResponse(features, source, generatedAt = new Date().toISOString()) {
+  return jsonResponse({
+    type: "FeatureCollection",
+    metadata: { source, generated_at: generatedAt, feature_count: features.length },
+    features,
+  }, 200, { "cache-control": "public, max-age=60, s-maxage=300" });
+}
+
+async function handleFlockCameraMap(url) {
+  const bbox = parseMapBbox(url, { maxArea: 25 });
+  if (!bbox) return jsonResponse({ error: "bbox is invalid or too large; zoom in before requesting camera records" }, 400);
+  const data = await fetchPublicMapJson(PUBLIC_MAP_FEEDS.flock, 900);
+  const features = (data.features || []).filter((feature) => {
+    const [longitude, latitude] = feature.geometry?.coordinates || [];
+    return feature.geometry?.type === "Point" && pointInBbox(Number(longitude), Number(latitude), bbox);
+  }).map((feature) => ({
+    type: "Feature",
+    geometry: feature.geometry,
+    properties: {
+      id: feature.properties?.id,
+      address: feature.properties?.address,
+      city: feature.properties?.city,
+      state: feature.properties?.state,
+      camera_type: feature.properties?.camera_type,
+      mounted_on: feature.properties?.mounted_on,
+      verified: Boolean(feature.properties?.verified),
+      confirm_count: Number(feature.properties?.confirm_count) || 0,
+      reported_at: feature.properties?.reported_at,
+      source_url: feature.properties?.source_url,
+    },
+  }));
+  return mapFeedResponse(features, data.source || "https://flocklocations.com", data.generated);
+}
+
+function overpassFeature(element) {
+  const latitude = Number(element.lat ?? element.center?.lat);
+  const longitude = Number(element.lon ?? element.center?.lon);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  const tags = element.tags || {};
+  return {
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [longitude, latitude] },
+    properties: {
+      osm_id: `${element.type}/${element.id}`,
+      operator: tags.operator,
+      brand: tags.brand,
+      manufacturer: tags.manufacturer,
+      direction: tags.direction,
+      camera_mount: tags.camera_mount || tags.mounting,
+      surveillance_type: tags["surveillance:type"],
+      source_url: `https://www.openstreetmap.org/${element.type}/${element.id}`,
+    },
+  };
+}
+
+async function handleAlprMap(url) {
+  const bbox = parseMapBbox(url, { maxArea: 4 });
+  if (!bbox) return jsonResponse({ error: "bbox is invalid or too large; zoom in before requesting ALPR records" }, 400);
+  const [west, south, east, north] = bbox;
+  const query = `[out:json][timeout:20];node["man_made"="surveillance"]["surveillance:type"="ALPR"](${south},${west},${north},${east});out body qt;`;
+  const response = await fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded", "user-agent": "CodeCollective public map/1.0" },
+    body: new URLSearchParams({ data: query }),
+  });
+  if (!response.ok) throw new Error(`Overpass returned HTTP ${response.status}`);
+  const data = await response.json();
+  return mapFeedResponse((data.elements || []).map(overpassFeature).filter(Boolean), "OpenStreetMap Overpass API", data.osm3s?.timestamp_osm_base);
+}
+
+function chartPoint(record, properties) {
+  const latitude = Number(record.lat);
+  const longitude = Number(record.lon);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  return { type: "Feature", geometry: { type: "Point", coordinates: [longitude, latitude] }, properties };
+}
+
+async function handleChartMap(url, kind) {
+  const bbox = parseMapBbox(url);
+  if (!bbox) return jsonResponse({ error: "bbox must be west,south,east,north" }, 400);
+  const feedUrl = kind === "speeds" ? PUBLIC_MAP_FEEDS.chartSpeeds : PUBLIC_MAP_FEEDS.chartIncidents;
+  const data = await fetchPublicMapJson(feedUrl, kind === "speeds" ? 60 : 120);
+  const policeOnly = kind === "incidents" && url.searchParams.get("kind") === "police";
+  const features = (data.data || []).filter((record) => pointInBbox(Number(record.lon), Number(record.lat), bbox)).filter((record) => (
+    !policeOnly || String(record.incidentType).toLowerCase() === "police activity"
+  )).map((record) => {
+    if (kind === "speeds") {
+      const zones = (record.zones || []).filter((zone) => Number(zone.speed) >= 0 && Number(zone.speed) <= 120);
+      const speeds = zones.map((zone) => Number(zone.speed));
+      return chartPoint(record, {
+        id: record.id,
+        name: record.name,
+        description: record.description,
+        operating_status: record.opStatus,
+        owner: record.owningOrg,
+        speed_mph: speeds.length ? Math.round(speeds.reduce((sum, speed) => sum + speed, 0) / speeds.length) : null,
+        directions: zones.map((zone) => zone.direction).filter(Boolean).join(", "),
+        last_updated: record.lastUpdateTime,
+      });
+    }
+    return chartPoint(record, {
+      id: record.id,
+      name: record.name,
+      description: record.description,
+      incident_type: record.incidentType,
+      county: record.county,
+      direction: record.direction,
+      lanes_status: record.lanesStatus,
+      closed: Boolean(record.closed),
+      traffic_alert: Boolean(record.trafficAlert),
+      traffic_alert_text: record.trafficAlertTextMsg,
+      started_at: record.startDateTime,
+      last_updated: record.lastCachedDataUpdateTime,
+    });
+  }).filter(Boolean);
+  return mapFeedResponse(features, "Maryland CHART", data.lastCachedDataUpdateTime);
+}
+
+async function handlePublicMapData(request, url) {
+  if (request.method !== "GET" && request.method !== "HEAD") return jsonResponse({ error: "Method not allowed" }, 405);
+  try {
+    if (url.pathname === "/api/map-data/flock-cameras") return await handleFlockCameraMap(url);
+    if (url.pathname === "/api/map-data/alpr") return await handleAlprMap(url);
+    if (url.pathname === "/api/map-data/chart/incidents") return await handleChartMap(url, "incidents");
+    if (url.pathname === "/api/map-data/chart/speeds") return await handleChartMap(url, "speeds");
+    return jsonResponse({ error: "Map feed not found" }, 404);
+  } catch (error) {
+    return jsonResponse({ error: `Public map feed unavailable: ${error.message}` }, 502);
+  }
+}
+
 function getRangeContentLength(range) {
   if (!range || typeof range.offset !== "number" || typeof range.length !== "number") {
     return null;
@@ -422,7 +583,7 @@ export default {
       return Response.redirect(url.toString(), 308);
     }
 
-    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels"))) {
+    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data"))) {
       return new Response(null, {
         status: 204,
         headers: {
@@ -443,6 +604,10 @@ export default {
 
     if (pathMatchesPrefix(path, "/api/chat")) {
       return proxyRequest(request, env.CHAT_API_ORIGIN, { stripPrefix: "/api/chat" });
+    }
+
+    if (pathMatchesPrefix(path, "/api/map-data")) {
+      return handlePublicMapData(request, url);
     }
 
     if (path === "/api/jobs/meta") {

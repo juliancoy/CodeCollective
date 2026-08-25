@@ -4,6 +4,7 @@ import json
 import math
 import re
 import struct
+import subprocess
 from pathlib import Path
 
 
@@ -41,10 +42,15 @@ def test_datacenters_share_a_complete_flat_schema():
     expected = set(records[0])
     for record in records:
         assert set(record) == expected
+        assert isinstance(record["facility_alias_ids"], list)
         assert record["record_type"] == "data_center"
         assert 37.8 <= record["latitude"] <= 39.8
         assert -79.6 <= record["longitude"] <= -75.0
         assert record["state"] == "MD"
+        assert record["location_tags"]
+        assert record["census_state_fips"]
+        assert record["census_county_fips"]
+        assert record["iso_region"] in ("PJM", None)
         assert record["public_sentiment_score"] in (-2, -1, 0, 1, 2, None)
         assert record["sentiment_confidence"] in ("high", "medium", "low", "insufficient")
         if record["public_sentiment_score"] is None:
@@ -180,15 +186,15 @@ def test_hover_inspector_renders_operational_finance_panel():
 
 def test_infrastructure_is_one_flat_tagged_inventory():
     records = infrastructure()
-    assert len(records) == 242
+    assert len(records) == 238
     assert {record["record_type"] for record in records} == {"data_center", "power_plant"}
-    assert len(infrastructure("data_center")) == 33
+    assert len(infrastructure("data_center")) == 29
     assert len(infrastructure("power_plant")) == 209
     assert all(record["technology_tags"] for record in records)
     assert all(len(tags := record["technology_tags"]) == len(set(tags)) for record in records)
+    assert all(record["location_tags"] for record in records)
     assert not (DATA / "datacenters.json").exists()
     assert not (DATA / "power-plants.json").exists()
-
     by_id = {record["id"]: record for record in records}
     assert {
         "aligned-iad04-frederick",
@@ -213,18 +219,39 @@ def test_infrastructure_is_one_flat_tagged_inventory():
     ]
 
 
+def test_nationwide_eia_generator_uses_each_plant_state():
+    script = (ROOT / "datacenters" / "generate_datacenter_energy_data.py").read_text()
+    assert 'plant_state = str(plant["State"]).strip().upper()' in script
+    assert '"state": plant_state' in script
+    assert '"state": args.state' not in script
+
+
+def test_curated_infrastructure_refresh_is_idempotent(tmp_path):
+    output = tmp_path / "infrastructure.json"
+    output.write_bytes((DATA / "infrastructure.json").read_bytes())
+    command = [
+        "python3",
+        str(ROOT / "datacenters" / "generate_datacenter_energy_data.py"),
+        "--curated-only",
+        "--output",
+        str(output),
+    ]
+    subprocess.run(command, cwd=ROOT, check=True)
+    first = output.read_bytes()
+    subprocess.run(command, cwd=ROOT, check=True)
+    assert output.read_bytes() == first
+
+
 def test_datacentermap_baltimore_directory_listings_are_covered():
     by_id = {record["id"]: record for record in infrastructure("data_center")}
     expected_ids = {
-        "ainet-one-market-center-baltimore",
+        "databank-bwi1-baltimore",
         "tierpoint-baltimore-bal",
         "tierpoint-baltimore-bwi",
         "expedient-owings-mills",
         "cogent-elkridge",
         "expedient-tide-point",
         "ainet-cybernap-glen-burnie",
-        "databank-bwi1-baltimore",
-        "crown-castle-baltimore",
         "databank-111-market-place",
         "infradms-bal01-baltimore",
         "amazon-cronridge-owings-mills",
@@ -232,8 +259,6 @@ def test_datacentermap_baltimore_directory_listings_are_covered():
         "comcast-nottingham",
         "gi-partners-eternal-rings-laurel",
         "gi-partners-sandy-farm-severn",
-        "lumen-baltimore",
-        "candler-building-baltimore",
     }
     assert expected_ids <= set(by_id)
     for record_id in expected_ids:
@@ -243,6 +268,14 @@ def test_datacentermap_baltimore_directory_listings_are_covered():
     assert by_id["infradms-bal01-baltimore"]["reported_power_capacity_mw"] == 0.65
     assert by_id["woodlawn-drive-1500-proposal"]["reported_power_capacity_mw"] == 150
     assert by_id["databank-111-market-place"]["street_address"] == "111 Market Place"
+    assert "collapsed duplicate tenant/provider listings" in by_id["databank-bwi1-baltimore"]["notes"].lower()
+    assert "collapsed duplicate tenant/provider listings" in by_id["databank-111-market-place"]["notes"].lower()
+    assert set(by_id["databank-bwi1-baltimore"]["facility_alias_ids"]) == {
+        "ainet-one-market-center-baltimore", "lumen-baltimore",
+    }
+    assert set(by_id["databank-111-market-place"]["facility_alias_ids"]) == {
+        "candler-building-baltimore", "crown-castle-baltimore",
+    }
 
     for facility_id in (
         "cogent-elkridge",
@@ -255,25 +288,14 @@ def test_datacentermap_baltimore_directory_listings_are_covered():
         assert facility_id in by_id
 
 
-def test_statewide_colocation_audit_keeps_directory_listings_distinct_from_buildings():
+def test_statewide_colocation_audit_deduplicates_physical_facilities():
     centers = infrastructure("data_center")
     addresses = [
         (record["street_address"] or "").lower().replace("street", "st").strip()
         for record in centers
     ]
-    assert addresses.count("300 west lexington st") == 3
-    assert addresses.count("111 market place") == 3
-    assert all(
-        "retained" in (record.get("notes") or "").lower()
-        for record in centers
-        if record["id"] in {
-            "ainet-one-market-center-baltimore",
-            "lumen-baltimore",
-            "crown-castle-baltimore",
-            "databank-111-market-place",
-            "candler-building-baltimore",
-        }
-    )
+    assert addresses.count("300 west lexington st") == 1
+    assert addresses.count("111 market place") == 1
     cogent = next(record for record in centers if record["id"] == "cogent-elkridge")
     assert cogent["street_address"] == "6050 Race Road"
     assert cogent["reported_power_capacity_mw"] == 7.5
@@ -287,6 +309,8 @@ def test_every_entity_has_source_backed_year_and_status_metadata():
         "year_built", "year_built_status", "year_built_basis",
         "development_status", "permit_status", "air_permit_status", "legal_status",
         "status_tags", "year_built_source_ids", "status_source_ids",
+        "census_state_fips", "census_county_fips", "census_place_fips",
+        "iso_region", "iso_zone", "location_tags",
     }
     for record in infrastructure():
         assert required <= set(record), record["id"]
@@ -297,6 +321,7 @@ def test_every_entity_has_source_backed_year_and_status_metadata():
         assert record["air_permit_status"]
         assert record["legal_status"]
         assert record["status_tags"]
+        assert record["location_tags"]
         assert set(record["year_built_source_ids"]) <= source_ids
         assert set(record["status_source_ids"]) <= source_ids
 
@@ -1728,6 +1753,70 @@ def test_worldsim_live_layers_are_lazy_viewport_queries_without_local_downloads(
     assert "function refreshRemoteLayers(map)" in script
     assert "function findRemoteHoverFeature(map, point, requireHover = true)" in script
     assert "remoteLayerStates.get(config.id)?.enabled" in script
+
+
+def test_camera_and_public_safety_layers_are_opt_in_and_source_labeled():
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    for layer_id in (
+        "community-flock-cameras", "osm-alpr-cameras", "eff-atlas-surveillance",
+        "maryland-traffic-cameras", "baltimore-fixed-speed-cameras",
+        "baltimore-citiwatch-cameras", "baltimore-red-light-cameras",
+        "maryland-road-speeds", "maryland-road-incidents", "maryland-police-road-activity",
+    ):
+        assert f"id: '{layer_id}'" in script
+    assert "Cameras, traffic & public safety" in script
+    assert "community-reported locations · opt in" in script
+    assert "community-mapped ALPR locations · zoom 9+" in script
+    assert "Participant and operational-detail fields are not exposed" in script
+    assert "viewportDataUrl: '/api/map-data/flock-cameras'" in script
+    assert "viewportDataUrl: '/api/map-data/alpr'" in script
+    assert "MD_TrafficCameras/FeatureServer/0" in script
+    assert "CityView/Fixed_Speed_Cameras/MapServer/0" in script
+    assert "CityView/CitiWatchCamera/FeatureServer/0" in script
+    assert "does not expose the private-camera partnership registry" in script
+    assert "new URL(config.viewportDataUrl, window.location.origin)" in script
+    assert "endpoint.searchParams.set('bbox', boundsKey)" in script
+    assert "safeExternalUrl(url)" in script
+
+
+def test_public_map_worker_is_an_allowlisted_normalizing_proxy():
+    worker = (ROOT / "cloudflare" / "worker.js").read_text()
+    assert 'url.pathname === "/api/map-data/flock-cameras"' in worker
+    assert 'url.pathname === "/api/map-data/alpr"' in worker
+    assert 'url.pathname === "/api/map-data/chart/incidents"' in worker
+    assert 'url.pathname === "/api/map-data/chart/speeds"' in worker
+    assert "parseMapBbox(url, { maxArea: 4 })" in worker
+    assert 'tags["surveillance:type"]' in worker
+    assert "Number(zone.speed) >= 0 && Number(zone.speed) <= 120" in worker
+    assert 'return await handleAlprMap(url)' in worker
+    assert "record.participants" not in worker
+    assert "record.other" not in worker
+    assert "parseMapBbox(url, { maxArea: 25 })" in worker
+
+
+def test_red_light_camera_inventory_uses_official_directional_intersections():
+    data = load("enforcement-cameras.json")
+    assert data["type"] == "FeatureCollection"
+    assert data["metadata"]["feature_count"] == 14
+    assert len(data["features"]) == 14
+    red_lights = [feature for feature in data["features"] if feature["properties"]["camera_type"] == "red-light camera"]
+    assert len(red_lights) == 14
+    assert all(feature["properties"]["location_status"] == "official intersection point" for feature in red_lights)
+    assert all(-76.8 < feature["geometry"]["coordinates"][0] < -76.4 for feature in data["features"])
+    assert all(39.1 < feature["geometry"]["coordinates"][1] < 39.5 for feature in data["features"])
+
+
+def test_atlas_surveillance_inventory_is_agency_level_and_precision_labeled():
+    data = load("atlas-surveillance.json")
+    assert data["type"] == "FeatureCollection"
+    assert data["metadata"]["license"] == "CC BY"
+    assert data["metadata"]["source_record_count"] >= 15_000
+    assert data["metadata"]["agency_feature_count"] == len(data["features"])
+    assert len(data["features"]) >= 6_000
+    assert all(feature["properties"]["agency"] for feature in data["features"])
+    assert all(feature["properties"]["location_precision"] in {
+        "Census place centroid", "Census county centroid", "derived state overview point",
+    } for feature in data["features"])
 
 
 def test_zoning_crime_and_grid_layers_follow_live_official_services():

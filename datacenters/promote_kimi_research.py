@@ -34,6 +34,24 @@ SOURCE_ARRAY_BY_FACET = {
 }
 
 
+def normalize_text(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", str(value).lower()).strip()
+
+
+def physical_facility_key(record: dict[str, Any]) -> str:
+    address = normalize_text(record.get("street_address") or "")
+    city = normalize_text(record.get("city") or "")
+    state = normalize_text(record.get("state") or "")
+    postal_code = normalize_text(record.get("postal_code") or "")
+    if address or city or state or postal_code:
+        return "|".join([address, city, state, postal_code])
+    latitude = record.get("latitude")
+    longitude = record.get("longitude")
+    if isinstance(latitude, (int, float)) and isinstance(longitude, (int, float)):
+        return f"{latitude:.5f}|{longitude:.5f}"
+    return str(record.get("id"))
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--audit", type=Path, default=DEFAULT_AUDIT)
@@ -103,6 +121,15 @@ def validate_candidates(
         for field in ("status_source_ids", "sentiment_source_ids", "profile_source_ids", "source_ids"):
             if field in record and not set(record.get(field) or []) <= source_id_set:
                 raise ValueError(f"{record['id']} has unresolved IDs in {field}")
+    seen_facilities: dict[str, str] = {}
+    for record in inventory:
+        if record.get("record_type") != "data_center":
+            continue
+        key = physical_facility_key(record)
+        prior = seen_facilities.get(key)
+        if prior and prior != record["id"]:
+            raise ValueError(f"duplicate physical facility detected: {prior} and {record['id']}")
+        seen_facilities[key] = record["id"]
 
 
 def main() -> int:
