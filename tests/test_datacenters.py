@@ -234,11 +234,13 @@ def test_nationwide_power_plant_scope_is_visible_and_maryland_is_default():
     assert '<option value="US">Nationwide</option>' in page
     assert "NATIONWIDE_POWER_PLANTS_URL" in script
     assert "nationwidePowerPlantsPromise ||= fetch" in script
-    assert "Maryland remains the default after reload" in script
+    assert "powerPlantScope: 'MD'" in script
+    assert "if (parameters.has('powerScope')) state.powerPlantScope" in script
+    assert "url.searchParams.set('powerScope', state.powerPlantScope)" in script
+    assert "await applyPowerPlantScope(powerPlantScope)" in script
     assert "payload.features.length !== payload.metadata?.record_count" in script
     assert "id: 'nationwide-eia-power-plants'" in script
     assert "hiddenControl: true" in script
-    assert "if (powerPlantScope !== 'MD') return" in script
     assert "const hoverEnabled = config.hiddenControl" in script
     assert "if (record.record_type === 'power_plant' && powerPlantScope !== 'MD') return false" in script
     assert ".getBounds().pad(" not in script
@@ -1349,7 +1351,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260824-national-power" in page
+    assert "20260824-national-power-state" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -1677,7 +1679,7 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
     assert "Power estimates JSON" in page
     assert "not utility-metered county load" in page
     assert "not utility-metered county load or coincident peak demand" in page
-    assert "20260824-national-power" in page
+    assert "20260824-national-power-state" in page
     assert {
         "eia-retail-sales-md-residential-2024",
         "eia-retail-sales-md-all-sectors-2024",
@@ -2289,7 +2291,7 @@ def test_all_map_selections_persist_to_storage_and_shareable_query_parameters():
     assert "url.searchParams.delete(COMPRESSED_STATE_QUERY_PARAM)" in script
     assert "url.searchParams.delete(COMPACT_STATE_QUERY_PARAM)" in script
     assert "localStorage.setItem(UI_STATE_STORAGE_KEY" in script
-    for parameter in ("theme", "layers", "hover", "q", "z", "o", "filters", "animation"):
+    for parameter in ("theme", "powerScope", "layers", "hover", "q", "z", "o", "filters", "animation"):
         assert f"url.searchParams.set('{parameter}'" in script
     assert "parameters.has('layers')" in script
     assert "parameters.has('hover')" in script
