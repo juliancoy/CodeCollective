@@ -67,6 +67,144 @@ def wait_for_map_ready(driver: webdriver.Remote) -> None:
     )
 
 
+def verify_nationwide_datacenter_layer(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    layer_id = "openstreetmap-us-data-centers"
+    source_id = f"remote-{layer_id}"
+    point_layer_id = f"{source_id}-point"
+    card = driver.find_element(By.CSS_SELECTOR, f'[data-layer-preview="{layer_id}"]')
+    if not card.is_displayed() or "OpenStreetMap U.S. data centers" not in card.text:
+        raise AssertionError("nationwide data-center source card was not visible beside the Maryland inventory")
+
+    set_checkbox(driver, f"show-{layer_id}", True)
+    status = WebDriverWait(driver, 45).until(
+        lambda d: (
+            text if "1,913 features" in (text := d.find_element(By.ID, f"status-{layer_id}").text) else None
+        )
+    )
+    diagnostics = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        const map = window.__codeCollectiveDatacenterMap;
+        fetch('/datacenters/data/data-centers-openstreetmap-us.json', {cache: 'no-store'})
+          .then((response) => response.json())
+          .then((data) => {
+            const layers = new URL(location.href).searchParams.get('layers')?.split(',') || [];
+            done({
+              checkbox: document.getElementById(arguments[1]).checked,
+              featureCount: data?.features?.length || 0,
+              metadataCount: data?.metadata?.record_count || 0,
+              locatedStateCount: data?.metadata?.located_state_count || 0,
+              sourceTimestamp: data?.metadata?.source_timestamp || '',
+              queryEnabled: layers.includes(arguments[2]),
+              pointLayerVisible: map.getLayoutProperty(arguments[3], 'visibility'),
+              sourceFeatureCount: map.querySourceFeatures(arguments[0]).length,
+              stateCount: Object.keys(data?.metadata?.state_counts || {}).length,
+              marylandCount: data?.metadata?.state_counts?.MD || 0
+            });
+          }).catch((error) => done({error: String(error)}));
+        """,
+        source_id,
+        f"show-{layer_id}",
+        layer_id,
+        point_layer_id,
+    )
+    expected = {
+        "checkbox": True,
+        "featureCount": 1913,
+        "metadataCount": 1913,
+        "locatedStateCount": 1913,
+        "queryEnabled": True,
+        "pointLayerVisible": "visible",
+        "marylandCount": 13,
+    }
+    for key, value in expected.items():
+        if diagnostics.get(key) != value:
+            raise AssertionError(f"nationwide data-center diagnostics failed for {key}: {diagnostics}")
+    if diagnostics["stateCount"] < 45 or not diagnostics["sourceTimestamp"].startswith("2026-08-27"):
+        raise AssertionError(f"nationwide data-center geography metadata was incomplete: {diagnostics}")
+
+    current_url = driver.current_url
+    driver.execute_script("localStorage.removeItem('codecollective.datacenters.ui-state.v1')")
+    driver.get(current_url)
+    wait_for_map_ready(driver)
+    install_instrumentation(driver)
+    reloaded = WebDriverWait(driver, 45).until(
+        lambda d: (
+            {
+                "status": d.find_element(By.ID, f"status-{layer_id}").text,
+                "visibility": d.execute_script(
+                    "return window.__codeCollectiveDatacenterMap.getLayoutProperty(arguments[0], 'visibility')",
+                    point_layer_id,
+                ),
+            }
+            if d.find_element(By.ID, f"show-{layer_id}").is_selected()
+            and "1,913 features" in d.find_element(By.ID, f"status-{layer_id}").text
+            and d.execute_script("return !!window.__codeCollectiveDatacenterMap.getLayer(arguments[0])", point_layer_id)
+            else None
+        )
+    )
+
+    driver.find_element(By.CSS_SELECTOR, f'[data-layer-locate="{layer_id}"]').click()
+    extent = WebDriverWait(driver, 15).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            if (map.isMoving()) return null;
+            return {center: map.getCenter().toArray(), zoom: map.getZoom(), rendered: map.queryRenderedFeatures({layers: [arguments[0]]}).length};
+            """,
+            point_layer_id,
+        )
+    )
+    if not (3 <= extent["zoom"] <= 3.5 and extent["rendered"] > 500):
+        raise AssertionError(f"nationwide locate/render acceptance failed: {extent}")
+
+    hover_point = driver.execute_script(
+        """
+        const map = window.__codeCollectiveDatacenterMap;
+        const coordinate = [-77.0291491, 38.9028879];
+        map.jumpTo({center: coordinate, zoom: 16});
+        const point = map.project(coordinate);
+        return {x: point.x, y: point.y};
+        """
+    )
+    if not hover_point:
+        raise AssertionError("known nationwide OpenStreetMap record was absent")
+    dispatch_hover(driver, hover_point["x"], hover_point["y"])
+    inspector = WebDriverWait(driver, 15).until(
+        lambda d: d.execute_script(
+            """
+            const detail = document.getElementById('record-detail');
+            if (detail.querySelector('h2')?.textContent?.trim() !== 'CoreSite DC1') return null;
+            return {
+              title: detail.querySelector('h2').textContent.trim(),
+              type: detail.querySelector('.dc-type')?.textContent?.trim() || '',
+              text: detail.textContent,
+              links: [...detail.querySelectorAll('.dc-record-sources a')].map((link) => ({label: link.textContent.trim(), href: link.href}))
+            };
+            """
+        )
+    )
+    if "community-mapped facility record" not in inspector["type"]:
+        raise AssertionError(f"nationwide inspector did not identify its record type: {inspector}")
+    if "reproducible mapped inventory" not in inspector["text"] or "Census state FIPS" not in inspector["text"]:
+        raise AssertionError(f"nationwide inspector omitted geography or coverage provenance: {inspector}")
+    links = {item["label"]: item["href"] for item in inspector["links"]}
+    if links.get("OpenStreetMap") != "https://www.openstreetmap.org/node/751881301":
+        raise AssertionError(f"nationwide inspector did not link the exact OSM record: {links}")
+    if "OpenStreetMap contributors" not in links or "U.S. Census Bureau TIGERweb state boundaries" not in links:
+        raise AssertionError(f"nationwide inspector did not expose both source names: {links}")
+
+    screenshot = save_screenshot(driver, screenshot_dir, "datacenters-openstreetmap-us-layer.png")
+    return {
+        "status": status,
+        "diagnostics": diagnostics,
+        "url_reload": reloaded,
+        "extent": extent,
+        "inspector": {"title": inspector["title"], "type": inspector["type"], "links": inspector["links"]},
+        "screenshot": str(screenshot),
+    }
+
+
 def install_instrumentation(driver: webdriver.Remote) -> None:
     driver.execute_script(
         """
@@ -2411,6 +2549,18 @@ def run(args: argparse.Namespace) -> int:
             report_path.write_text(json.dumps(report, indent=2))
             print(json.dumps(report, indent=2))
             return 0
+        if args.nationwide_datacenters_only:
+            report = {
+                "base_url": args.base_url,
+                "nationwide_data_centers": step(
+                    "nationwide data centers",
+                    lambda: verify_nationwide_datacenter_layer(driver, screenshot_dir),
+                ),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
         if args.line_width_only:
             report = {
                 "base_url": args.base_url,
@@ -2585,6 +2735,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--glow-only", action="store_true", help="Verify the data-center contestation glow, then exit.")
     parser.add_argument("--power-webgl-only", action="store_true", help="Verify the antialiased WebGL power-plant bolts, then exit.")
     parser.add_argument("--international-only", action="store_true", help="Verify separate EIA, WRI, and NACEI layers plus worldwide instanced animation, then exit.")
+    parser.add_argument("--nationwide-datacenters-only", action="store_true", help="Verify the source-separated nationwide OpenStreetMap data-center layer, URL reload, extent, and provenance, then exit.")
     parser.add_argument("--line-width-only", action="store_true", help="Verify line-layer width controls, then exit.")
     parser.add_argument("--point-splat-only", action="store_true", help="Verify point-layer GPU Splat density rendering, then exit.")
     parser.add_argument("--projected-demand-only", action="store_true", help="Verify projected demand for unbuilt data centers, then exit.")

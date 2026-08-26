@@ -5,6 +5,7 @@
     sources: '/datacenters/data/sources.json',
     datacenterNews: '/datacenters/data/datacenter-news.json',
   };
+  const NATIONWIDE_DATACENTERS_URL = '/datacenters/data/data-centers-openstreetmap-us.json';
   const NATIONWIDE_POWER_PLANTS_URL = '/datacenters/data/power-plants-us.json';
   const GLOBAL_POWER_PLANTS_URL = '/datacenters/data/power-plants-global.json';
   const NACEI_POWER_PLANTS_URL = '/datacenters/data/power-plants-nacei.json';
@@ -187,7 +188,7 @@
     ...Object.fromEntries(BASE_LAYER_CONFIGS.map((config) => [config.id, config])),
     datacenters: {
       id: 'datacenters',
-      name: 'Data centers',
+      name: 'Maryland curated data centers',
       description: 'Documented Maryland campuses, facilities, and proposals in the project inventory.',
       category: 'Facility inventory',
       sourceUrl: '/datacenters/data/infrastructure.json',
@@ -278,6 +279,39 @@
     },
   };
   const REMOTE_LAYERS = [
+    {
+      id: 'openstreetmap-us-data-centers',
+      name: 'OpenStreetMap U.S. data centers',
+      description: 'Nationwide mapped facilities matching documented OpenStreetMap data-center tags',
+      category: 'Facility inventory',
+      tags: ['data centers', 'OpenStreetMap', 'nationwide', 'United States', 'OSM', 'facilities'],
+      staticDataUrl: NATIONWIDE_DATACENTERS_URL,
+      sourceUrl: 'https://www.openstreetmap.org/copyright',
+      sourceLabel: 'OpenStreetMap contributors',
+      attribution: '© OpenStreetMap contributors · ODbL',
+      geometry: 'point',
+      color: '#ff8a3d',
+      minZoom: 0,
+      titleFields: ['name', 'operator'],
+      recordSourceFields: ['source_name', 'osm_url'],
+      recordType: 'community-mapped facility record',
+      facts: [
+        ['Operator', 'operator'], ['Address', 'street_address'], ['City', 'city'], ['County', 'county'],
+        ['State', 'state_name'], ['State code', 'state'], ['Postal code', 'postal_code'],
+        ['Census state FIPS', 'census_state_fips'], ['Coordinates', 'coordinate_method'],
+        ['Latitude', 'latitude'], ['Longitude', 'longitude'], ['OSM element type', 'osm_type'],
+        ['OSM element ID', 'osm_id'], ['Mapped tags', 'facility_tags'], ['Location tags', 'location_tags'],
+        ['Source snapshot', 'source_snapshot_at'],
+      ],
+      additionalSources: [[
+        'U.S. Census Bureau TIGERweb state boundaries',
+        'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/0',
+      ]],
+      provenanceNote: 'This layer contains every U.S.-boundary feature returned in the stated OpenStreetMap snapshot for the documented telecom, building, and industrial data-center tags. OpenStreetMap is community-maintained, so this is a reproducible mapped inventory rather than a claim that every private or unmapped facility is present.',
+      statusOffText: 'Off · 1,913 mapped U.S. features · OpenStreetMap snapshot 2026-08-27',
+      focus: { center: [-98.5, 39.5], zoom: 3.25 },
+      featuredControl: true,
+    },
     {
       id: 'nationwide-eia-power-plants',
       name: 'Nationwide EIA power plants',
@@ -1584,7 +1618,7 @@
       'baltimore-vacants-parcels',
     ],
     hover: [
-      'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
+      'datacenters', 'openstreetmap-us-data-centers', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
       'esri-3d-buildings', 'maryland-state-boundary', 'maryland-county-boundaries',
       'dhcd-multifamily', 'dhcd-qct', 'dhcd-just-communities', 'mdp-generalized-zoning',
       'baltimore-city-zoning', 'baltimore-nibrs-crime', 'historic-properties',
@@ -5100,7 +5134,7 @@
 
   function setupRemoteLayerControls(map) {
     const container = document.getElementById('remote-layer-controls');
-    container.innerHTML = REMOTE_LAYERS.map((config) => `
+    container.innerHTML = REMOTE_LAYERS.filter((config) => !config.featuredControl).map((config) => `
       <div class="dc-layer-option dc-layer-option--remote" data-layer-preview="${escapeHtml(config.id)}"${config.hiddenControl ? ' hidden' : ''}>
         <div class="dc-layer-toprow">
           <span class="dc-layer-name"><strong>${escapeHtml(config.name)}</strong><small>${escapeHtml(config.description)}</small></span>
@@ -6949,6 +6983,15 @@
 
   function displayRemoteValue(value, field) {
     if (value === null || value === undefined || String(value).trim() === '') return known(null);
+    if (Array.isArray(value)) return escapeHtml(value.join(', '));
+    if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return escapeHtml(parsed.join(', '));
+      } catch (_error) {
+        // Render non-JSON bracketed source text unchanged.
+      }
+    }
     if (field === 'UPDATEYR' && /^\d{4}/.test(String(value))) return escapeHtml(String(value).slice(0, 4));
     if (typeof value === 'number' && value > 100000000000) {
       return escapeHtml(new Date(value).toLocaleDateString('en-US'));

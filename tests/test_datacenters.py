@@ -257,6 +257,25 @@ def test_nationwide_power_plant_scope_is_visible_and_maryland_is_default():
     assert ".getBounds().pad(" not in script
 
 
+def test_nationwide_openstreetmap_datacenters_are_a_visible_source_separated_layer():
+    page = (ROOT / "datacenters.html").read_text()
+    script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
+    assert "<strong>Maryland curated data centers</strong>" in page
+    assert "<strong>OpenStreetMap U.S. data centers</strong>" in page
+    assert 'id="show-openstreetmap-us-data-centers" type="checkbox"' in page
+    assert 'id="hover-openstreetmap-us-data-centers" type="checkbox" checked' in page
+    assert 'id="status-openstreetmap-us-data-centers"' in page
+    assert "NATIONWIDE_DATACENTERS_URL" in script
+    assert "id: 'openstreetmap-us-data-centers'" in script
+    assert "sourceLabel: 'OpenStreetMap contributors'" in script
+    assert "recordSourceFields: ['source_name', 'osm_url']" in script
+    assert "featuredControl: true" in script
+    assert "REMOTE_LAYERS.filter((config) => !config.featuredControl)" in script
+    selenium = (ROOT / "datacenters" / "scripts" / "selenium-datacenters-smoke.py").read_text()
+    assert "--nationwide-datacenters-only" in selenium
+    assert "verify_nationwide_datacenter_layer" in selenium
+
+
 def test_international_power_plant_inventories_are_separate_compact_and_provenanced():
     global_path = DATA / "power-plants-global.json"
     global_data = load("power-plants-global.json")
@@ -310,6 +329,47 @@ def test_nationwide_power_plant_inventory_is_complete_compact_and_geotagged():
         assert record["location_tags"]
         assert -180 <= longitude <= -60
         assert 15 <= latitude <= 75
+
+
+def test_nationwide_openstreetmap_datacenter_inventory_is_compact_geotagged_and_provenanced():
+    path = DATA / "data-centers-openstreetmap-us.json"
+    data = load("data-centers-openstreetmap-us.json")
+    features = data["features"]
+    metadata = data["metadata"]
+    assert data["type"] == "FeatureCollection"
+    assert metadata["inventory"] == "OpenStreetMap U.S. mapped data centers"
+    assert metadata["record_count"] == len(features) >= 1_900
+    assert metadata["source_license"] == "Open Database License (ODbL) 1.0"
+    assert metadata["attribution"] == "OpenStreetMap contributors"
+    assert metadata["located_state_count"] == len(features)
+    assert metadata["state_counts"]["MD"] >= 10
+    assert len({feature["id"] for feature in features}) == len(features)
+    assert path.stat().st_size < 5 * 1024 * 1024
+    for feature in features:
+        record = feature["properties"]
+        longitude, latitude = feature["geometry"]["coordinates"]
+        assert record["record_type"] == "data_center"
+        assert record["source_name"] == "OpenStreetMap"
+        assert record["country_code"] == "US"
+        assert record["state"]
+        assert record["census_state_fips"]
+        assert record["location_tags"]
+        assert record["facility_tags"]
+        assert record["osm_url"].startswith("https://www.openstreetmap.org/")
+        assert -180 <= longitude <= -60
+        assert 15 <= latitude <= 75
+
+
+def test_nationwide_datacenter_generator_uses_publishable_osm_and_census_sources():
+    script = (ROOT / "datacenters" / "generate_nationwide_datacenter_data.py").read_text()
+    assert 'area["ISO3166-1"="US"]' in script
+    assert '"telecom"~"^data_cent(er|re)$"' in script
+    assert '"building"~"^data_cent(er|re)$"' in script
+    assert '"industrial"~"^data_cent(er|re)$"' in script
+    assert "TIGERweb/State_County/MapServer/0/query" in script
+    assert "Open Database License (ODbL) 1.0" in script
+    assert "--overpass-json" in script
+    assert "--census-states-json" in script
 
 
 def test_nationwide_generator_uses_final_eia_and_census_sources():
