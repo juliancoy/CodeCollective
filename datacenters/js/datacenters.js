@@ -6,6 +6,8 @@
     datacenterNews: '/datacenters/data/datacenter-news.json',
   };
   const NATIONWIDE_POWER_PLANTS_URL = '/datacenters/data/power-plants-us.json';
+  const GLOBAL_POWER_PLANTS_URL = '/datacenters/data/power-plants-global.json';
+  const NACEI_POWER_PLANTS_URL = '/datacenters/data/power-plants-nacei.json';
   const MOBILE_INSPECTOR_MEDIA = '(max-width: 760px), (hover: none) and (pointer: coarse)';
   const POWER_PLANT_WEBGL_LAYER_ID = 'power-plant-bolt-webgl';
   const NEON_STREET_GLOW_LAYER_ID = 'neon-streets-glow';
@@ -213,13 +215,33 @@
     },
     'power-plants': {
       id: 'power-plants',
-      name: 'Power plants',
-      description: 'EIA generation facilities with published capacity and production fields.',
+      name: 'U.S. EIA power plants',
+      description: 'Final 2024 EIA-860 and EIA-923 generation facilities.',
       category: 'Generation inventory',
       sourceUrl: '/datacenters/data/infrastructure.json',
       sourceLabel: 'Published EIA-derived power-plant inventory',
       statusId: 'power-plant-layer-count',
       statusSuffix: ' documented facilities',
+    },
+    'global-power-plants': {
+      id: 'global-power-plants',
+      name: 'WRI Global Power Plant Database',
+      description: 'WRI v1.3.0 geolocated research baseline outside the United States; capacity source years vary by country and record.',
+      category: 'Generation inventory',
+      sourceUrl: 'https://datasets.wri.org/datasets/global-power-plant-database',
+      sourceLabel: 'World Resources Institute Global Power Plant Database v1.3.0',
+      statusId: 'global-power-plant-layer-count',
+      statusSuffix: ' WRI facilities',
+    },
+    'nacei-power-plants': {
+      id: 'nacei-power-plants',
+      name: 'NRCan / SENER / DOE NACEI',
+      description: 'Official North American Cooperation on Energy Information comparison inventory for Canadian and Mexican plants of 100 MW or more, dated August 2017.',
+      category: 'Generation inventory',
+      sourceUrl: 'https://open.canada.ca/data/en/dataset/40fbe40c-01cd-49d3-8add-0d20ed64c90d',
+      sourceLabel: 'North American Cooperation on Energy Information',
+      statusId: 'nacei-power-plant-layer-count',
+      statusSuffix: ' official comparison facilities',
     },
     'neon-streets': {
       id: 'neon-streets',
@@ -280,7 +302,7 @@
         ['Balancing authority', 'balancing_authority_code'], ['ISO/RTO', 'iso_region'],
       ],
       provenanceNote: 'This compact nationwide baseline uses final annual EIA records and Census geographic identifiers. Maryland remains the default detailed view.',
-      statusOffText: 'Off · select Nationwide in the Power plants Scope control',
+      statusOffText: 'Off · select United States in the U.S. EIA power plants Scope control',
       hiddenControl: true,
     },
     {
@@ -1543,6 +1565,7 @@
     theme: 'collective',
     baseLayer: 'street-map',
     powerPlantScope: 'MD',
+    globalPowerPlantScope: 'NA',
     layers: ['datacenters', 'power-plants', 'neon-streets', 'data-center-moratoriums'],
     layerOrder: [
       'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
@@ -2275,14 +2298,22 @@
 
       void main() {
         vec4 clip = u_matrix * vec4(a_anchor, 0.0, 1.0);
-        float animated = 1.0 - step(0.5, u_lodMode);
-        float pulse = 1.0 + (sin((u_time * 2.1) + (a_phase * 1.7)) * 0.04 * animated);
-        float rotation = ((u_time * 1.15) + a_phase) * animated;
+        float simpleMode = step(1.5, u_lodMode);
+        float pulse = 1.0 + (sin((u_time * 2.1) + (a_phase * 1.7)) * 0.04);
+        float rotation = (u_time * 1.15) + a_phase;
         float cosAngle = cos(rotation);
         float sinAngle = sin(rotation);
-        float tilt = -0.18 * animated;
+        float tilt = -0.18 * (1.0 - simpleMode);
         vec3 rotated = rotateBolt(a_position, cosAngle, sinAngle);
         vec3 rotatedNormal = normalize(rotateBolt(a_normal, cosAngle, sinAngle));
+        if (simpleMode > 0.5) {
+          rotated = vec3(
+            (a_position.x * cosAngle) - (a_position.y * sinAngle),
+            (a_position.x * sinAngle) + (a_position.y * cosAngle),
+            a_position.z
+          );
+          rotatedNormal = vec3(0.0, 0.0, 1.0);
+        }
         vec2 modelScreen = projectBolt(rotated, tilt);
         float hoverScale = 1.0 + (a_hover * u_glowPass * 0.32);
         vec2 offsetPixels = modelScreen * a_size * u_scale * pulse * hoverScale;
@@ -2337,6 +2368,7 @@
       uniform mediump float u_outlineOnly;
       uniform mediump float u_materialMode;
       uniform mediump float u_globalAlpha;
+      uniform mediump float u_lodMode;
       varying vec3 v_accentColor;
       varying vec3 v_outlineColor;
       varying float v_light;
@@ -2352,6 +2384,13 @@
 
       void main() {
         vec3 energizedColor = mix(v_accentColor, vec3(1.0), 0.3);
+        if (u_lodMode > 1.5) {
+          float simpleFillCutoff = mix(u_fillMinY, u_fillMaxY, clamp(v_fillFraction, 0.0, 1.0));
+          if (v_fillY > simpleFillCutoff) discard;
+          vec3 simpleColor = min(vec3(1.0), energizedColor * 1.18);
+          gl_FragColor = vec4(simpleColor * u_globalAlpha, u_globalAlpha);
+          return;
+        }
         vec3 litColor = min(vec3(1.0), energizedColor * (0.95 + (v_light * 0.35)));
         float fillFraction = clamp(v_fillFraction, 0.0, 1.0);
         float fillCutoff = mix(u_fillMinY, u_fillMaxY, fillFraction);
@@ -2427,6 +2466,7 @@
     const state = {
       entries: [],
       records: [],
+      sourceRecordCount: 0,
       hoveredRecordId: null,
       ready: false,
       removed: false,
@@ -2453,6 +2493,8 @@
       lastGlError: null,
       antialiasSamples: 0,
       lastLod: 'full',
+      lastLodScale: 1,
+      animationTimer: null,
       fillMinY: 0,
       fillMaxY: 1,
       attribs: {},
@@ -2564,8 +2606,9 @@
         const zoom = map.getZoom();
         const lod = !adaptiveLod || zoom >= 8 ? 'full' : zoom >= 5 ? 'regional' : 'national';
         const simpleGeometry = lod === 'national';
-        const lodScale = lod === 'national' ? .14 : lod === 'regional' ? .45 : 1;
+        const lodScale = lod === 'national' ? .22 : lod === 'regional' ? .45 : 1;
         state.lastLod = lod;
+        state.lastLodScale = lodScale;
         if (state.dirty) {
           const payload = new Float32Array(state.entries.length * 12);
           state.entries.forEach((entry, index) => {
@@ -2646,7 +2689,7 @@
         gl.uniform1f(state.uniforms.fillMinY, simpleGeometry ? -.55 : state.fillMinY);
         gl.uniform1f(state.uniforms.fillMaxY, simpleGeometry ? .5 : state.fillMaxY);
         gl.uniform1f(state.uniforms.outlineWidth, boltOutlineWidth);
-        gl.uniform1f(state.uniforms.lodMode, lod === 'full' ? 0 : 1);
+        gl.uniform1f(state.uniforms.lodMode, lod === 'national' ? 2 : lod === 'regional' ? 1 : 0);
         gl.uniform1f(state.uniforms.materialMode, powerPlantRenderMaterialMode(layerFilters.powerPlants.renderMaterial));
         gl.uniform1f(state.uniforms.globalAlpha, layerCustomColorAlpha('power-plants'));
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
@@ -2722,10 +2765,18 @@
         if (depthTestEnabled) gl.enable(gl.DEPTH_TEST);
         state.renderCount += 1;
         state.lastGlError = gl.getError();
-        if (lod === 'full') map.triggerRepaint();
+        if (lod === 'full') {
+          map.triggerRepaint();
+        } else if (!state.animationTimer) {
+          state.animationTimer = setTimeout(() => {
+            state.animationTimer = null;
+            if (!state.removed) map.triggerRepaint();
+          }, lod === 'national' ? 50 : 33);
+        }
       },
       onRemove(_map, gl) {
         state.removed = true;
+        if (state.animationTimer) clearTimeout(state.animationTimer);
         if (state.positionBuffer) gl.deleteBuffer(state.positionBuffer);
         if (state.normalBuffer) gl.deleteBuffer(state.normalBuffer);
         if (state.indexBuffer) gl.deleteBuffer(state.indexBuffer);
@@ -2739,8 +2790,9 @@
         if (state.program) gl.deleteProgram(state.program);
         state.ready = false;
       },
-      setRecords(records) {
+      setRecords(records, sourceRecordCount = records.length) {
         state.records = records;
+        state.sourceRecordCount = sourceRecordCount;
         if (!records.some((record) => record.id === state.hoveredRecordId)) state.hoveredRecordId = null;
         const sizeFactors = pointScaleFactors(records, layerFilters.powerPlants.sizeBy);
         const brightness = normalizeBrightness(layerFilters.powerPlants.brightness);
@@ -2771,7 +2823,7 @@
         return {
           ready: state.ready,
           error: state.error,
-          recordCount: state.records.length,
+          recordCount: state.sourceRecordCount,
           instanceCount: state.entries.length,
           vertexCount: state.vertexCount,
           indexCount: state.indexCount,
@@ -2788,10 +2840,15 @@
           fillFraction: layerFilters.powerPlants.fillFraction,
           renderMaterial: normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial),
           adaptiveLod: layerFilters.powerPlants.adaptiveLod !== false,
+          animated: true,
+          animationTargetFps: state.lastLod === 'national' ? 20 : state.lastLod === 'regional' ? 30 : 60,
           lod: state.lastLod,
+          lodScale: state.lastLodScale,
           lodVertexCount: state.lodVertexCount,
           minimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
           maximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
+          renderedMinimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size * state.lastLodScale)) : 0,
+          renderedMaximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size * state.lastLodScale)) : 0,
           drawOrderAscending: state.entries.every((entry, index) => index === 0 || state.entries[index - 1].size <= entry.size),
           topmostRecordId: state.entries.at(-1)?.record.id || null,
           topmostSize: state.entries.at(-1)?.size || 0,
@@ -2811,7 +2868,7 @@
         let best = null;
         const adaptiveLod = layerFilters.powerPlants.adaptiveLod !== false;
         const zoom = map.getZoom();
-        const hitScale = !adaptiveLod || zoom >= 8 ? 1 : zoom >= 5 ? .45 : .14;
+        const hitScale = !adaptiveLod || zoom >= 8 ? 1 : zoom >= 5 ? .45 : .22;
         const maximumSize = state.entries.length ? Math.max(...state.entries.map((entry) => entry.size * hitScale), 1) : 1;
         const northWest = map.unproject([point.x - maximumSize, point.y - maximumSize]);
         const southEast = map.unproject([point.x + maximumSize, point.y + maximumSize]);
@@ -2999,7 +3056,10 @@
   let aerialAnimationSettings = { speed: 1, distance: 1 };
   let activeTagFilters = [];
   let powerPlantScope = 'MD';
+  let globalPowerPlantScope = 'NA';
   let nationwidePowerPlantRecords = [];
+  let globalPowerPlantRecords = [];
+  let naceiPowerPlantRecords = [];
   let tagFilterMode = 'and';
   let inspectorHoverKey = null;
   let inspectorPinnedKey = null;
@@ -3373,6 +3433,8 @@
     return [
       'datacenters',
       'power-plants',
+      'global-power-plants',
+      'nacei-power-plants',
       'neon-streets',
       'enviroscreen',
       'parcels',
@@ -3395,7 +3457,7 @@
   }
 
   function renderedLayerIdsForUiLayer(layerId) {
-    if (layerId === 'power-plants') return [POWER_PLANT_WEBGL_LAYER_ID];
+    if (['power-plants', 'global-power-plants', 'nacei-power-plants'].includes(layerId)) return [POWER_PLANT_WEBGL_LAYER_ID];
     if (layerId === 'neon-streets') return [NEON_STREET_GLOW_LAYER_ID, NEON_STREET_CORE_LAYER_ID, NEON_STREET_LABEL_LAYER_ID];
     if (layerId === 'enviroscreen') return [ENVIROSCREEN_FILL_ID, ENVIROSCREEN_LINE_ID];
     if (layerId === 'parcels') return [PARCEL_LAYER_ID, PARCEL_HOVER_FILL_ID, PARCEL_HOVER_LINE_ID];
@@ -3432,6 +3494,7 @@
     if (parameters.has('theme')) state.theme = parameters.get('theme');
     if (parameters.has('base')) state.baseLayer = parameters.get('base');
     if (parameters.has('powerScope')) state.powerPlantScope = parameters.get('powerScope');
+    if (parameters.has('globalPowerScope')) state.globalPowerPlantScope = parameters.get('globalPowerScope');
     if (parameters.has('layers')) state.layers = parameters.get('layers').split(',').filter(Boolean);
     if (parameters.has('order')) state.layerOrder = parameters.get('order').split(',').filter(Boolean);
     if (parameters.has('hover')) state.hover = parameters.get('hover').split(',').filter(Boolean);
@@ -3550,6 +3613,8 @@
     if (state.theme && BASEMAP_STYLES[state.theme]) themeSelect.value = state.theme;
     powerPlantScope = state.powerPlantScope === 'US' ? 'US' : 'MD';
     document.getElementById('power-plant-scope').value = powerPlantScope;
+    globalPowerPlantScope = state.globalPowerPlantScope === 'WORLD' ? 'WORLD' : 'NA';
+    document.getElementById('global-power-plant-scope').value = globalPowerPlantScope;
     if (Array.isArray(state.layers)) {
       document.querySelectorAll('input[id^="show-"]:not(.dc-base-layer-toggle):not(#show-map-title)').forEach((input) => {
         input.checked = state.layers.includes(input.id.slice(5));
@@ -3677,6 +3742,7 @@
       theme: document.getElementById('map-theme').value,
       baseLayer: selectedBaseLayer ? selectedBaseLayer.id.slice(5) : 'none',
       powerPlantScope,
+      globalPowerPlantScope,
       layers: checkedIds('show-'),
       layerOrder: normalizeLayerOrder(layerOrder),
       hover: checkedIds('hover-'),
@@ -3704,6 +3770,7 @@
     url.searchParams.set('theme', state.theme);
     url.searchParams.set('base', state.baseLayer);
     url.searchParams.set('powerScope', state.powerPlantScope);
+    url.searchParams.set('globalPowerScope', state.globalPowerPlantScope);
     url.searchParams.set('layers', state.layers.join(','));
     url.searchParams.set('order', state.layerOrder.join(','));
     url.searchParams.set('hover', state.hover.join(','));
@@ -4561,6 +4628,8 @@
     const dataCenters = allRecords.filter((record) => record.record_type === 'data_center');
     const powerPlants = allRecords.filter((record) => record.record_type === 'power_plant');
     let nationwidePowerPlantsPromise = null;
+    let globalPowerPlantsPromise = null;
+    let naceiPowerPlantsPromise = null;
     setupRemoteLayerControls(map);
     setupEsriBuildingsControl(map);
     setupBaseLayerControls(map);
@@ -4641,6 +4710,23 @@
     });
     setupLayerFilterUi(map, allRecords, markerById);
     const powerPlantScopeSelect = document.getElementById('power-plant-scope');
+    const globalPowerPlantScopeSelect = document.getElementById('global-power-plant-scope');
+    const featureRecords = (payload) => payload.features.map((feature) => ({
+      ...feature.properties,
+      id: feature.id || feature.properties.id,
+      latitude: feature.geometry.coordinates[1],
+      longitude: feature.geometry.coordinates[0],
+      record_type: 'power_plant',
+    }));
+    const checkedInventory = (promise, label) => promise.then((response) => {
+      if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
+      return response.json();
+    }).then((payload) => {
+      if (!Array.isArray(payload.features) || payload.features.length !== payload.metadata?.record_count) {
+        throw new Error(`${label} failed its record-count check`);
+      }
+      return payload;
+    });
     const applyPowerPlantScope = async (requestedScope, { recenter = false, save = false } = {}) => {
       const select = powerPlantScopeSelect;
       const status = document.getElementById('power-plant-scope-status');
@@ -4651,32 +4737,19 @@
       select.disabled = true;
       try {
         if (scope === 'US') {
-          status.textContent = 'Loading nationwide final 2024 EIA inventory…';
-          nationwidePowerPlantsPromise ||= fetch(NATIONWIDE_POWER_PLANTS_URL, { cache: 'no-store' })
-            .then((response) => {
-              if (!response.ok) throw new Error(`Nationwide inventory returned HTTP ${response.status}`);
-              return response.json();
-            })
-            .then((payload) => {
-              if (!Array.isArray(payload.features) || payload.features.length !== payload.metadata?.record_count) {
-                throw new Error('Nationwide inventory failed its record-count check');
-              }
-              return payload;
-            });
+          status.textContent = 'Loading final 2024 U.S. EIA inventory…';
+          nationwidePowerPlantsPromise ||= checkedInventory(
+            fetch(NATIONWIDE_POWER_PLANTS_URL, { cache: 'no-store' }),
+            'U.S. EIA inventory',
+          );
           const nationwide = await nationwidePowerPlantsPromise;
-          powerPlantScope = 'US';
-          nationwidePowerPlantRecords = nationwide.features.map((feature) => ({
-            ...feature.properties,
-            id: feature.id || feature.properties.id,
-            latitude: feature.geometry.coordinates[1],
-            longitude: feature.geometry.coordinates[0],
-            record_type: 'power_plant',
-          }));
+          nationwidePowerPlantRecords = featureRecords(nationwide);
+          powerPlantScope = scope;
           nationwideState.enabled = false;
           nationwideState.data = nationwide;
           hideRemoteLayer(map, nationwideConfig);
           document.getElementById('power-plant-layer-count').textContent = number(nationwide.metadata.record_count);
-          status.textContent = `${number(nationwide.metadata.record_count)} nationwide plants · final EIA 2024`;
+          status.textContent = `${number(nationwide.metadata.record_count)} U.S. plants · final EIA 2024`;
           if (recenter) map.easeTo({ center: [-98.5, 38.5], zoom: 3.1, duration: 850 });
         } else {
           powerPlantScope = 'MD';
@@ -4696,17 +4769,105 @@
         nationwideState.enabled = false;
         hideRemoteLayer(map, nationwideConfig);
         document.getElementById('power-plant-layer-count').textContent = number(powerPlants.length);
-        status.textContent = `Nationwide inventory unavailable · ${error.message}`;
+        status.textContent = `Broader inventory unavailable · ${error.message}`;
         renderResults(allRecords, markerById);
         if (save) persistUiState(map);
       } finally {
         select.disabled = false;
       }
     };
+    const applyGlobalPowerPlantScope = async (requestedScope, { recenter = false, save = false } = {}) => {
+      const select = globalPowerPlantScopeSelect;
+      const status = document.getElementById('global-power-plant-scope-status');
+      const enabled = document.getElementById('show-global-power-plants').checked;
+      globalPowerPlantScope = requestedScope === 'WORLD' ? 'WORLD' : 'NA';
+      select.value = globalPowerPlantScope;
+      if (!enabled) {
+        status.textContent = 'Off · WRI records load only when Render is enabled; source year and original source are retained per plant';
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+        return;
+      }
+      select.disabled = true;
+      try {
+        status.textContent = 'Loading WRI Global Power Plant Database v1.3.0…';
+        globalPowerPlantsPromise ||= checkedInventory(
+          fetch(GLOBAL_POWER_PLANTS_URL, { cache: 'no-store' }),
+          'WRI global inventory',
+        );
+        const global = await globalPowerPlantsPromise;
+        globalPowerPlantRecords = featureRecords(global).map((record) => ({ ...record, inventory_source: 'WRI' }));
+        const selected = globalPowerPlantScope === 'WORLD'
+          ? globalPowerPlantRecords
+          : globalPowerPlantRecords.filter((record) => ['CAN', 'MEX'].includes(record.country_code));
+        document.getElementById('global-power-plant-layer-count').textContent = number(selected.length);
+        status.textContent = globalPowerPlantScope === 'WORLD'
+          ? `${number(selected.length)} plants across ${number(global.metadata.country_count)} countries · WRI v${global.metadata.release}; source years vary`
+          : `${number(selected.length)} plants · Canada ${number(global.metadata.country_counts.CAN)} + Mexico ${number(global.metadata.country_counts.MEX)} · WRI source years vary`;
+        if (recenter) map.easeTo(globalPowerPlantScope === 'WORLD'
+          ? { center: [5, 20], zoom: 1.25, duration: 850 }
+          : { center: [-102, 40], zoom: 2.55, duration: 850 });
+        closePinnedInspector();
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } catch (error) {
+        globalPowerPlantsPromise = null;
+        document.getElementById('show-global-power-plants').checked = false;
+        document.getElementById('global-power-plant-layer-count').textContent = '—';
+        status.textContent = `WRI global inventory unavailable · ${error.message}`;
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } finally {
+        select.disabled = false;
+      }
+    };
+    const applyNaceiPowerPlants = async ({ recenter = false, save = false } = {}) => {
+      const status = document.getElementById('nacei-power-plant-scope-status');
+      const enabled = document.getElementById('show-nacei-power-plants').checked;
+      if (!enabled) {
+        status.textContent = 'Off · official threshold-limited comparison source, kept separate from WRI';
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+        return;
+      }
+      try {
+        status.textContent = 'Loading official NACEI Canada + Mexico inventory…';
+        naceiPowerPlantsPromise ||= checkedInventory(
+          fetch(NACEI_POWER_PLANTS_URL, { cache: 'no-store' }),
+          'NACEI inventory',
+        );
+        const nacei = await naceiPowerPlantsPromise;
+        naceiPowerPlantRecords = featureRecords(nacei).map((record) => ({ ...record, inventory_source: 'NACEI' }));
+        document.getElementById('nacei-power-plant-layer-count').textContent = number(naceiPowerPlantRecords.length);
+        status.textContent = `${number(naceiPowerPlantRecords.length)} official comparison plants · Canada ${number(nacei.metadata.country_counts.CAN)} + Mexico ${number(nacei.metadata.country_counts.MEX)} · ≥100 MW · August 2017`;
+        if (recenter) map.easeTo({ center: [-102, 40], zoom: 2.55, duration: 850 });
+        closePinnedInspector();
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } catch (error) {
+        naceiPowerPlantsPromise = null;
+        document.getElementById('show-nacei-power-plants').checked = false;
+        document.getElementById('nacei-power-plant-layer-count').textContent = '—';
+        status.textContent = `NACEI inventory unavailable · ${error.message}`;
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      }
+    };
     powerPlantScopeSelect.addEventListener('change', async (event) => {
       await applyPowerPlantScope(event.target.value, { recenter: true, save: true });
     });
+    globalPowerPlantScopeSelect.addEventListener('change', async (event) => {
+      await applyGlobalPowerPlantScope(event.target.value, { recenter: true, save: true });
+    });
+    document.getElementById('show-global-power-plants').addEventListener('change', async () => {
+      await applyGlobalPowerPlantScope(globalPowerPlantScope, { save: true });
+    });
+    document.getElementById('show-nacei-power-plants').addEventListener('change', async (event) => {
+      await applyNaceiPowerPlants({ recenter: event.target.checked, save: true });
+    });
     await applyPowerPlantScope(powerPlantScope);
+    await applyGlobalPowerPlantScope(globalPowerPlantScope);
+    await applyNaceiPowerPlants();
     setupLayerColorUi();
     setupTagFilterUi();
     setupUiStatePersistence(map);
@@ -5988,7 +6149,7 @@
         + fieldMarkup('Bolt outline uses', 'outlineBy', layerFilters.powerPlants.outlineBy, FILTER_OPTIONS.plantBoltOutline, 'A real silhouette outline is drawn independently from the fill. Choose Neutral light outline for a fixed pale border.')
         + fieldMarkup('Bolt fill uses', 'fillBy', layerFilters.powerPlants.fillBy || 'none', FILTER_OPTIONS.plantBoltFill, 'Fill the bolt from the bottom. Resource-adjusted annual utilization compares annual output to a technology-specific planning envelope, so solar and wind are not judged as if they should run at nameplate all year.')
         + fieldMarkup('Render material', 'renderMaterial', normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial), FILTER_OPTIONS.plantRenderMaterial, 'Reuses the full AgnuQuena appearance menu for the WebGL bolt renderer.')
-        + checkboxFieldMarkup('Adaptive level of detail', 'adaptiveLod', layerFilters.powerPlants.adaptiveLod !== false, 'Uses a simplified one-pass instanced bolt nationally, adds effects regionally, and reserves the full mesh, outline, and animation for local zooms. Disable to force the full treatment at every zoom; this can be substantially slower nationwide.')
+        + checkboxFieldMarkup('Adaptive level of detail', 'adaptiveLod', layerFilters.powerPlants.adaptiveLod !== false, 'At world zooms, keeps the highest-capacity plant in each small screen cell; uses capacity-sized animated one-pass instanced bolts continentally, adds effects regionally, and reserves the full mesh and outline for local zooms. Disable to render every record with the full treatment; this can be substantially slower on large inventories.')
         + numberFieldMarkup('Custom fill fraction', 'fillFraction', layerFilters.powerPlants.fillFraction ?? 1, { min: 0, max: 1, step: 0.01, help: 'Only used when Bolt fill uses is set to Custom fraction from bottom.' })
         + numberFieldMarkup('Bolt outline width', 'outlineWidth', normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth), { min: .5, max: 5, step: .25, help: 'Sets the silhouette trace width in screen pixels.' })
         + scaleFieldMarkup('Icon scale', 'iconScale', layerFilters.powerPlants.iconScale)
@@ -6617,22 +6778,33 @@
       });
     }
     if (deckHoverTarget) candidates.push({ ...deckHoverTarget, z: layerZIndex(deckHoverTarget.layerId) });
-    if (
-      document.getElementById('show-power-plants').checked
-      && document.getElementById('hover-power-plants').checked
-    ) {
+    const eiaPlantHoverEnabled = document.getElementById('show-power-plants').checked
+      && document.getElementById('hover-power-plants').checked;
+    const globalPlantHoverEnabled = document.getElementById('show-global-power-plants').checked
+      && document.getElementById('hover-global-power-plants').checked;
+    const naceiPlantHoverEnabled = document.getElementById('show-nacei-power-plants').checked
+      && document.getElementById('hover-nacei-power-plants').checked;
+    if (eiaPlantHoverEnabled || globalPlantHoverEnabled || naceiPlantHoverEnabled) {
       const hit = powerPlantBoltLayer?.hitTest(point);
       if (hit?.record) {
         const record = hit.record;
-        const layerZ = layerZIndex('power-plants');
-        candidates.push({
-          kind: 'power-plant',
-          key: `record:${record.id}`,
-          layerId: 'power-plants',
-          record,
-          z: layerZ + Math.min(.99, Math.max(0, hit.zOffset || 0)),
-          render: () => selectRecord(record, sourceById),
-        });
+        const sourceLayerId = record.inventory_source === 'NACEI'
+          ? 'nacei-power-plants'
+          : record.inventory_source === 'WRI' ? 'global-power-plants' : 'power-plants';
+        const sourceHoverEnabled = sourceLayerId === 'power-plants'
+          ? eiaPlantHoverEnabled
+          : sourceLayerId === 'global-power-plants' ? globalPlantHoverEnabled : naceiPlantHoverEnabled;
+        if (sourceHoverEnabled) {
+          const layerZ = layerZIndex(sourceLayerId);
+          candidates.push({
+            kind: 'power-plant',
+            key: `record:${record.id}`,
+            layerId: sourceLayerId,
+            record,
+            z: layerZ + Math.min(.99, Math.max(0, hit.zOffset || 0)),
+            render: () => selectRecord(record, sourceById),
+          });
+        }
       }
     }
 
@@ -6985,6 +7157,27 @@
     return (families[energyFilter] || [energyFilter]).some((code) => codes.includes(code));
   }
 
+  function worldLodPowerPlantRepresentatives(records, map) {
+    if (!map || layerFilters.powerPlants.adaptiveLod === false || map.getZoom() >= 3 || records.length < 1000) {
+      return records;
+    }
+    const cellSize = 12;
+    const width = map.getCanvas().clientWidth;
+    const height = map.getCanvas().clientHeight;
+    const cells = new Map();
+    records.forEach((record) => {
+      const point = map.project([record.longitude, record.latitude]);
+      if (point.x < -cellSize || point.x > width + cellSize || point.y < -cellSize || point.y > height + cellSize) return;
+      const key = `${Math.floor(point.x / cellSize)}:${Math.floor(point.y / cellSize)}`;
+      const current = cells.get(key);
+      const capacity = Number(record.nameplate_capacity_mw) || 0;
+      if (!current || capacity > current.capacity || (capacity === current.capacity && record.id < current.record.id)) {
+        cells.set(key, { record, capacity });
+      }
+    });
+    return [...cells.values()].map((entry) => entry.record);
+  }
+
   function renderResults(records, markerById) {
     const matches = records.filter((record) => matchesFilters(record));
     const matchedIds = new Set(matches.map((record) => record.id));
@@ -7018,8 +7211,12 @@
         size: 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1),
       }))
       .sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
-    const nationwidePowerPlantsVisible = document.getElementById('show-power-plants').checked
+    const eiaPowerPlantsVisible = document.getElementById('show-power-plants').checked
       && (!map || layerShownAtZoom('power-plants', map.getZoom()));
+    const globalPowerPlantsVisible = document.getElementById('show-global-power-plants').checked
+      && (!map || layerShownAtZoom('global-power-plants', map.getZoom()));
+    const naceiPowerPlantsVisible = document.getElementById('show-nacei-power-plants').checked
+      && (!map || layerShownAtZoom('nacei-power-plants', map.getZoom()));
     const cullNationwideBolts = Boolean(map && layerFilters.powerPlants.adaptiveLod !== false && map.getZoom() >= 5);
     const nationwideBounds = cullNationwideBolts ? map.getBounds() : null;
     const nationwideLongitudePadding = nationwideBounds ? (nationwideBounds.getEast() - nationwideBounds.getWest()) * .15 : 0;
@@ -7029,10 +7226,19 @@
         && record.longitude <= nationwideBounds.getEast() + nationwideLongitudePadding
         && record.latitude >= nationwideBounds.getSouth() - nationwideLatitudePadding
         && record.latitude <= nationwideBounds.getNorth() + nationwideLatitudePadding);
-    const matchingPowerPlants = powerPlantScope === 'US'
-      ? (nationwidePowerPlantsVisible ? nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false)) : [])
+    const matchingEiaPowerPlants = !eiaPowerPlantsVisible ? [] : powerPlantScope === 'US'
+      ? nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false))
       : matches.filter((record) => record.record_type === 'power_plant');
-    powerPlantBoltLayer?.setRecords(matchingPowerPlants);
+    const matchingGlobalPowerPlants = !globalPowerPlantsVisible ? [] : globalPowerPlantRecords
+      .filter((record) => globalPowerPlantScope === 'WORLD' || ['CAN', 'MEX'].includes(record.country_code))
+      .filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false));
+    const matchingNaceiPowerPlants = !naceiPowerPlantsVisible ? [] : naceiPowerPlantRecords
+      .filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false));
+    const allMatchingPowerPlants = [...matchingEiaPowerPlants, ...matchingGlobalPowerPlants, ...matchingNaceiPowerPlants];
+    powerPlantBoltLayer?.setRecords(
+      worldLodPowerPlantRepresentatives(allMatchingPowerPlants, map),
+      allMatchingPowerPlants.length,
+    );
     applyMapLayerOrder(activeLayerContext?.map);
   }
 
@@ -7194,7 +7400,9 @@
   }
 
   function recordLayerId(record) {
-    return record?.record_type === 'power_plant' ? 'power-plants' : 'datacenters';
+    if (record?.record_type !== 'power_plant') return 'datacenters';
+    if (record.inventory_source === 'NACEI') return 'nacei-power-plants';
+    return record.inventory_source === 'WRI' ? 'global-power-plants' : 'power-plants';
   }
 
   function updateLayerSelectionHighlight() {
@@ -7412,12 +7620,20 @@
         ${renderRecordSources(recordSourceIds, sourceById)}
       `;
     } else {
+      const isGlobalPlant = Boolean(record.country_code);
+      const isWriPlant = record.inventory_source === 'WRI';
+      const isNaceiPlant = record.inventory_source === 'NACEI';
+      const originalSourceUrl = safeExternalUrl(record.source_url);
       detail.innerHTML = `
         ${renderHoveredIconHeading(record)}
-        <p class="dc-type">EIA plant ${record.eia_plant_code}</p>
+        <p class="dc-type">${isGlobalPlant
+          ? `${isNaceiPlant ? 'NACEI official comparison plant' : 'WRI global plant'} · ${escapeHtml(record.country)} · ISO3 ${escapeHtml(record.country_code)}`
+          : `EIA plant ${record.eia_plant_code}`}</p>
         ${renderEnergySummary(record)}
         ${renderPlantImage(record)}
         ${renderFactGroup('Plant profile', [
+          ['Country', known(record.country)],
+          ['ISO3 country code', known(record.country_code)],
           ['Operator', known(record.operator)],
           ['County', known(record.county)],
           ['Location tags', known(record.location_tags?.join(', '))],
@@ -7430,16 +7646,21 @@
           ['EIA status codes', known(record.generator_status_codes?.join(', '))],
           ['Primary technology', known(record.primary_technology)],
           ['All technologies', known(record.technology_tags?.join(', '))],
-          ['Fuel codes', known(record.energy_source_codes.join(', '))],
-          ['Coordinate confidence', known(`${record.coordinate_confidence} · ${record.latitude_decimal_places}/${record.longitude_decimal_places} decimal places`)],
-          ['Shared coordinate', record.shared_coordinate_count > 1 ? `Yes · ${record.shared_coordinate_count} plant records` : 'No'],
-          ['Aerial frame', `${number(record.aerial_frame_width_m)} × ${number(record.aerial_frame_height_m)} m`],
+          ['Fuel codes', known(record.energy_source_codes?.join(', '))],
+          ['Capacity source year', known(record.source_year)],
+          ['Original source', known(record.source_name)],
+          ['Geolocation source', known(record.geolocation_source)],
+          ['Coordinate confidence', isGlobalPlant ? known(record.coordinate_confidence) : known(`${record.coordinate_confidence} · ${record.latitude_decimal_places}/${record.longitude_decimal_places} decimal places`)],
+          ['Shared coordinate', isGlobalPlant ? known(null) : record.shared_coordinate_count > 1 ? `Yes · ${record.shared_coordinate_count} plant records` : 'No'],
+          ['Aerial frame', isGlobalPlant ? known(null) : `${number(record.aerial_frame_width_m)} × ${number(record.aerial_frame_height_m)} m`],
         ])}
         ${renderFactGroup('Production', [
           ['Capacity', known(record.nameplate_capacity_mw, ' MW')],
           ['Planning output', record.planning_sustained_output_mw == null ? known(null) : `${number(record.planning_sustained_output_mw, 2)} MW`],
           ['Capacity factor', record.annual_capacity_factor == null ? known(null) : `${number(record.annual_capacity_factor * 100, 1)}%`],
-          ['Planning basis', known(record.planning_output_basis)],
+          ['Planning basis', known(record.planning_output_basis || (isGlobalPlant
+            ? 'Code Collective fuel-family heuristic for visual scaling; not publisher-reported output.'
+            : null))],
           ['Generators', known(record.generator_count)],
           ['Average generation', powerPlantAverageGeneration(record) == null ? known(null) : `${number(powerPlantAverageGeneration(record), 1)} MWh`],
         ])}
@@ -7448,7 +7669,12 @@
           ['Air permit', known(record.air_permit_status)],
           ['Legal status', known(record.legal_status)],
         ])}
-        <p class="dc-record-note">${escapeHtml(record.coordinate_confidence_basis)}</p>
+        <p class="dc-record-note">${escapeHtml(isGlobalPlant
+          ? isNaceiPlant
+            ? 'Official NACEI comparison record limited to North American plants of at least 100 MW and dated August 2017. It is intentionally separate from the broader WRI baseline.'
+            : 'WRI Global Power Plant Database v1.3.0 is an older research baseline. Capacity source years vary and are shown above; coordinates have not been independently surveyed by Code Collective.'
+          : record.coordinate_confidence_basis)}</p>
+        ${isGlobalPlant ? `<div class="dc-record-sources"><strong>Sources</strong><ul><li><a href="${isWriPlant ? 'https://datasets.wri.org/datasets/global-power-plant-database' : 'https://open.canada.ca/data/en/dataset/40fbe40c-01cd-49d3-8add-0d20ed64c90d'}" target="_blank" rel="noopener noreferrer">${isWriPlant ? 'WRI Global Power Plant Database v1.3.0' : 'North American Cooperation on Energy Information'}</a></li>${isWriPlant && originalSourceUrl ? `<li><a href="${escapeHtml(originalSourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(record.source_name || 'Original country source')}</a></li>` : ''}</ul></div>` : ''}
         ${renderRecordSources(recordSourceIds, sourceById)}
       `;
     }
@@ -7495,7 +7721,7 @@
   }
 
   function renderPlantImage(record) {
-    return renderEntityImage(record) + renderSiteAnimation(record);
+    return renderEntityImage(record) + (record.country_code ? '' : renderSiteAnimation(record));
   }
 
   function renderEntityImage(record) {

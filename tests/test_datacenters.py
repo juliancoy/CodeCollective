@@ -231,12 +231,23 @@ def test_nationwide_power_plant_scope_is_visible_and_maryland_is_default():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
     assert 'id="power-plant-scope"' in page
     assert '<option value="MD" selected>Maryland only</option>' in page
-    assert '<option value="US">Nationwide</option>' in page
+    assert '<option value="US">United States</option>' in page
+    assert '<strong>WRI Global Power Plant Database</strong>' in page
+    assert '<strong>NRCan / SENER / DOE NACEI</strong>' in page
+    assert 'id="show-global-power-plants" type="checkbox"' in page
+    assert 'id="show-nacei-power-plants" type="checkbox"' in page
     assert "NATIONWIDE_POWER_PLANTS_URL" in script
-    assert "nationwidePowerPlantsPromise ||= fetch" in script
+    assert "GLOBAL_POWER_PLANTS_URL" in script
+    assert "NACEI_POWER_PLANTS_URL" in script
+    assert "nationwidePowerPlantsPromise ||= checkedInventory" in script
+    assert "globalPowerPlantsPromise ||= checkedInventory" in script
+    assert "naceiPowerPlantsPromise ||= checkedInventory" in script
     assert "powerPlantScope: 'MD'" in script
+    assert "globalPowerPlantScope: 'NA'" in script
     assert "if (parameters.has('powerScope')) state.powerPlantScope" in script
+    assert "if (parameters.has('globalPowerScope')) state.globalPowerPlantScope" in script
     assert "url.searchParams.set('powerScope', state.powerPlantScope)" in script
+    assert "url.searchParams.set('globalPowerScope', state.globalPowerPlantScope)" in script
     assert "await applyPowerPlantScope(powerPlantScope)" in script
     assert "payload.features.length !== payload.metadata?.record_count" in script
     assert "id: 'nationwide-eia-power-plants'" in script
@@ -244,6 +255,39 @@ def test_nationwide_power_plant_scope_is_visible_and_maryland_is_default():
     assert "const hoverEnabled = config.hiddenControl" in script
     assert "if (record.record_type === 'power_plant' && powerPlantScope !== 'MD') return false" in script
     assert ".getBounds().pad(" not in script
+
+
+def test_international_power_plant_inventories_are_separate_compact_and_provenanced():
+    global_path = DATA / "power-plants-global.json"
+    global_data = load("power-plants-global.json")
+    assert global_data["metadata"]["inventory"] == "WRI Global Power Plant Database non-U.S. baseline"
+    assert global_data["metadata"]["release"] == "1.3.0"
+    assert global_data["metadata"]["record_count"] == len(global_data["features"]) == 25_103
+    assert global_data["metadata"]["country_count"] == 166
+    assert global_data["metadata"]["country_counts"]["CAN"] == 1_159
+    assert global_data["metadata"]["country_counts"]["MEX"] == 277
+    assert global_path.stat().st_size < 25 * 1024 * 1024
+    assert all(feature["properties"]["country_code"] != "USA" for feature in global_data["features"])
+    assert all(feature["properties"]["source_name"] for feature in global_data["features"])
+    assert all(feature["properties"]["location_tags"] for feature in global_data["features"])
+
+    nacei_path = DATA / "power-plants-nacei.json"
+    nacei = load("power-plants-nacei.json")
+    assert nacei["metadata"]["record_count"] == len(nacei["features"]) == 379
+    assert nacei["metadata"]["country_counts"] == {"CAN": 247, "MEX": 132}
+    assert nacei["metadata"]["threshold_mw"] == 100
+    assert nacei["metadata"]["reference_period"] == "2017-08"
+    assert nacei_path.stat().st_size < 1024 * 1024
+    assert {feature["properties"]["country_code"] for feature in nacei["features"]} == {"CAN", "MEX"}
+
+
+def test_international_research_plan_is_review_gated_and_assignable_to_gpt_5_4_mini():
+    plan = (ROOT / "datacenters" / "INTERNATIONAL_POWER_PLANT_RESEARCH_PLAN.md").read_text()
+    assert "gpt-5.4-mini" in plan
+    assert "model_reasoning_effort=\"high\"" in plan
+    assert "Do not commit, push, or deploy" in plan
+    assert "source-manifest.json" in plan
+    assert "byte-identical output" in plan
 
 
 def test_nationwide_power_plant_inventory_is_complete_compact_and_geotagged():
@@ -486,7 +530,8 @@ def test_browser_starts_with_unified_maryland_inventory_and_lazily_loads_nationw
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
     assert "infrastructure: '/datacenters/data/infrastructure.json'" in script
     assert "const allRecords = data.infrastructure.map" in script
-    assert "nationwidePowerPlantsPromise ||= fetch" in script
+    assert "nationwidePowerPlantsPromise ||= checkedInventory" in script
+    assert "globalPowerPlantsPromise ||= checkedInventory" in script
     assert "record.technology_tags" in script
     assert "/datacenters/data/datacenters.json" not in page + script
     assert "/datacenters/data/power-plants.json" not in page + script
@@ -993,7 +1038,7 @@ def test_hover_arbitration_selects_one_target_by_rendered_layer_z_order():
     assert "function layerZIndex(layerId)" in script
     assert "z: layerZIndex(deckHoverTarget.layerId)" in script
     assert "const z = layerZIndex('datacenters')" in script
-    assert "const layerZ = layerZIndex('power-plants')" in script
+    assert "const layerZ = layerZIndex(sourceLayerId)" in script
     assert "z: layerZIndex(target.layerId)" in script
     assert "candidates.sort((left, right) => right.z - left.z)" in script
     assert "return candidates[0] || null" in script
@@ -1004,7 +1049,7 @@ def test_hover_arbitration_selects_one_target_by_rendered_layer_z_order():
     assert "document.elementsFromPoint(clientX, clientY)" in script
     assert "Number.MAX_SAFE_INTEGER" not in script.split("function topMapHoverTarget(map, point, sourceById)", 1)[1].split("function topDataCenterHoverRecord", 1)[0]
     assert "layerId: 'datacenters'" in script
-    assert "layerId: 'power-plants'" in script
+    assert "layerId: sourceLayerId" in script
     assert "layerId: 'enviroscreen'" in script
     assert "layerId: config.id" in script
 
@@ -1218,9 +1263,19 @@ def test_nationwide_power_plants_use_disableable_instanced_lod_bolts():
     assert "drawArraysInstanced(gl.TRIANGLES, 0, state.lodVertexCount" in script
     assert "if (lod !== 'national')" in script
     assert "if (lod === 'full' && state.silhouetteVertexCount > 0)" in script
-    assert "if (lod === 'full') map.triggerRepaint()" in script
-    assert "nationwidePowerPlantRecords = nationwide.features.map" in script
-    assert "nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false))" in script
+    assert "gl.uniform1f(state.uniforms.lodMode, lod === 'national' ? 2 : lod === 'regional' ? 1 : 0)" in script
+    assert "const lodScale = lod === 'national' ? .22 : lod === 'regional' ? .45 : 1" in script
+    assert "simpleMode = step(1.5, u_lodMode)" in script
+    assert "map.triggerRepaint();" in script
+    assert "animated: true" in script
+    assert "nationwidePowerPlantRecords = featureRecords(nationwide)" in script
+    assert "nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record)" in script
+    assert "matchingGlobalPowerPlants" in script
+    assert "matchingNaceiPowerPlants" in script
+    assert "function worldLodPowerPlantRepresentatives" in script
+    assert "const cellSize = 12" in script
+    assert "powerPlantBoltLayer?.setRecords(" in script
+    assert "allMatchingPowerPlants.length" in script
     assert "const cullNationwideBolts" in script
     assert "const nationwideRecordInViewport" in script
     assert "window.__powerPlantBoltDiagnostics" in script
