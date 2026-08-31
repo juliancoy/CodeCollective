@@ -151,6 +151,46 @@ cat > "$OUT_DIR/_headers" <<'EOF'
 /*
   Cache-Control: public, max-age=300
 
+/upcoming_events.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
+/cc_events.ics
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
+/:city/upcoming_events.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
+/:city/manual_events.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
+/:city/scrape_errors.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
+/:city/skipped_events.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
+/:city/calendar_lenses.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
+/:city/cc_events.ics
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET,HEAD,OPTIONS
+  Access-Control-Max-Age: 86400
+
 /p/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
