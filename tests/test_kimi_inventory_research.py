@@ -73,6 +73,40 @@ def test_parse_json_object_accepts_fenced_json():
     assert research.parse_json_object('```json\n{"ok": true}\n```') == {"ok": True}
 
 
+def test_worldwide_power_profile_requires_numeric_cited_fields():
+    source_url = "https://agency.example.gov/data-center"
+    facet = {
+        "value": "The facility has a published 24 MW capacity envelope.",
+        "confidence": "high",
+        "basis": "The facility-specific planning decision states the capacity and scope.",
+        "fields": {
+            "reported_grid_demand_mw": None,
+            "reported_power_capacity_mw": 24,
+            "projected_power_demand_mw": None,
+            "estimated_power_draw_mw": None,
+            "estimated_power_draw_method": None,
+            "on_site_generation_capacity_mw": None,
+            "energy_source_codes": [],
+            "lifecycle_status": "operating",
+            "value_scope": "facility",
+            "as_of_date": "2026-01-01",
+        },
+        "field_evidence": {"reported_power_capacity_mw": [source_url]},
+        "sources": [{
+            "title": "Planning decision",
+            "publisher": "Example Agency",
+            "url": source_url,
+            "document_date": "2026-01-01",
+            "source_type": "primary government",
+            "supports": "Facility power capacity is 24 MW.",
+        }],
+    }
+
+    assert research.facet_validation_errors("power_profile", facet) == []
+    facet["fields"]["reported_power_capacity_mw"] = "24 MW"
+    assert any("JSON number" in error for error in research.facet_validation_errors("power_profile", facet))
+
+
 def test_validate_result_requires_searches_and_citations():
     target = research.find_targets([record()], set(), set())[0]
     result = {
@@ -190,6 +224,19 @@ def test_agent_loop_preserves_reasoning_and_returns_formula_result():
         "tool_call_id": "web_search:0",
         "content": "encrypted search evidence",
     }
+
+
+def test_prompt_profile_selects_system_prompt():
+    target = research.find_targets([record()], set(), set())[0]
+
+    assert (
+        research.system_prompt_for_target(target, "worldwide-datacenter-power")
+        == research.WORLDWIDE_POWER_SYSTEM_PROMPT
+    )
+    assert (
+        research.system_prompt_for_target(target, "maryland-infrastructure")
+        == research.SYSTEM_PROMPT
+    )
 
 
 def test_agent_loop_forces_each_required_search_before_json_synthesis():

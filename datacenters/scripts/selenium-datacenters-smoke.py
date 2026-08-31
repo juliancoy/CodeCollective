@@ -1403,6 +1403,13 @@ def verify_international_power_plant_layers(driver: webdriver.Remote, screenshot
     WebDriverWait(driver, 45).until(
         lambda d: "13,370 U.S. plants" in d.find_element(By.ID, "power-plant-scope-status").get_attribute("textContent")
     )
+    driver.execute_script(
+        """
+        const select = document.getElementById('global-power-plant-scope');
+        select.value = 'NA';
+        select.dispatchEvent(new Event('change', {bubbles: true}));
+        """
+    )
     set_checkbox(driver, "show-global-power-plants", True)
     WebDriverWait(driver, 45).until(
         lambda d: "1,436 plants" in d.find_element(By.ID, "global-power-plant-scope-status").get_attribute("textContent")
@@ -1422,10 +1429,14 @@ def verify_international_power_plant_layers(driver: webdriver.Remote, screenshot
         lambda d: "25,103 plants" in d.find_element(By.ID, "global-power-plant-scope-status").get_attribute("textContent")
     )
     worldwide = WebDriverWait(driver, 45).until(
-        lambda _d: diagnostics_with_count(38_473, "national")
+        lambda _d: diagnostics_with_count(38_852, "full")
     )
-    if not worldwide.get("animated") or worldwide.get("lodVertexCount") != 12:
-        raise AssertionError(f"worldwide bolts did not use animated simplified instances: {worldwide}")
+    if not worldwide.get("animated") or worldwide.get("lodScale") != 1:
+        raise AssertionError(f"worldwide bolts did not preserve the full-size animated renderer: {worldwide}")
+    if abs(worldwide.get("renderedMaximumSize", 0) - worldwide.get("maximumSize", -1)) > 0.01:
+        raise AssertionError(f"worldwide bolts applied an extra rendered-size scale: {worldwide}")
+    if abs(worldwide.get("renderedMinimumSize", 0) - worldwide.get("minimumSize", -1)) > 0.01:
+        raise AssertionError(f"worldwide bolts applied an extra rendered-size scale: {worldwide}")
     if worldwide.get("renderedMaximumSize", 0) <= worldwide.get("renderedMinimumSize", 0) * 4:
         raise AssertionError(f"worldwide capacity sizing was not visually meaningful: {worldwide}")
 
@@ -1487,6 +1498,75 @@ def verify_international_power_plant_layers(driver: webdriver.Remote, screenshot
         "screenshots": [str(first), str(second)],
         "query": query,
     }
+
+
+def verify_power_plant_workflow_query(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
+    state = WebDriverWait(driver, 60).until(
+        lambda d: d.execute_script(
+            """
+            const map = window.__codeCollectiveDatacenterMap;
+            const layer = map?.getLayer('power-plant-bolt-webgl');
+            const diagnostics = layer?.implementation?.getDiagnostics?.();
+            const statuses = {
+              eia: document.getElementById('power-plant-scope-status')?.textContent || '',
+              global: document.getElementById('global-power-plant-scope-status')?.textContent || '',
+              nacei: document.getElementById('nacei-power-plant-scope-status')?.textContent || ''
+            };
+            if (!diagnostics?.ready || diagnostics.recordCount !== 38852) return null;
+            if (!statuses.eia.includes('13,370 U.S. plants')) return null;
+            if (!statuses.global.includes('25,103 plants')) return null;
+            if (!statuses.nacei.includes('379 official comparison plants')) return null;
+            return {
+              url: location.href,
+              scopes: {
+                eia: document.getElementById('power-plant-scope')?.value,
+                global: document.getElementById('global-power-plant-scope')?.value
+              },
+              checked: {
+                eia: document.getElementById('show-power-plants')?.checked,
+                global: document.getElementById('show-global-power-plants')?.checked,
+                nacei: document.getElementById('show-nacei-power-plants')?.checked
+              },
+              center: map.getCenter().toArray(),
+              zoom: map.getZoom(),
+              diagnostics,
+              statuses
+            };
+            """
+        )
+    )
+    if not all(state["checked"].values()) or state["scopes"] != {"eia": "US", "global": "WORLD"}:
+        raise AssertionError(f"power-plant workflow query did not enable the expected controls: {state}")
+    diagnostics = state["diagnostics"]
+    if diagnostics.get("lodScale") != 1:
+        raise AssertionError(f"power-plant workflow query applied extra rendered-size scaling: {state}")
+    if abs(diagnostics.get("renderedMaximumSize", 0) - diagnostics.get("maximumSize", -1)) > 0.01:
+        raise AssertionError(f"power-plant workflow query changed rendered maximum size: {state}")
+    if abs(diagnostics.get("renderedMinimumSize", 0) - diagnostics.get("minimumSize", -1)) > 0.01:
+        raise AssertionError(f"power-plant workflow query changed rendered minimum size: {state}")
+    stable_size = {}
+    for label, zoom in (("regional", 6), ("local", 15)):
+        stable_size[label] = WebDriverWait(driver, 30).until(
+            lambda d, target_zoom=zoom: d.execute_script(
+                """
+                const map = window.__codeCollectiveDatacenterMap;
+                map.jumpTo({ center: [-76.548, 39.267], zoom: arguments[0], bearing: 0, pitch: 0 });
+                const layer = map.getLayer('power-plant-bolt-webgl');
+                const entry = layer?.implementation?.getExportEntries?.().find((item) => item.id === 'eia-61465');
+                const diagnostics = layer?.implementation?.getDiagnostics?.();
+                return entry && Math.abs(map.getZoom() - arguments[0]) < 0.01
+                  ? { zoom: map.getZoom(), size: entry.size, diagnostics }
+                  : null;
+                """,
+                target_zoom,
+            )
+        )
+    if abs(stable_size["regional"]["size"] - stable_size["local"]["size"]) > 0.01:
+        raise AssertionError(f"power-plant size changed across high-zoom viewport culling: {stable_size}")
+    screenshot = save_screenshot(driver, screenshot_dir, "datacenters-power-workflow-query.png")
+    state["screenshot"] = str(screenshot)
+    state["stable_size"] = stable_size
+    return state
 
 
 def verify_baltimore_zoning(driver: webdriver.Remote, screenshot_dir: pathlib.Path) -> dict:
@@ -2549,6 +2629,18 @@ def run(args: argparse.Namespace) -> int:
             report_path.write_text(json.dumps(report, indent=2))
             print(json.dumps(report, indent=2))
             return 0
+        if args.power_workflow_query_only:
+            report = {
+                "base_url": args.base_url,
+                "power_workflow_query": step(
+                    "power workflow query",
+                    lambda: verify_power_plant_workflow_query(driver, screenshot_dir),
+                ),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
         if args.nationwide_datacenters_only:
             report = {
                 "base_url": args.base_url,
@@ -2735,6 +2827,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--glow-only", action="store_true", help="Verify the data-center contestation glow, then exit.")
     parser.add_argument("--power-webgl-only", action="store_true", help="Verify the antialiased WebGL power-plant bolts, then exit.")
     parser.add_argument("--international-only", action="store_true", help="Verify separate EIA, WRI, and NACEI layers plus worldwide instanced animation, then exit.")
+    parser.add_argument("--power-workflow-query-only", action="store_true", help="Verify the short power-plant workflow query initializes the full source view.")
     parser.add_argument("--nationwide-datacenters-only", action="store_true", help="Verify the source-separated nationwide OpenStreetMap data-center layer, URL reload, extent, and provenance, then exit.")
     parser.add_argument("--line-width-only", action="store_true", help="Verify line-layer width controls, then exit.")
     parser.add_argument("--point-splat-only", action="store_true", help="Verify point-layer GPU Splat density rendering, then exit.")

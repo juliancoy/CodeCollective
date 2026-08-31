@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Kimi Research Observatory</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%232d6048'/%3E%3C/svg%3E">
   <style>
     :root {
       --ink: #142119;
@@ -59,6 +60,7 @@
     .hero { grid-column: span 8; }
     .controls { grid-column: span 4; }
     .workflow { grid-column: span 12; }
+    .gates { grid-column: span 12; }
     .metric { grid-column: span 3; min-height: 8.5rem; display: flex; flex-direction: column; justify-content: space-between; }
     .chart { grid-column: span 8; }
     .activity { grid-column: span 4; grid-row: span 2; }
@@ -73,19 +75,27 @@
       border: 1px solid var(--ink); background: #fffdf6; color: var(--ink); padding: .68rem .8rem;
       font: 700 .75rem "Courier New", monospace;
     }
+    button, input, select { min-height: 44px; }
     button { cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
     button:hover { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--ink); }
     button.primary { background: var(--moss); color: white; }
     button.stop { background: var(--danger); color: white; }
     .control-row { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; }
     input { width: 4.2rem; }
-    .workflow-grid { display:grid; grid-template-columns:repeat(6,minmax(7rem,1fr)); gap:.65rem; align-items:end; margin-top:.8rem; }
+    .workflow-grid { display:grid; grid-template-columns:repeat(8,minmax(7rem,1fr)); gap:.65rem; align-items:end; margin-top:.8rem; }
     .workflow-grid label { display:flex; flex-direction:column; gap:.3rem; color:var(--muted); font:.68rem "Courier New",monospace; text-transform:uppercase; letter-spacing:.06em; }
+    .workflow-grid label:first-child { grid-column:span 2; }
     .workflow-grid input, .workflow-grid select { width:100%; border:1px solid var(--ink); background:#fffdf6; color:var(--ink); padding:.62rem; font:.72rem "Courier New",monospace; text-transform:none; letter-spacing:0; }
     .workflow-checks { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:.8rem; }
     .workflow-checks label { display:inline-flex; align-items:center; gap:.4rem; color:var(--ink); font:.72rem "Courier New",monospace; }
     .workflow-checks input { width:auto; }
     .workflow-log { max-height:210px; overflow:auto; margin-top:.8rem; border:1px solid var(--line); background:#fffdf6; padding:.65rem; font:.68rem/1.4 "Courier New",monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .workflow-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:.55rem; margin-top:.8rem; }
+    .workflow-summary > span { border:1px solid var(--line); background:#fffdf6; padding:.6rem; font:.7rem/1.35 "Courier New",monospace; }
+    .gate-list { display:grid; gap:.6rem; margin-top:.8rem; }
+    .gate-card { border:1px solid var(--line); background:#fffdf6; padding:.75rem; }
+    .gate-head { display:flex; justify-content:space-between; align-items:start; gap:.6rem; }
+    .gate-fields { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.5rem; }
     canvas { width: 100%; height: 230px; margin-top: .8rem; }
     .legend { display:flex; gap:1rem; color:var(--muted); font: .72rem "Courier New", monospace; }
     .swatch { display:inline-block; width:.8rem; height:.18rem; margin-right:.35rem; vertical-align:middle; }
@@ -149,12 +159,12 @@
     .empty { padding:1.5rem; color:var(--muted); text-align:center; font:italic 1rem Georgia,serif; }
     @keyframes pulse { 50% { transform: scale(.75); opacity:.65; } }
     @media (max-width: 900px) {
-      .hero,.controls,.workflow,.chart,.activity,.flight,.received { grid-column:span 12; }
+      .hero,.controls,.workflow,.gates,.chart,.activity,.flight,.received { grid-column:span 12; }
       .metric { grid-column:span 6; }
       .activity { grid-row:auto; }
     }
-    @media (max-width: 700px) { .filters,.workflow-grid { grid-template-columns:1fr 1fr; } .record-table th:nth-child(3),.record-table td:nth-child(3),.record-table th:nth-child(5),.record-table td:nth-child(5) { display:none; } .attempt { grid-template-columns:1fr 1fr; } }
-    @media (max-width: 520px) { .metric { grid-column:span 12; } header { align-items:start; flex-direction:column; } .flight-list { grid-template-columns:1fr; } .filters,.workflow-grid { grid-template-columns:1fr; } }
+    @media (max-width: 700px) { .filters,.workflow-grid { grid-template-columns:1fr 1fr; } .workflow-grid label:first-child { grid-column:span 2; } .record-table th:nth-child(3),.record-table td:nth-child(3),.record-table th:nth-child(5),.record-table td:nth-child(5) { display:none; } .attempt { grid-template-columns:1fr 1fr; } }
+    @media (max-width: 520px) { .metric { grid-column:span 12; } header { align-items:start; flex-direction:column; } .flight-list { grid-template-columns:1fr; } .filters,.workflow-grid { grid-template-columns:1fr; } .workflow-grid label:first-child { grid-column:span 1; } }
   </style>
 </head>
 <body>
@@ -196,21 +206,36 @@
           <div class="received-actions"><span id="workflowState" class="badge">idle</span><button id="startWorkflow" class="primary">Start workflow</button><button id="stopWorkflow" class="stop">Stop workflow</button></div>
         </div>
         <div class="workflow-grid">
+          <label>Research profile <select id="workflowProfile"><option value="maryland-infrastructure">Maryland infrastructure</option><option value="worldwide-datacenter-power">Worldwide data-center power</option></select></label>
+          <label>Prompt profile <select id="workflowPromptProfile"><option value="auto">Auto</option><option value="maryland-infrastructure">Maryland infrastructure</option><option value="worldwide-datacenter-power">Worldwide data-center power</option></select></label>
           <label>Record type <select id="workflowRecordType"><option value="data_center">Data center</option><option value="power_plant">Power plant</option></select></label>
           <label>Max tier <select id="workflowTier"><option value="escalation">Escalation</option><option value="retry">Retry</option><option value="primary">Primary</option></select></label>
           <label>Workers <input id="workflowWorkers" type="number" min="1" max="16" value="4"></label>
           <label>Searches <input id="workflowSearches" type="number" min="1" max="20" value="5"></label>
           <label>Audit workers <input id="workflowAuditWorkers" type="number" min="1" max="32" value="8"></label>
           <label>Judge workers <input id="workflowJudgeWorkers" type="number" min="1" max="16" value="4"></label>
+          <label class="worldwide-only">Pilot limit <input id="workflowLimit" type="number" min="1" max="100" value="5"></label>
+          <label class="worldwide-only">ISO country <input id="workflowCountry" maxlength="3" placeholder="all"></label>
+          <label class="worldwide-only">Priority <select id="workflowPriority"><option value="1">1 · strongest</option><option value="2">2</option><option value="3">3</option><option value="4">4 · weakest</option></select></label>
         </div>
         <div class="workflow-checks">
+          <label class="worldwide-only"><input id="workflowPrepare" type="checkbox" checked> Prepare source inventory</label>
+          <label class="worldwide-only"><input id="workflowPreview" type="checkbox" checked> Preview only (no paid calls)</label>
           <label><input id="workflowResearch" type="checkbox" checked> Research</label>
           <label><input id="workflowAudit" type="checkbox" checked> Audit</label>
           <label><input id="workflowPromote" type="checkbox" checked> Promote dry run</label>
           <label><input id="workflowReuseAudit" type="checkbox" checked> Reuse source audit</label>
           <label><input id="workflowApply" type="checkbox"> Apply promotion</label>
         </div>
+        <div id="workflowSummary" class="workflow-summary"></div>
         <div id="workflowLog" class="workflow-log">No local workflow has run in this dashboard session.</div>
+      </section>
+      <section class="panel gates">
+        <div class="received-head">
+          <div><div class="label">Worldwide Evidence Gates</div><p class="sub">Fetched evidence, audit decisions, judge results, repair reasons, and sparse-overlay publication state.</p></div>
+          <div class="received-actions"><span id="overlayCount" class="badge">0 promoted</span></div>
+        </div>
+        <div id="gateList" class="gate-list"><div class="empty">No worldwide evidence has been audited.</div></div>
       </section>
       <section class="panel metric"><span class="label">Current Spend</span><span id="cost" class="big">$0.00</span><span id="costRate" class="sub">$0.00 / record</span></section>
       <section class="panel metric"><span class="label">Forecast Total</span><span id="forecastCost" class="big">$0.00</span><span id="remainingCost" class="sub">$0.00 remaining</span></section>
@@ -219,7 +244,7 @@
       <section class="panel received">
         <div class="received-head">
           <div><div class="label">Received Data Inspector</div><p class="sub">Facility facts, confidence, evidence support, and model-stage provenance.</p></div>
-          <div class="received-actions"><label class="sub">Records <select id="recordScope"><option value="current">Current run</option><option value="all">All runs</option></select></label><span id="receivedCount" class="big">0</span></div>
+          <div class="received-actions"><label class="sub">Profile <select id="recordProfile"><option value="maryland-infrastructure">Maryland</option><option value="worldwide-datacenter-power">Worldwide power</option></select></label><label class="sub">Records <select id="recordScope"><option value="current">Current run</option><option value="all">All runs</option></select></label><span id="receivedCount" class="big">0</span></div>
         </div>
         <div id="distribution" class="distribution"></div>
         <div class="filters">
@@ -253,6 +278,7 @@
     const qualityColors = {high:'#2d6048',medium:'#6d9b68',low:'#d3a62c',insufficient:'#a5332b',unknown:'#c8c5b7'};
     let receivedRecords = [], lastRecordCount = -1;
     const recordScope = () => $('recordScope')?.value || 'current';
+    const recordProfile = () => $('recordProfile')?.value || 'maryland-infrastructure';
     const money = value => `$${Number(value || 0).toFixed(2)}`;
     const duration = seconds => {
       if (seconds == null) return '--';
@@ -281,14 +307,22 @@
       renderWorkflow(value);
     }
     function workflowOptions() {
+      const worldwide = $('workflowProfile').value === 'worldwide-datacenter-power';
       return {
         action:'start',
+        profile:$('workflowProfile').value,
+        prompt_profile:$('workflowPromptProfile').value,
         record_type:$('workflowRecordType').value,
         max_tier:$('workflowTier').value,
         workers:Number($('workflowWorkers').value),
         max_searches:Number($('workflowSearches').value),
         audit_workers:Number($('workflowAuditWorkers').value),
         judge_workers:Number($('workflowJudgeWorkers').value),
+        limit:Number($('workflowLimit').value),
+        country:$('workflowCountry').value.trim().toUpperCase(),
+        priority:Number($('workflowPriority').value),
+        run_prepare:worldwide && $('workflowPrepare').checked,
+        preview_only:worldwide && $('workflowPreview').checked,
         run_research:$('workflowResearch').checked,
         run_audit:$('workflowAudit').checked,
         run_promote:$('workflowPromote').checked,
@@ -296,8 +330,73 @@
         apply_promotion:$('workflowApply').checked,
       };
     }
+    const workflowQuery = new URLSearchParams(window.location.search);
+    const truthyQueryValue = value => ['1','true','yes','on'].includes(String(value || '').trim().toLowerCase());
+    const setSelectFromQuery = (id, value) => {
+      if (value == null || value === '') return;
+      const element = $(id);
+      if ([...element.options].some(option => option.value === value)) element.value = value;
+    };
+    const setNumberFromQuery = (id, value) => {
+      if (value == null || value === '') return;
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) $(id).value = parsed;
+    };
+    const setCheckboxFromQuery = (id, value) => {
+      if (value == null) return;
+      $(id).checked = truthyQueryValue(value);
+    };
+    function applyWorkflowQuery() {
+      const workflow = String(workflowQuery.get('workflow') || workflowQuery.get('wf') || '').trim().toLowerCase();
+      const dataCenterWorkflowAliases = new Set([
+        'data-centers',
+        'datacenters',
+        'kimi-datacenters',
+        'worldwide-datacenter-power',
+      ]);
+      const powerPlantWorkflowAliases = new Set([
+        'power-bolts',
+        'power-plants',
+        'powerplants',
+        'kimi-power-plants',
+      ]);
+      if (dataCenterWorkflowAliases.has(workflow)) {
+        $('workflowProfile').value = 'worldwide-datacenter-power';
+        $('recordProfile').value = 'worldwide-datacenter-power';
+        $('workflowRecordType').value = 'data_center';
+      } else if (powerPlantWorkflowAliases.has(workflow)) {
+        $('workflowProfile').value = 'maryland-infrastructure';
+        $('recordProfile').value = 'maryland-infrastructure';
+        $('workflowRecordType').value = 'power_plant';
+      }
+      setSelectFromQuery('workflowProfile', workflowQuery.get('profile'));
+      setSelectFromQuery('workflowPromptProfile', workflowQuery.get('prompt_profile') || workflowQuery.get('prompt'));
+      if (workflowQuery.get('profile') === 'worldwide-datacenter-power') {
+        $('recordProfile').value = 'worldwide-datacenter-power';
+      }
+      setSelectFromQuery('recordProfile', workflowQuery.get('records_profile') || workflowQuery.get('profile'));
+      setSelectFromQuery('recordScope', workflowQuery.get('scope'));
+      setSelectFromQuery('workflowRecordType', workflowQuery.get('record_type') || workflowQuery.get('type'));
+      setSelectFromQuery('workflowTier', workflowQuery.get('max_tier') || workflowQuery.get('tier'));
+      setSelectFromQuery('workflowPriority', workflowQuery.get('priority'));
+      setNumberFromQuery('workflowWorkers', workflowQuery.get('workers'));
+      setNumberFromQuery('workflowSearches', workflowQuery.get('searches') || workflowQuery.get('max_searches'));
+      setNumberFromQuery('workflowAuditWorkers', workflowQuery.get('audit_workers'));
+      setNumberFromQuery('workflowJudgeWorkers', workflowQuery.get('judge_workers'));
+      setNumberFromQuery('workflowLimit', workflowQuery.get('limit'));
+      if (workflowQuery.has('country')) $('workflowCountry').value = workflowQuery.get('country').trim().toUpperCase();
+      setCheckboxFromQuery('workflowPrepare', workflowQuery.get('prepare'));
+      setCheckboxFromQuery('workflowPreview', workflowQuery.get('preview'));
+      setCheckboxFromQuery('workflowResearch', workflowQuery.get('research'));
+      setCheckboxFromQuery('workflowAudit', workflowQuery.get('audit'));
+      setCheckboxFromQuery('workflowPromote', workflowQuery.get('promote'));
+      setCheckboxFromQuery('workflowReuseAudit', workflowQuery.get('reuse_audit'));
+      setCheckboxFromQuery('workflowApply', workflowQuery.get('apply'));
+    }
     $('startWorkflow').onclick = async () => {
-      if ($('workflowApply').checked && !confirm('Apply promotion can edit canonical data files after the audit gate passes. Continue?')) return;
+      const worldwide=$('workflowProfile').value==='worldwide-datacenter-power';
+      if (worldwide && !$('workflowPreview').checked && !confirm(`This will make paid Kimi calls for at most ${$('workflowLimit').value} worldwide facilities. Continue?`)) return;
+      if ($('workflowApply').checked && !confirm(worldwide?'Apply only audited worldwide values to the sparse enrichment overlay?':'Apply promotion can edit canonical data files after the audit gate passes. Continue?')) return;
       try { await workflowRequest(workflowOptions()); $('error').style.display='none'; }
       catch (error) { $('error').textContent=`Workflow failed to start: ${error.message}`; $('error').style.display='block'; }
     };
@@ -313,6 +412,41 @@
       $('stopWorkflow').disabled=state!=='running';
       const lines=(workflow?.log||[]).slice(-80).map(item=>`[${new Date(item.timestamp*1000).toLocaleTimeString()}] ${item.message}`);
       $('workflowLog').textContent=lines.join('\n') || 'No local workflow has run in this dashboard session.';
+    }
+    function syncWorkflowProfile() {
+      const worldwide=$('workflowProfile').value==='worldwide-datacenter-power';
+      document.querySelectorAll('.worldwide-only').forEach(element=>element.hidden=!worldwide);
+      if (worldwide) {
+        $('workflowRecordType').value='data_center';
+        $('workflowRecordType').disabled=true;
+      } else {
+        $('workflowRecordType').disabled=false;
+      }
+    }
+    $('workflowProfile').addEventListener('change',syncWorkflowProfile);
+    applyWorkflowQuery();
+    syncWorkflowProfile();
+    async function refreshWorldwideSummary() {
+      try {
+        const response=await fetch('/api/worldwide-summary',{cache:'no-store'});
+        if (!response.ok) return;
+        const value=await response.json(), countries=Object.keys(value.country_counts||{}).length;
+        $('workflowSummary').innerHTML=`<span><b>Prepared</b><br>${value.prepared?'yes':'no'}</span><span><b>Eligible</b><br>${value.eligible_count||0}</span><span><b>Deferred</b><br>${value.deferred_count||0}</span><span><b>Countries</b><br>${countries}</span><span><b>Researched</b><br>${value.researched_count||0}</span><span><b>Audited</b><br>${value.audited_count||0}</span><span><b>Promotion ready</b><br>${value.promotion_ready_count||0}</span><span><b>Queues</b><br>${value.repair_count||0} repair · ${value.review_count||0} review</span>`;
+      } catch {}
+    }
+    async function refreshWorldwideGates() {
+      try {
+        const response=await fetch('/api/worldwide-gates',{cache:'no-store'});
+        if (!response.ok) return;
+        const value=await response.json(), rows=value.rows||[];
+        $('overlayCount').textContent=`${value.overlay_record_count||0} promoted`;
+        $('overlayCount').className=`badge ${value.overlay_record_count?'ok':''}`;
+        $('gateList').innerHTML=rows.length?rows.map(row=>{
+          const fields=Object.entries(row.fields||{}).filter(([,fieldValue])=>fieldValue!==null&&fieldValue!==''&&(!Array.isArray(fieldValue)||fieldValue.length));
+          const sources=(row.sources||[]).map(source=>`<li>${safeUrl(source.url)==='#'?esc(source.title):`<a href="${esc(safeUrl(source.url))}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>`} · ${esc(source.source_class||'other')} · ${source.usable?'usable':source.reachable?'reachable':'unavailable'}</li>`).join('');
+          return `<article class="gate-card"><div class="gate-head"><div><span class="record-name">${esc(row.facility_name||row.facility_id)}</span><span class="record-id">${esc(row.facility_id)} · ${esc(label(row.action))}</span></div><span class="badge ${esc(row.state)}">${esc(label(row.state))}</span></div>${row.value?`<p class="finding">${esc(row.value)}</p>`:''}<div class="gate-fields">${fields.map(([key,fieldValue])=>`<span class="badge"><b>${esc(label(key))}</b> ${esc(Array.isArray(fieldValue)?fieldValue.join(', '):fieldValue)}</span>`).join('')}</div>${(row.reasons||[]).length?`<details><summary>Audit reasons</summary><ul>${row.reasons.map(reason=>`<li>${esc(reason)}</li>`).join('')}</ul></details>`:''}${sources?`<details><summary>Evidence sources</summary><ul>${sources}</ul></details>`:''}${row.judge?`<details><summary>Judge result · ${esc(row.judge.verdict||'unknown')}</summary><pre>${esc(JSON.stringify(row.judge,null,2))}</pre></details>`:''}</article>`;
+        }).join(''):'<div class="empty">No worldwide evidence has been audited.</div>';
+      } catch {}
     }
     async function refreshWorkflow() {
       try {
@@ -389,7 +523,7 @@
       document.querySelectorAll('.quality-card').forEach(card=>card.addEventListener('click',()=>openRecord(card.dataset.id, card.dataset.runId)));
     }
     async function loadRecords() {
-      const response=await fetch(`/api/records?scope=${encodeURIComponent(recordScope())}`,{cache:'no-store'});
+      const response=await fetch(`/api/records?scope=${encodeURIComponent(recordScope())}&profile=${encodeURIComponent(recordProfile())}`,{cache:'no-store'});
       if (!response.ok) return;
       receivedRecords=await response.json(); lastRecordCount=receivedRecords.length; renderRecordList();
     }
@@ -406,14 +540,15 @@
     }
     function facetCard(name, facet) {
       if (!facet||typeof facet!=='object') return `<div class="facet-card"><div class="facet-head"><strong>${esc(label(name))}</strong><span class="badge error">malformed</span></div></div>`;
-      return `<article class="facet-card"><div class="facet-head"><strong>${esc(label(name))}</strong><span class="badge ${esc(facet.confidence)}">${esc(facet.confidence||'unknown')}</span></div><p class="finding">${esc(facet.value)}</p><p class="basis">${esc(facet.basis)}</p><div class="fact-group"><h3>Evidence sources</h3>${(facet.sources||[]).map(sourceCard).join('')||'<div class="empty">No sources received</div>'}</div></article>`;
+      const fields=facet.fields&&typeof facet.fields==='object'?`<div class="fact-group"><h3>Structured enhancement</h3><div class="distribution">${Object.entries(facet.fields).map(([key,value])=>`<span><b>${esc(label(key))}</b> ${esc(Array.isArray(value)?value.join(', ')||'unknown':value??'unknown')}</span>`).join('')}</div></div>`:'';
+      return `<article class="facet-card"><div class="facet-head"><strong>${esc(label(name))}</strong><span class="badge ${esc(facet.confidence)}">${esc(facet.confidence||'unknown')}</span></div><p class="finding">${esc(facet.value)}</p><p class="basis">${esc(facet.basis)}</p>${fields}<div class="fact-group"><h3>Evidence sources</h3>${(facet.sources||[]).map(sourceCard).join('')||'<div class="empty">No sources received</div>'}</div></article>`;
     }
     function attemptDisclosure(attempt) {
       return `<details><summary>${esc(attempt.stage)} · ${esc(attempt.status)} · ${attempt.metrics?.search_count||0} searches · ${money(attempt.metrics?.estimated_cost_usd)}</summary><div><div class="attempt"><span>Model<br><b>${esc(attempt.model)}</b></span><span>Elapsed<br><b>${Number(attempt.elapsed_seconds||0).toFixed(1)}s</b></span><span>Prior searches<br><b>${(attempt.prior_search_queries||[]).length}</b></span><span>HTTP retries<br><b>${attempt.metrics?.http_retry_count||0}</b></span></div>${attempt.error?`<p class="basis"><b>Validation/API error:</b> ${esc(attempt.error)}</p>`:''}${(attempt.search_queries||[]).length?`<div class="fact-group"><h3>Queries</h3><ul>${attempt.search_queries.map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>`:''}${attempt.invalid_result?`<details><summary>Invalid structured result</summary><pre>${esc(JSON.stringify(attempt.invalid_result,null,2))}</pre></details>`:''}</div></details>`;
     }
     async function openRecord(id, runId='') {
       $('inspector').classList.add('open'); $('inspectorShade').classList.add('open'); $('inspector').setAttribute('aria-hidden','false'); $('inspectorTitle').textContent='Loading'; $('inspectorBody').innerHTML='';
-      const response=await fetch(`/api/record?id=${encodeURIComponent(id)}&run_id=${encodeURIComponent(runId)}&scope=${encodeURIComponent(recordScope())}`,{cache:'no-store'}), record=await response.json();
+      const response=await fetch(`/api/record?id=${encodeURIComponent(id)}&run_id=${encodeURIComponent(runId)}&scope=${encodeURIComponent(recordScope())}&profile=${encodeURIComponent(recordProfile())}`,{cache:'no-store'}), record=await response.json();
       if (!response.ok) { $('inspectorTitle').textContent='Record unavailable'; $('inspectorBody').textContent=record.error||'Unknown error'; return; }
       const result=record.final_result||{}, facets=result.facets||{};
       $('inspectorTitle').textContent=record.facility_name||record.facility_id;
@@ -423,8 +558,8 @@
     function closeInspector(){ $('inspector').classList.remove('open'); $('inspectorShade').classList.remove('open'); $('inspector').setAttribute('aria-hidden','true'); }
     $('closeInspector').onclick=closeInspector; $('inspectorShade').onclick=closeInspector; addEventListener('keydown',event=>{if(event.key==='Escape')closeInspector();});
     ['recordSearch','statusFilter','typeFilter','confidenceFilter'].forEach(id=>$(id).addEventListener('input',renderRecordList));
-    $('recordScope').addEventListener('change',()=>{lastRecordCount=-1; loadRecords(); refresh();});
-    async function refresh(){try{const r=await fetch(`/api/snapshot?scope=${encodeURIComponent(recordScope())}`,{cache:'no-store'});render(await r.json());refreshWorkflow();}catch(e){$('connection').textContent='DASHBOARD ERROR';}}
+    ['recordScope','recordProfile'].forEach(id=>$(id).addEventListener('change',()=>{lastRecordCount=-1; loadRecords(); refresh();}));
+    async function refresh(){try{const r=await fetch(`/api/snapshot?scope=${encodeURIComponent(recordScope())}&profile=${encodeURIComponent(recordProfile())}`,{cache:'no-store'});render(await r.json());refreshWorkflow();refreshWorldwideSummary();refreshWorldwideGates();}catch(e){$('connection').textContent='DASHBOARD ERROR';}}
     refresh(); setInterval(refresh,2000); addEventListener('resize',refresh);
   </script>
 </body>

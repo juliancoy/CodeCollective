@@ -1670,7 +1670,7 @@
         outlineWidth: 1.5,
         outlineScale: 1.04,
         renderMaterial: 'standard',
-        adaptiveLod: true,
+        adaptiveLod: false,
       },
       neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 },
       enviroscreen: { text: '', scoreBand: 'all', community: 'all', brightness: 1 },
@@ -1692,26 +1692,26 @@
     return JSON.parse(JSON.stringify(DEFAULT_UI_STATE));
   }
   const ENERGY_SOURCES = {
-    SUN: { label: 'Solar', light: '#69c7ff', color: '#167fc1', dark: '#064a7d' },
-    BIT: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    SUB: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    LIG: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    WC: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    RC: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    NG: { label: 'Natural gas', light: '#c58a62', color: '#865033', dark: '#4a281b' },
-    PG: { label: 'Propane gas', light: '#c58a62', color: '#865033', dark: '#4a281b' },
+    SUN: { label: 'Solar', light: '#e5fbff', color: '#70dcff', dark: '#1aa6d9' },
+    BIT: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    SUB: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    LIG: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    WC: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    RC: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    NG: { label: 'Natural gas', light: '#f0b278', color: '#b86c34', dark: '#5f3319' },
+    PG: { label: 'Propane gas', light: '#f0b278', color: '#b86c34', dark: '#5f3319' },
     DFO: { label: 'Oil / diesel', light: '#ffb454', color: '#c76522', dark: '#743010' },
     RFO: { label: 'Oil / diesel', light: '#ffb454', color: '#c76522', dark: '#743010' },
-    WAT: { label: 'Hydroelectric', light: '#70ebef', color: '#16a5b5', dark: '#075f74' },
-    WND: { label: 'Wind', light: '#ffffff', color: '#b9c4cc', dark: '#53606a' },
+    WAT: { label: 'Hydroelectric', light: '#2f6fab', color: '#0b3f82', dark: '#031a3d' },
+    WND: { label: 'Wind', light: '#ffffff', color: '#e5ebef', dark: '#9daab2' },
     NUC: { label: 'Nuclear', light: '#9affbd', color: '#25c965', dark: '#08732e' },
     MWH: { label: 'Battery storage', light: '#d7b4ff', color: '#8d65ca', dark: '#4c317e' },
-    LFG: { label: 'Landfill gas', light: '#b7cf70', color: '#718e39', dark: '#3d5520' },
-    MSW: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
-    MSB: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
-    MSN: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
-    OBG: { label: 'Biomass', light: '#d0c779', color: '#8b8436', dark: '#514c1e' },
-    WDS: { label: 'Biomass', light: '#d0c779', color: '#8b8436', dark: '#514c1e' },
+    LFG: { label: 'Landfill gas', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    MSW: { label: 'Municipal waste', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    MSB: { label: 'Municipal waste', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    MSN: { label: 'Municipal waste', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    OBG: { label: 'Biomass', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    WDS: { label: 'Biomass', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
     UNKNOWN: { label: 'Undisclosed', light: '#aab9c5', color: '#657887', dark: '#344550' },
   };
   const LIFECYCLE_COLORS = {
@@ -1729,13 +1729,13 @@
   };
   const PLANT_TECH_COLORS = {
     nuclear: { label: 'Nuclear', light: '#9affbd', color: '#25c965', dark: '#08732e' },
-    gas: { label: 'Combustion / gas', light: '#d2ad90', color: '#8e5a38', dark: '#4d2e1a' },
-    solar: { label: 'Solar', light: '#93d7ff', color: '#1d89cf', dark: '#0d4770' },
+    gas: { label: 'Combustion / gas', light: '#f0b278', color: '#b86c34', dark: '#5f3319' },
+    solar: { label: 'Solar', light: '#e5fbff', color: '#70dcff', dark: '#1aa6d9' },
     battery: { label: 'Battery / storage', light: '#ddc2ff', color: '#8b63c9', dark: '#4b3375' },
-    hydro: { label: 'Hydroelectric', light: '#7cecf4', color: '#16a5b5', dark: '#085d69' },
-    wind: { label: 'Wind', light: '#ffffff', color: '#b9c4cc', dark: '#53606a' },
-    coal: { label: 'Coal', light: '#848b93', color: '#373d43', dark: '#101316' },
-    waste: { label: 'Waste / biomass', light: '#dfd38f', color: '#9a8d38', dark: '#574f1f' },
+    hydro: { label: 'Hydroelectric', light: '#2f6fab', color: '#0b3f82', dark: '#031a3d' },
+    wind: { label: 'Wind', light: '#ffffff', color: '#e5ebef', dark: '#9daab2' },
+    coal: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    waste: { label: 'Waste / biomass', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
     other: { label: 'Other technology', light: '#c4d1db', color: '#70808f', dark: '#354350' },
   };
   const PLANT_SCALE_COLORS = {
@@ -1746,26 +1746,26 @@
     unknown: { label: 'Unknown size', light: '#c6d0d8', color: '#738392', dark: '#384654' },
   };
   const BRIGHT_BOLT_SOURCE_COLORS = {
-    SUN: '#4db8ff',
-    BIT: '#6f7a86',
-    SUB: '#6f7a86',
-    LIG: '#6f7a86',
-    WC: '#6f7a86',
-    RC: '#6f7a86',
-    NG: '#f3c572',
-    PG: '#f3c572',
+    SUN: '#8be7ff',
+    BIT: '#303740',
+    SUB: '#303740',
+    LIG: '#303740',
+    WC: '#303740',
+    RC: '#303740',
+    NG: '#f0a55b',
+    PG: '#f0a55b',
     DFO: '#d5a56d',
     RFO: '#d5a56d',
-    WAT: '#52e3ff',
-    WND: '#dce6ec',
+    WAT: '#0b4f9f',
+    WND: '#f1f5f7',
     NUC: '#52ef82',
     MWH: '#c5b2ff',
-    LFG: '#bedf67',
-    MSW: '#f2de74',
-    MSB: '#f2de74',
-    MSN: '#f2de74',
-    OBG: '#d8cb6d',
-    WDS: '#d8cb6d',
+    LFG: '#d6ed63',
+    MSW: '#d6ed63',
+    MSB: '#d6ed63',
+    MSN: '#d6ed63',
+    OBG: '#c9e457',
+    WDS: '#c9e457',
     UNKNOWN: '#ffd84f',
   };
 
@@ -2302,7 +2302,6 @@
       uniform float u_fillMinY;
       uniform float u_fillMaxY;
       uniform float u_outlineWidth;
-      uniform mediump float u_lodMode;
       uniform mediump float u_glowPass;
       uniform mediump float u_outlineOnly;
       varying vec3 v_accentColor;
@@ -2332,25 +2331,15 @@
 
       void main() {
         vec4 clip = u_matrix * vec4(a_anchor, 0.0, 1.0);
-        float simpleMode = step(1.5, u_lodMode);
-        float pulse = 1.0 + (sin((u_time * 2.1) + (a_phase * 1.7)) * 0.04);
         float rotation = (u_time * 1.15) + a_phase;
         float cosAngle = cos(rotation);
         float sinAngle = sin(rotation);
-        float tilt = -0.18 * (1.0 - simpleMode);
+        float tilt = -0.18;
         vec3 rotated = rotateBolt(a_position, cosAngle, sinAngle);
         vec3 rotatedNormal = normalize(rotateBolt(a_normal, cosAngle, sinAngle));
-        if (simpleMode > 0.5) {
-          rotated = vec3(
-            (a_position.x * cosAngle) - (a_position.y * sinAngle),
-            (a_position.x * sinAngle) + (a_position.y * cosAngle),
-            a_position.z
-          );
-          rotatedNormal = vec3(0.0, 0.0, 1.0);
-        }
         vec2 modelScreen = projectBolt(rotated, tilt);
         float hoverScale = 1.0 + (a_hover * u_glowPass * 0.32);
-        vec2 offsetPixels = modelScreen * a_size * u_scale * pulse * hoverScale;
+        vec2 offsetPixels = modelScreen * a_size * u_scale * hoverScale;
         v_traceVisible = 1.0;
         v_traceCoord = vec2(0.0);
         v_traceLength = 0.0;
@@ -2364,8 +2353,8 @@
           float facingB = (edgeNormalB.y * sin(tilt)) + (edgeNormalB.z * cos(tilt));
           v_traceVisible = step(facingA * facingB, 0.0001);
 
-          vec2 startPixels = projectBolt(edgeStart, tilt) * a_size * pulse;
-          vec2 endPixels = projectBolt(edgeEnd, tilt) * a_size * pulse;
+          vec2 startPixels = projectBolt(edgeStart, tilt) * a_size;
+          vec2 endPixels = projectBolt(edgeEnd, tilt) * a_size;
           vec2 edgeVector = endPixels - startPixels;
           float edgeLength = max(length(edgeVector), 0.001);
           vec2 edgeDirection = edgeVector / edgeLength;
@@ -2402,7 +2391,6 @@
       uniform mediump float u_outlineOnly;
       uniform mediump float u_materialMode;
       uniform mediump float u_globalAlpha;
-      uniform mediump float u_lodMode;
       varying vec3 v_accentColor;
       varying vec3 v_outlineColor;
       varying float v_light;
@@ -2418,13 +2406,6 @@
 
       void main() {
         vec3 energizedColor = mix(v_accentColor, vec3(1.0), 0.3);
-        if (u_lodMode > 1.5) {
-          float simpleFillCutoff = mix(u_fillMinY, u_fillMaxY, clamp(v_fillFraction, 0.0, 1.0));
-          if (v_fillY > simpleFillCutoff) discard;
-          vec3 simpleColor = min(vec3(1.0), energizedColor * 1.18);
-          gl_FragColor = vec4(simpleColor * u_globalAlpha, u_globalAlpha);
-          return;
-        }
         vec3 litColor = min(vec3(1.0), energizedColor * (0.95 + (v_light * 0.35)));
         float fillFraction = clamp(v_fillFraction, 0.0, 1.0);
         float fillCutoff = mix(u_fillMinY, u_fillMaxY, fillFraction);
@@ -2509,8 +2490,6 @@
       ext: null,
       program: null,
       instanceBuffer: null,
-      lodPositionBuffer: null,
-      lodVertexCount: 0,
       positionBuffer: null,
       normalBuffer: null,
       indexBuffer: null,
@@ -2578,7 +2557,6 @@
           fillMinY: gl.getUniformLocation(state.program, 'u_fillMinY'),
           fillMaxY: gl.getUniformLocation(state.program, 'u_fillMaxY'),
           outlineWidth: gl.getUniformLocation(state.program, 'u_outlineWidth'),
-          lodMode: gl.getUniformLocation(state.program, 'u_lodMode'),
           glowPass: gl.getUniformLocation(state.program, 'u_glowPass'),
           outlineOnly: gl.getUniformLocation(state.program, 'u_outlineOnly'),
           materialMode: gl.getUniformLocation(state.program, 'u_materialMode'),
@@ -2586,16 +2564,6 @@
         };
         state.antialiasSamples = gl.getParameter(gl.SAMPLES);
         state.instanceBuffer = gl.createBuffer();
-        const lodPositions = new Float32Array([
-          -.16, .5, 0, .32, .5, 0, -.02, .02, 0,
-          -.16, .5, 0, -.02, .02, 0, -.38, .02, 0,
-          -.02, .08, 0, .32, .08, 0, -.28, -.55, 0,
-          -.02, .08, 0, -.28, -.55, 0, -.14, -.08, 0,
-        ]);
-        state.lodPositionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, state.lodPositionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, lodPositions, gl.STATIC_DRAW);
-        state.lodVertexCount = lodPositions.length / 3;
         state.dirty = true;
         loadLightningBoltMesh().then((mesh) => {
           if (state.removed) return;
@@ -2636,11 +2604,10 @@
       render(gl, options) {
         if (!state.ready || !state.entries.length) return;
         const boltOutlineWidth = normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth);
-        const adaptiveLod = layerFilters.powerPlants.adaptiveLod !== false;
+        const adaptiveLod = layerFilters.powerPlants.adaptiveLod === true;
         const zoom = map.getZoom();
-        const lod = !adaptiveLod || zoom >= 8 ? 'full' : zoom >= 5 ? 'regional' : 'national';
-        const simpleGeometry = lod === 'national';
-        const lodScale = lod === 'national' ? .22 : lod === 'regional' ? .45 : 1;
+        const lod = adaptiveLod && zoom < 5 ? 'representative' : 'full';
+        const lodScale = 1;
         state.lastLod = lod;
         state.lastLodScale = lodScale;
         if (state.dirty) {
@@ -2679,19 +2646,14 @@
         };
 
         gl.useProgram(state.program);
-        gl.bindBuffer(gl.ARRAY_BUFFER, simpleGeometry ? state.lodPositionBuffer : state.positionBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, state.positionBuffer);
         gl.enableVertexAttribArray(state.attribs.position);
         gl.vertexAttribPointer(state.attribs.position, 3, gl.FLOAT, false, 0, 0);
         divisor(state.attribs.position, 0);
-        if (simpleGeometry) {
-          gl.disableVertexAttribArray(state.attribs.normal);
-          gl.vertexAttrib3f(state.attribs.normal, 0, 0, 1);
-        } else {
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.normalBuffer);
-          gl.enableVertexAttribArray(state.attribs.normal);
-          gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
-          divisor(state.attribs.normal, 0);
-        }
+        gl.bindBuffer(gl.ARRAY_BUFFER, state.normalBuffer);
+        gl.enableVertexAttribArray(state.attribs.normal);
+        gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
+        divisor(state.attribs.normal, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, state.instanceBuffer);
         const stride = 12 * 4;
@@ -2720,10 +2682,9 @@
         gl.uniformMatrix4fv(state.uniforms.matrix, false, options.defaultProjectionData.mainMatrix);
         gl.uniform2f(state.uniforms.viewportSize, map.getCanvas().clientWidth, map.getCanvas().clientHeight);
         gl.uniform1f(state.uniforms.time, performance.now() * 0.001);
-        gl.uniform1f(state.uniforms.fillMinY, simpleGeometry ? -.55 : state.fillMinY);
-        gl.uniform1f(state.uniforms.fillMaxY, simpleGeometry ? .5 : state.fillMaxY);
+        gl.uniform1f(state.uniforms.fillMinY, state.fillMinY);
+        gl.uniform1f(state.uniforms.fillMaxY, state.fillMaxY);
         gl.uniform1f(state.uniforms.outlineWidth, boltOutlineWidth);
-        gl.uniform1f(state.uniforms.lodMode, lod === 'national' ? 2 : lod === 'regional' ? 1 : 0);
         gl.uniform1f(state.uniforms.materialMode, powerPlantRenderMaterialMode(layerFilters.powerPlants.renderMaterial));
         gl.uniform1f(state.uniforms.globalAlpha, layerCustomColorAlpha('power-plants'));
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
@@ -2738,22 +2699,16 @@
         gl.disable(gl.DEPTH_TEST);
         gl.depthMask(false);
         if (state.antialiasSamples > 1) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE);
-        if (simpleGeometry) {
-          gl.disable(gl.CULL_FACE);
-        } else {
-          gl.enable(gl.CULL_FACE);
-          gl.cullFace(gl.BACK);
-          gl.frontFace(gl.CCW);
-        }
+        gl.enable(gl.CULL_FACE);
+        gl.cullFace(gl.BACK);
+        gl.frontFace(gl.CCW);
 
-        if (lod !== 'national') {
-          gl.uniform1f(state.uniforms.glowPass, 1.0);
-          gl.uniform1f(state.uniforms.outlineOnly, 0.0);
-          gl.uniform1f(state.uniforms.scale, 1.16 * lodScale);
-          drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
-        }
+        gl.uniform1f(state.uniforms.glowPass, 1.0);
+        gl.uniform1f(state.uniforms.outlineOnly, 0.0);
+        gl.uniform1f(state.uniforms.scale, 1.16);
+        drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
 
-        if (lod === 'full' && state.silhouetteVertexCount > 0) {
+        if (state.silhouetteVertexCount > 0) {
           gl.disableVertexAttribArray(state.attribs.position);
           gl.vertexAttrib3f(state.attribs.position, 0, 0, 0);
           gl.disableVertexAttribArray(state.attribs.normal);
@@ -2786,9 +2741,8 @@
 
         gl.uniform1f(state.uniforms.glowPass, 0.0);
         gl.uniform1f(state.uniforms.outlineOnly, 0.0);
-        gl.uniform1f(state.uniforms.scale, lodScale);
-        if (simpleGeometry) drawArraysInstanced(gl.TRIANGLES, 0, state.lodVertexCount, state.entries.length);
-        else drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
+        gl.uniform1f(state.uniforms.scale, 1.0);
+        drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
 
         if (!alphaToCoverageEnabled) gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
         gl.cullFace(cullFaceMode);
@@ -2799,13 +2753,11 @@
         if (depthTestEnabled) gl.enable(gl.DEPTH_TEST);
         state.renderCount += 1;
         state.lastGlError = gl.getError();
-        if (lod === 'full') {
-          map.triggerRepaint();
-        } else if (!state.animationTimer) {
+        if (!state.animationTimer) {
           state.animationTimer = setTimeout(() => {
             state.animationTimer = null;
             if (!state.removed) map.triggerRepaint();
-          }, lod === 'national' ? 50 : 33);
+          }, 33);
         }
       },
       onRemove(_map, gl) {
@@ -2820,15 +2772,14 @@
         if (state.edgeNormalBBuffer) gl.deleteBuffer(state.edgeNormalBBuffer);
         if (state.edgeCornerBuffer) gl.deleteBuffer(state.edgeCornerBuffer);
         if (state.instanceBuffer) gl.deleteBuffer(state.instanceBuffer);
-        if (state.lodPositionBuffer) gl.deleteBuffer(state.lodPositionBuffer);
         if (state.program) gl.deleteProgram(state.program);
         state.ready = false;
       },
-      setRecords(records, sourceRecordCount = records.length) {
+      setRecords(records, sourceRecordCount = records.length, scaleDomainRecords = records) {
         state.records = records;
         state.sourceRecordCount = sourceRecordCount;
         if (!records.some((record) => record.id === state.hoveredRecordId)) state.hoveredRecordId = null;
-        const sizeFactors = pointScaleFactors(records, layerFilters.powerPlants.sizeBy);
+        const sizeFactors = pointScaleFactors(scaleDomainRecords, layerFilters.powerPlants.sizeBy);
         const brightness = normalizeBrightness(layerFilters.powerPlants.brightness);
         state.entries = records.map((record, index) => {
           const coordinate = maplibregl.MercatorCoordinate.fromLngLat([record.longitude, record.latitude], 0);
@@ -2839,7 +2790,7 @@
             accent: hexToRgb(brightenedMarkerAccentColor(record, layerFilters.powerPlants.colorBy, brightness)),
             outline: hexToRgb(adjustHexBrightness(outlineColorForRecord(record, layerFilters.powerPlants.outlineBy), brightness)),
             phase: (index * 2.399963229728653) % (Math.PI * 2),
-            size: 36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * sizeFactors.get(record),
+            size: 36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * (sizeFactors.get(record) || 1),
             fillFraction: powerPlantFillFraction(record, layerFilters.powerPlants.fillBy, layerFilters.powerPlants.fillFraction),
           };
         }).sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
@@ -2873,16 +2824,15 @@
           fillBy: layerFilters.powerPlants.fillBy,
           fillFraction: layerFilters.powerPlants.fillFraction,
           renderMaterial: normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial),
-          adaptiveLod: layerFilters.powerPlants.adaptiveLod !== false,
+          adaptiveLod: layerFilters.powerPlants.adaptiveLod === true,
           animated: true,
-          animationTargetFps: state.lastLod === 'national' ? 20 : state.lastLod === 'regional' ? 30 : 60,
+          animationTargetFps: 30,
           lod: state.lastLod,
           lodScale: state.lastLodScale,
-          lodVertexCount: state.lodVertexCount,
           minimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
           maximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
-          renderedMinimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size * state.lastLodScale)) : 0,
-          renderedMaximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size * state.lastLodScale)) : 0,
+          renderedMinimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
+          renderedMaximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
           drawOrderAscending: state.entries.every((entry, index) => index === 0 || state.entries[index - 1].size <= entry.size),
           topmostRecordId: state.entries.at(-1)?.record.id || null,
           topmostSize: state.entries.at(-1)?.size || 0,
@@ -2890,6 +2840,8 @@
       },
       getExportEntries() {
         return state.entries.map((entry) => ({
+          id: entry.record.id,
+          name: entry.record.name,
           longitude: entry.record.longitude,
           latitude: entry.record.latitude,
           accent: rgbToHex(entry.accent),
@@ -2900,10 +2852,7 @@
       },
       hitTest(point) {
         let best = null;
-        const adaptiveLod = layerFilters.powerPlants.adaptiveLod !== false;
-        const zoom = map.getZoom();
-        const hitScale = !adaptiveLod || zoom >= 8 ? 1 : zoom >= 5 ? .45 : .22;
-        const maximumSize = state.entries.length ? Math.max(...state.entries.map((entry) => entry.size * hitScale), 1) : 1;
+        const maximumSize = state.entries.length ? Math.max(...state.entries.map((entry) => entry.size), 1) : 1;
         const northWest = map.unproject([point.x - maximumSize, point.y - maximumSize]);
         const southEast = map.unproject([point.x + maximumSize, point.y + maximumSize]);
         state.entries.forEach((entry) => {
@@ -2914,7 +2863,7 @@
           const dx = projected.x - point.x;
           const dy = projected.y - point.y;
           const distance = Math.hypot(dx, dy);
-          const renderedSize = entry.size * hitScale;
+          const renderedSize = entry.size;
           if (distance > renderedSize && !(Math.abs(dx) <= renderedSize * .67 && Math.abs(dy) <= renderedSize)) return;
           if (!best || renderedSize > best.size || (renderedSize === best.size && distance < best.distance)) {
             best = { record, distance, size: renderedSize };
@@ -3107,7 +3056,7 @@
   let streetStyleLayerIds = [];
   const layerFilters = {
     datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, iconScale: 1, brightness: 1, sizeBy: 'reported_power_capacity_mw' },
-    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', outlineWidth: 1.5, outlineScale: 1.04, renderMaterial: 'standard' },
+    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', outlineWidth: 1.5, outlineScale: 1.04, renderMaterial: 'standard', adaptiveLod: false },
     neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 },
     enviroscreen: { text: '', scoreBand: 'all', community: 'all', brightness: 1 },
     parcels: { text: '', brightness: 1 },
@@ -3433,7 +3382,7 @@
     filters.brightness = normalizeBrightness(filters.brightness);
     filters.outlineWidth = normalizeBoltOutlineWidth(filters.outlineWidth);
     filters.renderMaterial = normalizePowerPlantRenderMaterial(filters.renderMaterial);
-    filters.adaptiveLod = filters.adaptiveLod !== false;
+    filters.adaptiveLod = filters.adaptiveLod === true;
     if (filters.fillBy === 'resource-adjusted-utilization' && (!filters.sizeBy || filters.sizeBy === 'none')) {
       filters.sizeBy = 'planning_sustained_output_mw';
     }
@@ -3524,7 +3473,34 @@
     });
   }
 
+  function applyWorkflowQueryState(state, parameters) {
+    const workflow = String(parameters.get('workflow') || parameters.get('wf') || '').trim().toLowerCase();
+    if (!['power-bolts', 'power-plants', 'uniform-power-bolts'].includes(workflow)) return state;
+    state.powerPlantScope = 'US';
+    state.globalPowerPlantScope = 'WORLD';
+    state.layers = ['power-plants', 'global-power-plants', 'nacei-power-plants'];
+    state.hover = ['power-plants', 'global-power-plants', 'nacei-power-plants'];
+    state.center = [-102, 40];
+    state.zoom = 2.55;
+    state.orientation = { bearing: 0, pitch: 0 };
+    state.filters = {
+      ...state.filters,
+      powerPlants: {
+        ...state.filters.powerPlants,
+        sizeBy: 'planning_sustained_output_mw',
+        fillBy: 'resource-adjusted-utilization',
+        fillFraction: 1,
+        outlineWidth: 1.5,
+        iconScale: 1,
+        renderMaterial: 'standard',
+        adaptiveLod: false,
+      },
+    };
+    return state;
+  }
+
   function applyExpandedQueryState(state, parameters) {
+    state = applyWorkflowQueryState(state, parameters);
     if (parameters.has('theme')) state.theme = parameters.get('theme');
     if (parameters.has('base')) state.baseLayer = parameters.get('base');
     if (parameters.has('powerScope')) state.powerPlantScope = parameters.get('powerScope');
@@ -3555,6 +3531,13 @@
       } catch (_error) {
         // Ignore a malformed share URL and retain any valid locally stored filters.
       }
+    }
+    if (parameters.has('powerPlantCull')) {
+      state.filters = state.filters || {};
+      state.filters.powerPlants = {
+        ...(state.filters.powerPlants || {}),
+        adaptiveLod: parameters.get('powerPlantCull') === '1',
+      };
     }
     if (parameters.has('animation')) {
       const [speed, distance] = parameters.get('animation').split(',').map(Number);
@@ -6183,7 +6166,7 @@
         + fieldMarkup('Bolt outline uses', 'outlineBy', layerFilters.powerPlants.outlineBy, FILTER_OPTIONS.plantBoltOutline, 'A real silhouette outline is drawn independently from the fill. Choose Neutral light outline for a fixed pale border.')
         + fieldMarkup('Bolt fill uses', 'fillBy', layerFilters.powerPlants.fillBy || 'none', FILTER_OPTIONS.plantBoltFill, 'Fill the bolt from the bottom. Resource-adjusted annual utilization compares annual output to a technology-specific planning envelope, so solar and wind are not judged as if they should run at nameplate all year.')
         + fieldMarkup('Render material', 'renderMaterial', normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial), FILTER_OPTIONS.plantRenderMaterial, 'Reuses the full AgnuQuena appearance menu for the WebGL bolt renderer.')
-        + checkboxFieldMarkup('Adaptive level of detail', 'adaptiveLod', layerFilters.powerPlants.adaptiveLod !== false, 'At world zooms, keeps the highest-capacity plant in each small screen cell; uses capacity-sized animated one-pass instanced bolts continentally, adds effects regionally, and reserves the full mesh and outline for local zooms. Disable to render every record with the full treatment; this can be substantially slower on large inventories.')
+        + checkboxFieldMarkup('Cull dense plants for performance', 'adaptiveLod', layerFilters.powerPlants.adaptiveLod === true, 'At world zooms, keeps the highest-output plant in each small screen cell and at high zoom only sends plants near the viewport. Off by default; rendered bolts keep the same full mesh and output-derived screen size.')
         + numberFieldMarkup('Custom fill fraction', 'fillFraction', layerFilters.powerPlants.fillFraction ?? 1, { min: 0, max: 1, step: 0.01, help: 'Only used when Bolt fill uses is set to Custom fraction from bottom.' })
         + numberFieldMarkup('Bolt outline width', 'outlineWidth', normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth), { min: .5, max: 5, step: .25, help: 'Sets the silhouette trace width in screen pixels.' })
         + scaleFieldMarkup('Icon scale', 'iconScale', layerFilters.powerPlants.iconScale)
@@ -6339,7 +6322,7 @@
     if (activeLayerConfigId === 'datacenters') {
       layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, iconScale: 1, brightness: 1, sizeBy: 'reported_power_capacity_mw' };
     } else if (activeLayerConfigId === 'power-plants') {
-      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineWidth: 1.5, outlineScale: 1.04, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', renderMaterial: 'standard', adaptiveLod: true };
+      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineWidth: 1.5, outlineScale: 1.04, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', renderMaterial: 'standard', adaptiveLod: false };
     } else if (activeLayerConfigId === 'neon-streets') {
       layerFilters.neonStreets = { scope: 'i95', lineWidth: 1, brightness: 1 };
     } else if (activeLayerConfigId === 'enviroscreen') {
@@ -7201,21 +7184,22 @@
   }
 
   function worldLodPowerPlantRepresentatives(records, map) {
-    if (!map || layerFilters.powerPlants.adaptiveLod === false || map.getZoom() >= 3 || records.length < 1000) {
+    if (!map || layerFilters.powerPlants.adaptiveLod === false || map.getZoom() >= 5 || records.length < 1000) {
       return records;
     }
-    const cellSize = 12;
+    const cellSize = 64;
     const width = map.getCanvas().clientWidth;
     const height = map.getCanvas().clientHeight;
     const cells = new Map();
+    const sizeFactors = pointScaleFactors(records, layerFilters.powerPlants.sizeBy);
     records.forEach((record) => {
       const point = map.project([record.longitude, record.latitude]);
       if (point.x < -cellSize || point.x > width + cellSize || point.y < -cellSize || point.y > height + cellSize) return;
       const key = `${Math.floor(point.x / cellSize)}:${Math.floor(point.y / cellSize)}`;
       const current = cells.get(key);
-      const capacity = Number(record.nameplate_capacity_mw) || 0;
-      if (!current || capacity > current.capacity || (capacity === current.capacity && record.id < current.record.id)) {
-        cells.set(key, { record, capacity });
+      const outputScale = sizeFactors.get(record) || 1;
+      if (!current || outputScale > current.outputScale || (outputScale === current.outputScale && record.id < current.record.id)) {
+        cells.set(key, { record, outputScale });
       }
     });
     return [...cells.values()].map((entry) => entry.record);
@@ -7260,7 +7244,7 @@
       && (!map || layerShownAtZoom('global-power-plants', map.getZoom()));
     const naceiPowerPlantsVisible = document.getElementById('show-nacei-power-plants').checked
       && (!map || layerShownAtZoom('nacei-power-plants', map.getZoom()));
-    const cullNationwideBolts = Boolean(map && layerFilters.powerPlants.adaptiveLod !== false && map.getZoom() >= 5);
+    const cullNationwideBolts = Boolean(map && layerFilters.powerPlants.adaptiveLod === true && map.getZoom() >= 5);
     const nationwideBounds = cullNationwideBolts ? map.getBounds() : null;
     const nationwideLongitudePadding = nationwideBounds ? (nationwideBounds.getEast() - nationwideBounds.getWest()) * .15 : 0;
     const nationwideLatitudePadding = nationwideBounds ? (nationwideBounds.getNorth() - nationwideBounds.getSouth()) * .15 : 0;
@@ -7269,18 +7253,27 @@
         && record.longitude <= nationwideBounds.getEast() + nationwideLongitudePadding
         && record.latitude >= nationwideBounds.getSouth() - nationwideLatitudePadding
         && record.latitude <= nationwideBounds.getNorth() + nationwideLatitudePadding);
-    const matchingEiaPowerPlants = !eiaPowerPlantsVisible ? [] : powerPlantScope === 'US'
-      ? nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false))
+    const matchingEiaPowerPlantDomain = !eiaPowerPlantsVisible ? [] : powerPlantScope === 'US'
+      ? nationwidePowerPlantRecords.filter((record) => matchesFilters(record, false))
       : matches.filter((record) => record.record_type === 'power_plant');
-    const matchingGlobalPowerPlants = !globalPowerPlantsVisible ? [] : globalPowerPlantRecords
+    const matchingGlobalPowerPlantDomain = !globalPowerPlantsVisible ? [] : globalPowerPlantRecords
       .filter((record) => globalPowerPlantScope === 'WORLD' || ['CAN', 'MEX'].includes(record.country_code))
-      .filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false));
-    const matchingNaceiPowerPlants = !naceiPowerPlantsVisible ? [] : naceiPowerPlantRecords
-      .filter((record) => nationwideRecordInViewport(record) && matchesFilters(record, false));
+      .filter((record) => matchesFilters(record, false));
+    const matchingNaceiPowerPlantDomain = !naceiPowerPlantsVisible ? [] : naceiPowerPlantRecords
+      .filter((record) => matchesFilters(record, false));
+    const matchingEiaPowerPlants = matchingEiaPowerPlantDomain.filter(nationwideRecordInViewport);
+    const matchingGlobalPowerPlants = matchingGlobalPowerPlantDomain.filter(nationwideRecordInViewport);
+    const matchingNaceiPowerPlants = matchingNaceiPowerPlantDomain.filter(nationwideRecordInViewport);
+    const powerPlantScaleDomain = [
+      ...matchingEiaPowerPlantDomain,
+      ...matchingGlobalPowerPlantDomain,
+      ...matchingNaceiPowerPlantDomain,
+    ];
     const allMatchingPowerPlants = [...matchingEiaPowerPlants, ...matchingGlobalPowerPlants, ...matchingNaceiPowerPlants];
     powerPlantBoltLayer?.setRecords(
       worldLodPowerPlantRepresentatives(allMatchingPowerPlants, map),
-      allMatchingPowerPlants.length,
+      powerPlantScaleDomain.length,
+      powerPlantScaleDomain,
     );
     applyMapLayerOrder(activeLayerContext?.map);
   }

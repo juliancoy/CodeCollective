@@ -33,10 +33,24 @@ FACET_TERMS = {
     "legal_status": ("court", "lawsuit", "litigation", "appeal", "docket", "petition", "case"),
     "public_opposition_status": ("opposition", "hearing", "comment", "protest", "testimony"),
     "on_site_natural_gas_power_plant": ("natural gas", "generator", "turbine", "engine", "power plant"),
+    "power_profile": (
+        "mw", "megawatt", "power", "capacity", "demand", "load", "utility",
+        "substation", "critical load", "it load",
+    ),
 }
 PRIMARY_TYPES = {"government", "court"}
 MAX_SOURCE_BYTES = 15 * 1024 * 1024
 USER_AGENT = "CodeCollectiveEvidenceAudit/1.0 (+local research validation)"
+AUTHORITY_REGISTRY = Path(__file__).with_name("data") / "international-research-authorities.json"
+
+
+def authority_registry(path: Path = AUTHORITY_REGISTRY) -> list[dict[str, Any]]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    authorities = payload.get("authorities") if isinstance(payload, dict) else None
+    return authorities if isinstance(authorities, list) else []
 
 
 @dataclass(frozen=True)
@@ -74,6 +88,10 @@ def source_class(url: str) -> str:
         return "government"
     if host.endswith(".md.us") or host.endswith("maryland.gov"):
         return "government"
+    for authority in authority_registry():
+        suffix = str(authority.get("domain_suffix") or "").lower().lstrip(".")
+        if suffix and (host == suffix or host.endswith("." + suffix)):
+            return str(authority.get("authority_class") or "government")
     return "other"
 
 
@@ -379,6 +397,8 @@ def evaluate_facet(
         "reasons": list(dict.fromkeys(reasons)),
         "value": value,
         "basis": facet.get("basis"),
+        "fields": facet.get("fields"),
+        "field_evidence": facet.get("field_evidence"),
         "sources": source_audits,
     }
 
