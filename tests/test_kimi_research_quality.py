@@ -83,6 +83,12 @@ def test_positive_facility_specific_permit_can_become_promotion_ready():
     assert decision["sources"][0]["facet_match"] is True
 
 
+def test_international_authority_registry_classifies_known_public_domains():
+    assert quality.source_class("https://natural-resources.canada.ca/example") == "government"
+    assert quality.source_class("https://planning.example.gov.uk/facility") == "government"
+    assert quality.source_class("https://operator.example.com/specification") == "other"
+
+
 def test_negative_air_claim_is_not_accepted_from_generation_data():
     eia_source = source("https://www.eia.gov/electricity/data/eia860/example.zip")
     facet = {

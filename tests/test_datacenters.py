@@ -1227,7 +1227,7 @@ def test_map_markers_encode_documented_energy_sources_with_gradients():
     assert "/diesel|fuel oil/.test(backup)" in script
     assert "Energy color key" not in page
     assert "background: var(--marker-icon-fill" in styles
-    assert "WND: '#dce6ec'" in script
+    assert "WND: '#f1f5f7'" in script
     assert "NUC: '#52ef82'" in script
     assert ".dc-energy-swatch--wind { background: linear-gradient(145deg, #ffffff" in styles
     assert ".dc-energy-swatch--nuclear { background: linear-gradient(145deg, #9affbd" in styles
@@ -1315,27 +1315,23 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
 
 def test_nationwide_power_plants_use_disableable_instanced_lod_bolts():
     script = (ROOT / "datacenters" / "js" / "datacenters.js").read_text()
-    assert "adaptiveLod: true" in script
-    assert "Adaptive level of detail" in script
+    assert "adaptiveLod: false" in script
+    assert "Cull dense plants for performance" in script
     assert "adaptiveLod: formData.has('adaptiveLod')" in script
-    assert "const lod = !adaptiveLod || zoom >= 8 ? 'full' : zoom >= 5 ? 'regional' : 'national'" in script
-    assert "const lodPositions = new Float32Array" in script
-    assert "drawArraysInstanced(gl.TRIANGLES, 0, state.lodVertexCount" in script
-    assert "if (lod !== 'national')" in script
-    assert "if (lod === 'full' && state.silhouetteVertexCount > 0)" in script
-    assert "gl.uniform1f(state.uniforms.lodMode, lod === 'national' ? 2 : lod === 'regional' ? 1 : 0)" in script
-    assert "const lodScale = lod === 'national' ? .22 : lod === 'regional' ? .45 : 1" in script
-    assert "simpleMode = step(1.5, u_lodMode)" in script
+    assert "filters.adaptiveLod = filters.adaptiveLod === true" in script
+    assert "parameters.has('powerPlantCull')" in script
+    assert "adaptiveLod: parameters.get('powerPlantCull') === '1'" in script
+    assert "const lod = adaptiveLod && zoom < 5 ? 'representative' : 'full'" in script
+    assert "const lodScale = 1" in script
     assert "map.triggerRepaint();" in script
     assert "animated: true" in script
     assert "nationwidePowerPlantRecords = featureRecords(nationwide)" in script
-    assert "nationwidePowerPlantRecords.filter((record) => nationwideRecordInViewport(record)" in script
+    assert "const cullNationwideBolts = Boolean(map && layerFilters.powerPlants.adaptiveLod === true && map.getZoom() >= 5)" in script
     assert "matchingGlobalPowerPlants" in script
     assert "matchingNaceiPowerPlants" in script
     assert "function worldLodPowerPlantRepresentatives" in script
-    assert "const cellSize = 12" in script
+    assert "const cellSize = 64" in script
     assert "powerPlantBoltLayer?.setRecords(" in script
-    assert "allMatchingPowerPlants.length" in script
     assert "const cullNationwideBolts" in script
     assert "const nationwideRecordInViewport" in script
     assert "window.__powerPlantBoltDiagnostics" in script
@@ -1486,7 +1482,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260824-national-bolt-lod" in page
+    assert "20260831-power-plant-controls" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -1814,7 +1810,7 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
     assert "Power estimates JSON" in page
     assert "not utility-metered county load" in page
     assert "not utility-metered county load or coincident peak demand" in page
-    assert "20260824-national-bolt-lod" in page
+    assert "20260831-power-plant-controls" in page
     assert {
         "eia-retail-sales-md-residential-2024",
         "eia-retail-sales-md-all-sectors-2024",
@@ -2109,7 +2105,7 @@ def test_point_layer_gears_scale_markers_by_numeric_attributes():
     assert "Total draw · published envelope or projected demand" in script
     assert "dataCenterPointScaleOptions(records)" in script
     assert "Icons without the selected value use the smallest size" in script
-    assert "size: 36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * sizeFactors.get(record)" in script
+    assert "size: 36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * (sizeFactors.get(record) || 1)" in script
     assert "minimumSize: state.entries.length" in script
     assert "maximumSize: state.entries.length" in script
     assert "--marker-size" in script
@@ -2139,7 +2135,7 @@ def test_icon_layer_gears_have_persisted_scale_sliders():
     assert "remoteState.iconScale = normalizeIconScale(savedFilter.iconScale)" in script
     assert "iconScale: normalizeIconScale(remoteState?.iconScale)" in script
     assert "state.iconScale = 1" in script
-    assert "36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * sizeFactors.get(record)" in script
+    assert "36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * (sizeFactors.get(record) || 1)" in script
     assert "22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1)" in script
     assert "function remotePointSizeExpression(config)" in script
     assert "map.setLayoutProperty(layerId, 'text-size', remotePointSizeExpression(config))" in script

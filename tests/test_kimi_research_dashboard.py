@@ -188,6 +188,7 @@ def test_workflow_runner_builds_best_practice_data_center_commands(tmp_path):
             "workers": 4,
             "max_searches": 5,
             "max_tier": "escalation",
+            "prompt_profile": "worldwide-datacenter-power",
             "audit_workers": 8,
             "judge_workers": 4,
             "apply_promotion": False,
@@ -199,8 +200,12 @@ def test_workflow_runner_builds_best_practice_data_center_commands(tmp_path):
     research_command = commands[0][1]
     assert "datacenters/research_inventory_with_kimi.py" in research_command
     assert research_command[research_command.index("--record-type") + 1] == "data_center"
+    assert research_command[research_command.index("--prompt-profile") + 1] == "worldwide-datacenter-power"
     assert research_command[research_command.index("--max-tier") + 1] == "escalation"
-    assert research_command[research_command.index("--control-port") + 1] == "8765"
+    assert research_command[research_command.index("--control-host") + 1] == "127.0.0.1"
+    control_port = int(research_command[research_command.index("--control-port") + 1])
+    assert 1 <= control_port <= 65535
+    assert control_port != 8765
     audit_command = commands[1][1]
     assert "datacenters/audit_kimi_research.py" in audit_command
     assert "--judge" in audit_command
@@ -214,6 +219,7 @@ def test_workflow_options_are_bounded_and_explicit(tmp_path):
     options = runner._normalize_options({"run_research": "false", "run_audit": "true"})
     assert options["run_research"] is False
     assert options["run_audit"] is True
+    assert options["prompt_profile"] == "auto"
 
     try:
         runner._normalize_options({"record_type": "facility"})
@@ -221,6 +227,13 @@ def test_workflow_options_are_bounded_and_explicit(tmp_path):
         assert "record_type" in str(exc)
     else:
         raise AssertionError("invalid record_type was accepted")
+
+    try:
+        runner._normalize_options({"prompt_profile": "raw-text"})
+    except ValueError as exc:
+        assert "prompt profile" in str(exc)
+    else:
+        raise AssertionError("invalid prompt profile was accepted")
 
     try:
         runner._normalize_options({"apply_promotion": "maybe"})
@@ -235,3 +248,39 @@ def test_workflow_options_are_bounded_and_explicit(tmp_path):
         assert "workers" in str(exc)
     else:
         raise AssertionError("invalid workers value was accepted")
+
+
+def test_worldwide_workflow_is_prepared_bounded_and_source_separated(tmp_path):
+    runner = dashboard.WorkflowRunner(tmp_path, tmp_path / ".env.kimi", "http://127.0.0.1:8765")
+    options = runner._normalize_options({
+        "profile": "worldwide-datacenter-power",
+        "limit": 5,
+        "priority": 1,
+        "country": "CA",
+        "preview_only": True,
+    })
+
+    commands = runner._commands(options)
+
+    assert [phase for phase, _command in commands] == ["prepare", "research"]
+    research_command = commands[1][1]
+    assert research_command[research_command.index("--profile") + 1] == "worldwide-datacenter-power"
+    assert research_command[research_command.index("--limit") + 1] == "5"
+    assert research_command[research_command.index("--country") + 1] == "CA"
+    assert "--dry-run" in research_command
+    assert str(dashboard.WORLDWIDE_CHECKPOINT) in research_command
+
+
+def test_workflow_start_returns_without_reacquiring_runner_lock(tmp_path, monkeypatch):
+    runner = dashboard.WorkflowRunner(tmp_path, tmp_path / ".env.kimi", "http://127.0.0.1:8765")
+    completed = dashboard.threading.Event()
+
+    def no_op(_options):
+        completed.set()
+
+    monkeypatch.setattr(runner, "_run_workflow", no_op)
+
+    result = runner.start({"run_research": True, "run_audit": False, "run_promote": False})
+
+    assert result["state"] == "running"
+    assert completed.wait(1)

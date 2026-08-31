@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -23,6 +24,14 @@ DEFAULT_UPSTREAM = "http://127.0.0.1:8765"
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8766
 DEFAULT_CHECKPOINT = Path(__file__).with_name("research") / "kimi-research.jsonl"
+WORLDWIDE_RESEARCH_DIR = Path(__file__).with_name("research") / "worldwide-datacenters"
+WORLDWIDE_INPUT = WORLDWIDE_RESEARCH_DIR / "enrichment-input.json"
+WORLDWIDE_REPORT = WORLDWIDE_RESEARCH_DIR / "enrichment-input-report.json"
+WORLDWIDE_CHECKPOINT = WORLDWIDE_RESEARCH_DIR / "kimi-power-research.jsonl"
+WORLDWIDE_EVENTS = WORLDWIDE_RESEARCH_DIR / "kimi-power-events.jsonl"
+WORLDWIDE_AUDIT = WORLDWIDE_RESEARCH_DIR / "kimi-power-audit.jsonl"
+WORLDWIDE_REPAIR = WORLDWIDE_RESEARCH_DIR / "kimi-power-repair-queue.json"
+WORLDWIDE_REVIEW = WORLDWIDE_RESEARCH_DIR / "kimi-power-review-queue.json"
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ENV_FILE = Path(__file__).resolve().parent.parent / ".env.kimi"
 PILOT_COST_PER_RECORD = 0.320834 / 10
@@ -38,6 +47,8 @@ QUALITY_WEIGHTS = {
 QUALITY_ORDER = ("high", "medium", "low", "insufficient", "unknown")
 WORKFLOW_RECORD_TYPES = {"data_center", "power_plant"}
 WORKFLOW_TIERS = {"primary", "retry", "escalation"}
+WORKFLOW_PROFILES = {"maryland-infrastructure", "worldwide-datacenter-power"}
+WORKFLOW_PROMPT_PROFILES = {"auto", "maryland-infrastructure", "worldwide-datacenter-power"}
 
 
 class WorkflowRunner:
@@ -71,6 +82,8 @@ class WorkflowRunner:
 
     def start(self, options: dict[str, Any]) -> dict[str, Any]:
         normalized = self._normalize_options(options)
+        normalized["control_host"] = "127.0.0.1"
+        normalized["control_port"] = free_loopback_port(normalized["control_host"])
         with self.lock:
             if self.thread and self.thread.is_alive():
                 raise ValueError("workflow is already running")
@@ -93,7 +106,7 @@ class WorkflowRunner:
                 daemon=True,
             )
             self.thread.start()
-            return self.current()
+            return json.loads(json.dumps(self.status))
 
     def stop(self) -> dict[str, Any]:
         with self.lock:
@@ -105,6 +118,12 @@ class WorkflowRunner:
         return self.current()
 
     def _normalize_options(self, options: dict[str, Any]) -> dict[str, Any]:
+        profile = str(options.get("profile") or "maryland-infrastructure")
+        if profile not in WORKFLOW_PROFILES:
+            raise ValueError("unsupported research profile")
+        prompt_profile = str(options.get("prompt_profile") or "auto")
+        if prompt_profile not in WORKFLOW_PROMPT_PROFILES:
+            raise ValueError("unsupported prompt profile")
         record_type = str(options.get("record_type") or "data_center")
         if record_type not in WORKFLOW_RECORD_TYPES:
             raise ValueError("record_type must be data_center or power_plant")
@@ -115,13 +134,28 @@ class WorkflowRunner:
         max_searches = bounded_int(options.get("max_searches", 5), 1, 20, "max_searches")
         audit_workers = bounded_int(options.get("audit_workers", 8), 1, 32, "audit_workers")
         judge_workers = bounded_int(options.get("judge_workers", 4), 1, 16, "judge_workers")
+        limit = bounded_int(options.get("limit", 5), 1, 100, "limit")
+        priority = bounded_int(options.get("priority", 1), 1, 4, "priority")
+        country = str(options.get("country") or "").strip().upper()
+        if country and (len(country) not in {2, 3} or not country.isalpha()):
+            raise ValueError("country must be a two- or three-letter ISO code")
         return {
+            "profile": profile,
+            "prompt_profile": prompt_profile,
             "record_type": record_type,
             "workers": workers,
             "max_searches": max_searches,
             "max_tier": max_tier,
             "audit_workers": audit_workers,
             "judge_workers": judge_workers,
+            "limit": limit,
+            "priority": priority,
+            "country": country,
+            "run_prepare": bounded_bool(
+                options.get("run_prepare", profile == "worldwide-datacenter-power"),
+                "run_prepare",
+            ),
+            "preview_only": bounded_bool(options.get("preview_only", False), "preview_only"),
             "run_research": bounded_bool(options.get("run_research", True), "run_research"),
             "run_audit": bounded_bool(options.get("run_audit", True), "run_audit"),
             "run_promote": bounded_bool(options.get("run_promote", True), "run_promote"),
@@ -149,15 +183,23 @@ class WorkflowRunner:
                 self.process = None
 
     def _commands(self, options: dict[str, Any]) -> list[tuple[str, list[str]]]:
-        host, port = upstream_host_port(self.upstream)
         commands: list[tuple[str, list[str]]] = []
+        worldwide = options["profile"] == "worldwide-datacenter-power"
+        control_host = str(options.get("control_host") or "127.0.0.1")
+        control_port = int(options.get("control_port") or free_loopback_port(control_host))
+        if worldwide and options["run_prepare"]:
+            commands.append(("prepare", [
+                sys.executable,
+                "datacenters/prepare_worldwide_datacenter_enrichment.py",
+                "--output", str(WORLDWIDE_INPUT),
+                "--report", str(WORLDWIDE_REPORT),
+            ]))
         if options["run_research"]:
-            commands.append(
-                (
-                    "research",
-                    [
+            research_command = [
                         sys.executable,
                         "datacenters/research_inventory_with_kimi.py",
+                        "--profile", options["profile"],
+                        "--prompt-profile", options["prompt_profile"],
                         "--record-type",
                         options["record_type"],
                         "--env-file",
@@ -169,18 +211,31 @@ class WorkflowRunner:
                         "--max-tier",
                         options["max_tier"],
                         "--control-host",
-                        host,
+                        control_host,
                         "--control-port",
-                        str(port),
+                        str(control_port),
                         "--verbose",
-                    ],
-                )
-            )
-        audit_path = self.root / "datacenters" / "research" / "kimi-evidence-audit.jsonl"
-        if options["run_audit"]:
+                    ]
+            if worldwide:
+                research_command.extend([
+                    "--input", str(WORLDWIDE_INPUT),
+                    "--checkpoint", str(WORLDWIDE_CHECKPOINT),
+                    "--events", str(WORLDWIDE_EVENTS),
+                    "--limit", str(options["limit"]),
+                    "--priority", str(options["priority"]),
+                    "--primary-minimum-searches", "2",
+                ])
+                if options["country"]:
+                    research_command.extend(["--country", options["country"]])
+            if options["preview_only"]:
+                research_command.append("--dry-run")
+            commands.append(("research", research_command))
+        audit_path = WORLDWIDE_AUDIT if worldwide else self.root / "datacenters" / "research" / "kimi-evidence-audit.jsonl"
+        if options["run_audit"] and not options["preview_only"]:
             audit_command = [
                 sys.executable,
                 "datacenters/audit_kimi_research.py",
+                "--profile", options["profile"],
                 "--judge",
                 "--workers",
                 str(options["audit_workers"]),
@@ -189,11 +244,26 @@ class WorkflowRunner:
                 "--env-file",
                 str(self.env_file),
             ]
+            if worldwide:
+                audit_command.extend([
+                    "--inventory", str(WORLDWIDE_INPUT),
+                    "--checkpoint", str(WORLDWIDE_CHECKPOINT),
+                    "--output", str(WORLDWIDE_AUDIT),
+                    "--repair-queue", str(WORLDWIDE_REPAIR),
+                    "--review-queue", str(WORLDWIDE_REVIEW),
+                ])
             if options["reuse_source_audit"] and audit_path.exists():
                 audit_command.extend(["--reuse-source-audit", str(audit_path)])
             commands.append(("audit", audit_command))
-        if options["run_promote"]:
-            promote_command = [sys.executable, "datacenters/promote_kimi_research.py"]
+        if options["run_promote"] and not options["preview_only"]:
+            promote_command = [
+                sys.executable,
+                "datacenters/promote_worldwide_datacenter_enrichment.py"
+                if worldwide
+                else "datacenters/promote_kimi_research.py",
+            ]
+            if worldwide:
+                promote_command.extend(["--audit", str(WORLDWIDE_AUDIT)])
             if options["apply_promotion"]:
                 promote_command.append("--apply")
             commands.append(("promote", promote_command))
@@ -419,6 +489,12 @@ def upstream_host_port(upstream: str) -> tuple[str, int]:
     return host, parsed.port or 8765
 
 
+def free_loopback_port(host: str = "127.0.0.1") -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+        server.bind((host, 0))
+        return int(server.getsockname()[1])
+
+
 def env_value(path: Path, key: str) -> str | None:
     if not path.exists():
         return None
@@ -491,13 +567,17 @@ class DashboardState:
         self.lock = threading.Lock()
         self.stop_event = threading.Event()
         self.records = ResearchRecords(checkpoint)
+        self.worldwide_records = ResearchRecords(WORLDWIDE_CHECKPOINT)
         self.env_file = DEFAULT_ENV_FILE
         self.workflow = WorkflowRunner(ROOT, self.env_file, self.upstream)
 
     def request(self, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+        base_url = self.control_base_url() if path in {"/status", "/control"} else self.upstream
+        if base_url is None:
+            raise ValueError("no active workflow control API")
         data = json.dumps(body).encode() if body is not None else None
         request = urllib.request.Request(
-            self.upstream + path,
+            base_url + path,
             data=data,
             headers={"Content-Type": "application/json"} if data is not None else {},
             method="POST" if data is not None else "GET",
@@ -511,6 +591,17 @@ class DashboardState:
             except (ValueError, AttributeError):
                 detail = str(exc)
             raise ValueError(detail) from exc
+
+    def control_base_url(self) -> str | None:
+        workflow = self.workflow.current()
+        options = workflow.get("options") or {}
+        if workflow.get("state") != "running":
+            return self.upstream
+        host = options.get("control_host")
+        port = options.get("control_port")
+        if not host or not port:
+            return self.upstream
+        return f"http://{host}:{port}"
 
     def add_activity(self, message: str, level: str = "info") -> None:
         self.activity.appendleft(
@@ -574,7 +665,14 @@ class DashboardState:
                     self.last_error = message
             self.stop_event.wait(self.interval)
 
-    def metrics(self, records_scope: str = "current") -> dict[str, Any]:
+    def record_store(self, profile: str) -> ResearchRecords:
+        return self.worldwide_records if profile == "worldwide-datacenter-power" else self.records
+
+    def metrics(
+        self,
+        records_scope: str = "current",
+        profile: str = "maryland-infrastructure",
+    ) -> dict[str, Any]:
         with self.lock:
             status = dict(self.last_status or {})
             samples = list(self.samples)
@@ -595,7 +693,9 @@ class DashboardState:
             elapsed = max(float(status.get("elapsed_seconds", 0)), 1)
             rate = processed / elapsed
         remaining = max(total - processed, 0)
-        run_id = status.get("run_id") or self.records.latest_run_id()
+        store = self.record_store(profile)
+        run_id = status.get("run_id") if (self.workflow.current().get("options") or {}).get("profile") == profile else None
+        run_id = run_id or store.latest_run_id()
         records_run_id = None if records_scope == "all" else run_id
         return {
             "connected": bool(status) and error is None,
@@ -615,7 +715,8 @@ class DashboardState:
             "activity": activity[:80],
             "received_run_id": records_run_id,
             "received_scope": "all" if records_scope == "all" else "current",
-            "received": self.records.aggregate(records_run_id),
+            "received_profile": profile,
+            "received": store.aggregate(records_run_id),
         }
 
     def current_run_id(self) -> str | None:
@@ -623,14 +724,86 @@ class DashboardState:
             run_id = (self.last_status or {}).get("run_id")
         return run_id or self.records.latest_run_id()
 
-    def records_run_id(self, scope: str) -> str | None:
-        return None if scope == "all" else self.current_run_id()
+    def records_run_id(self, scope: str, profile: str = "maryland-infrastructure") -> str | None:
+        if scope == "all":
+            return None
+        workflow = self.workflow.current()
+        if (workflow.get("options") or {}).get("profile") == profile:
+            with self.lock:
+                run_id = (self.last_status or {}).get("run_id")
+            if run_id:
+                return run_id
+        return self.record_store(profile).latest_run_id()
 
     def service_settings(self) -> dict[str, Any]:
         return {
             "kimi_key_configured": bool(env_value(self.env_file, "MOONSHOT_API_KEY")),
             "env_file": str(self.env_file),
             "github_mode": "browser-local",
+        }
+
+    def worldwide_summary(self) -> dict[str, Any]:
+        def json_value(path: Path, default: Any) -> Any:
+            try:
+                return json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                return default
+
+        report = json_value(WORLDWIDE_REPORT, {})
+        repair = json_value(WORLDWIDE_REPAIR, {})
+        review = json_value(WORLDWIDE_REVIEW, {})
+        audit_rows = ResearchRecords(WORLDWIDE_AUDIT).current(None)
+        promotion_ready = sum(bool(row.get("promotion_ready")) for row in audit_rows)
+        return {
+            "prepared": WORLDWIDE_INPUT.exists(),
+            "eligible_count": report.get("eligible_count", 0),
+            "deferred_count": report.get("deferred_count", 0),
+            "country_counts": report.get("country_counts", {}),
+            "priority_counts": report.get("priority_counts", {}),
+            "source_snapshot": report.get("source_snapshot"),
+            "researched_count": len(self.worldwide_records.current(None)),
+            "audited_count": len(audit_rows),
+            "promotion_ready_count": promotion_ready,
+            "repair_count": len(repair.get("facilities") or []),
+            "review_count": len(review.get("facilities") or []),
+        }
+
+    def worldwide_gates(self) -> dict[str, Any]:
+        audits = ResearchRecords(WORLDWIDE_AUDIT).current(None)
+        rows = []
+        for audit in reversed(audits):
+            decision = (audit.get("facets") or {}).get("power_profile") or {}
+            rows.append({
+                "facility_id": audit.get("facility_id"),
+                "facility_name": audit.get("facility_name"),
+                "state": decision.get("state", "unknown"),
+                "action": decision.get("recommended_action", "unknown"),
+                "confidence": decision.get("confidence", "unknown"),
+                "value": decision.get("value"),
+                "fields": decision.get("fields") or {},
+                "reasons": decision.get("reasons") or [],
+                "sources": [
+                    {
+                        "title": source.get("title"),
+                        "publisher": source.get("publisher"),
+                        "url": source.get("final_url") or source.get("url"),
+                        "source_class": source.get("source_class"),
+                        "reachable": source.get("reachable"),
+                        "usable": source.get("usable"),
+                    }
+                    for source in decision.get("sources", [])
+                ],
+                "judge": decision.get("judge"),
+            })
+        overlay_path = Path(__file__).with_name("data") / "data-centers-openstreetmap-world-enrichment.json"
+        try:
+            overlay = json.loads(overlay_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            overlay = {}
+        return {
+            "rows": rows[:250],
+            "overlay_record_count": overlay.get("record_count", 0),
+            "overlay_generated_at": overlay.get("generated_at"),
         }
 
     def update_service_settings(self, values: dict[str, Any]) -> dict[str, Any]:
@@ -686,29 +859,37 @@ def make_handler(state: DashboardState, html: bytes) -> type[BaseHTTPRequestHand
             records_scope = query.get("scope", ["current"])[0]
             if records_scope not in {"current", "all"}:
                 records_scope = "current"
+            profile = query.get("profile", ["maryland-infrastructure"])[0]
+            if profile not in WORKFLOW_PROFILES:
+                profile = "maryland-infrastructure"
+            store = state.record_store(profile)
             if parsed.path == "/":
                 self.send_value(200, html, "text/html; charset=utf-8")
             elif parsed.path == "/api/snapshot":
                 self.send_value(
-                    200, state.metrics(records_scope), "application/json"
+                    200, state.metrics(records_scope, profile), "application/json"
                 )
             elif parsed.path == "/api/records":
-                run_id = state.records_run_id(records_scope)
+                run_id = state.records_run_id(records_scope, profile)
                 self.send_value(
-                    200, state.records.summaries(run_id), "application/json"
+                    200, store.summaries(run_id), "application/json"
                 )
             elif parsed.path == "/api/service-settings":
                 self.send_value(200, state.service_settings(), "application/json")
             elif parsed.path == "/api/workflow":
                 self.send_value(200, state.workflow.current(), "application/json")
+            elif parsed.path == "/api/worldwide-summary":
+                self.send_value(200, state.worldwide_summary(), "application/json")
+            elif parsed.path == "/api/worldwide-gates":
+                self.send_value(200, state.worldwide_gates(), "application/json")
             elif parsed.path == "/api/record":
                 facility_id = query.get("id", [""])[0]
                 exact_run_id = query.get("run_id", [""])[0]
-                run_id = state.records_run_id(records_scope)
+                run_id = state.records_run_id(records_scope, profile)
                 record = (
-                    state.records.detail_for_run(exact_run_id, facility_id)
+                    store.detail_for_run(exact_run_id, facility_id)
                     if exact_run_id
-                    else state.records.detail(run_id, facility_id)
+                    else store.detail(run_id, facility_id)
                 )
                 self.send_value(
                     200 if record else 404,

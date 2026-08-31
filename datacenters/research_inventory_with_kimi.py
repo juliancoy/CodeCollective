@@ -62,6 +62,7 @@ RESEARCHABLE_FIELDS = (
     "legal_status",
     "public_opposition_status",
     "on_site_natural_gas_power_plant",
+    "power_profile",
 )
 UNRESOLVED_PATTERNS = (
     re.compile(r"\bnot (?:yet )?researched\b", re.IGNORECASE),
@@ -84,6 +85,31 @@ in the reviewed sources as of YYYY-MM-DD" for a well-searched absence. If eviden
 is inadequate or facilities may be confused, use confidence "insufficient" and
 say exactly what could not be established. Do not invent URLs, dates, agencies,
 case numbers, permit numbers, or quotations."""
+
+WORLDWIDE_POWER_SYSTEM_PROMPT = """You research physical data-center facilities worldwide for a public map.
+Use the web_search tool before answering. Search in the facility's country and local
+language when useful, but return normalized English JSON. Prefer government planning,
+permit, regulator, grid-operator, and utility records, followed by exact-facility
+operator specifications and filings. Directories and search snippets are leads only.
+
+Never transfer a fleet, market, region, availability-zone, or portfolio figure to an
+individual facility. Distinguish operating grid demand, published capacity envelope,
+projected demand, IT or critical load, utility service, substation capacity, and backup
+generation. Do not use backup-generator capacity as facility demand. Every non-null
+number needs a facility-specific source, unit, scope, and URL. Use null when evidence
+does not establish a value. Do not invent or average values."""
+
+PROMPT_PROFILES = {
+    "maryland-infrastructure": SYSTEM_PROMPT,
+    "worldwide-datacenter-power": WORLDWIDE_POWER_SYSTEM_PROMPT,
+}
+
+RESEARCH_PROFILES = {
+    "maryland-infrastructure": tuple(
+        field for field in RESEARCHABLE_FIELDS if field != "power_profile"
+    ),
+    "worldwide-datacenter-power": ("power_profile",),
+}
 
 
 @dataclass(frozen=True)
@@ -290,6 +316,7 @@ class KimiClient:
         retries: int,
         max_tool_rounds: int,
         max_searches: int,
+        prompt_profile: str = "auto",
     ) -> None:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
@@ -298,6 +325,7 @@ class KimiClient:
         self.retries = retries
         self.max_tool_rounds = max_tool_rounds
         self.max_searches = max_searches
+        self.prompt_profile = prompt_profile
         self._local = threading.local()
         self.tools = self._request("GET", f"/formulas/{formula_uri}/tools")["tools"]
 
@@ -475,7 +503,13 @@ class KimiClient:
             prior_queries,
         )
         messages: list[dict[str, Any]] = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "system",
+                "content": system_prompt_for_target(
+                    target,
+                    getattr(self, "prompt_profile", "auto"),
+                ),
+            },
             {"role": "user", "content": prompt},
         ]
         queries = queries_out if queries_out is not None else []
@@ -635,6 +669,19 @@ def target_context(record: dict[str, Any], facets: tuple[str, ...]) -> dict[str,
         "iso_region",
         "iso_zone",
         "location_tags",
+        "country",
+        "country_code",
+        "osm_type",
+        "osm_id",
+        "osm_url",
+        "website",
+        "facility_tags",
+        "research_priority",
+        "reported_grid_demand_mw",
+        "reported_power_capacity_mw",
+        "projected_power_demand_mw",
+        "estimated_power_draw_mw",
+        "on_site_generation_capacity_mw",
     )
     context = {field: record.get(field) for field in fields if record.get(field) is not None}
     context["unresolved_facets"] = {field: record.get(field) for field in facets}
@@ -649,12 +696,40 @@ def build_user_prompt(
     prior_queries: list[str] | None = None,
 ) -> str:
     today = date.today().isoformat()
+    power_profile = {
+        "value": "concise scope-aware facility power summary",
+        "confidence": "high | medium | low | insufficient",
+        "basis": "what the cited evidence establishes and its limits",
+        "fields": {
+            "reported_grid_demand_mw": None,
+            "reported_power_capacity_mw": None,
+            "projected_power_demand_mw": None,
+            "estimated_power_draw_mw": None,
+            "estimated_power_draw_method": None,
+            "on_site_generation_capacity_mw": None,
+            "energy_source_codes": [],
+            "lifecycle_status": None,
+            "value_scope": "unknown",
+            "as_of_date": None,
+        },
+        "field_evidence": {},
+        "sources": [
+            {
+                "title": "document or page title",
+                "publisher": "publisher",
+                "url": "https://...",
+                "document_date": "YYYY-MM-DD or null",
+                "source_type": "primary government | regulator | grid operator | utility | operator | filing | news",
+                "supports": "exact facility-specific claim, number, unit, and scope",
+            }
+        ],
+    }
     schema = {
         "facility_id": target.record["id"],
         "facility_name": target.record["name"],
         "researched_at": today,
         "facets": {
-            facet: {
+            facet: power_profile if facet == "power_profile" else {
                 "value": "concise inventory-ready finding",
                 "confidence": "high | medium | low | insufficient",
                 "basis": "what the cited evidence establishes and its limits",
@@ -675,11 +750,16 @@ def build_user_prompt(
     }
     prior_queries = prior_queries or []
     search_word = "search" if minimum_searches == 1 else "searches"
+    primary_instruction = (
+        "Target an official government, regulator, grid, utility, filing, or exact-facility operator source in at least one query."
+        if "power_profile" in target.facets
+        else "Target primary government or court records in at least one query."
+    )
     return f"""Research every unresolved facet for this one facility as of {today}.
 Ensure at least {minimum_searches} distinct web {search_word} have been completed
 across all attempts. Prior queries listed below count toward that total. Run only
 the additional searches needed to resolve evidence gaps, and do not repeat an
-equivalent query. Target primary government or court records in at least one query.
+equivalent query. {primary_instruction}
 Search alternate facility/operator names when useful. Do not research or return
 facets outside the requested list.
 
@@ -741,6 +821,70 @@ def facet_validation_errors(name: str, facet: Any) -> list[str]:
         for field in ("title", "publisher", "source_type", "supports"):
             if not isinstance(source.get(field), str) or not source[field].strip():
                 errors.append(f"{name}: source {index + 1} lacks {field}")
+    if name == "power_profile":
+        fields = facet.get("fields")
+        evidence = facet.get("field_evidence")
+        required = {
+            "reported_grid_demand_mw",
+            "reported_power_capacity_mw",
+            "projected_power_demand_mw",
+            "estimated_power_draw_mw",
+            "estimated_power_draw_method",
+            "on_site_generation_capacity_mw",
+            "energy_source_codes",
+            "lifecycle_status",
+            "value_scope",
+            "as_of_date",
+        }
+        if not isinstance(fields, dict) or set(fields) != required:
+            errors.append(f"{name}: fields must exactly match the power-profile schema")
+            fields = fields if isinstance(fields, dict) else {}
+        if not isinstance(evidence, dict):
+            errors.append(f"{name}: field_evidence must be an object")
+            evidence = {}
+        numeric_fields = {
+            "reported_grid_demand_mw",
+            "reported_power_capacity_mw",
+            "projected_power_demand_mw",
+            "estimated_power_draw_mw",
+            "on_site_generation_capacity_mw",
+        }
+        source_urls = {
+            source.get("url") for source in sources if isinstance(source, dict)
+        }
+        for field in numeric_fields:
+            value = fields.get(field)
+            if value is not None and (
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or value < 0
+            ):
+                errors.append(
+                    f"{name}: {field} must be a nonnegative JSON number or null"
+                )
+            citations = evidence.get(field, [])
+            if value is not None and (
+                not isinstance(citations, list)
+                or not citations
+                or not set(citations) <= source_urls
+            ):
+                errors.append(f"{name}: {field} lacks matching field evidence")
+        if (
+            fields.get("estimated_power_draw_mw") is not None
+            and not fields.get("estimated_power_draw_method")
+        ):
+            errors.append(f"{name}: estimated power draw requires a method")
+        if not isinstance(fields.get("energy_source_codes"), list):
+            errors.append(f"{name}: energy_source_codes must be an array")
+        if fields.get("value_scope") not in {
+            "building",
+            "facility",
+            "campus",
+            "availability_zone",
+            "portfolio",
+            "unknown",
+        }:
+            errors.append(f"{name}: invalid value_scope")
     return errors
 
 
@@ -1012,13 +1156,30 @@ def result_meets_threshold(result: dict[str, Any], threshold: str) -> bool:
     )
 
 
-def pipeline_identifier(stages: list[Stage], confidence_threshold: str) -> str:
+def pipeline_identifier(
+    stages: list[Stage],
+    confidence_threshold: str,
+    profile: str = "maryland-infrastructure",
+    prompt_profile: str = "auto",
+) -> str:
     configuration = {
         "stages": [stage.__dict__ for stage in stages],
         "confidence_threshold": confidence_threshold,
+        "profile": profile,
+        "prompt_profile": prompt_profile,
         "schema_version": 4,
     }
     return hashlib.sha256(canonical_json(configuration).encode()).hexdigest()[:16]
+
+
+def system_prompt_for_target(target: Target, prompt_profile: str = "auto") -> str:
+    if prompt_profile == "auto":
+        return (
+            WORLDWIDE_POWER_SYSTEM_PROMPT
+            if "power_profile" in target.facets
+            else SYSTEM_PROMPT
+        )
+    return PROMPT_PROFILES[prompt_profile]
 
 
 def research_one(
@@ -1254,6 +1415,17 @@ def write_event(handle: Any, event: dict[str, Any]) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
+    parser.add_argument(
+        "--profile",
+        choices=tuple(RESEARCH_PROFILES),
+        default="maryland-infrastructure",
+    )
+    parser.add_argument(
+        "--prompt-profile",
+        choices=("auto", *PROMPT_PROFILES),
+        default=os.getenv("KIMI_PROMPT_PROFILE", "auto"),
+        help="system prompt to use; auto chooses from the requested facets",
+    )
     parser.add_argument("--sources", type=Path, default=DEFAULT_SOURCES)
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
     parser.add_argument("--events", type=Path, default=DEFAULT_EVENTS)
@@ -1280,6 +1452,20 @@ def parse_args() -> argparse.Namespace:
         type=str.upper,
         default=[],
         help="restrict research to these state abbreviations; repeatable",
+    )
+    parser.add_argument(
+        "--country",
+        action="append",
+        type=str.upper,
+        default=[],
+        help="restrict research to ISO country codes; repeatable",
+    )
+    parser.add_argument(
+        "--priority",
+        action="append",
+        type=int,
+        default=[],
+        help="restrict research to prepared priority values; repeatable",
     )
     parser.add_argument("--id", action="append", default=[], help="research only this facility ID; repeatable")
     parser.add_argument("--limit", type=int, help="maximum number of pending facilities")
@@ -1356,6 +1542,8 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("--control-host must be a loopback address")
     if not 0 <= args.control_port <= 65535:
         raise SystemExit("--control-port must be between 0 and 65535")
+    if getattr(args, "prompt_profile", "auto") not in {"auto", *PROMPT_PROFILES}:
+        raise SystemExit("--prompt-profile must be auto, maryland-infrastructure, or worldwide-datacenter-power")
 
 
 def main() -> int:
@@ -1384,7 +1572,12 @@ def main() -> int:
     ]
     tier_count = {"primary": 1, "retry": 2, "escalation": 3}[args.max_tier]
     stages = stages[:tier_count]
-    pipeline_id = pipeline_identifier(stages, args.confidence_threshold)
+    pipeline_id = pipeline_identifier(
+        stages,
+        args.confidence_threshold,
+        args.profile,
+        args.prompt_profile,
+    )
     records = json.loads(args.input.read_text())
     if not isinstance(records, list):
         raise SystemExit("Infrastructure input must be a JSON array")
@@ -1412,6 +1605,28 @@ def main() -> int:
         states=set(args.state),
         facet_overrides=facet_overrides,
     )
+    allowed_facets = set(RESEARCH_PROFILES[args.profile])
+    allowed_countries = set(args.country)
+    allowed_priorities = set(args.priority)
+    filtered_targets: list[Target] = []
+    for target in targets:
+        facets = tuple(facet for facet in target.facets if facet in allowed_facets)
+        if not facets:
+            continue
+        if allowed_countries and str(target.record.get("country_code") or "").upper() not in allowed_countries:
+            continue
+        if allowed_priorities and target.record.get("research_priority") not in allowed_priorities:
+            continue
+        context = target_context(target.record, facets)
+        filtered_targets.append(
+            Target(
+                record=target.record,
+                facets=facets,
+                fingerprint=hashlib.sha256(canonical_json(context).encode()).hexdigest(),
+                repair_context=target.repair_context,
+            )
+        )
+    targets = filtered_targets
     completed = (
         set()
         if args.force or args.repair_queue is not None
@@ -1480,6 +1695,7 @@ def main() -> int:
         ),
         "credential_source": credential_source,
         "confidence_threshold": args.confidence_threshold,
+        "prompt_profile": args.prompt_profile,
         "stages": [stage.__dict__ for stage in stages],
         "pricing_snapshot": PRICING_SNAPSHOT,
     }
@@ -1495,6 +1711,7 @@ def main() -> int:
             retries=args.retries,
             max_tool_rounds=args.max_tool_rounds,
             max_searches=args.max_searches,
+            prompt_profile=args.prompt_profile,
         )
     except Exception as exc:
         with args.events.open("a", encoding="utf-8") as events:

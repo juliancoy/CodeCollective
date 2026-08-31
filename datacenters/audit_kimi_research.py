@@ -40,6 +40,11 @@ DEFAULT_BASE_URL = "https://api.moonshot.ai/v1"
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
+    parser.add_argument(
+        "--profile",
+        choices=("maryland-infrastructure", "worldwide-datacenter-power"),
+        default="maryland-infrastructure",
+    )
     parser.add_argument("--inventory", type=Path, default=DEFAULT_INVENTORY)
     parser.add_argument("--output", type=Path, default=DEFAULT_AUDIT)
     parser.add_argument("--repair-queue", type=Path, default=DEFAULT_REPAIR_QUEUE)
@@ -214,6 +219,10 @@ Claim: {decision.get('value')}
 Basis: {decision.get('basis')}
 Evidence:
 {json.dumps(evidence, indent=2, ensure_ascii=False)}
+Structured fields:
+{json.dumps(decision.get('fields'), indent=2, ensure_ascii=False)}
+Field evidence mapping:
+{json.dumps(decision.get('field_evidence'), indent=2, ensure_ascii=False)}
 
 Return JSON only:
 {{"verdict":"supported|partial|unsupported","reason":"concise explanation","supported_urls":["..."]}}
