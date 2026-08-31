@@ -1324,7 +1324,11 @@ def test_nationwide_power_plants_use_disableable_instanced_lod_bolts():
     assert "const lod = adaptiveLod && zoom < 5 ? 'representative' : 'full'" in script
     assert "const lodScale = 1" in script
     assert "map.triggerRepaint();" in script
-    assert "animated: true" in script
+    assert "function powerPlantAnimationTargetFps(instanceCount)" in script
+    assert "if (instanceCount > 20000) return 0" in script
+    assert "if (targetFps <= 0) return" in script
+    assert "animated: powerPlantAnimationTargetFps(state.entries.length) > 0" in script
+    assert "animationTargetFps: powerPlantAnimationTargetFps(state.entries.length)" in script
     assert "nationwidePowerPlantRecords = featureRecords(nationwide)" in script
     assert "const cullNationwideBolts = Boolean(map && layerFilters.powerPlants.adaptiveLod === true && map.getZoom() >= 5)" in script
     assert "matchingGlobalPowerPlants" in script

@@ -2278,6 +2278,12 @@
     };
   }
 
+  function powerPlantAnimationTargetFps(instanceCount) {
+    if (instanceCount > 20000) return 0;
+    if (instanceCount > 8000) return 20;
+    return 30;
+  }
+
   function createPowerPlantBoltLayer(map) {
     const vertexSource = `
       precision highp float;
@@ -2468,8 +2474,8 @@
           materialAlpha = max(0.22, grid);
         }
         if (u_glowPass > 0.5) {
-          vec3 glowColor = mix(materialColor * 0.52, vec3(1.0), v_hover * 0.7);
-          float glowAlpha = mix(0.38, 0.92, v_hover) * max(0.42, materialAlpha);
+          vec3 glowColor = min(vec3(1.0), v_outlineColor * mix(0.78, 1.08, v_hover));
+          float glowAlpha = mix(0.5, 0.88, v_hover) * max(0.5, materialAlpha);
           gl_FragColor = vec4(glowColor * glowAlpha * u_globalAlpha, glowAlpha * u_globalAlpha);
           return;
         }
@@ -2705,39 +2711,8 @@
 
         gl.uniform1f(state.uniforms.glowPass, 1.0);
         gl.uniform1f(state.uniforms.outlineOnly, 0.0);
-        gl.uniform1f(state.uniforms.scale, 1.16);
+        gl.uniform1f(state.uniforms.scale, 1.0 + (boltOutlineWidth * 0.08));
         drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
-
-        if (state.silhouetteVertexCount > 0) {
-          gl.disableVertexAttribArray(state.attribs.position);
-          gl.vertexAttrib3f(state.attribs.position, 0, 0, 0);
-          gl.disableVertexAttribArray(state.attribs.normal);
-          gl.vertexAttrib3f(state.attribs.normal, 0, 0, 1);
-          const edgeAttributes = [
-            [state.attribs.edgeStart, state.edgeStartBuffer, 3],
-            [state.attribs.edgeEnd, state.edgeEndBuffer, 3],
-            [state.attribs.edgeNormalA, state.edgeNormalABuffer, 3],
-            [state.attribs.edgeNormalB, state.edgeNormalBBuffer, 3],
-            [state.attribs.edgeCorner, state.edgeCornerBuffer, 2],
-          ];
-          edgeAttributes.forEach(([attribute, buffer, components]) => {
-            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-            gl.enableVertexAttribArray(attribute);
-            gl.vertexAttribPointer(attribute, components, gl.FLOAT, false, 0, 0);
-            divisor(attribute, 0);
-          });
-          gl.uniform1f(state.uniforms.glowPass, 0.0);
-          gl.uniform1f(state.uniforms.outlineOnly, 1.0);
-          gl.uniform1f(state.uniforms.scale, 1.0);
-          drawArraysInstanced(gl.TRIANGLES, 0, state.silhouetteVertexCount, state.entries.length);
-          edgeAttributes.forEach(([attribute]) => gl.disableVertexAttribArray(attribute));
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.positionBuffer);
-          gl.enableVertexAttribArray(state.attribs.position);
-          gl.vertexAttribPointer(state.attribs.position, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.normalBuffer);
-          gl.enableVertexAttribArray(state.attribs.normal);
-          gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
-        }
 
         gl.uniform1f(state.uniforms.glowPass, 0.0);
         gl.uniform1f(state.uniforms.outlineOnly, 0.0);
@@ -2754,10 +2729,12 @@
         state.renderCount += 1;
         state.lastGlError = gl.getError();
         if (!state.animationTimer) {
+          const targetFps = powerPlantAnimationTargetFps(state.entries.length);
+          if (targetFps <= 0) return;
           state.animationTimer = setTimeout(() => {
             state.animationTimer = null;
             if (!state.removed) map.triggerRepaint();
-          }, 33);
+          }, Math.round(1000 / targetFps));
         }
       },
       onRemove(_map, gl) {
@@ -2825,8 +2802,8 @@
           fillFraction: layerFilters.powerPlants.fillFraction,
           renderMaterial: normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial),
           adaptiveLod: layerFilters.powerPlants.adaptiveLod === true,
-          animated: true,
-          animationTargetFps: 30,
+          animated: powerPlantAnimationTargetFps(state.entries.length) > 0,
+          animationTargetFps: powerPlantAnimationTargetFps(state.entries.length),
           lod: state.lastLod,
           lodScale: state.lastLodScale,
           minimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,

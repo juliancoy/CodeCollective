@@ -12,6 +12,7 @@ import re
 import statistics
 import sys
 import time
+import urllib.parse
 
 from selenium import webdriver
 from selenium.webdriver import ChromeOptions
@@ -42,6 +43,7 @@ def new_driver(selenium_url: str, width: int, height: int) -> webdriver.Remote:
             {"width": width, "height": height, "deviceScaleFactor": 2, "mobile": True},
         )
     driver.set_page_load_timeout(60)
+    driver.set_script_timeout(120)
     return driver
 
 
@@ -2565,10 +2567,148 @@ def build_summary(samples: list[dict]) -> dict:
     }
 
 
+def percentile(values: list[float], fraction: float) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    index = min(len(ordered) - 1, max(0, round((len(ordered) - 1) * fraction)))
+    return round(ordered[index], 2)
+
+
+def power_bolts_workflow_url(base_url: str) -> str:
+    parsed = urllib.parse.urlparse(base_url)
+    params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
+    params["workflow"] = ["power-bolts"]
+    query = urllib.parse.urlencode(params, doseq=True)
+    return urllib.parse.urlunparse(parsed._replace(query=query))
+
+
+def collect_power_bolt_profile(driver: webdriver.Remote, screenshot_dir: pathlib.Path, base_url: str) -> dict:
+    driver.execute_script("localStorage.removeItem('codecollective.datacenters.ui-state.v1')")
+    driver.get(power_bolts_workflow_url(base_url))
+    wait_for_map_ready(driver)
+    diagnostics = WebDriverWait(driver, 90).until(
+        lambda d: d.execute_script(
+            """
+            const diagnostics = window.__powerPlantBoltDiagnostics?.();
+            if (!diagnostics?.ready || diagnostics.renderCount < 2 || diagnostics.instanceCount < 1000) return null;
+            return diagnostics;
+            """
+        )
+    )
+    frame_report = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        const startedAt = performance.now();
+        const samples = [];
+        let lastAt = startedAt;
+        let lastRenderCount = window.__powerPlantBoltDiagnostics?.()?.renderCount || 0;
+        function sample() {
+          const now = performance.now();
+          const diagnostics = window.__powerPlantBoltDiagnostics?.() || {};
+          samples.push({
+            elapsedMs: now - startedAt,
+            intervalMs: now - lastAt,
+            renderDelta: (diagnostics.renderCount || 0) - lastRenderCount,
+            renderCount: diagnostics.renderCount || 0
+          });
+          lastAt = now;
+          lastRenderCount = diagnostics.renderCount || 0;
+          if (now - startedAt >= 8000) {
+            const diagnostics = window.__powerPlantBoltDiagnostics?.() || {};
+            done({
+              samples,
+              elapsedMs: performance.now() - startedAt,
+              diagnostics,
+              memory: performance.memory ? {
+                usedJSHeapSize: performance.memory.usedJSHeapSize,
+                totalJSHeapSize: performance.memory.totalJSHeapSize,
+                jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+              } : null,
+              navigation: performance.getEntriesByType('navigation')[0]?.toJSON?.() || null
+            });
+            return;
+          }
+          setTimeout(sample, 500);
+        }
+        setTimeout(sample, 500);
+        """
+    )
+    update_report = driver.execute_async_script(
+        """
+        const done = arguments[arguments.length - 1];
+        const map = window.__codeCollectiveDatacenterMap;
+        const steps = [
+          {center: [-102, 40], zoom: 2.55},
+          {center: [-76.7, 39.1], zoom: 6},
+          {center: [-76.4417, 38.4344], zoom: 15},
+          {center: [-102, 40], zoom: 2.55}
+        ];
+        const results = [];
+        let index = 0;
+        function settle() {
+          const started = performance.now();
+          const startDiagnostics = window.__powerPlantBoltDiagnostics?.() || {};
+          setTimeout(() => {
+            const diagnostics = window.__powerPlantBoltDiagnostics?.() || {};
+            results.push({
+              step: index,
+              target: steps[index],
+              elapsedMs: performance.now() - started,
+              renderDelta: (diagnostics.renderCount || 0) - (startDiagnostics.renderCount || 0),
+              diagnostics
+            });
+            index += 1;
+            if (index >= steps.length) {
+              done(results);
+            } else {
+              map.jumpTo(steps[index]);
+              settle();
+            }
+          }, 1200);
+        }
+        map.jumpTo(steps[index]);
+        settle();
+        """
+    )
+    interval_samples = [float(value["intervalMs"]) for value in frame_report["samples"]]
+    render_delta_samples = [float(value["renderDelta"]) for value in frame_report["samples"]]
+    return {
+        "url": driver.current_url,
+        "initial_diagnostics": diagnostics,
+        "frame_timing": {
+            "sample_count": len(interval_samples),
+            "elapsed_ms": round(float(frame_report["elapsedMs"]), 1),
+            "median_interval_ms": percentile(interval_samples, 0.5),
+            "p90_interval_ms": percentile(interval_samples, 0.9),
+            "p95_interval_ms": percentile(interval_samples, 0.95),
+            "max_interval_ms": percentile(interval_samples, 1.0),
+            "median_renders_per_sample": percentile(render_delta_samples, 0.5),
+            "render_fps_estimate": round(
+                (float(frame_report["diagnostics"].get("renderCount", 0)) - float(diagnostics.get("renderCount", 0)))
+                / (float(frame_report["elapsedMs"]) / 1000),
+                1,
+            ) if frame_report["elapsedMs"] else 0,
+            "samples": frame_report["samples"],
+        },
+        "post_frame_diagnostics": frame_report["diagnostics"],
+        "zoom_pan_updates": [
+            {
+                **entry,
+                "elapsedMs": round(float(entry["elapsedMs"]), 1),
+            }
+            for entry in update_report
+        ],
+        "memory": frame_report["memory"],
+        "navigation": frame_report["navigation"],
+    }
+
+
 def run(args: argparse.Namespace) -> int:
     screenshot_dir = pathlib.Path(args.screenshot_dir).resolve()
     driver = new_driver(args.selenium_url, args.width, args.height)
-    report_path = screenshot_dir / "datacenters-parcel-hover-report.json"
+    report_name = "datacenters-power-bolts-profile.json" if args.profile_power_bolts else "datacenters-parcel-hover-report.json"
+    report_path = screenshot_dir / report_name
     stage = "startup"
     def step(name: str, action):
         nonlocal stage
@@ -2581,6 +2721,15 @@ def run(args: argparse.Namespace) -> int:
         wait_for_map_ready(driver)
         stage = "install instrumentation"
         install_instrumentation(driver)
+        if args.profile_power_bolts:
+            report = {
+                "base_url": args.base_url,
+                "power_bolts_profile": step("power bolts profile", lambda: collect_power_bolt_profile(driver, screenshot_dir, args.base_url)),
+            }
+            screenshot_dir.mkdir(parents=True, exist_ok=True)
+            report_path.write_text(json.dumps(report, indent=2))
+            print(json.dumps(report, indent=2))
+            return 0
         if args.sources_only:
             report = {
                 "base_url": args.base_url,
@@ -2836,6 +2985,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--layer-order-only", action="store_true", help="Verify selected layer drag ordering and persisted z-order, then exit.")
     parser.add_argument("--transmission-only", action="store_true", help="Verify transmission line color theme and width controls, then exit.")
     parser.add_argument("--moratorium-only", action="store_true", help="Verify local operating-environment colors, counts, default visibility, hover, and sourcing, then exit.")
+    parser.add_argument("--profile-power-bolts", action="store_true", help="Profile the power-bolts workflow with frame and zoom/pan timings, then exit.")
     return parser.parse_args()
 
 

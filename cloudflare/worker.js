@@ -53,6 +53,19 @@ function looksLikeSpaRoute(path) {
   return !lastSegment.includes(".");
 }
 
+function isPublicCalendarAsset(path) {
+  return /^\/(?:baltimore|dc|hawaii|multicity|philadelphia|pittsburgh|virtual)\/(?:upcoming_events|manual_events|scrape_errors|skipped_events|calendar_lenses)\.json$/i.test(path)
+    || /^\/(?:baltimore|dc|hawaii|multicity|philadelphia|pittsburgh|virtual)\/cc_events\.ics$/i.test(path)
+    || path === "/upcoming_events.json"
+    || path === "/cc_events.ics";
+}
+
+function applyPublicCors(headers) {
+  headers.set("access-control-allow-origin", "*");
+  headers.set("access-control-allow-methods", "GET,HEAD,OPTIONS");
+  headers.set("access-control-max-age", "86400");
+}
+
 function spaEntrypointRequest(url, request, pathname) {
   return new Request(`${url.origin}${pathname}`, {
     method: "GET",
@@ -71,6 +84,10 @@ function applyStaticCachePolicy(path, response) {
     headers.set("cache-control", "public, max-age=2592000");
   } else if (path.endsWith(".html") || path === "/" || path === "/p/" || path === "/p") {
     headers.set("cache-control", "public, max-age=300");
+  }
+
+  if (isPublicCalendarAsset(path)) {
+    applyPublicCors(headers);
   }
 
   return new Response(response.body, {
@@ -581,6 +598,12 @@ export default {
     if (path === "/R8-rowhome" || path.startsWith("/R8-rowhome/")) {
       url.pathname = `/r8-rowhome${path.slice("/R8-rowhome".length)}`;
       return Response.redirect(url.toString(), 308);
+    }
+
+    if (request.method === "OPTIONS" && isPublicCalendarAsset(path)) {
+      const headers = new Headers();
+      applyPublicCors(headers);
+      return new Response(null, { status: 204, headers });
     }
 
     if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data"))) {
