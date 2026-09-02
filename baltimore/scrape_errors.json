@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-09-01T03:53:34.352634-04:00",
+        "timestamp": "2026-09-02T03:10:26.886574-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "404 Client Error: Not Found for url: https://luma.com/blk-tech-connect-baltimore",
@@ -10,7 +10,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 501, in <lambda>\n    lambda: scrape_luma_orgpage.fetch_and_parse_luma_events(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_luma_orgpage.py\", line 42, in fetch_and_parse_luma_events\n    response.raise_for_status()  # Raise an exception for bad status codes\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://luma.com/blk-tech-connect-baltimore\n"
     },
     {
-        "timestamp": "2026-09-01T03:53:38.364519-04:00",
+        "timestamp": "2026-09-02T03:10:30.878029-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "'event'",
@@ -20,7 +20,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 493, in <lambda>\n    lambda: scrape_luma.parse_luma_event_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_luma.py\", line 29, in parse_luma_event_page\n    'name': event_data['event']['name'],\n            ~~~~~~~~~~^^^^^^^^^\nKeyError: 'event'\n"
     },
     {
-        "timestamp": "2026-09-01T03:53:44.772406-04:00",
+        "timestamp": "2026-09-02T03:10:38.182583-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "404 Client Error: Not Found for url: https://luma.com/SGLang-meetups",
@@ -30,7 +30,17 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 501, in <lambda>\n    lambda: scrape_luma_orgpage.fetch_and_parse_luma_events(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_luma_orgpage.py\", line 42, in fetch_and_parse_luma_events\n    response.raise_for_status()  # Raise an exception for bad status codes\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://luma.com/SGLang-meetups\n"
     },
     {
-        "timestamp": "2026-09-01T03:54:08.532884-04:00",
+        "timestamp": "2026-09-02T03:11:29.242907-04:00",
+        "city": "baltimore",
+        "stage": "source_fetch",
+        "error": "403 Client Error: Forbidden for url: https://cfgbankarena.com/events/",
+        "source_url": "https://cfgbankarena.com/events/",
+        "source_kind": "web_events_page",
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://cfgbankarena.com/events/\n"
+    },
+    {
+        "timestamp": "2026-09-02T03:11:03.556354-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "'NoneType' object has no attribute 'group'",
@@ -40,7 +50,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 481, in <lambda>\n    lambda: scrape_eventbrite.parse_eventbrite_event(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_eventbrite.py\", line 30, in parse_eventbrite_event\n    event_id = re.search(r'tickets-(\\d+)', url).group(1)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'group'\n"
     },
     {
-        "timestamp": "2026-09-01T03:54:26.329303-04:00",
+        "timestamp": "2026-09-02T03:11:26.019451-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://www.lifebridgehealth.org/events/community-calendar",
@@ -50,7 +60,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.lifebridgehealth.org/events/community-calendar\n"
     },
     {
-        "timestamp": "2026-09-01T03:54:27.350213-04:00",
+        "timestamp": "2026-09-02T03:11:27.024933-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://www.baltimorecountymd.gov/departments/aging/events/diabetes-support-group",
@@ -60,7 +70,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.baltimorecountymd.gov/departments/aging/events/diabetes-support-group\n"
     },
     {
-        "timestamp": "2026-09-01T03:54:41.195481-04:00",
+        "timestamp": "2026-09-02T03:11:32.159630-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "404 Client Error: Not Found for url: https://www.baltimorefreefarm.org/events/",
@@ -70,7 +80,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://www.baltimorefreefarm.org/events/\n"
     },
     {
-        "timestamp": "2026-09-01T03:54:48.853192-04:00",
+        "timestamp": "2026-09-02T03:11:37.617375-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "404 Client Error: Not Found for url: https://www.baltimorecity.gov/dhcd/events/list",
@@ -80,17 +90,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://www.baltimorecity.gov/dhcd/events/list\n"
     },
     {
-        "timestamp": "2026-09-01T03:54:57.100141-04:00",
-        "city": "baltimore",
-        "stage": "source_fetch",
-        "error": "Expecting value: line 1 column 1 (char 0)",
-        "source_url": "https://www.younggiftedgreen.org/events/",
-        "source_kind": "tribe_events",
-        "error_type": "JSONDecodeError",
-        "traceback": "Traceback (most recent call last):\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1116, in json\n    return complexjson.loads(self.text, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/json/decoder.py\", line 338, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/json/decoder.py\", line 356, in raw_decode\n    raise JSONDecodeError(\"Expecting value\", s, err.value) from None\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 517, in <lambda>\n    lambda: scrape_tribe.scrape(source.get(\"feed_url\") or source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_tribe.py\", line 93, in scrape\n    return _events_from_payload(response.json(), api_url)\n                                ^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1120, in json\n    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)\nrequests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n"
-    },
-    {
-        "timestamp": "2026-09-01T03:55:28.561304-04:00",
+        "timestamp": "2026-09-02T03:12:22.293946-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://makerspace.jhu.edu/events/",
@@ -100,7 +100,17 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://makerspace.jhu.edu/events/\n"
     },
     {
-        "timestamp": "2026-09-01T03:55:30.632351-04:00",
+        "timestamp": "2026-09-02T03:12:23.429633-04:00",
+        "city": "baltimore",
+        "stage": "source_fetch",
+        "error": "403 Client Error: Forbidden for url: https://www.openworksbmore.org/schedule/",
+        "source_url": "https://www.openworksbmore.org/schedule/",
+        "source_kind": "web_events_page",
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.openworksbmore.org/schedule/\n"
+    },
+    {
+        "timestamp": "2026-09-02T03:12:24.438421-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://www.lwv-baltimorecity.org/events",
@@ -110,7 +120,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.lwv-baltimorecity.org/events\n"
     },
     {
-        "timestamp": "2026-09-01T03:55:54.379168-04:00",
+        "timestamp": "2026-09-02T03:12:47.423946-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "404 Client Error: Not Found for url: https://buildiaf.org/calendar/events/",
@@ -120,7 +130,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://buildiaf.org/calendar/events/\n"
     },
     {
-        "timestamp": "2026-09-01T03:55:59.322756-04:00",
+        "timestamp": "2026-09-02T03:12:50.971906-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://changinglivesinitiativ.org/events/",
@@ -130,7 +140,17 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://changinglivesinitiativ.org/events/\n"
     },
     {
-        "timestamp": "2026-09-01T03:56:54.402490-04:00",
+        "timestamp": "2026-09-02T03:14:06.003226-04:00",
+        "city": "baltimore",
+        "stage": "source_fetch",
+        "error": "403 Client Error: Forbidden for url: https://www.baltimorehungerproject.org/events/today/",
+        "source_url": "https://www.baltimorehungerproject.org/events/today/",
+        "source_kind": "web_events_page",
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.baltimorehungerproject.org/events/today/\n"
+    },
+    {
+        "timestamp": "2026-09-02T03:14:10.353597-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "Blocked by robots.txt policy: https://gdg.community.dev/api/event_slim/for_chapter/3047/",
@@ -140,7 +160,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 581, in fetch_events_from_source\n    return apply_source_metadata(scrape_gdg.scrapeChapterID(chapter_id), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_gdg.py\", line 222, in scrapeChapterID\n    return scrape(cfg)\n           ^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_gdg.py\", line 227, in scrape\n    events.extend(fetch_events(cfg, \"Live\"))\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_gdg.py\", line 178, in fetch_events\n    resp = polite_get(session, endpoint, params=params, timeout=cfg.timeout_s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://gdg.community.dev/api/event_slim/for_chapter/3047/\n"
     },
     {
-        "timestamp": "2026-09-01T03:58:47.016706-04:00",
+        "timestamp": "2026-09-02T03:15:24.878226-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://carey.jhu.edu/events?location=Baltimore%2C+MD",
@@ -150,7 +170,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://carey.jhu.edu/events?location=Baltimore%2C+MD\n"
     },
     {
-        "timestamp": "2026-09-01T03:58:52.697543-04:00",
+        "timestamp": "2026-09-02T03:15:30.356512-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://carey.jhu.edu/events/2026-annual-carey-finance-conference",
@@ -160,7 +180,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://carey.jhu.edu/events/2026-annual-carey-finance-conference\n"
     },
     {
-        "timestamp": "2026-09-01T03:58:55.116058-04:00",
+        "timestamp": "2026-09-02T03:15:32.582719-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://www.hopkinsmedicine.org/heart-vascular-institute/cardiology/hypertrophic-cardiomyopathy-hcm/hcm-patient-symposium",
@@ -170,7 +190,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.hopkinsmedicine.org/heart-vascular-institute/cardiology/hypertrophic-cardiomyopathy-hcm/hcm-patient-symposium\n"
     },
     {
-        "timestamp": "2026-09-01T03:58:55.483774-04:00",
+        "timestamp": "2026-09-02T03:15:33.477853-04:00",
         "city": "baltimore",
         "stage": "source_fetch",
         "error": "403 Client Error: Forbidden for url: https://compassinstitute4dei.com/events/EventDetails.aspx?id=2064586",
@@ -180,7 +200,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 587, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 529, in <lambda>\n    lambda: scrape_web_events.parse_web_events_page(source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_web_events.py\", line 432, in parse_web_events_page\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://compassinstitute4dei.com/events/EventDetails.aspx?id=2064586\n"
     },
     {
-        "timestamp": "2026-09-01T03:59:20.948470-04:00",
+        "timestamp": "2026-09-02T03:17:00.899979-04:00",
         "city": "baltimore",
         "stage": "city_collect",
         "error": "Downloaded payload is not a valid ICS calendar: ",
@@ -190,7 +210,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 361, in collect_events\n    fetch_ics_source(source, city),\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 318, in fetch_ics_source\n    return scrape_ics.fetch_calendar_events(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_ics.py\", line 111, in fetch_calendar_events\n    raise ValueError(f\"Downloaded payload is not a valid ICS calendar: {excerpt}\")\nValueError: Downloaded payload is not a valid ICS calendar: \n"
     },
     {
-        "timestamp": "2026-09-01T03:59:30.724071-04:00",
+        "timestamp": "2026-09-02T03:17:10.674640-04:00",
         "city": "baltimore",
         "stage": "city_collect",
         "error": "404 Client Error: Not Found for url: https://rccbaltimore.org/events-1",
@@ -200,17 +220,17 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 406, in collect_events\n    scrape_rccbaltimore.scrape_events(),\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_rccbaltimore.py\", line 16, in scrape_events\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://rccbaltimore.org/events-1\n"
     },
     {
-        "timestamp": "2026-09-01T03:59:40.096508-04:00",
+        "timestamp": "2026-09-02T03:17:18.778403-04:00",
         "city": "baltimore",
         "stage": "city_collect",
-        "error": "Unknown string format: Sep 01 2026 7:30 AM - 7:45 AM",
+        "error": "Unknown string format: Sep 08 2026 7:30 AM - 7:45 AM",
         "source_url": "https://www.mtzionbaltimore.org/events/",
         "scraper": "baltimore.scrape_mtzion",
         "error_type": "ParserError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 461, in collect_events\n    scrape_mtzion.scrape_events(),\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_mtzion.py\", line 51, in scrape_events\n    start_dt = _infer_start(date_parts[1], date_parts[0], time_text)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_mtzion.py\", line 24, in _infer_start\n    candidate = parse(f\"{month_text} {day_text} {now.year} {time_text}\")\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/dateutil/parser/_parser.py\", line 1368, in parse\n    return DEFAULTPARSER.parse(timestr, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/dateutil/parser/_parser.py\", line 643, in parse\n    raise ParserError(\"Unknown string format: %s\", timestr)\ndateutil.parser._parser.ParserError: Unknown string format: Sep 01 2026 7:30 AM - 7:45 AM\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 461, in collect_events\n    scrape_mtzion.scrape_events(),\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_mtzion.py\", line 51, in scrape_events\n    start_dt = _infer_start(date_parts[1], date_parts[0], time_text)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_mtzion.py\", line 24, in _infer_start\n    candidate = parse(f\"{month_text} {day_text} {now.year} {time_text}\")\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/dateutil/parser/_parser.py\", line 1368, in parse\n    return DEFAULTPARSER.parse(timestr, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/dateutil/parser/_parser.py\", line 643, in parse\n    raise ParserError(\"Unknown string format: %s\", timestr)\ndateutil.parser._parser.ParserError: Unknown string format: Sep 08 2026 7:30 AM - 7:45 AM\n"
     },
     {
-        "timestamp": "2026-09-01T03:59:50.351034-04:00",
+        "timestamp": "2026-09-02T03:17:25.813591-04:00",
         "city": "baltimore",
         "stage": "city_collect",
         "error": "hour must be in 0..23",
@@ -220,7 +240,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 511, in collect_events\n    scrape_baltsistercities.scrape_baltimore_events(),\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_baltsistercities.py\", line 328, in scrape_baltimore_events\n    start_date_iso = create_iso_datetime(start_date_obj, start_hour, start_minute or 0)\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_baltsistercities.py\", line 227, in create_iso_datetime\n    datetime_obj = datetime(date_obj.year, date_obj.month, date_obj.day, hour, minute)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: hour must be in 0..23\n"
     },
     {
-        "timestamp": "2026-09-01T03:59:57.081275-04:00",
+        "timestamp": "2026-09-02T03:17:32.441454-04:00",
         "city": "baltimore",
         "stage": "city_collect",
         "error": "Couldn't find a tree builder with the features you requested: xml. Do you need to install a parser library?",
@@ -230,7 +250,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 522, in collect_events\n    scraped_events = scraper_fn()\n                     ^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_powerplantlive.py\", line 65, in scrape_events\n    for event_url in _event_urls_from_sitemap():\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/scrape_powerplantlive.py\", line 32, in _event_urls_from_sitemap\n    soup = BeautifulSoup(response.text, \"xml\")\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/bs4/__init__.py\", line 366, in __init__\n    raise FeatureNotFound(\nbs4.exceptions.FeatureNotFound: Couldn't find a tree builder with the features you requested: xml. Do you need to install a parser library?\n"
     },
     {
-        "timestamp": "2026-09-01T04:01:35.523009-04:00",
+        "timestamp": "2026-09-02T03:18:05.765509-04:00",
         "city": "baltimore",
         "stage": "ZERO_EVENTS_PARSED",
         "error": "ZERO_EVENTS_PARSED",
@@ -240,7 +260,7 @@
         "traceback": "NoneType: None\n"
     },
     {
-        "timestamp": "2026-09-01T04:01:45.272431-04:00",
+        "timestamp": "2026-09-02T03:18:08.264680-04:00",
         "city": "baltimore",
         "stage": "ZERO_EVENTS_PARSED",
         "error": "ZERO_EVENTS_PARSED",
@@ -250,7 +270,7 @@
         "traceback": "NoneType: None\n"
     },
     {
-        "timestamp": "2026-09-01T04:01:48.251921-04:00",
+        "timestamp": "2026-09-02T03:18:11.425615-04:00",
         "city": "baltimore",
         "stage": "ZERO_EVENTS_PARSED",
         "error": "ZERO_EVENTS_PARSED",
@@ -260,7 +280,7 @@
         "traceback": "NoneType: None\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:07.493350-04:00",
+        "timestamp": "2026-09-02T03:18:32.031274-04:00",
         "city": "baltimore",
         "stage": "city_collect",
         "error": "[Errno 2] No such file or directory: 'maryland-stem-festival-96ecc18ef7d.ics'",
@@ -270,7 +290,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 562, in collect_events\n    fetch_cached_ics_source(source),\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/baltimore/gen_calendar.py\", line 329, in fetch_cached_ics_source\n    return scrape_ics.processICS(\n           ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_ics.py\", line 175, in processICS\n    with open(CACHE_FILENAME, \"rb\") as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: 'maryland-stem-festival-96ecc18ef7d.ics'\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.451576-04:00",
+        "timestamp": "2026-09-02T03:18:59.363597-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/4/highres_535800228.jpeg",
@@ -282,7 +302,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/4/highres_535800228.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.452446-04:00",
+        "timestamp": "2026-09-02T03:18:59.364461-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/8/d/c/7/highres_515016295.jpeg",
@@ -294,7 +314,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/8/d/c/7/highres_515016295.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.452824-04:00",
+        "timestamp": "2026-09-02T03:18:59.364872-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/a/1/5/3/highres_535841299.jpeg",
@@ -306,7 +326,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/a/1/5/3/highres_535841299.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.453207-04:00",
+        "timestamp": "2026-09-02T03:18:59.365275-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/6/d/0/9/highres_535887913.jpeg",
@@ -318,7 +338,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/6/d/0/9/highres_535887913.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.453722-04:00",
+        "timestamp": "2026-09-02T03:18:59.365794-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/c/a/e/f/highres_535551951.jpeg",
@@ -330,7 +350,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/c/a/e/f/highres_535551951.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.454058-04:00",
+        "timestamp": "2026-09-02T03:18:59.366178-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/2/7/6/highres_535617974.jpeg",
@@ -342,7 +362,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/2/7/6/highres_535617974.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.454418-04:00",
+        "timestamp": "2026-09-02T03:18:59.366790-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/d/1/4/1/highres_535553569.jpeg",
@@ -354,7 +374,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/d/1/4/1/highres_535553569.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.454779-04:00",
+        "timestamp": "2026-09-02T03:18:59.367274-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/2/7/a/7/highres_535690151.jpeg",
@@ -366,7 +386,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/2/7/a/7/highres_535690151.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.455378-04:00",
+        "timestamp": "2026-09-02T03:18:59.367648-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/f/e/d/highres_535804077.jpeg",
@@ -378,7 +398,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/f/e/d/highres_535804077.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:41.455847-04:00",
+        "timestamp": "2026-09-02T03:18:59.368041-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/4/4/6/2/highres_535937506.jpeg",
@@ -390,7 +410,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/4/4/6/2/highres_535937506.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.700942-04:00",
+        "timestamp": "2026-09-02T03:19:02.875660-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '380', 'height': '213'}\"",
@@ -402,7 +422,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '380', 'height': '213'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.702178-04:00",
+        "timestamp": "2026-09-02T03:19:02.877046-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1350'}\"",
@@ -414,7 +434,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1350'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.703184-04:00",
+        "timestamp": "2026-09-02T03:19:02.878085-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1080'}\"",
@@ -426,7 +446,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1080'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.704186-04:00",
+        "timestamp": "2026-09-02T03:19:02.879115-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1500', 'height': '2255'}\"",
@@ -438,7 +458,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1500', 'height': '2255'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.705180-04:00",
+        "timestamp": "2026-09-02T03:19:02.880132-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1050', 'height': '600'}\"",
@@ -450,7 +470,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1050', 'height': '600'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.706153-04:00",
+        "timestamp": "2026-09-02T03:19:02.881125-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1080'}\"",
@@ -462,7 +482,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1080'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.707137-04:00",
+        "timestamp": "2026-09-02T03:19:02.882133-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1920'}\"",
@@ -474,7 +494,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1920'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.708099-04:00",
+        "timestamp": "2026-09-02T03:19:02.883123-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1080'}\"",
@@ -486,7 +506,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '1080', 'height': '1080'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.709091-04:00",
+        "timestamp": "2026-09-02T03:19:02.884140-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '2084', 'height': '2084'}\"",
@@ -498,7 +518,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'representativeOfPage': 'True', 'width': '2084', 'height': '2084'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.709715-04:00",
+        "timestamp": "2026-09-02T03:19:02.884783-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/3/4/1/highres_535918177.jpeg",
@@ -510,7 +530,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/3/4/1/highres_535918177.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.710053-04:00",
+        "timestamp": "2026-09-02T03:19:02.885130-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/3/4/1/highres_535918177.jpeg",
@@ -522,7 +542,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/e/3/4/1/highres_535918177.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.710911-04:00",
+        "timestamp": "2026-09-02T03:19:02.886002-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"",
@@ -534,7 +554,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.712328-04:00",
+        "timestamp": "2026-09-02T03:19:02.887425-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/aml-bsa-school/#primaryimage'}\"",
@@ -546,7 +566,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/aml-bsa-school/#primaryimage'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.713332-04:00",
+        "timestamp": "2026-09-02T03:19:02.888460-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/bank-directors-symposium/#primaryimage'}\"",
@@ -558,7 +578,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/bank-directors-symposium/#primaryimage'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.714334-04:00",
+        "timestamp": "2026-09-02T03:19:02.889493-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/commercial-lending-advanced-commercial-lending-school/#primaryimage'}\"",
@@ -570,7 +590,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/commercial-lending-advanced-commercial-lending-school/#primaryimage'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.715336-04:00",
+        "timestamp": "2026-09-02T03:19:02.890511-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/connect-protect-experience/#primaryimage'}\"",
@@ -582,7 +602,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/connect-protect-experience/#primaryimage'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:42.716320-04:00",
+        "timestamp": "2026-09-02T03:19:02.891521-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/emerging-leaders-program/#primaryimage'}\"",
@@ -594,7 +614,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@id': 'https://www.mdbankers.com/event/emerging-leaders-program/#primaryimage'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:56.439401-04:00",
+        "timestamp": "2026-09-02T03:19:09.929514-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"",
@@ -606,7 +626,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:56.440542-04:00",
+        "timestamp": "2026-09-02T03:19:09.930731-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"",
@@ -618,7 +638,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:56.441597-04:00",
+        "timestamp": "2026-09-02T03:19:09.931865-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"",
@@ -630,7 +650,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 305, in polite_get\n    response = session.get(url, timeout=timeout, **request_kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 671, in get\n    return self.request(\"GET\", url, params=params, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 651, in request\n    resp = self.send(prep, **send_kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 778, in send\n    adapter = self.get_adapter(url=request.url)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/sessions.py\", line 881, in get_adapter\n    raise InvalidSchema(f\"No connection adapters were found for {url!r}\")\nrequests.exceptions.InvalidSchema: No connection adapters were found for \"{'@type': 'ImageObject', 'inLanguage': 'en-US', '@id': 'https://mdfoodbank.org/event/charm-city-trivia-hunger-games/#primaryimage', 'url': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'contentUrl': 'https://mdfoodbank.org/wp-content/uploads/2026/08/event-Hunger-Games-trivia-with-Charm-City-trivia-and-Maryland-Food-Bank.jpg', 'width': 800, 'height': 450, 'caption': 'Hunger Games trivia with Charm City trivia and Maryland Food Bank'}\"\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:56.518049-04:00",
+        "timestamp": "2026-09-02T03:19:09.962435-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/African-Odyssey-2026-600x400-1.png",
@@ -642,7 +662,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/African-Odyssey-2026-600x400-1.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:57.462714-04:00",
+        "timestamp": "2026-09-02T03:19:10.938715-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/01/Washington-Sculptors-Group-400x400-1.png",
@@ -654,7 +674,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/01/Washington-Sculptors-Group-400x400-1.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:58.463884-04:00",
+        "timestamp": "2026-09-02T03:19:11.938660-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/01/Maria-Santiago.png",
@@ -666,19 +686,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/01/Maria-Santiago.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:02:59.462990-04:00",
-        "city": "baltimore",
-        "stage": "image_download",
-        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/03/Yoga-with-Meditation-2026-600x400-1.jpg",
-        "source_url": "https://www.pgparks.com/wp-content/uploads/2026/03/Yoga-with-Meditation-2026-600x400-1.jpg",
-        "context": {
-            "event_name": "Yoga with Meditation"
-        },
-        "error_type": "HTTPError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/03/Yoga-with-Meditation-2026-600x400-1.jpg\n"
-    },
-    {
-        "timestamp": "2026-09-01T04:03:00.463444-04:00",
+        "timestamp": "2026-09-02T03:19:12.943049-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Living-Strong-2026-600x400-1.jpg",
@@ -690,43 +698,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Living-Strong-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:01.463351-04:00",
-        "city": "baltimore",
-        "stage": "image_download",
-        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg",
-        "source_url": "https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg",
-        "context": {
-            "event_name": "Yoga in the Parks:\u00a0Pilates"
-        },
-        "error_type": "HTTPError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg\n"
-    },
-    {
-        "timestamp": "2026-09-01T04:03:02.464098-04:00",
-        "city": "baltimore",
-        "stage": "image_download",
-        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Fit-and-Strong-2026-600x400-1.jpg",
-        "source_url": "https://www.pgparks.com/wp-content/uploads/2026/02/Fit-and-Strong-2026-600x400-1.jpg",
-        "context": {
-            "event_name": "Fit &amp; Strong (Tuesdays)"
-        },
-        "error_type": "HTTPError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Fit-and-Strong-2026-600x400-1.jpg\n"
-    },
-    {
-        "timestamp": "2026-09-01T04:03:03.463688-04:00",
-        "city": "baltimore",
-        "stage": "image_download",
-        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Living-Strong-2026-600x400-1.jpg",
-        "source_url": "https://www.pgparks.com/wp-content/uploads/2026/02/Living-Strong-2026-600x400-1.jpg",
-        "context": {
-            "event_name": "Living Strong (Wednesdays)"
-        },
-        "error_type": "HTTPError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Living-Strong-2026-600x400-1.jpg\n"
-    },
-    {
-        "timestamp": "2026-09-01T04:03:04.463963-04:00",
+        "timestamp": "2026-09-02T03:19:13.939339-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg",
@@ -738,7 +710,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:05.464049-04:00",
+        "timestamp": "2026-09-02T03:19:14.939070-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/06/SAARC-Maxwell-Street-2026-600x400-1.jpg",
@@ -750,7 +722,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/06/SAARC-Maxwell-Street-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:06.464036-04:00",
+        "timestamp": "2026-09-02T03:19:15.938487-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg",
@@ -762,7 +734,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:07.464169-04:00",
+        "timestamp": "2026-09-02T03:19:16.939294-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg",
@@ -774,7 +746,31 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Yoga-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:08.464043-04:00",
+        "timestamp": "2026-09-02T03:19:17.939559-04:00",
+        "city": "baltimore",
+        "stage": "image_download",
+        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/12/Child-Care-600x400-1.png",
+        "source_url": "https://www.pgparks.com/wp-content/uploads/2025/12/Child-Care-600x400-1.png",
+        "context": {
+            "event_name": "Toddler Time at Mount Rainier (September)"
+        },
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/12/Child-Care-600x400-1.png\n"
+    },
+    {
+        "timestamp": "2026-09-02T03:19:18.939423-04:00",
+        "city": "baltimore",
+        "stage": "image_download",
+        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/12/Child-Care-600x400-1.png",
+        "source_url": "https://www.pgparks.com/wp-content/uploads/2025/12/Child-Care-600x400-1.png",
+        "context": {
+            "event_name": "Toddler Time: Mushroom month"
+        },
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2025/12/Child-Care-600x400-1.png\n"
+    },
+    {
+        "timestamp": "2026-09-02T03:19:19.939448-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Get-Fit-Mobile-2026-600x400-1.jpg",
@@ -786,7 +782,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Get-Fit-Mobile-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:09.464443-04:00",
+        "timestamp": "2026-09-02T03:19:20.939084-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Get-Fit-Mobile-2026-600x400-1.jpg",
@@ -798,7 +794,19 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Get-Fit-Mobile-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:10.464354-04:00",
+        "timestamp": "2026-09-02T03:19:21.939262-04:00",
+        "city": "baltimore",
+        "stage": "image_download",
+        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/08/GFM-Strength-in-Motion.jpg",
+        "source_url": "https://www.pgparks.com/wp-content/uploads/2026/08/GFM-Strength-in-Motion.jpg",
+        "context": {
+            "event_name": "Get Fit Mobile: Strength in Motion (4-week program)"
+        },
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/08/GFM-Strength-in-Motion.jpg\n"
+    },
+    {
+        "timestamp": "2026-09-02T03:19:22.939394-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Fit-and-Strong-2026-600x400-1.jpg",
@@ -810,7 +818,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Fit-and-Strong-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:11.464592-04:00",
+        "timestamp": "2026-09-02T03:19:23.939643-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/MAC-instructors-Sarah-Presley-Sawtooth-etching_600x400.jpg",
@@ -822,7 +830,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/MAC-instructors-Sarah-Presley-Sawtooth-etching_600x400.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:12.465515-04:00",
+        "timestamp": "2026-09-02T03:19:24.940094-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/03/Balance-and-Stretch-2026-600x400-1.jpg",
@@ -834,7 +842,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/03/Balance-and-Stretch-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:13.464642-04:00",
+        "timestamp": "2026-09-02T03:19:25.940093-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Living-Strong-2026-600x400-1.jpg",
@@ -846,7 +854,19 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Living-Strong-2026-600x400-1.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:14.464539-04:00",
+        "timestamp": "2026-09-02T03:19:26.941325-04:00",
+        "city": "baltimore",
+        "stage": "image_download",
+        "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2024/09/600x400-teens.jpg",
+        "source_url": "https://www.pgparks.com/wp-content/uploads/2024/09/600x400-teens.jpg",
+        "context": {
+            "event_name": "Community Center Teen Nights"
+        },
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2024/09/600x400-teens.jpg\n"
+    },
+    {
+        "timestamp": "2026-09-02T03:19:27.944036-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2024/02/MarylandAviationFestival23-070.jpg",
@@ -858,7 +878,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2024/02/MarylandAviationFestival23-070.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:15.464865-04:00",
+        "timestamp": "2026-09-02T03:19:28.940461-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2024/02/MarylandAviationFestival23-070.jpg",
@@ -870,7 +890,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2024/02/MarylandAviationFestival23-070.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:16.465296-04:00",
+        "timestamp": "2026-09-02T03:19:29.940970-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/Virtual-Lecture-1.png",
@@ -882,7 +902,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/Virtual-Lecture-1.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:17.464865-04:00",
+        "timestamp": "2026-09-02T03:19:30.940817-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/EchoesoftheEnslaved25-23.jpg",
@@ -894,7 +914,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/EchoesoftheEnslaved25-23.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:18.465896-04:00",
+        "timestamp": "2026-09-02T03:19:31.941175-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/SchoolsOutWheelsUp25-42.jpg",
@@ -906,7 +926,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/SchoolsOutWheelsUp25-42.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:19.465819-04:00",
+        "timestamp": "2026-09-02T03:19:32.941785-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/Souls-Seeking-Freedom-2026-600x400-1.png",
@@ -918,7 +938,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/Souls-Seeking-Freedom-2026-600x400-1.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:20.465747-04:00",
+        "timestamp": "2026-09-02T03:19:33.941057-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/Hidden-Spaces-2026-600x400-1.png",
@@ -930,7 +950,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/01/Hidden-Spaces-2026-600x400-1.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:21.467037-04:00",
+        "timestamp": "2026-09-02T03:19:34.941605-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/HispanicHeritagekickoff24-14.jpg",
@@ -942,7 +962,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/HispanicHeritagekickoff24-14.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:22.465741-04:00",
+        "timestamp": "2026-09-02T03:19:35.942011-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/DarnallChanceIndoorOutdoor26-83.jpg",
@@ -954,7 +974,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/07/DarnallChanceIndoorOutdoor26-83.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:23.466008-04:00",
+        "timestamp": "2026-09-02T03:19:36.941650-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Latinas-in-Aviation.jpg",
@@ -966,7 +986,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/Latinas-in-Aviation.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:24.466259-04:00",
+        "timestamp": "2026-09-02T03:19:37.941741-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/EchoesoftheEnslaved25-23.jpg",
@@ -978,67 +998,43 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://www.pgparks.com/wp-content/uploads/2026/02/EchoesoftheEnslaved25-23.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:27.327569-04:00",
+        "timestamp": "2026-09-02T03:19:38.984518-04:00",
         "city": "baltimore",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f612c3faca0>",
+        "error": "403 Client Error: Forbidden for url: https://ggwo.org/wp-content/uploads/2026/05/Connect-Ruth-Esther-Poster.jpg",
         "source_url": "https://ggwo.org/wp-content/uploads/2026/05/Connect-Ruth-Esther-Poster.jpg",
         "context": {
             "event_name": "Women's Connection Study | Tuesday Mornings"
         },
-        "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f612c3faca0>\n"
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://ggwo.org/wp-content/uploads/2026/05/Connect-Ruth-Esther-Poster.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:28.228639-04:00",
+        "timestamp": "2026-09-02T03:19:39.992796-04:00",
         "city": "baltimore",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f612c3f89f0>",
+        "error": "403 Client Error: Forbidden for url: https://ggwo.org/wp-content/uploads/2026/05/2026-Seminar-Poster.jpg",
         "source_url": "https://ggwo.org/wp-content/uploads/2026/05/2026-Seminar-Poster.jpg",
         "context": {
             "event_name": "Women's Seminar | 2026"
         },
-        "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f612c3f89f0>\n"
+        "error_type": "HTTPError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://ggwo.org/wp-content/uploads/2026/05/2026-Seminar-Poster.jpg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:29.228679-04:00",
+        "timestamp": "2026-09-02T03:19:40.993185-04:00",
         "city": "baltimore",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f6134d67150>",
+        "error": "403 Client Error: Forbidden for url: https://ggwo.org/wp-content/uploads/2026/03/medium_image-1774279268348.jpeg",
         "source_url": "https://ggwo.org/wp-content/uploads/2026/03/medium_image-1774279268348.jpeg",
         "context": {
             "event_name": "Pastoral Leadership Retreat | 2026"
         },
-        "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f6134d67150>\n"
-    },
-    {
-        "timestamp": "2026-09-01T04:03:30.417097-04:00",
-        "city": "baltimore",
-        "stage": "image_download",
-        "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
-        "source_url": "https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
-        "context": {
-            "event_name": "Noon Eucharist"
-        },
         "error_type": "HTTPError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://ggwo.org/wp-content/uploads/2026/03/medium_image-1774279268348.jpeg\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:31.277100-04:00",
-        "city": "baltimore",
-        "stage": "image_download",
-        "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
-        "source_url": "https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
-        "context": {
-            "event_name": "Christian Meditation"
-        },
-        "error_type": "HTTPError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
-    },
-    {
-        "timestamp": "2026-09-01T04:03:32.273555-04:00",
+        "timestamp": "2026-09-02T03:19:42.048923-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1050,7 +1046,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:33.273753-04:00",
+        "timestamp": "2026-09-02T03:19:42.997324-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1062,7 +1058,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:34.273805-04:00",
+        "timestamp": "2026-09-02T03:19:43.997632-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1074,7 +1070,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:35.274036-04:00",
+        "timestamp": "2026-09-02T03:19:44.997658-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1086,7 +1082,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:36.274314-04:00",
+        "timestamp": "2026-09-02T03:19:45.997911-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1098,7 +1094,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:37.274085-04:00",
+        "timestamp": "2026-09-02T03:19:46.998070-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1110,7 +1106,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:38.274736-04:00",
+        "timestamp": "2026-09-02T03:19:47.998133-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1122,7 +1118,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:39.274750-04:00",
+        "timestamp": "2026-09-02T03:19:48.998274-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1134,7 +1130,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:40.275106-04:00",
+        "timestamp": "2026-09-02T03:19:49.998487-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1146,7 +1142,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:41.274931-04:00",
+        "timestamp": "2026-09-02T03:19:50.998393-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1158,7 +1154,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:42.275461-04:00",
+        "timestamp": "2026-09-02T03:19:51.998337-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1170,7 +1166,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:43.283734-04:00",
+        "timestamp": "2026-09-02T03:19:52.998501-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1182,7 +1178,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:44.275544-04:00",
+        "timestamp": "2026-09-02T03:19:53.999016-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1194,7 +1190,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:45.278506-04:00",
+        "timestamp": "2026-09-02T03:19:54.999040-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1206,7 +1202,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:46.279583-04:00",
+        "timestamp": "2026-09-02T03:19:55.998994-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1218,7 +1214,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:47.276369-04:00",
+        "timestamp": "2026-09-02T03:19:56.999136-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1230,7 +1226,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:48.276325-04:00",
+        "timestamp": "2026-09-02T03:19:57.999630-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1242,7 +1238,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:49.276529-04:00",
+        "timestamp": "2026-09-02T03:19:58.999535-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png",
@@ -1254,7 +1250,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://incarnationbmore.org/wp-content/uploads/2022/09/Incarnation-Logo-Words-Color.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:50.306644-04:00",
+        "timestamp": "2026-09-02T03:20:00.019477-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1266,7 +1262,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:51.305120-04:00",
+        "timestamp": "2026-09-02T03:20:01.012537-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1278,7 +1274,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:52.305039-04:00",
+        "timestamp": "2026-09-02T03:20:02.013091-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1290,7 +1286,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:53.307309-04:00",
+        "timestamp": "2026-09-02T03:20:03.012832-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1302,7 +1298,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:54.305233-04:00",
+        "timestamp": "2026-09-02T03:20:04.013484-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1314,7 +1310,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:55.305950-04:00",
+        "timestamp": "2026-09-02T03:20:05.012415-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1326,7 +1322,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:56.307000-04:00",
+        "timestamp": "2026-09-02T03:20:06.014161-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1338,7 +1334,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:57.306048-04:00",
+        "timestamp": "2026-09-02T03:20:07.014528-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1350,7 +1346,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:58.305568-04:00",
+        "timestamp": "2026-09-02T03:20:08.013089-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1362,7 +1358,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:03:59.307563-04:00",
+        "timestamp": "2026-09-02T03:20:09.015509-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1374,7 +1370,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:00.307481-04:00",
+        "timestamp": "2026-09-02T03:20:10.015347-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1386,7 +1382,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:01.306387-04:00",
+        "timestamp": "2026-09-02T03:20:11.016077-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1398,7 +1394,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:02.306479-04:00",
+        "timestamp": "2026-09-02T03:20:12.015737-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png",
@@ -1410,7 +1406,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 38, in download_event_images\n    response.raise_for_status()\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 403 Client Error: Forbidden for url: https://maryland-dmmp.com/wp-content/uploads/2022/12/cropped-favicon-32x32.png\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:05.724358-04:00",
+        "timestamp": "2026-09-02T03:20:15.390273-04:00",
         "city": "baltimore",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://mpa.maryland.gov/_catalogs/masterpage/images/favicon.ico",
@@ -1422,51 +1418,51 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://mpa.maryland.gov/_catalogs/masterpage/images/favicon.ico\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:06.775421-04:00",
+        "timestamp": "2026-09-02T03:20:16.462944-04:00",
         "city": "baltimore",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f613482a340>",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7fd1540c3b00>",
         "source_url": "https://www.chesapeakewea.org/images/top-logo-new.svg",
         "context": {
             "event_name": "2026 Tri-Association Conference"
         },
         "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f613482a340>\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7fd1540c3b00>\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:07.775591-04:00",
+        "timestamp": "2026-09-02T03:20:17.462814-04:00",
         "city": "baltimore",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f612cb11ee0>",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7fd14463a660>",
         "source_url": "https://www.chesapeakewea.org/images/top-logo-new.svg",
         "context": {
             "event_name": "Submission deadline for MDE's October Credit Review Meeting"
         },
         "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f612cb11ee0>\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7fd14463a660>\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:08.775862-04:00",
+        "timestamp": "2026-09-02T03:20:18.463452-04:00",
         "city": "baltimore",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f612c6b6980>",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7fd1540c3b00>",
         "source_url": "https://www.chesapeakewea.org/images/top-logo-new.svg",
         "context": {
             "event_name": "VWEA's Water Jam"
         },
         "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f612c6b6980>\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7fd1540c3b00>\n"
     },
     {
-        "timestamp": "2026-09-01T04:04:09.776052-04:00",
+        "timestamp": "2026-09-02T03:20:19.463553-04:00",
         "city": "baltimore",
         "stage": "image_download",
-        "error": "cannot identify image file <_io.BytesIO object at 0x7f612cb12ca0>",
+        "error": "cannot identify image file <_io.BytesIO object at 0x7fd14415fba0>",
         "source_url": "https://www.chesapeakewea.org/images/top-logo-new.svg",
         "context": {
             "event_name": "2026 WEFTEC - New Orleans"
         },
         "error_type": "UnidentifiedImageError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7f612cb12ca0>\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 40, in download_event_images\n    img = Image.open(BytesIO(response.content))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.14/x64/lib/python3.12/site-packages/PIL/Image.py\", line 3715, in open\n    raise UnidentifiedImageError(msg)\nPIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x7fd14415fba0>\n"
     }
 ]
