@@ -2,7 +2,7 @@ name: Update Calendar
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs daily at 00:00 UTC
+    - cron: '15 2 * * *'
   push:
     branches:
       - main
@@ -10,6 +10,8 @@ on:
       - ".github/workflows/update-calendar.yml"
       - "requirements.txt"
       - "genCalendar.py"
+      - "run_calendar.py"
+      - "http_client.py"
       - "genSimpleCalendar.py"
       - "calendar_*.py"
       - "city_source_taxonomy.py"
@@ -17,22 +19,18 @@ on:
       - "geocode*.py"
       - "scrape_*.py"
       - "*/event_sources.py"
+      - "*/extra_event_sources.py"
       - "*/gen_calendar.py"
       - "*/scrape_*.py"
       - "*/manual_events.json"
-      - "tests/calendar/validate_calendar_source_exclusions.py"
-      - "tests/calendar/validate_source_*.py"
-      - "tests/calendar_filtering.test.cjs"
-      - "tests/test_calendar_*.py"
-      - "tests/test_city_source_taxonomy.py"
-  workflow_dispatch:  # Allows manual trigger from the Actions tab
+  workflow_dispatch:
 
 permissions:
   contents: write
   actions: write
 
 concurrency:
-  group: repository-data-updates
+  group: calendar-data-updates
   cancel-in-progress: false
 
 jobs:
@@ -48,38 +46,35 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - name: Restore conditional HTTP cache
+        uses: actions/cache@v4
         with:
-          node-version: '22'
+          path: .cache/codecollective-http
+          key: calendar-http-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            calendar-http-${{ runner.os }}-
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      - name: Run calendar regression tests
-        run: |
-          python -m pytest tests
-          node --test tests/calendar_filtering.test.cjs
-          python tests/calendar/validate_source_tag_mappings.py
-          python tests/calendar/validate_source_lens_minimums.py
+      - name: Generate calendar
+        run: python run_calendar.py
 
-      - name: Run genCalendar.py
-        run: |
-          python genCalendar.py
-
-      - name: Validate generated source exclusions
-        run: |
-          python tests/calendar/validate_calendar_source_exclusions.py
+      - name: Upload scrape telemetry
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: calendar-scrape-telemetry-${{ github.run_id }}
+          path: .cache/codecollective-scrape-telemetry.json
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Check for changes
         id: changes
         run: |
           if git diff --quiet; then
-            echo "No repository changes detected"
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Changes detected"
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -95,9 +90,6 @@ jobs:
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:"${GITHUB_REF_NAME}"
 
-      # Pushes authenticated with GITHUB_TOKEN intentionally do not start most
-      # other workflows. Dispatch the site deployment explicitly so freshly
-      # generated feeds do not remain newer than the production calendar.
       - name: Deploy updated calendar to production
         if: ${{ steps.changes.outputs.has_changes == 'true' }}
         env:

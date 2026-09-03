@@ -18,3 +18,12 @@ def test_site_bundle_excludes_pytest_cache():
     build_script = (ROOT / "cloudflare/scripts/build_cloudflare_site.sh").read_text()
 
     assert "--exclude='.pytest_cache/'" in build_script
+
+
+def test_site_bundle_excludes_internal_kimi_research_artifacts():
+    build_script = (ROOT / "cloudflare/scripts/build_cloudflare_site.sh").read_text()
+
+    assert "--exclude='datacenters/research/'" in build_script
+    assert "--exclude='datacenters/history/'" in build_script
+    assert "--exclude='datacenters/kimi_research_dashboard.html'" in build_script
+    assert "--exclude='kimi-inspector.html'" in build_script

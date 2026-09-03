@@ -3,7 +3,12 @@
     infrastructure: '/datacenters/data/infrastructure.json',
     entityImages: '/datacenters/data/power-plant-images.json',
     sources: '/datacenters/data/sources.json',
+    datacenterNews: '/datacenters/data/datacenter-news.json',
   };
+  const NATIONWIDE_DATACENTERS_URL = '/datacenters/data/data-centers-openstreetmap-us.json';
+  const NATIONWIDE_POWER_PLANTS_URL = '/datacenters/data/power-plants-us.json';
+  const GLOBAL_POWER_PLANTS_URL = '/datacenters/data/power-plants-global.json';
+  const NACEI_POWER_PLANTS_URL = '/datacenters/data/power-plants-nacei.json';
   const MOBILE_INSPECTOR_MEDIA = '(max-width: 760px), (hover: none) and (pointer: coarse)';
   const POWER_PLANT_WEBGL_LAYER_ID = 'power-plant-bolt-webgl';
   const NEON_STREET_GLOW_LAYER_ID = 'neon-streets-glow';
@@ -37,6 +42,8 @@
   const PARCEL_HOVER_FILL_ID = 'mdp-sdat-parcel-hover-fill';
   const PARCEL_HOVER_LINE_ID = 'mdp-sdat-parcel-hover-line';
   const PARCEL_MIN_ZOOM = 13;
+  const LARGE_INVENTORY_MARKER_THRESHOLD = 400;
+  const LARGE_INVENTORY_VIEW_PADDING = 0.35;
   const MAP_MIN_ZOOM = 0;
   const MAP_MAX_ZOOM = 18;
   const PARCEL_MAX_FEATURES = 1000;
@@ -69,6 +76,25 @@
     ['2', 'Bold'],
     ['3', 'Heavy'],
     ['5', 'Maximum'],
+  ];
+  const POINT_RENDER_OPTIONS = [
+    ['points', 'Individual points'],
+    ['gpu-splat', 'GPU Splat density'],
+  ];
+  const POWER_PLANT_RENDER_MATERIAL_OPTIONS = [
+    ['standard', 'Standard'],
+    ['brushed-metal', 'Brushed metal'],
+    ['polished-metal', 'Polished metal'],
+    ['iridescent', 'Iridescent metal'],
+    ['pearl', 'Pearlescent'],
+    ['glass', 'Tinted glass'],
+    ['emissive', 'Neon glow'],
+    ['hologram', 'Hologram'],
+    ['xray', 'X-ray'],
+    ['phong', 'Phong'],
+    ['toon', 'Toon'],
+    ['normal', 'Normals'],
+    ['wireframe', 'Wireframe'],
   ];
   const LINE_WIDTH_BY_DEFAULT = [['zoom', 'Zoom curve only']];
 
@@ -208,7 +234,7 @@
     ...Object.fromEntries(BASE_LAYER_CONFIGS.map((config) => [config.id, config])),
     datacenters: {
       id: 'datacenters',
-      name: 'Data centers',
+      name: 'Maryland curated data centers',
       description: 'Documented Maryland campuses, facilities, and proposals in the project inventory.',
       category: 'Facility inventory',
       sourceUrl: '/datacenters/data/infrastructure.json',
@@ -236,13 +262,33 @@
     },
     'power-plants': {
       id: 'power-plants',
-      name: 'Power plants',
-      description: 'EIA generation facilities with published capacity and production fields.',
+      name: 'U.S. EIA power plants',
+      description: 'Final 2024 EIA-860 and EIA-923 generation facilities.',
       category: 'Generation inventory',
       sourceUrl: '/datacenters/data/infrastructure.json',
       sourceLabel: 'Published EIA-derived power-plant inventory',
       statusId: 'power-plant-layer-count',
       statusSuffix: ' documented facilities',
+    },
+    'global-power-plants': {
+      id: 'global-power-plants',
+      name: 'WRI Global Power Plant Database',
+      description: 'WRI v1.3.0 geolocated research baseline outside the United States; capacity source years vary by country and record.',
+      category: 'Generation inventory',
+      sourceUrl: 'https://datasets.wri.org/datasets/global-power-plant-database',
+      sourceLabel: 'World Resources Institute Global Power Plant Database v1.3.0',
+      statusId: 'global-power-plant-layer-count',
+      statusSuffix: ' WRI facilities',
+    },
+    'nacei-power-plants': {
+      id: 'nacei-power-plants',
+      name: 'NRCan / SENER / DOE NACEI',
+      description: 'Official North American Cooperation on Energy Information comparison inventory for Canadian and Mexican plants of 100 MW or more, dated August 2017.',
+      category: 'Generation inventory',
+      sourceUrl: 'https://open.canada.ca/data/en/dataset/40fbe40c-01cd-49d3-8add-0d20ed64c90d',
+      sourceLabel: 'North American Cooperation on Energy Information',
+      statusId: 'nacei-power-plant-layer-count',
+      statusSuffix: ' official comparison facilities',
     },
     'neon-streets': {
       id: 'neon-streets',
@@ -279,6 +325,66 @@
     },
   };
   const REMOTE_LAYERS = [
+    {
+      id: 'openstreetmap-us-data-centers',
+      name: 'OpenStreetMap U.S. data centers',
+      description: 'Nationwide mapped facilities matching documented OpenStreetMap data-center tags',
+      category: 'Facility inventory',
+      tags: ['data centers', 'OpenStreetMap', 'nationwide', 'United States', 'OSM', 'facilities'],
+      staticDataUrl: NATIONWIDE_DATACENTERS_URL,
+      sourceUrl: 'https://www.openstreetmap.org/copyright',
+      sourceLabel: 'OpenStreetMap contributors',
+      attribution: '© OpenStreetMap contributors · ODbL',
+      geometry: 'point',
+      color: '#ff8a3d',
+      minZoom: 0,
+      titleFields: ['name', 'operator'],
+      recordSourceFields: ['source_name', 'osm_url'],
+      recordType: 'community-mapped facility record',
+      facts: [
+        ['Operator', 'operator'], ['Address', 'street_address'], ['City', 'city'], ['County', 'county'],
+        ['State', 'state_name'], ['State code', 'state'], ['Postal code', 'postal_code'],
+        ['Census state FIPS', 'census_state_fips'], ['Coordinates', 'coordinate_method'],
+        ['Latitude', 'latitude'], ['Longitude', 'longitude'], ['OSM element type', 'osm_type'],
+        ['OSM element ID', 'osm_id'], ['Mapped tags', 'facility_tags'], ['Location tags', 'location_tags'],
+        ['Source snapshot', 'source_snapshot_at'],
+      ],
+      additionalSources: [[
+        'U.S. Census Bureau TIGERweb state boundaries',
+        'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/0',
+      ]],
+      provenanceNote: 'This layer contains every U.S.-boundary feature returned in the stated OpenStreetMap snapshot for the documented telecom, building, and industrial data-center tags. OpenStreetMap is community-maintained, so this is a reproducible mapped inventory rather than a claim that every private or unmapped facility is present.',
+      statusOffText: 'Off · 1,913 mapped U.S. features · OpenStreetMap snapshot 2026-08-27',
+      focus: { center: [-98.5, 39.5], zoom: 3.25 },
+      featuredControl: true,
+    },
+    {
+      id: 'nationwide-eia-power-plants',
+      name: 'Nationwide EIA power plants',
+      description: 'Final 2024 EIA operable power-plant inventory for all 50 states and the District of Columbia',
+      category: 'Generation inventory',
+      tags: ['power plants', 'EIA', 'nationwide', 'United States'],
+      staticDataUrl: NATIONWIDE_POWER_PLANTS_URL,
+      sourceUrl: 'https://www.eia.gov/electricity/data/eia860/',
+      sourceLabel: 'U.S. EIA-860 and EIA-923 final 2024 data',
+      attribution: 'U.S. Energy Information Administration',
+      geometry: 'point',
+      color: '#6fd3ff',
+      minZoom: 0,
+      titleFields: ['name', 'operator'],
+      facts: [
+        ['Operator', 'operator'], ['City', 'city'], ['County', 'county'], ['State', 'state'],
+        ['Primary technology', 'primary_technology'], ['Primary fuel', 'primary_energy_source_code'],
+        ['Nameplate capacity', 'nameplate_capacity_mw', ' MW'], ['2024 net generation', 'net_generation_mwh', ' MWh'],
+        ['Generators', 'generator_count'], ['Earliest operating year', 'year_built'],
+        ['Census state FIPS', 'census_state_fips'], ['Census county FIPS', 'census_county_fips'],
+        ['Census place FIPS', 'census_place_fips'], ['NERC region', 'nerc_region'],
+        ['Balancing authority', 'balancing_authority_code'], ['ISO/RTO', 'iso_region'],
+      ],
+      provenanceNote: 'This compact nationwide baseline uses final annual EIA records and Census geographic identifiers. Maryland remains the default detailed view.',
+      statusOffText: 'Off · select United States in the U.S. EIA power plants Scope control',
+      hiddenControl: true,
+    },
     {
       id: 'maryland-state-boundary',
       name: 'Maryland state boundary',
@@ -322,6 +428,124 @@
       outFields: ['COUNTY', 'DISTRICT', 'TSD_ID', 'OBJECTID_1', 'COUNTY_FIP', 'COUNTYNUM', 'Shape__Area', 'Shape__Length'],
       titleFields: ['COUNTY'],
       facts: [['County', 'COUNTY'], ['County FIPS', 'COUNTY_FIP'], ['County number', 'COUNTYNUM'], ['MDOT SHA district', 'DISTRICT'], ['Object ID', 'OBJECTID_1']],
+    },
+    {
+      id: 'maryland-county-names',
+      name: 'Maryland county names',
+      description: 'County and Baltimore City names from the official Maryland political boundary service',
+      category: 'Political boundaries',
+      service: 'https://mdgeodata.md.gov/imap/rest/services/Boundaries/MD_PoliticalBoundaries/FeatureServer/1',
+      sourceUrl: 'https://mdgeodata.md.gov/imap/rest/services/Boundaries/MD_PoliticalBoundaries/FeatureServer/1',
+      sourceLabel: 'Maryland iMAP County Boundaries',
+      attribution: 'MD iMAP, MDP, MDOT SHA',
+      geometry: 'label',
+      color: '#d8f6ff',
+      focus: { center: [-76.7, 39.05], zoom: 7.2 },
+      minZoom: 0,
+      maxFeatures: 50,
+      outFields: ['COUNTY', 'COUNTY_FIP', 'COUNTYNUM', 'OBJECTID_1'],
+      titleFields: ['COUNTY'],
+      facts: [['County', 'COUNTY'], ['County FIPS', 'COUNTY_FIP'], ['County number', 'COUNTYNUM'], ['Object ID', 'OBJECTID_1']],
+    },
+    {
+      id: 'baltimore-red-line',
+      name: 'Baltimore Red Line alignment',
+      description: 'Static contested rapid-transit alignment from the public Red Line Alternative 4C web map',
+      category: 'Contested transit infrastructure',
+      tags: ['Transit', 'Red Line', 'Baltimore', 'Contested infrastructure', 'Rapid transit'],
+      staticDataUrl: '/datacenters/data/baltimore-red-line.json',
+      sourceUrl: '/datacenters/data/baltimore-red-line.json',
+      sourceLabel: 'Static Baltimore Red Line alignment copy',
+      attribution: 'Public ArcGIS feature collection',
+      geometry: 'line',
+      color: '#ff263f',
+      lineColor: '#ff263f',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 10, 2.2, 14, 4.8],
+      lineOpacity: .92,
+      focus: { center: [-76.677, 39.297], zoom: 11.6 },
+      minZoom: 9,
+      maxZoom: MAP_MAX_ZOOM,
+      statusOffText: 'Off · 13 Red Line alignment segments',
+      titleFields: ['Layer', 'FID'],
+      facts: [['Segment type', 'Layer'], ['Line type', 'Linetype'], ['Elevation code', 'Elevation'], ['Reference name', 'RefName'], ['Segment length', 'Shape_len'], ['Feature ID', 'FID']],
+      additionalSources: [
+        ['Baltimore Red Line Alternative 4C web map', 'https://www.arcgis.com/home/item.html?id=ea0cc16a76c444968b7f634e3d8dc737'],
+      ],
+    },
+    {
+      id: 'census-incorporated-places',
+      name: 'Municipal boundaries',
+      description: 'Census TIGER incorporated places in Maryland',
+      category: 'Municipal / civil boundaries',
+      tags: ['Municipalities', 'Incorporated places', 'Cities', 'Towns', 'Census TIGER'],
+      service: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/11',
+      sourceUrl: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/11',
+      sourceLabel: 'U.S. Census TIGERweb Incorporated Places',
+      attribution: 'U.S. Census Bureau',
+      where: "STATE='24'",
+      geometry: 'polygon',
+      color: '#f0abfc',
+      fillColor: '#f0abfc',
+      fillOpacity: .055,
+      lineColor: '#f0abfc',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, .5, 12, 1.8],
+      lineOpacity: .86,
+      focus: { center: [-76.7, 39.05], zoom: 7.4 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'STATE', 'PLACE', 'GEOID', 'NAME', 'BASENAME', 'LSADC', 'FUNCSTAT', 'AREALAND', 'AREAWATER', 'CENTLAT', 'CENTLON', 'INTPTLAT', 'INTPTLON'],
+      titleFields: ['NAME', 'BASENAME'],
+      facts: [['Place', 'NAME'], ['Base name', 'BASENAME'], ['GEOID', 'GEOID'], ['Place code', 'PLACE'], ['Legal/statistical area type', 'LSADC'], ['Functional status', 'FUNCSTAT'], ['Land area', 'AREALAND'], ['Water area', 'AREAWATER']],
+    },
+    {
+      id: 'census-designated-places',
+      name: 'Census-designated places',
+      description: 'Unincorporated named community boundaries from Census TIGER',
+      category: 'Municipal / civil boundaries',
+      tags: ['Unincorporated places', 'Census-designated places', 'Communities', 'Census TIGER'],
+      service: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/12',
+      sourceUrl: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/12',
+      sourceLabel: 'U.S. Census TIGERweb Census Designated Places',
+      attribution: 'U.S. Census Bureau',
+      where: "STATE='24'",
+      geometry: 'polygon',
+      color: '#c4b5fd',
+      fillColor: '#c4b5fd',
+      fillOpacity: .045,
+      lineColor: '#c4b5fd',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, .45, 12, 1.5],
+      lineOpacity: .82,
+      focus: { center: [-76.7, 39.05], zoom: 7.4 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'STATE', 'PLACE', 'GEOID', 'NAME', 'BASENAME', 'LSADC', 'FUNCSTAT', 'AREALAND', 'AREAWATER', 'CENTLAT', 'CENTLON', 'INTPTLAT', 'INTPTLON'],
+      titleFields: ['NAME', 'BASENAME'],
+      facts: [['Place', 'NAME'], ['Base name', 'BASENAME'], ['GEOID', 'GEOID'], ['Place code', 'PLACE'], ['Legal/statistical area type', 'LSADC'], ['Functional status', 'FUNCSTAT'], ['Land area', 'AREALAND'], ['Water area', 'AREAWATER']],
+    },
+    {
+      id: 'census-county-subdivisions',
+      name: 'County subdivisions',
+      description: 'Minor civil divisions / county subdivisions from Census TIGER',
+      category: 'Municipal / civil boundaries',
+      tags: ['County subdivisions', 'Election districts', 'Minor civil divisions', 'Census TIGER'],
+      service: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/8',
+      sourceUrl: 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer/8',
+      sourceLabel: 'U.S. Census TIGERweb County Subdivisions',
+      attribution: 'U.S. Census Bureau',
+      where: "STATE='24'",
+      geometry: 'polygon',
+      color: '#93c5fd',
+      fillColor: '#93c5fd',
+      fillOpacity: .035,
+      lineColor: '#93c5fd',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 7, .35, 12, 1.2],
+      lineOpacity: .76,
+      focus: { center: [-76.7, 39.05], zoom: 7.4 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'STATE', 'COUNTY', 'COUSUB', 'GEOID', 'NAME', 'BASENAME', 'LSADC', 'FUNCSTAT', 'AREALAND', 'AREAWATER', 'CENTLAT', 'CENTLON', 'INTPTLAT', 'INTPTLON'],
+      titleFields: ['NAME', 'BASENAME'],
+      facts: [['Subdivision', 'NAME'], ['Base name', 'BASENAME'], ['GEOID', 'GEOID'], ['County code', 'COUNTY'], ['Subdivision code', 'COUSUB'], ['Legal/statistical area type', 'LSADC'], ['Functional status', 'FUNCSTAT'], ['Land area', 'AREALAND'], ['Water area', 'AREAWATER']],
     },
     {
       id: 'dhcd-multifamily',
@@ -443,6 +667,212 @@
       outFields: ['CCNumber', 'CrimeDateTime', 'CrimeCode', 'Description', 'Inside_Outside', 'Weapon', 'Shooting', 'New_District', 'Neighborhood', 'PremiseType', 'Total_Incidents'],
       titleFields: ['Description', 'CrimeCode'],
       facts: [['Incident number', 'CCNumber'], ['Date and time', 'CrimeDateTime'], ['NIBRS code', 'CrimeCode'], ['Description', 'Description'], ['Inside / outside', 'Inside_Outside'], ['Weapon', 'Weapon'], ['Shooting', 'Shooting'], ['Police district', 'New_District'], ['Neighborhood', 'Neighborhood'], ['Premise type', 'PremiseType'], ['Incident count', 'Total_Incidents']],
+    },
+    {
+      id: 'community-flock-cameras',
+      name: 'Community-reported Flock cameras',
+      description: 'User-submitted Flock Safety ALPR camera reports; locations are not guaranteed complete or current',
+      category: 'Cameras, traffic & public safety',
+      tags: ['Flock Safety', 'ALPR', 'license plate readers', 'surveillance cameras', 'United States'],
+      viewportDataUrl: '/api/map-data/flock-cameras',
+      sourceUrl: 'https://flocklocations.com/',
+      sourceLabel: 'Flock Locations community dataset',
+      attribution: 'Flock Locations contributors, CC BY 4.0',
+      geometry: 'point',
+      color: '#ff7a90',
+      focus: { center: [-98.6, 39.8], zoom: 3.4 },
+      minZoom: 5,
+      maxFeatures: 5000,
+      titleFields: ['address', 'camera_type', 'id'],
+      facts: [['Camera type', 'camera_type'], ['Address', 'address'], ['City', 'city'], ['State', 'state'], ['Mounted on', 'mounted_on'], ['Community verified', 'verified'], ['Confirmations', 'confirm_count'], ['Reported', 'reported_at']],
+      recordSourceFields: ['camera_type', 'source_url'],
+      statusOffText: 'Off · community-reported locations · opt in',
+      provenanceNote: 'These are community reports, not a complete registry or a statement that a camera is currently active. Check the linked record before relying on a location.',
+    },
+    {
+      id: 'osm-alpr-cameras',
+      name: 'OpenStreetMap ALPR cameras',
+      description: 'Publicly mapped automated license plate readers of any brand in the current view',
+      category: 'Cameras, traffic & public safety',
+      tags: ['ALPR', 'license plate readers', 'surveillance cameras', 'OpenStreetMap', 'DeFlock'],
+      viewportDataUrl: '/api/map-data/alpr',
+      sourceUrl: 'https://wiki.openstreetmap.org/wiki/Tag:surveillance:type=ALPR',
+      sourceLabel: 'OpenStreetMap ALPR mapping',
+      attribution: '© OpenStreetMap contributors, ODbL',
+      geometry: 'point',
+      color: '#f3c969',
+      focus: { center: [-76.7, 39.05], zoom: 10 },
+      minZoom: 9,
+      maxFeatures: 5000,
+      titleFields: ['operator', 'brand', 'osm_id'],
+      facts: [['OSM feature', 'osm_id'], ['Operator', 'operator'], ['Brand', 'brand'], ['Manufacturer', 'manufacturer'], ['Direction', 'direction'], ['Mount', 'camera_mount'], ['Surveillance type', 'surveillance_type']],
+      recordSourceFields: ['osm_id', 'source_url'],
+      statusOffText: 'Off · community-mapped ALPR locations · zoom 9+',
+      provenanceNote: 'This viewport query includes public OpenStreetMap features tagged as ALPR. Coverage and tagging vary by community and do not establish current operation.',
+    },
+    {
+      id: 'eff-atlas-surveillance',
+      name: 'EFF Atlas of Surveillance',
+      description: 'Documented law-enforcement surveillance technologies, grouped by agency jurisdiction rather than device location',
+      category: 'Cameras, traffic & public safety',
+      tags: ['police technology', 'surveillance', 'ALPR', 'drones', 'face recognition', 'body cameras', 'United States'],
+      staticDataUrl: '/datacenters/data/atlas-surveillance.json',
+      recordType: 'derived public inventory',
+      sourceUrl: 'https://atlasofsurveillance.org/',
+      sourceLabel: 'Electronic Frontier Foundation Atlas of Surveillance',
+      attribution: 'EFF Atlas of Surveillance, CC BY; U.S. Census Bureau',
+      geometry: 'point',
+      color: '#c68cff',
+      defaultPointRenderMode: 'gpu-splat',
+      scaleFields: [['technology_count', 'Technology types'], ['records', 'Atlas records']],
+      defaultSizeBy: 'technology_count',
+      focus: { center: [-98.6, 39.8], zoom: 3.4 },
+      minZoom: 3,
+      titleFields: ['agency', 'city', 'county'],
+      facts: [['Agency', 'agency'], ['City', 'city'], ['County', 'county'], ['State', 'state'], ['Technologies', 'technologies'], ['Vendors', 'vendors'], ['Technology types', 'technology_count'], ['Atlas records', 'records'], ['Point precision', 'location_precision']],
+      recordSourceFields: ['agency', 'source_url'],
+      statusOffText: 'Off · 10,036 agency-jurisdiction points · opt in',
+      provenanceNote: 'Atlas records document technology use by agencies, not individual device positions. Points are Census place or county centroids; state-level fallbacks are explicitly labeled.',
+    },
+    {
+      id: 'maryland-traffic-cameras',
+      name: 'Maryland traffic cameras',
+      description: 'Official Maryland roadway camera locations and public feed links',
+      category: 'Cameras, traffic & public safety',
+      tags: ['traffic cameras', 'CCTV', 'roads', 'Maryland CHART'],
+      service: 'https://mdgeodata.md.gov/imap/rest/services/Transportation/MD_TrafficCameras/FeatureServer/0',
+      sourceUrl: 'https://chart.maryland.gov/InteractiveMap/GetInteractiveMap',
+      sourceLabel: 'Maryland CHART traffic cameras',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#62d8ff',
+      focus: { center: [-76.7, 39.05], zoom: 7.2 },
+      minZoom: 7,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'location', 'county', 'feedID', 'url', 'lat', 'long'],
+      titleFields: ['location', 'feedID'],
+      facts: [['Location', 'location'], ['County', 'county'], ['Feed ID', 'feedID'], ['Latitude', 'lat'], ['Longitude', 'long']],
+      recordSourceFields: ['location', 'url'],
+    },
+    {
+      id: 'baltimore-fixed-speed-cameras',
+      name: 'Baltimore fixed speed cameras',
+      description: 'Official Baltimore City fixed speed-camera inventory',
+      category: 'Cameras, traffic & public safety',
+      tags: ['speed cameras', 'automated enforcement', 'school zones', 'Baltimore'],
+      service: 'https://egisdata.baltimorecity.gov/egis/rest/services/CityView/Fixed_Speed_Cameras/MapServer/0',
+      sourceUrl: 'https://egisdata.baltimorecity.gov/egis/rest/services/CityView/Fixed_Speed_Cameras/MapServer/0',
+      sourceLabel: 'Baltimore City EGIS Fixed Speed Cameras',
+      attribution: 'Baltimore City',
+      geometry: 'point',
+      color: '#ffb347',
+      focus: { center: [-76.6122, 39.2904], zoom: 11.2 },
+      minZoom: 9,
+      maxFeatures: 1000,
+      outFields: ['OBJECTID', 'address', 'direction', 'street', 'crossStree', 'intersecti', 'created_date', 'last_edited_date'],
+      titleFields: ['address', 'intersecti', 'street'],
+      facts: [['Address', 'address'], ['Direction', 'direction'], ['Street', 'street'], ['Cross street', 'crossStree'], ['Intersection', 'intersecti'], ['Last edited', 'last_edited_date'], ['Object ID', 'OBJECTID']],
+      statusOffText: 'Off · 80 official fixed speed-camera records',
+    },
+    {
+      id: 'baltimore-citiwatch-cameras',
+      name: 'Baltimore CitiWatch cameras',
+      description: 'Official Baltimore City public-safety CCTV camera infrastructure',
+      category: 'Cameras, traffic & public safety',
+      tags: ['CitiWatch', 'CCTV', 'public safety cameras', 'Baltimore'],
+      service: 'https://geodata.baltimorecity.gov/egis/rest/services/CityView/CitiWatchCamera/FeatureServer/0',
+      sourceUrl: 'https://geodata.baltimorecity.gov/egis/rest/services/CityView/CitiWatchCamera/FeatureServer/0',
+      sourceLabel: 'Baltimore City EGIS CitiWatch Cameras',
+      attribution: 'Baltimore City',
+      geometry: 'point',
+      color: '#2dd4bf',
+      focus: { center: [-76.6122, 39.2904], zoom: 11.2 },
+      minZoom: 9,
+      maxFeatures: 2000,
+      outFields: ['OBJECTID', 'CAM_NUMBER', 'CAM_LOCATION', 'created_date', 'last_edited_date'],
+      titleFields: ['CAM_LOCATION', 'CAM_NUMBER'],
+      facts: [['Camera number', 'CAM_NUMBER'], ['Location', 'CAM_LOCATION'], ['Last edited', 'last_edited_date'], ['Object ID', 'OBJECTID']],
+      statusOffText: 'Off · 861 official CitiWatch camera records',
+      provenanceNote: 'This is the City’s public CitiWatch infrastructure layer. It does not expose the private-camera partnership registry or its owner information.',
+    },
+    {
+      id: 'baltimore-red-light-cameras',
+      name: 'Baltimore red-light cameras',
+      description: 'Baltimore City red-light enforcement intersections from the official January 2025 location document',
+      category: 'Cameras, traffic & public safety',
+      tags: ['red-light cameras', 'automated enforcement', 'Baltimore'],
+      staticDataUrl: '/datacenters/data/enforcement-cameras.json',
+      sourceUrl: 'https://www.baltimorecity.gov/transportation',
+      sourceLabel: 'Baltimore City DOT automated enforcement',
+      attribution: 'Baltimore City Department of Transportation',
+      geometry: 'point',
+      color: '#ff5252',
+      focus: { center: [-76.6122, 39.2904], zoom: 11.2 },
+      minZoom: 9,
+      titleFields: ['location', 'camera_type'],
+      facts: [['Type', 'camera_type'], ['Intersection', 'location'], ['Direction', 'direction'], ['Jurisdiction', 'jurisdiction'], ['Location precision', 'location_status'], ['Official source date', 'source_date'], ['Coordinate method', 'coordinate_method']],
+      recordSourceFields: ['camera_type', 'source_url'],
+      statusOffText: 'Off · 14 documented red-light camera directions',
+      provenanceNote: 'Each record is an official directional intersection entry. Coordinates are geocoded intersection points rather than surveyed camera-pole positions.',
+    },
+    {
+      id: 'maryland-road-speeds',
+      name: 'Maryland live roadway speeds',
+      description: 'Current valid speed readings from Maryland CHART traffic sensors',
+      category: 'Cameras, traffic & public safety',
+      tags: ['traffic speed', 'road sensors', 'congestion', 'Maryland CHART'],
+      viewportDataUrl: '/api/map-data/chart/speeds',
+      sourceUrl: 'https://chart.maryland.gov/DataFeeds/GetDataFeeds',
+      sourceLabel: 'Maryland CHART traffic speed sensors',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#43e6a8',
+      scaleFields: [['speed_mph', 'Measured speed']],
+      defaultSizeBy: 'speed_mph',
+      focus: { center: [-76.7, 39.05], zoom: 8 },
+      minZoom: 7,
+      titleFields: ['description', 'name'],
+      facts: [['Road location', 'description'], ['Sensor', 'name'], ['Speed', 'speed_mph', ' mph'], ['Directions', 'directions'], ['Operating status', 'operating_status'], ['Owner', 'owner'], ['Last updated', 'last_updated']],
+      statusOffText: 'Off · live roadway sensor feed · opt in',
+      provenanceNote: 'CHART sensor readings are live operational data. Invalid sentinel speeds are removed before display; a missing speed is shown as unknown.',
+    },
+    {
+      id: 'maryland-road-incidents',
+      name: 'Maryland roadway incidents',
+      description: 'Current public roadway events reported by Maryland CHART',
+      category: 'Cameras, traffic & public safety',
+      tags: ['traffic incidents', 'closures', 'crashes', 'road work', 'Maryland CHART'],
+      viewportDataUrl: '/api/map-data/chart/incidents',
+      sourceUrl: 'https://chart.maryland.gov/InteractiveMap/GetInteractiveMap',
+      sourceLabel: 'Maryland CHART roadway events',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#ff9f43',
+      focus: { center: [-76.7, 39.05], zoom: 8 },
+      minZoom: 7,
+      titleFields: ['name', 'incident_type'],
+      facts: [['Event', 'name'], ['Type', 'incident_type'], ['Description', 'description'], ['County', 'county'], ['Direction', 'direction'], ['Lane status', 'lanes_status'], ['Road closed', 'closed'], ['Traffic alert', 'traffic_alert'], ['Alert text', 'traffic_alert_text'], ['Started', 'started_at'], ['Last updated', 'last_updated']],
+      statusOffText: 'Off · live public incident feed · opt in',
+      provenanceNote: 'This is a public transportation incident feed, not a dispatch system or a complete record of police activity. Participant and operational-detail fields are not exposed.',
+    },
+    {
+      id: 'maryland-police-road-activity',
+      name: 'Maryland police roadway activity',
+      description: 'CHART roadway events publicly categorized as police activity',
+      category: 'Cameras, traffic & public safety',
+      tags: ['police activity', 'roads', 'traffic incidents', 'Maryland CHART'],
+      viewportDataUrl: '/api/map-data/chart/incidents?kind=police',
+      sourceUrl: 'https://chart.maryland.gov/InteractiveMap/GetInteractiveMap',
+      sourceLabel: 'Maryland CHART roadway events',
+      attribution: 'Maryland Department of Transportation',
+      geometry: 'point',
+      color: '#a98cff',
+      focus: { center: [-76.7, 39.05], zoom: 8 },
+      minZoom: 7,
+      titleFields: ['name', 'incident_type'],
+      facts: [['Event', 'name'], ['Type', 'incident_type'], ['Description', 'description'], ['County', 'county'], ['Direction', 'direction'], ['Lane status', 'lanes_status'], ['Started', 'started_at'], ['Last updated', 'last_updated']],
+      statusOffText: 'Off · current CHART police-activity events · opt in',
+      provenanceNote: 'This only shows roadway events that Maryland CHART currently labels police activity. It is not a comprehensive police-activity map and excludes participant and operational-detail fields.',
     },
     {
       id: 'baltimore-vacant-lots',
@@ -622,6 +1052,7 @@
       geometry: 'line',
       color: '#4cc9f0',
       lineColor: '#4cc9f0',
+      lineWidthFields: [['Shape__Length', 'Segment length']],
       focus: { center: [-76.7, 39.05], zoom: 8.2 },
       minZoom: 8,
       outFields: ['OBJECTID', 'LAYER', 'Shape__Length'],
@@ -774,6 +1205,67 @@
       ],
     },
     {
+      id: 'data-center-moratoriums',
+      name: 'Data-center operating environment',
+      description: 'Bright green operating · translucent green open · yellow pending action · red restricted',
+      category: 'Local operating environment',
+      tags: ['Operating', 'Open', 'Moratorium', 'Ban', 'Pause', 'County', 'Policy', 'Zoning'],
+      staticDataUrl: '/datacenters/data/moratoriums.json',
+      sourceUrl: '/datacenters/data/moratoriums.json',
+      sourceLabel: 'Maryland local data-center operating environment inventory',
+      attribution: 'Maryland local governments, U.S. Census Bureau',
+      geometry: 'polygon',
+      color: '#00e676',
+      fillColor: ['match', ['get', 'status'],
+        'operating', '#00e676',
+        'open', 'rgba(34, 197, 94, 0.5)',
+        'pending_action', '#facc15',
+        'restricted', '#ef4444',
+        'rgba(34, 197, 94, 0.5)'],
+      fillOpacity: .68,
+      lineColor: ['match', ['get', 'status'],
+        'operating', '#69f0ae',
+        'open', 'rgba(134, 239, 172, 0.65)',
+        'pending_action', '#fde047',
+        'restricted', '#fca5a5',
+        'rgba(134, 239, 172, 0.65)'],
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 6, .8, 11, 2.2],
+      lineOpacity: .92,
+      focus: { center: [-76.75, 39.05], zoom: 7.2 },
+      minZoom: 0,
+      statusOffText: 'Off · 24 localities · operating, open, pending, or restricted',
+      titleFields: ['county', 'geoid'],
+      facts: [
+        ['Locality', 'county'],
+        ['Operating environment', 'status_label'],
+        ['Confirmed operating facilities', 'operating_facility_count'],
+        ['Policy status', 'policy_status_label'],
+        ['Restriction type', 'action_type'],
+        ['Legal instrument', 'legal_instrument'],
+        ['Adopted', 'adopted_date'],
+        ['Effective', 'effective_date'],
+        ['Ends / sunsets', 'end_date'],
+        ['Scope', 'scope'],
+        ['Verified', 'verified_date'],
+      ],
+      colorLegend: {
+        field: 'status',
+        label: 'Data-center operating environment',
+        entries: [
+          { value: 'operating', label: 'Data centers operating', color: '#00e676' },
+          { value: 'open', label: 'Open, none operating identified', color: 'rgba(34, 197, 94, 0.5)' },
+          { value: 'pending_action', label: 'Action pending', color: '#facc15' },
+          { value: 'restricted', label: 'Moratorium or restriction', color: '#ef4444' },
+        ],
+        fallback: { label: 'Open, none operating identified', color: 'rgba(34, 197, 94, 0.5)' },
+      },
+      recordSourceFields: ['source_title', 'source_url'],
+      provenanceNote: 'County-equivalent geometry is from Census TIGERweb. Red restrictions and yellow proposals are curated from linked primary local records. Operating presence comes from confirmed operating records in the facility inventory. Restrictions take visual precedence over operating facilities.',
+      additionalSources: [
+        ['U.S. Census Bureau TIGERweb county boundaries', 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1'],
+      ],
+    },
+    {
       id: 'county-power-estimates',
       name: 'County power estimates',
       description: 'Derived residential electricity demand estimates by Maryland county equivalent',
@@ -820,6 +1312,61 @@
       ],
     },
     {
+      id: 'county-total-power-estimates',
+      name: 'County total power estimates',
+      description: 'Derived all-sector demand, generation, and planned data-center load context by Maryland county equivalent',
+      category: 'Power demand estimates',
+      tags: ['Total demand', 'Generation balance', 'Data center demand', 'County', 'ACS', 'EIA'],
+      staticDataUrl: '/datacenters/data/power-estimates.json',
+      sourceUrl: '/datacenters/data/power-estimates.json',
+      sourceLabel: 'Derived Maryland county total electricity planning estimates',
+      attribution: 'EIA, U.S. Census Bureau, Census Reporter, Code Collective flat inventory',
+      geometry: 'polygon',
+      color: '#fb7185',
+      fillColor: [
+        'interpolate', ['linear'], ['coalesce', ['get', 'estimated_total_with_projected_datacenters_average_mw'], ['get', 'estimated_total_average_mw'], 0],
+        0, '#12315f',
+        80, '#2563eb',
+        200, '#06b6d4',
+        450, '#facc15',
+        900, '#f97316',
+        1400, '#ef4444',
+      ],
+      fillOpacity: .42,
+      lineColor: '#fecdd3',
+      lineWidth: ['interpolate', ['linear'], ['zoom'], 6, .7, 11, 2.0],
+      lineOpacity: .86,
+      focus: { center: [-76.75, 39.05], zoom: 7.2 },
+      minZoom: 0,
+      statusOffText: 'Off · 24 county total-demand estimates',
+      titleFields: ['county', 'geoid'],
+      facts: [
+        ['County', 'county'],
+        ['Source year', 'source_year'],
+        ['Estimated total average', 'estimated_total_average_mw', ' MW'],
+        ['Estimated total with planned data centers', 'estimated_total_with_projected_datacenters_average_mw', ' MW'],
+        ['Estimated total annual use', 'estimated_total_annual_mwh', ' MWh'],
+        ['Estimated residential average', 'estimated_residential_average_mw', ' MW'],
+        ['Estimated non-residential average', 'estimated_nonresidential_average_mw', ' MW'],
+        ['Employed population proxy', 'employed_population'],
+        ['Power plant average generation', 'county_power_plant_average_generation_mw', ' MW'],
+        ['Power plant nameplate capacity', 'county_power_plant_nameplate_capacity_mw', ' MW'],
+        ['Power plant count', 'county_power_plant_count'],
+        ['Planned data-center additions', 'county_planned_data_center_projected_mw', ' MW'],
+        ['Planned data-center count', 'county_planned_data_center_count'],
+        ['Generation minus estimated total load', 'estimated_generation_minus_total_load_average_mw', ' MW'],
+        ['Generation minus total plus planned data centers', 'estimated_generation_minus_total_with_projected_datacenters_average_mw', ' MW'],
+        ['Total estimate basis', 'total_estimate_basis'],
+        ['Planning context basis', 'planning_context_basis'],
+      ],
+      additionalSources: [
+        ['EIA Maryland retail electricity records', 'https://api.eia.gov/v2/electricity/retail-sales/data/'],
+        ['Census Reporter ACS tables B25003 and B23025', 'https://api.censusreporter.org/1.0/data/show/latest'],
+        ['U.S. Census Bureau TIGERweb county boundaries', 'https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/State_County/MapServer/1'],
+        ['Code Collective flat infrastructure inventory', '/datacenters/data/infrastructure.json'],
+      ],
+    },
+    {
       id: 'md-imap-substations',
       name: 'MD iMAP substations',
       description: 'Delmarva Peninsula substations',
@@ -856,6 +1403,26 @@
       facts: [['Line name', 'Name'], ['Voltage (kV)', 'Voltage_kV'], ['Status', 'Status'], ['Underground', 'Undergrnd'], ['Line ID', 'Id']],
     },
     {
+      id: 'maryland-lng-terminals',
+      name: 'Maryland LNG terminals',
+      description: 'Liquefied natural gas import and export terminals in Maryland',
+      category: 'Gas infrastructure',
+      tags: ['LNG', 'Liquefied natural gas', 'Cove Point', 'Terminal', 'Gas infrastructure'],
+      service: 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/Liquefied_Natural_Gas_Import_Export_Terminals/FeatureServer/0',
+      sourceUrl: 'https://www.arcgis.com/home/item.html?id=cf9fa5240d4d4d55b3286f873ce0d8e7',
+      sourceLabel: 'Liquefied Natural Gas Import Export Terminals (EIA)',
+      attribution: 'U.S. Energy Information Administration',
+      where: "STATE = 'MD'",
+      geometry: 'point',
+      color: '#ff9f1c',
+      scaleFields: [['POPULATION', 'Population']],
+      focus: { center: [-76.4345, 38.3817], zoom: 12.1 },
+      minZoom: 7,
+      outFields: ['TERMID', 'NAME', 'TYPE', 'STATUS', 'ADDRESS', 'CITY', 'STATE', 'ZIP', 'POPULATION'],
+      titleFields: ['NAME', 'TERMID'],
+      facts: [['Terminal', 'NAME'], ['Type', 'TYPE'], ['Status', 'STATUS'], ['Address', 'ADDRESS'], ['City', 'CITY'], ['State', 'STATE'], ['ZIP', 'ZIP'], ['Population', 'POPULATION'], ['Terminal ID', 'TERMID']],
+    },
+    {
       id: 'bge-generation-hosting',
       name: 'BGE generation hosting',
       description: 'Estimated remaining DER capacity',
@@ -886,8 +1453,8 @@
       name: 'BGE load capacity',
       description: 'Estimated capacity for new electric load',
       services: [
-        [14, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/1'],
-        [10, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/2'],
+        [15, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/1'],
+        [11, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/2'],
         [0, 'https://services3.arcgis.com/agWTKEK7X5K1Bx7o/arcgis/rest/services/BGE_EV_Load_Capacity/FeatureServer/3'],
       ],
       sourceUrl: 'https://www.arcgis.com/home/item.html?id=3388d9b757a64147b84bd5ee8c3a7e1a',
@@ -895,7 +1462,7 @@
       attribution: 'BGE',
       geometry: 'polygon',
       color: '#00b4d8',
-      fillColor: ['step', ['coalesce', ['get', 'Max_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027', .77, '#f46d43', 1.83, '#f5f500', 2.93, '#94f700', 4.21, '#00f500'],
+      fillColor: ['step', ['coalesce', ['get', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], 0], '#d73027', 1, '#f46d43', 4, '#f5f500', 8, '#94f700', 15, '#00f500'],
       fillOpacity: .56,
       lineColor: '#6e6e6e',
       lineWidth: ['interpolate', ['linear'], ['zoom'], 7, 0.4, 14, 0.8],
@@ -903,9 +1470,9 @@
       focus: { center: [-76.65, 39.25], zoom: 8.6 },
       minZoom: 7,
       maxFeatures: 1000,
-      outFields: ['OBJECTID_1', 'MAP_NAME', 'Count_', 'Sum_FEEDER_AVAIL_CAP_MW_MIN', 'Min_FEEDER_AVAIL_CAP_MW_MIN', 'Max_FEEDER_AVAIL_CAP_MW_MIN', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN'],
+      outFields: ['OBJECTID_1', 'MAP_NAME', 'GRID_SIZE', 'PLOT_DATE', 'UPDATE_FLAG', 'Count_', 'Sum_FEEDER_AVAIL_CAP_MW_MIN', 'Min_FEEDER_AVAIL_CAP_MW_MIN', 'Max_FEEDER_AVAIL_CAP_MW_MIN', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN'],
       titleFields: ['MAP_NAME', 'OBJECTID_1'],
-      facts: [['Map area', 'MAP_NAME'], ['Feeder capacity sum (MW)', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], ['Minimum feeder capacity (MW)', 'Min_FEEDER_AVAIL_CAP_MW_MIN'], ['Maximum feeder capacity (MW)', 'Max_FEEDER_AVAIL_CAP_MW_MIN'], ['Substation capacity sum (MW)', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN']],
+      facts: [['Map area', 'MAP_NAME'], ['Grid size', 'GRID_SIZE'], ['Plot date', 'PLOT_DATE'], ['Update flag', 'UPDATE_FLAG'], ['Feeder capacity sum (MW)', 'Sum_FEEDER_AVAIL_CAP_MW_MIN'], ['Minimum feeder capacity (MW)', 'Min_FEEDER_AVAIL_CAP_MW_MIN'], ['Maximum feeder capacity (MW)', 'Max_FEEDER_AVAIL_CAP_MW_MIN'], ['Substation capacity sum (MW)', 'Sum_SUBSTATION_AVAIL_CAP_MW_MIN']],
     },
     {
       id: 'pepco-generation-hosting',
@@ -1042,6 +1609,26 @@
       titleFields: ['ID', 'OWNER'],
       facts: [['Line ID', 'ID'], ['Type', 'TYPE'], ['Status', 'STATUS'], ['Owner', 'OWNER'], ['Voltage', 'VOLTAGE'], ['Voltage class', 'VOLT_CLASS'], ['Inferred attributes', 'INFERRED'], ['Origin', 'SUB_1'], ['Destination', 'SUB_2'], ['Source', 'SOURCE'], ['Source date', 'SOURCEDATE'], ['Validation method', 'VAL_METHOD'], ['Validation date', 'VAL_DATE']],
     },
+    {
+      id: 'natural-gas-pipelines',
+      name: 'Natural gas pipelines',
+      description: 'Interstate and intrastate natural-gas pipelines in the current map view',
+      category: 'Gas infrastructure',
+      tags: ['Natural gas', 'Pipeline', 'Gas infrastructure', 'Interstate', 'Intrastate'],
+      service: 'https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/Natural_Gas_Interstate_and_Intrastate_Pipelines_1/FeatureServer/0',
+      sourceUrl: 'https://www.arcgis.com/home/item.html?id=53e5594f0d0242c0a18f6019f98f8841',
+      sourceLabel: 'Natural Gas Interstate and Intrastate Pipelines (EIA)',
+      attribution: 'U.S. Energy Information Administration',
+      geometry: 'line',
+      color: '#ffb703',
+      lineColor: '#ffb703',
+      lineWidthFields: [['Shape__Length', 'Segment length']],
+      focus: { center: [-76.75, 39.05], zoom: 8.4 },
+      minZoom: 7,
+      outFields: ['TYPEPIPE', 'Operator', 'Status', 'Shape__Length'],
+      titleFields: ['Operator', 'TYPEPIPE'],
+      facts: [['Operator', 'Operator'], ['Pipe type', 'TYPEPIPE'], ['Status', 'Status'], ['Segment length', 'Shape__Length']],
+    },
   ];
   const BASEMAP_STYLES = {
     collective: 'https://tiles.openfreemap.org/styles/liberty',
@@ -1052,10 +1639,14 @@
     liberty: 'https://tiles.openfreemap.org/styles/liberty',
   };
   const UI_STATE_STORAGE_KEY = 'codecollective.datacenters.ui-state.v1';
+  const COMPRESSED_STATE_QUERY_PARAM = 's';
+  const COMPACT_STATE_QUERY_PARAM = 'compact';
   const DEFAULT_UI_STATE = {
     theme: 'collective',
     baseLayer: 'street-map',
-    layers: ['datacenters', 'power-plants', 'neon-streets'],
+    powerPlantScope: 'MD',
+    globalPowerPlantScope: 'NA',
+    layers: ['datacenters', 'power-plants', 'neon-streets', 'data-center-moratoriums'],
     layerOrder: [
       'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
       'esri-3d-buildings', 'maryland-state-boundary', 'maryland-county-boundaries',
@@ -1064,7 +1655,7 @@
       'dpw-storm-ms4', 'dpw-stormwater', 'dpw-water', 'dpw-wastewater',
       'md-waterbodies-streams', 'md-waterbodies-lakes', 'md-watersheds-12digit',
       'md-fema-floodplain', 'md-stream-gauges', 'md-blue-infrastructure',
-      'power-interchanges', 'county-power-estimates', 'md-imap-substations',
+      'power-interchanges', 'data-center-moratoriums', 'county-power-estimates', 'md-imap-substations',
       'md-imap-transmission-lines', 'bge-generation-hosting', 'bge-load-capacity',
       'pepco-generation-hosting', 'pepco-load-capacity', 'delmarva-generation-hosting',
       'delmarva-load-capacity', 'potomac-edison-generation-hosting',
@@ -1073,14 +1664,14 @@
       'baltimore-vacants-parcels',
     ],
     hover: [
-      'datacenters', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
+      'datacenters', 'openstreetmap-us-data-centers', 'power-plants', 'neon-streets', 'enviroscreen', 'parcels',
       'esri-3d-buildings', 'maryland-state-boundary', 'maryland-county-boundaries',
       'dhcd-multifamily', 'dhcd-qct', 'dhcd-just-communities', 'mdp-generalized-zoning',
       'baltimore-city-zoning', 'baltimore-nibrs-crime', 'historic-properties',
       'dpw-storm-ms4', 'dpw-stormwater', 'dpw-water', 'dpw-wastewater',
       'md-waterbodies-streams', 'md-waterbodies-lakes', 'md-watersheds-12digit',
       'md-fema-floodplain', 'md-stream-gauges', 'md-blue-infrastructure',
-      'power-interchanges', 'county-power-estimates', 'md-imap-substations',
+      'power-interchanges', 'data-center-moratoriums', 'county-power-estimates', 'md-imap-substations',
       'md-imap-transmission-lines', 'bge-generation-hosting', 'bge-load-capacity',
       'pepco-generation-hosting', 'pepco-load-capacity', 'delmarva-generation-hosting',
       'delmarva-load-capacity', 'potomac-edison-generation-hosting',
@@ -1108,6 +1699,8 @@
         glowBy: 'contestation',
         glowDistance: 1,
         glowBlur: 1,
+        iconScale: 1,
+        brightness: 1,
         sizeBy: 'reported_power_capacity_mw',
       },
       powerPlants: {
@@ -1117,12 +1710,17 @@
         outlineBy: 'technology',
         fillBy: 'resource-adjusted-utilization',
         fillFraction: 1,
+        iconScale: 1,
+        brightness: 1,
         sizeBy: 'planning_sustained_output_mw',
+        outlineWidth: 1.5,
         outlineScale: 1.04,
+        renderMaterial: 'standard',
+        adaptiveLod: false,
       },
-      neonStreets: { scope: 'i95', lineWidth: 1 },
-      enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
-      parcels: { text: '' },
+      neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 },
+      enviroscreen: { text: '', scoreBand: 'all', community: 'all', brightness: 1 },
+      parcels: { text: '', brightness: 1 },
       remote: {
         'power-interchanges': {
           text: '',
@@ -1140,26 +1738,26 @@
     return JSON.parse(JSON.stringify(DEFAULT_UI_STATE));
   }
   const ENERGY_SOURCES = {
-    SUN: { label: 'Solar', light: '#69c7ff', color: '#167fc1', dark: '#064a7d' },
-    BIT: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    SUB: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    LIG: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    WC: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    RC: { label: 'Coal', light: '#59616a', color: '#20262c', dark: '#050708' },
-    NG: { label: 'Natural gas', light: '#c58a62', color: '#865033', dark: '#4a281b' },
-    PG: { label: 'Propane gas', light: '#c58a62', color: '#865033', dark: '#4a281b' },
+    SUN: { label: 'Solar', light: '#e5fbff', color: '#70dcff', dark: '#1aa6d9' },
+    BIT: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    SUB: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    LIG: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    WC: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    RC: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    NG: { label: 'Natural gas', light: '#f0b278', color: '#b86c34', dark: '#5f3319' },
+    PG: { label: 'Propane gas', light: '#f0b278', color: '#b86c34', dark: '#5f3319' },
     DFO: { label: 'Oil / diesel', light: '#ffb454', color: '#c76522', dark: '#743010' },
     RFO: { label: 'Oil / diesel', light: '#ffb454', color: '#c76522', dark: '#743010' },
-    WAT: { label: 'Hydroelectric', light: '#70ebef', color: '#16a5b5', dark: '#075f74' },
-    WND: { label: 'Wind', light: '#ffffff', color: '#b9c4cc', dark: '#53606a' },
+    WAT: { label: 'Hydroelectric', light: '#2f6fab', color: '#0b3f82', dark: '#031a3d' },
+    WND: { label: 'Wind', light: '#ffffff', color: '#e5ebef', dark: '#9daab2' },
     NUC: { label: 'Nuclear', light: '#9affbd', color: '#25c965', dark: '#08732e' },
     MWH: { label: 'Battery storage', light: '#d7b4ff', color: '#8d65ca', dark: '#4c317e' },
-    LFG: { label: 'Landfill gas', light: '#b7cf70', color: '#718e39', dark: '#3d5520' },
-    MSW: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
-    MSB: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
-    MSN: { label: 'Municipal waste', light: '#f4d06f', color: '#b38b25', dark: '#695012' },
-    OBG: { label: 'Biomass', light: '#d0c779', color: '#8b8436', dark: '#514c1e' },
-    WDS: { label: 'Biomass', light: '#d0c779', color: '#8b8436', dark: '#514c1e' },
+    LFG: { label: 'Landfill gas', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    MSW: { label: 'Municipal waste', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    MSB: { label: 'Municipal waste', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    MSN: { label: 'Municipal waste', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    OBG: { label: 'Biomass', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
+    WDS: { label: 'Biomass', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
     UNKNOWN: { label: 'Undisclosed', light: '#aab9c5', color: '#657887', dark: '#344550' },
   };
   const LIFECYCLE_COLORS = {
@@ -1169,12 +1767,6 @@
     paused: { label: 'Paused / blocked', light: '#ffaaa5', color: '#d24a43', dark: '#6d1f1b' },
     unknown: { label: 'Unknown', light: '#c6d0d8', color: '#738392', dark: '#384654' },
   };
-  const PLANNED_UNCONTESTED_COLOR = {
-    label: 'Planned / unbuilt / uncontested',
-    light: '#fffbd1',
-    color: '#fff15f',
-    dark: '#9a5e00',
-  };
   const SENTIMENT_COLORS = {
     supportive: { label: 'Supportive', light: '#8de6b4', color: '#24995f', dark: '#0f5634' },
     mixed: { label: 'Mixed / unclear', light: '#e8d98d', color: '#ae8f22', dark: '#655111' },
@@ -1183,13 +1775,13 @@
   };
   const PLANT_TECH_COLORS = {
     nuclear: { label: 'Nuclear', light: '#9affbd', color: '#25c965', dark: '#08732e' },
-    gas: { label: 'Combustion / gas', light: '#d2ad90', color: '#8e5a38', dark: '#4d2e1a' },
-    solar: { label: 'Solar', light: '#93d7ff', color: '#1d89cf', dark: '#0d4770' },
+    gas: { label: 'Combustion / gas', light: '#f0b278', color: '#b86c34', dark: '#5f3319' },
+    solar: { label: 'Solar', light: '#e5fbff', color: '#70dcff', dark: '#1aa6d9' },
     battery: { label: 'Battery / storage', light: '#ddc2ff', color: '#8b63c9', dark: '#4b3375' },
-    hydro: { label: 'Hydroelectric', light: '#7cecf4', color: '#16a5b5', dark: '#085d69' },
-    wind: { label: 'Wind', light: '#ffffff', color: '#b9c4cc', dark: '#53606a' },
-    coal: { label: 'Coal', light: '#848b93', color: '#373d43', dark: '#101316' },
-    waste: { label: 'Waste / biomass', light: '#dfd38f', color: '#9a8d38', dark: '#574f1f' },
+    hydro: { label: 'Hydroelectric', light: '#2f6fab', color: '#0b3f82', dark: '#031a3d' },
+    wind: { label: 'Wind', light: '#ffffff', color: '#e5ebef', dark: '#9daab2' },
+    coal: { label: 'Coal', light: '#4d555e', color: '#1f252b', dark: '#07090b' },
+    waste: { label: 'Waste / biomass', light: '#e7f28a', color: '#bed94a', dark: '#627514' },
     other: { label: 'Other technology', light: '#c4d1db', color: '#70808f', dark: '#354350' },
   };
   const PLANT_SCALE_COLORS = {
@@ -1200,26 +1792,26 @@
     unknown: { label: 'Unknown size', light: '#c6d0d8', color: '#738392', dark: '#384654' },
   };
   const BRIGHT_BOLT_SOURCE_COLORS = {
-    SUN: '#4db8ff',
-    BIT: '#6f7a86',
-    SUB: '#6f7a86',
-    LIG: '#6f7a86',
-    WC: '#6f7a86',
-    RC: '#6f7a86',
-    NG: '#f3c572',
-    PG: '#f3c572',
+    SUN: '#8be7ff',
+    BIT: '#303740',
+    SUB: '#303740',
+    LIG: '#303740',
+    WC: '#303740',
+    RC: '#303740',
+    NG: '#f0a55b',
+    PG: '#f0a55b',
     DFO: '#d5a56d',
     RFO: '#d5a56d',
-    WAT: '#52e3ff',
-    WND: '#dce6ec',
+    WAT: '#0b4f9f',
+    WND: '#f1f5f7',
     NUC: '#52ef82',
     MWH: '#c5b2ff',
-    LFG: '#bedf67',
-    MSW: '#f2de74',
-    MSB: '#f2de74',
-    MSN: '#f2de74',
-    OBG: '#d8cb6d',
-    WDS: '#d8cb6d',
+    LFG: '#d6ed63',
+    MSW: '#d6ed63',
+    MSB: '#d6ed63',
+    MSN: '#d6ed63',
+    OBG: '#c9e457',
+    WDS: '#c9e457',
     UNKNOWN: '#ffd84f',
   };
 
@@ -1230,6 +1822,15 @@
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 
+  function safeExternalUrl(value) {
+    try {
+      const url = new URL(String(value));
+      return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null;
+    } catch (_error) {
+      return null;
+    }
+  }
+
   const known = (value, suffix = '') => value === null || value === undefined || value === ''
     ? '<span class="dc-unknown">Not publicly disclosed</span>'
     : `${escapeHtml(value)}${suffix}`;
@@ -1237,6 +1838,13 @@
   const number = (value, digits = 0) => Number(value).toLocaleString('en-US', {
     maximumFractionDigits: digits,
   });
+
+  function formatNewsDate(value) {
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime())
+      ? String(value || 'Undated')
+      : date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
 
   function markerSourceCodes(record) {
     if (record.record_type === 'power_plant') {
@@ -1318,7 +1926,6 @@
 
   function stylePaletteForRecord(record, attribute) {
     if (record.record_type === 'data_center') {
-      if (isPlannedUncontestedDataCenter(record)) return [PLANNED_UNCONTESTED_COLOR];
       if (attribute === 'lifecycle') return [LIFECYCLE_COLORS[lifecycleStage(record)] || LIFECYCLE_COLORS.unknown];
       if (attribute === 'sentiment') return [SENTIMENT_COLORS[classifySentiment(record)]];
       return markerPalette(markerSourceCodes(record));
@@ -1329,7 +1936,7 @@
   }
 
   function iconFillForRecord(record, attribute) {
-    const customColor = record.record_type === 'data_center' ? layerCustomColors.get('datacenters') : null;
+    const customColor = record.record_type === 'data_center' ? layerCustomColorHex('datacenters') : null;
     if (customColor) {
       return `radial-gradient(circle at 30% 22%, rgba(255,255,255,.78) 0 7%, rgba(255,255,255,.2) 22%, transparent 48%), linear-gradient(145deg, ${adjustHexColor(customColor, 1.28)} 0%, ${customColor} 48%, ${adjustHexColor(customColor, .58)} 100%)`;
     }
@@ -1374,6 +1981,59 @@
     return `#${[r, g, b].map((value) => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0')).join('')}`;
   }
 
+  function adjustHexBrightness(color, brightness) {
+    if (!/^#[0-9a-f]{6}$/i.test(String(color))) return color;
+    const factor = normalizeBrightness(brightness);
+    const rgb = hexToRgb(color);
+    return rgbToHex({ r: rgb.r * factor, g: rgb.g * factor, b: rgb.b * factor });
+  }
+
+  function isLayerColorHex(value) {
+    return /^#[0-9a-f]{6}$/i.test(String(value));
+  }
+
+  function normalizeLayerAlpha(value) {
+    const alpha = Number(value);
+    if (!Number.isFinite(alpha)) return 1;
+    return Math.max(0, Math.min(1, alpha));
+  }
+
+  function normalizeLayerColorSetting(value) {
+    if (isLayerColorHex(value)) {
+      return { color: String(value).toLowerCase(), alpha: 1 };
+    }
+    if (value && typeof value === 'object' && isLayerColorHex(value.color)) {
+      return {
+        color: String(value.color).toLowerCase(),
+        alpha: normalizeLayerAlpha(value.alpha),
+      };
+    }
+    return null;
+  }
+
+  function colorValueString(color, alpha = 1) {
+    if (!isLayerColorHex(color)) return color;
+    const normalizedAlpha = normalizeLayerAlpha(alpha);
+    if (normalizedAlpha >= .999) return String(color).toLowerCase();
+    return rgbToRgbaString(hexToRgb(color), normalizedAlpha);
+  }
+
+  function layerCustomColorSetting(layerId) {
+    return normalizeLayerColorSetting(layerCustomColors.get(layerId));
+  }
+
+  function layerCustomColorHex(layerId) {
+    return layerCustomColorSetting(layerId)?.color || null;
+  }
+
+  function layerCustomColorAlpha(layerId) {
+    return layerCustomColorSetting(layerId)?.alpha ?? 1;
+  }
+
+  function formatLayerColorValue(color, alpha) {
+    return `${String(color).toUpperCase()} @ ${Math.round(normalizeLayerAlpha(alpha) * 100)}%`;
+  }
+
   function rgbToRgbaString({ r, g, b }, alpha = 1) {
     return `rgba(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)}, ${alpha})`;
   }
@@ -1411,8 +2071,8 @@
   }
 
   function markerAccentColor(record, attribute) {
-    if (record.record_type === 'power_plant' && layerCustomColors.has('power-plants')) {
-      return layerCustomColors.get('power-plants');
+    if (record.record_type === 'power_plant' && layerCustomColorHex('power-plants')) {
+      return layerCustomColorHex('power-plants');
     }
     if (record.record_type === 'power_plant' && attribute === 'energy') {
       const codes = markerSourceCodes(record);
@@ -1423,6 +2083,10 @@
     }
     const palette = stylePaletteForRecord(record, attribute);
     return mixColors(palette.map((source) => hexToRgb(source.color)));
+  }
+
+  function brightenedMarkerAccentColor(record, attribute, brightness) {
+    return adjustHexBrightness(markerAccentColor(record, attribute), brightness);
   }
 
   const POINT_SCALE_LABELS = {
@@ -1555,8 +2219,7 @@
     const meshDefinition = model.meshes?.[0];
     const primitive = meshDefinition?.primitives?.[0];
     const encoded = model.buffers?.[0]?.uri?.split(',', 2)?.[1];
-    const outline2d = meshDefinition?.extras?.outline2d;
-    if (!primitive || !encoded || !Array.isArray(outline2d)) throw new Error('Lightning bolt model is missing embedded mesh data');
+    if (!primitive || !encoded) throw new Error('Lightning bolt model is missing embedded mesh data');
 
     const binary = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
     const componentReaders = {
@@ -1599,78 +2262,72 @@
       positions,
       normals,
       indices,
-      outline: buildLightningOutlineMesh(outline2d.map(([x, y]) => ({ x, y }))),
+      silhouetteEdges: buildLightningSilhouetteEdges(positions, indices),
       bounds: { minY, maxY },
     };
   }
 
-  function polygonArea(points) {
-    let area = 0;
-    points.forEach((point, index) => {
-      const next = points[(index + 1) % points.length];
-      area += (point.x * next.y) - (next.x * point.y);
-    });
-    return area * 0.5;
-  }
-
-  function normalize2D(vector) {
-    const length = Math.hypot(vector.x, vector.y);
-    return length > 0 ? { x: vector.x / length, y: vector.y / length } : { x: 0, y: 0 };
-  }
-
-  function buildLightningOutlineMesh(points) {
-    if (!Array.isArray(points) || points.length < 3) {
-      return {
-        positions: new Float32Array(),
-        normals: new Float32Array(),
-        indices: new Uint32Array(),
-      };
-    }
-    const outlineWidth = .045;
-    const winding = polygonArea(points) >= 0 ? 1 : -1;
-    const outerPoints = points.map((point, index) => {
-      const previous = points[(index + points.length - 1) % points.length];
-      const next = points[(index + 1) % points.length];
-      const incoming = normalize2D({ x: point.x - previous.x, y: point.y - previous.y });
-      const outgoing = normalize2D({ x: next.x - point.x, y: next.y - point.y });
-      const incomingNormal = winding > 0
-        ? { x: incoming.y, y: -incoming.x }
-        : { x: -incoming.y, y: incoming.x };
-      const outgoingNormal = winding > 0
-        ? { x: outgoing.y, y: -outgoing.x }
-        : { x: -outgoing.y, y: outgoing.x };
-      const miter = normalize2D({
-        x: incomingNormal.x + outgoingNormal.x,
-        y: incomingNormal.y + outgoingNormal.y,
-      });
-      const reference = outgoingNormal;
-      const divider = Math.abs((miter.x * reference.x) + (miter.y * reference.y));
-      const scale = outlineWidth / Math.max(.35, divider);
-      return {
-        x: point.x + (miter.x * scale),
-        y: point.y + (miter.y * scale),
-      };
-    });
-
-    const positions = [];
-    const normals = [];
-    const indices = [];
-    points.forEach((point, index) => {
-      const outer = outerPoints[index];
-      positions.push(point.x, point.y, 0, outer.x, outer.y, 0);
-      normals.push(0, 0, 1, 0, 0, 1);
-    });
-    for (let index = 0; index < points.length; index += 1) {
-      const next = (index + 1) % points.length;
-      const base = index * 2;
-      const nextBase = next * 2;
-      indices.push(base, nextBase, nextBase + 1, base, nextBase + 1, base + 1);
-    }
-    return {
-      positions: new Float32Array(positions),
-      normals: new Float32Array(normals),
-      indices: new Uint32Array(indices),
+  function buildLightningSilhouetteEdges(positions, indices) {
+    const edgeMap = new Map();
+    const point = (index) => [positions[index * 3], positions[(index * 3) + 1], positions[(index * 3) + 2]];
+    const pointKey = (value) => value.map((component) => component.toFixed(6)).join(',');
+    const faceNormal = (a, b, c) => {
+      const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+      const ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+      const normal = [
+        (ab[1] * ac[2]) - (ab[2] * ac[1]),
+        (ab[2] * ac[0]) - (ab[0] * ac[2]),
+        (ab[0] * ac[1]) - (ab[1] * ac[0]),
+      ];
+      const length = Math.hypot(...normal) || 1;
+      return normal.map((component) => component / length);
     };
+    for (let offset = 0; offset < indices.length; offset += 3) {
+      const triangle = [point(indices[offset]), point(indices[offset + 1]), point(indices[offset + 2])];
+      const normal = faceNormal(...triangle);
+      [[0, 1], [1, 2], [2, 0]].forEach(([startIndex, endIndex]) => {
+        const start = triangle[startIndex];
+        const end = triangle[endIndex];
+        const startKey = pointKey(start);
+        const endKey = pointKey(end);
+        const key = startKey < endKey ? `${startKey}|${endKey}` : `${endKey}|${startKey}`;
+        const edge = edgeMap.get(key) || { start, end, normals: [] };
+        edge.normals.push(normal);
+        edgeMap.set(key, edge);
+      });
+    }
+
+    const starts = [];
+    const ends = [];
+    const normalAs = [];
+    const normalBs = [];
+    const corners = [];
+    const quadCorners = [[0, -1], [1, 1], [1, -1], [0, -1], [0, 1], [1, 1]];
+    edgeMap.forEach(({ start, end, normals }) => {
+      const normalA = normals[0];
+      const normalB = normals[1] || normalA.map((component) => -component);
+      quadCorners.forEach((corner) => {
+        starts.push(...start);
+        ends.push(...end);
+        normalAs.push(...normalA);
+        normalBs.push(...normalB);
+        corners.push(...corner);
+      });
+    });
+    return {
+      starts: new Float32Array(starts),
+      ends: new Float32Array(ends),
+      normalAs: new Float32Array(normalAs),
+      normalBs: new Float32Array(normalBs),
+      corners: new Float32Array(corners),
+      vertexCount: corners.length / 2,
+    };
+  }
+
+  function powerPlantAnimationTargetFps(instanceCount) {
+    if (instanceCount > 20000) return 0;
+    if (instanceCount > 8000) return 20;
+    return 30;
   }
 
   function createPowerPlantBoltLayer(map) {
@@ -1678,6 +2335,11 @@
       precision highp float;
       attribute vec3 a_position;
       attribute vec3 a_normal;
+      attribute vec3 a_edgeStart;
+      attribute vec3 a_edgeEnd;
+      attribute vec3 a_edgeNormalA;
+      attribute vec3 a_edgeNormalB;
+      attribute vec2 a_edgeCorner;
       attribute vec2 a_anchor;
       attribute vec3 a_accentColor;
       attribute vec3 a_outlineColor;
@@ -1687,10 +2349,11 @@
       attribute float a_fillFraction;
       uniform mat4 u_matrix;
       uniform vec2 u_viewportSize;
-      uniform float u_time;
+      uniform highp float u_time;
       uniform float u_scale;
       uniform float u_fillMinY;
       uniform float u_fillMaxY;
+      uniform float u_outlineWidth;
       uniform mediump float u_glowPass;
       uniform mediump float u_outlineOnly;
       varying vec3 v_accentColor;
@@ -1699,30 +2362,63 @@
       varying float v_hover;
       varying float v_fillY;
       varying float v_fillFraction;
+      varying float v_traceVisible;
+      varying vec2 v_traceCoord;
+      varying float v_traceLength;
+      varying float v_traceHalfWidth;
+      varying vec3 v_normal;
+      varying vec3 v_modelPosition;
+
+      vec3 rotateBolt(vec3 value, float cosAngle, float sinAngle) {
+        return vec3(
+          (value.x * cosAngle) + (value.z * sinAngle),
+          value.y,
+          (-value.x * sinAngle) + (value.z * cosAngle)
+        );
+      }
+
+      vec2 projectBolt(vec3 value, float tilt) {
+        return vec2(value.x, -((value.y * cos(tilt)) - (value.z * sin(tilt))));
+      }
 
       void main() {
         vec4 clip = u_matrix * vec4(a_anchor, 0.0, 1.0);
-        float pulse = 1.0 + (sin((u_time * 2.1) + (a_phase * 1.7)) * 0.04);
         float rotation = (u_time * 1.15) + a_phase;
         float cosAngle = cos(rotation);
         float sinAngle = sin(rotation);
-        vec3 rotated = vec3(
-          (a_position.x * cosAngle) + (a_position.z * sinAngle),
-          a_position.y,
-          (-a_position.x * sinAngle) + (a_position.z * cosAngle)
-        );
-        vec3 rotatedNormal = normalize(vec3(
-          (a_normal.x * cosAngle) + (a_normal.z * sinAngle),
-          a_normal.y,
-          (-a_normal.x * sinAngle) + (a_normal.z * cosAngle)
-        ));
         float tilt = -0.18;
-        vec2 modelScreen = vec2(
-          rotated.x,
-          -((rotated.y * cos(tilt)) - (rotated.z * sin(tilt)))
-        );
+        vec3 rotated = rotateBolt(a_position, cosAngle, sinAngle);
+        vec3 rotatedNormal = normalize(rotateBolt(a_normal, cosAngle, sinAngle));
+        vec2 modelScreen = projectBolt(rotated, tilt);
         float hoverScale = 1.0 + (a_hover * u_glowPass * 0.32);
-        vec2 offsetPixels = modelScreen * a_size * u_scale * pulse * hoverScale;
+        vec2 offsetPixels = modelScreen * a_size * u_scale * hoverScale;
+        v_traceVisible = 1.0;
+        v_traceCoord = vec2(0.0);
+        v_traceLength = 0.0;
+        v_traceHalfWidth = 0.0;
+        if (u_outlineOnly > 0.5) {
+          vec3 edgeStart = rotateBolt(a_edgeStart, cosAngle, sinAngle);
+          vec3 edgeEnd = rotateBolt(a_edgeEnd, cosAngle, sinAngle);
+          vec3 edgeNormalA = rotateBolt(a_edgeNormalA, cosAngle, sinAngle);
+          vec3 edgeNormalB = rotateBolt(a_edgeNormalB, cosAngle, sinAngle);
+          float facingA = (edgeNormalA.y * sin(tilt)) + (edgeNormalA.z * cos(tilt));
+          float facingB = (edgeNormalB.y * sin(tilt)) + (edgeNormalB.z * cos(tilt));
+          v_traceVisible = step(facingA * facingB, 0.0001);
+
+          vec2 startPixels = projectBolt(edgeStart, tilt) * a_size;
+          vec2 endPixels = projectBolt(edgeEnd, tilt) * a_size;
+          vec2 edgeVector = endPixels - startPixels;
+          float edgeLength = max(length(edgeVector), 0.001);
+          vec2 edgeDirection = edgeVector / edgeLength;
+          vec2 edgeNormal = vec2(-edgeDirection.y, edgeDirection.x);
+          float halfWidth = u_outlineWidth * mix(1.0, 1.2, a_hover);
+          float outerWidth = halfWidth + 1.0;
+          float along = mix(-outerWidth, edgeLength + outerWidth, a_edgeCorner.x);
+          offsetPixels = startPixels + (edgeDirection * along) + (edgeNormal * a_edgeCorner.y * outerWidth);
+          v_traceCoord = vec2(along, a_edgeCorner.y * outerWidth);
+          v_traceLength = edgeLength;
+          v_traceHalfWidth = halfWidth;
+        }
         vec2 offsetClip = vec2(
           (offsetPixels.x / u_viewportSize.x) * 2.0 * clip.w,
           (-offsetPixels.y / u_viewportSize.y) * 2.0 * clip.w
@@ -1734,20 +2430,31 @@
         v_hover = a_hover;
         v_fillY = a_position.y;
         v_fillFraction = a_fillFraction;
+        v_normal = rotatedNormal;
+        v_modelPosition = a_position;
       }
     `;
     const fragmentSource = `
       precision mediump float;
+      uniform highp float u_time;
       uniform mediump float u_fillMinY;
       uniform mediump float u_fillMaxY;
       uniform mediump float u_glowPass;
       uniform mediump float u_outlineOnly;
+      uniform mediump float u_materialMode;
+      uniform mediump float u_globalAlpha;
       varying vec3 v_accentColor;
       varying vec3 v_outlineColor;
       varying float v_light;
       varying float v_hover;
       varying float v_fillY;
       varying float v_fillFraction;
+      varying float v_traceVisible;
+      varying vec2 v_traceCoord;
+      varying float v_traceLength;
+      varying float v_traceHalfWidth;
+      varying vec3 v_normal;
+      varying vec3 v_modelPosition;
 
       void main() {
         vec3 energizedColor = mix(v_accentColor, vec3(1.0), 0.3);
@@ -1756,24 +2463,77 @@
         float fillCutoff = mix(u_fillMinY, u_fillMaxY, fillFraction);
         float filled = step(v_fillY, fillCutoff);
         if (u_outlineOnly > 0.5) {
+          if (v_traceVisible < 0.5) discard;
+          vec2 centered = vec2(v_traceCoord.x - (v_traceLength * 0.5), v_traceCoord.y);
+          vec2 distanceToBox = abs(centered) - vec2((v_traceLength * 0.5) + v_traceHalfWidth, v_traceHalfWidth);
+          float traceDistance = length(max(distanceToBox, 0.0)) + min(max(distanceToBox.x, distanceToBox.y), 0.0);
+          float coverage = 1.0 - smoothstep(-0.5, 0.5, traceDistance);
+          if (coverage <= 0.0) discard;
           vec3 outlineColor = min(vec3(1.0), v_outlineColor * mix(0.88, 1.08, v_hover));
-          gl_FragColor = vec4(outlineColor, mix(0.92, 1.0, v_hover));
+          gl_FragColor = vec4(outlineColor * coverage * u_globalAlpha, coverage * u_globalAlpha);
+          return;
+        }
+        vec3 normalColor = normalize(v_normal) * 0.5 + 0.5;
+        float fresnel = pow(1.0 - abs(normalize(v_normal).z), 2.2);
+        float metallicHighlight = pow(max(v_light, 0.0), 3.2);
+        float polishedHighlight = pow(max(v_light, 0.0), 6.0);
+        float pulse = 0.5 + 0.5 * sin((u_time * 2.4) + (v_modelPosition.y * 4.2));
+        float scan = 0.5 + 0.5 * sin((v_modelPosition.y * 16.0) - (u_time * 5.0));
+        vec3 rainbow = 0.5 + 0.5 * cos(6.28318 * (vec3(0.0, 0.33, 0.67) + (v_modelPosition.y * 0.55) + (u_time * 0.08)));
+        float toonLight = step(0.3, v_light) * 0.38 + step(0.55, v_light) * 0.28 + step(0.8, v_light) * 0.22;
+        float grid = max(
+          1.0 - smoothstep(0.84, 0.96, abs(sin(v_modelPosition.x * 16.0))),
+          1.0 - smoothstep(0.84, 0.96, abs(sin(v_modelPosition.y * 11.0)))
+        );
+        vec3 materialColor = litColor;
+        float materialAlpha = 1.0;
+        if (u_materialMode < 0.5) {
+          materialColor = litColor;
+        } else if (u_materialMode < 1.5) {
+          materialColor = min(vec3(1.0), energizedColor * 0.78 + vec3(metallicHighlight * 0.7));
+        } else if (u_materialMode < 2.5) {
+          materialColor = min(vec3(1.0), energizedColor * 0.68 + vec3(polishedHighlight * 0.95 + fresnel * 0.2));
+        } else if (u_materialMode < 3.5) {
+          materialColor = mix(energizedColor, rainbow, 0.62);
+          materialColor = min(vec3(1.0), materialColor * (0.88 + polishedHighlight * 0.35));
+        } else if (u_materialMode < 4.5) {
+          materialColor = min(vec3(1.0), mix(energizedColor, vec3(1.0, 0.96, 0.98), 0.32) + rainbow * 0.12 + fresnel * 0.16);
+        } else if (u_materialMode < 5.5) {
+          materialColor = mix(energizedColor, vec3(0.92, 0.98, 1.0), 0.45);
+          materialAlpha = 0.4 + fresnel * 0.18;
+        } else if (u_materialMode < 6.5) {
+          materialColor = min(vec3(1.0), energizedColor * (1.2 + pulse * 0.45) + vec3(0.12, 0.12, 0.06));
+        } else if (u_materialMode < 7.5) {
+          materialColor = mix(energizedColor, rainbow, 0.7) * (0.7 + fresnel * 0.7 + scan * 0.22);
+          materialAlpha = 0.48 + fresnel * 0.24;
+        } else if (u_materialMode < 8.5) {
+          materialColor = mix(normalColor, energizedColor, 0.2);
+          materialAlpha = 0.24 + fresnel * 0.18;
+        } else if (u_materialMode < 9.5) {
+          materialColor = min(vec3(1.0), energizedColor * 0.74 + vec3(polishedHighlight * 0.9));
+        } else if (u_materialMode < 10.5) {
+          materialColor = energizedColor * (0.45 + toonLight);
+        } else if (u_materialMode < 11.5) {
+          materialColor = normalColor;
+        } else {
+          materialColor = min(vec3(1.0), energizedColor * 0.2 + vec3(grid));
+          materialAlpha = max(0.22, grid);
+        }
+        if (u_glowPass > 0.5) {
+          vec3 glowColor = min(vec3(1.0), v_outlineColor * mix(0.78, 1.08, v_hover));
+          float glowAlpha = mix(0.5, 0.88, v_hover) * max(0.5, materialAlpha);
+          gl_FragColor = vec4(glowColor * glowAlpha * u_globalAlpha, glowAlpha * u_globalAlpha);
           return;
         }
         if (filled < 0.5) discard;
-        if (u_glowPass > 0.5) {
-          vec3 glowColor = mix(energizedColor * 0.52, vec3(1.0), v_hover * 0.7);
-          float glowAlpha = mix(0.38, 0.92, v_hover);
-          gl_FragColor = vec4(glowColor * glowAlpha, glowAlpha);
-          return;
-        }
-        gl_FragColor = vec4(litColor, 1.0);
+        gl_FragColor = vec4(materialColor * materialAlpha * u_globalAlpha, materialAlpha * u_globalAlpha);
       }
     `;
 
     const state = {
       entries: [],
       records: [],
+      sourceRecordCount: 0,
       hoveredRecordId: null,
       ready: false,
       removed: false,
@@ -1785,15 +2545,21 @@
       positionBuffer: null,
       normalBuffer: null,
       indexBuffer: null,
-      outlinePositionBuffer: null,
-      outlineNormalBuffer: null,
-      outlineIndexBuffer: null,
+      edgeStartBuffer: null,
+      edgeEndBuffer: null,
+      edgeNormalABuffer: null,
+      edgeNormalBBuffer: null,
+      edgeCornerBuffer: null,
       indexCount: 0,
-      outlineIndexCount: 0,
+      silhouetteEdgeCount: 0,
+      silhouetteVertexCount: 0,
       vertexCount: 0,
       renderCount: 0,
       lastGlError: null,
       antialiasSamples: 0,
+      lastLod: 'full',
+      lastLodScale: 1,
+      animationTimer: null,
       fillMinY: 0,
       fillMaxY: 1,
       attribs: {},
@@ -1822,6 +2588,11 @@
         state.attribs = {
           position: gl.getAttribLocation(state.program, 'a_position'),
           normal: gl.getAttribLocation(state.program, 'a_normal'),
+          edgeStart: gl.getAttribLocation(state.program, 'a_edgeStart'),
+          edgeEnd: gl.getAttribLocation(state.program, 'a_edgeEnd'),
+          edgeNormalA: gl.getAttribLocation(state.program, 'a_edgeNormalA'),
+          edgeNormalB: gl.getAttribLocation(state.program, 'a_edgeNormalB'),
+          edgeCorner: gl.getAttribLocation(state.program, 'a_edgeCorner'),
           anchor: gl.getAttribLocation(state.program, 'a_anchor'),
           accentColor: gl.getAttribLocation(state.program, 'a_accentColor'),
           outlineColor: gl.getAttribLocation(state.program, 'a_outlineColor'),
@@ -1837,8 +2608,11 @@
           scale: gl.getUniformLocation(state.program, 'u_scale'),
           fillMinY: gl.getUniformLocation(state.program, 'u_fillMinY'),
           fillMaxY: gl.getUniformLocation(state.program, 'u_fillMaxY'),
+          outlineWidth: gl.getUniformLocation(state.program, 'u_outlineWidth'),
           glowPass: gl.getUniformLocation(state.program, 'u_glowPass'),
           outlineOnly: gl.getUniformLocation(state.program, 'u_outlineOnly'),
+          materialMode: gl.getUniformLocation(state.program, 'u_materialMode'),
+          globalAlpha: gl.getUniformLocation(state.program, 'u_globalAlpha'),
         };
         state.antialiasSamples = gl.getParameter(gl.SAMPLES);
         state.instanceBuffer = gl.createBuffer();
@@ -1854,18 +2628,22 @@
           state.indexBuffer = gl.createBuffer();
           gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
           gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
-          state.outlinePositionBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlinePositionBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, mesh.outline.positions, gl.STATIC_DRAW);
-          state.outlineNormalBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlineNormalBuffer);
-          gl.bufferData(gl.ARRAY_BUFFER, mesh.outline.normals, gl.STATIC_DRAW);
-          state.outlineIndexBuffer = gl.createBuffer();
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.outlineIndexBuffer);
-          gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.outline.indices, gl.STATIC_DRAW);
+          const edgeBuffers = [
+            ['edgeStartBuffer', mesh.silhouetteEdges.starts],
+            ['edgeEndBuffer', mesh.silhouetteEdges.ends],
+            ['edgeNormalABuffer', mesh.silhouetteEdges.normalAs],
+            ['edgeNormalBBuffer', mesh.silhouetteEdges.normalBs],
+            ['edgeCornerBuffer', mesh.silhouetteEdges.corners],
+          ];
+          edgeBuffers.forEach(([name, values]) => {
+            state[name] = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, state[name]);
+            gl.bufferData(gl.ARRAY_BUFFER, values, gl.STATIC_DRAW);
+          });
           state.vertexCount = mesh.positions.length / 3;
           state.indexCount = mesh.indices.length;
-          state.outlineIndexCount = mesh.outline.indices.length;
+          state.silhouetteVertexCount = mesh.silhouetteEdges.vertexCount;
+          state.silhouetteEdgeCount = mesh.silhouetteEdges.vertexCount / 6;
           state.fillMinY = mesh.bounds.minY;
           state.fillMaxY = mesh.bounds.maxY;
           state.ready = true;
@@ -1877,7 +2655,13 @@
       },
       render(gl, options) {
         if (!state.ready || !state.entries.length) return;
-        const boltOutlineScale = normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale);
+        const boltOutlineWidth = normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth);
+        const adaptiveLod = layerFilters.powerPlants.adaptiveLod === true;
+        const zoom = map.getZoom();
+        const lod = adaptiveLod && zoom < 5 ? 'representative' : 'full';
+        const lodScale = 1;
+        state.lastLod = lod;
+        state.lastLodScale = lodScale;
         if (state.dirty) {
           const payload = new Float32Array(state.entries.length * 12);
           state.entries.forEach((entry, index) => {
@@ -1907,6 +2691,10 @@
         const drawElementsInstanced = (mode, count, type, offset, instances) => {
           if (gl.drawElementsInstanced) gl.drawElementsInstanced(mode, count, type, offset, instances);
           else state.ext.drawElementsInstancedANGLE(mode, count, type, offset, instances);
+        };
+        const drawArraysInstanced = (mode, first, count, instances) => {
+          if (gl.drawArraysInstanced) gl.drawArraysInstanced(mode, first, count, instances);
+          else state.ext.drawArraysInstancedANGLE(mode, first, count, instances);
         };
 
         gl.useProgram(state.program);
@@ -1948,6 +2736,9 @@
         gl.uniform1f(state.uniforms.time, performance.now() * 0.001);
         gl.uniform1f(state.uniforms.fillMinY, state.fillMinY);
         gl.uniform1f(state.uniforms.fillMaxY, state.fillMaxY);
+        gl.uniform1f(state.uniforms.outlineWidth, boltOutlineWidth);
+        gl.uniform1f(state.uniforms.materialMode, powerPlantRenderMaterialMode(layerFilters.powerPlants.renderMaterial));
+        gl.uniform1f(state.uniforms.globalAlpha, layerCustomColorAlpha('power-plants'));
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
@@ -1966,25 +2757,8 @@
 
         gl.uniform1f(state.uniforms.glowPass, 1.0);
         gl.uniform1f(state.uniforms.outlineOnly, 0.0);
-        gl.uniform1f(state.uniforms.scale, 1.16);
+        gl.uniform1f(state.uniforms.scale, 1.0 + (boltOutlineWidth * 0.08));
         drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length);
-
-        if (state.outlineIndexCount > 0) {
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlinePositionBuffer);
-          gl.vertexAttribPointer(state.attribs.position, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.outlineNormalBuffer);
-          gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.outlineIndexBuffer);
-          gl.uniform1f(state.uniforms.glowPass, 0.0);
-          gl.uniform1f(state.uniforms.outlineOnly, 1.0);
-          gl.uniform1f(state.uniforms.scale, boltOutlineScale);
-          drawElementsInstanced(gl.TRIANGLES, state.outlineIndexCount, gl.UNSIGNED_INT, 0, state.entries.length);
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.positionBuffer);
-          gl.vertexAttribPointer(state.attribs.position, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ARRAY_BUFFER, state.normalBuffer);
-          gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0);
-          gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, state.indexBuffer);
-        }
 
         gl.uniform1f(state.uniforms.glowPass, 0.0);
         gl.uniform1f(state.uniforms.outlineOnly, 0.0);
@@ -1994,39 +2768,52 @@
         if (!alphaToCoverageEnabled) gl.disable(gl.SAMPLE_ALPHA_TO_COVERAGE);
         gl.cullFace(cullFaceMode);
         gl.frontFace(frontFaceMode);
-        if (!cullFaceEnabled) gl.disable(gl.CULL_FACE);
+        if (cullFaceEnabled) gl.enable(gl.CULL_FACE);
+        else gl.disable(gl.CULL_FACE);
         gl.depthMask(depthWriteEnabled);
         if (depthTestEnabled) gl.enable(gl.DEPTH_TEST);
         state.renderCount += 1;
         state.lastGlError = gl.getError();
-        map.triggerRepaint();
+        if (!state.animationTimer) {
+          const targetFps = powerPlantAnimationTargetFps(state.entries.length);
+          if (targetFps <= 0) return;
+          state.animationTimer = setTimeout(() => {
+            state.animationTimer = null;
+            if (!state.removed) map.triggerRepaint();
+          }, Math.round(1000 / targetFps));
+        }
       },
       onRemove(_map, gl) {
         state.removed = true;
+        if (state.animationTimer) clearTimeout(state.animationTimer);
         if (state.positionBuffer) gl.deleteBuffer(state.positionBuffer);
         if (state.normalBuffer) gl.deleteBuffer(state.normalBuffer);
         if (state.indexBuffer) gl.deleteBuffer(state.indexBuffer);
-        if (state.outlinePositionBuffer) gl.deleteBuffer(state.outlinePositionBuffer);
-        if (state.outlineNormalBuffer) gl.deleteBuffer(state.outlineNormalBuffer);
-        if (state.outlineIndexBuffer) gl.deleteBuffer(state.outlineIndexBuffer);
+        if (state.edgeStartBuffer) gl.deleteBuffer(state.edgeStartBuffer);
+        if (state.edgeEndBuffer) gl.deleteBuffer(state.edgeEndBuffer);
+        if (state.edgeNormalABuffer) gl.deleteBuffer(state.edgeNormalABuffer);
+        if (state.edgeNormalBBuffer) gl.deleteBuffer(state.edgeNormalBBuffer);
+        if (state.edgeCornerBuffer) gl.deleteBuffer(state.edgeCornerBuffer);
         if (state.instanceBuffer) gl.deleteBuffer(state.instanceBuffer);
         if (state.program) gl.deleteProgram(state.program);
         state.ready = false;
       },
-      setRecords(records) {
+      setRecords(records, sourceRecordCount = records.length, scaleDomainRecords = records) {
         state.records = records;
+        state.sourceRecordCount = sourceRecordCount;
         if (!records.some((record) => record.id === state.hoveredRecordId)) state.hoveredRecordId = null;
-        const sizeFactors = pointScaleFactors(records, layerFilters.powerPlants.sizeBy);
+        const sizeFactors = pointScaleFactors(scaleDomainRecords, layerFilters.powerPlants.sizeBy);
+        const brightness = normalizeBrightness(layerFilters.powerPlants.brightness);
         state.entries = records.map((record, index) => {
           const coordinate = maplibregl.MercatorCoordinate.fromLngLat([record.longitude, record.latitude], 0);
           return {
             record,
             mercatorX: coordinate.x,
             mercatorY: coordinate.y,
-            accent: hexToRgb(markerAccentColor(record, layerFilters.powerPlants.colorBy)),
-            outline: hexToRgb(outlineColorForRecord(record, layerFilters.powerPlants.outlineBy)),
+            accent: hexToRgb(brightenedMarkerAccentColor(record, layerFilters.powerPlants.colorBy, brightness)),
+            outline: hexToRgb(adjustHexBrightness(outlineColorForRecord(record, layerFilters.powerPlants.outlineBy), brightness)),
             phase: (index * 2.399963229728653) % (Math.PI * 2),
-            size: 36 * sizeFactors.get(record),
+            size: 36 * normalizeIconScale(layerFilters.powerPlants.iconScale) * (sizeFactors.get(record) || 1),
             fillFraction: powerPlantFillFraction(record, layerFilters.powerPlants.fillBy, layerFilters.powerPlants.fillFraction),
           };
         }).sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
@@ -2044,22 +2831,31 @@
         return {
           ready: state.ready,
           error: state.error,
-          recordCount: state.records.length,
+          recordCount: state.sourceRecordCount,
           instanceCount: state.entries.length,
           vertexCount: state.vertexCount,
           indexCount: state.indexCount,
-          outlineIndexCount: state.outlineIndexCount,
+          silhouetteEdgeCount: state.silhouetteEdgeCount,
           renderCount: state.renderCount,
           lastGlError: state.lastGlError,
           antialiasSamples: state.antialiasSamples,
-          outlineScale: normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale),
+          outlineWidth: normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth),
+          brightness: normalizeBrightness(layerFilters.powerPlants.brightness),
           alphaToCoverage: state.antialiasSamples > 1,
           hoveredRecordId: state.hoveredRecordId,
           sizeBy: layerFilters.powerPlants.sizeBy,
           fillBy: layerFilters.powerPlants.fillBy,
           fillFraction: layerFilters.powerPlants.fillFraction,
+          renderMaterial: normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial),
+          adaptiveLod: layerFilters.powerPlants.adaptiveLod === true,
+          animated: powerPlantAnimationTargetFps(state.entries.length) > 0,
+          animationTargetFps: powerPlantAnimationTargetFps(state.entries.length),
+          lod: state.lastLod,
+          lodScale: state.lastLodScale,
           minimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
           maximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
+          renderedMinimumSize: state.entries.length ? Math.min(...state.entries.map((entry) => entry.size)) : 0,
+          renderedMaximumSize: state.entries.length ? Math.max(...state.entries.map((entry) => entry.size)) : 0,
           drawOrderAscending: state.entries.every((entry, index) => index === 0 || state.entries[index - 1].size <= entry.size),
           topmostRecordId: state.entries.at(-1)?.record.id || null,
           topmostSize: state.entries.at(-1)?.size || 0,
@@ -2067,6 +2863,8 @@
       },
       getExportEntries() {
         return state.entries.map((entry) => ({
+          id: entry.record.id,
+          name: entry.record.name,
           longitude: entry.record.longitude,
           latitude: entry.record.latitude,
           accent: rgbToHex(entry.accent),
@@ -2077,22 +2875,28 @@
       },
       hitTest(point) {
         let best = null;
+        const maximumSize = state.entries.length ? Math.max(...state.entries.map((entry) => entry.size), 1) : 1;
+        const northWest = map.unproject([point.x - maximumSize, point.y - maximumSize]);
+        const southEast = map.unproject([point.x + maximumSize, point.y + maximumSize]);
         state.entries.forEach((entry) => {
           const { record } = entry;
+          if (record.longitude < northWest.lng || record.longitude > southEast.lng
+            || record.latitude > northWest.lat || record.latitude < southEast.lat) return;
           const projected = map.project([record.longitude, record.latitude]);
           const dx = projected.x - point.x;
           const dy = projected.y - point.y;
           const distance = Math.hypot(dx, dy);
-          if (distance > entry.size && !(Math.abs(dx) <= entry.size * .67 && Math.abs(dy) <= entry.size)) return;
-          if (!best || entry.size > best.size || (entry.size === best.size && distance < best.distance)) {
-            best = { record, distance, size: entry.size };
+          const renderedSize = entry.size;
+          if (distance > renderedSize && !(Math.abs(dx) <= renderedSize * .67 && Math.abs(dy) <= renderedSize)) return;
+          if (!best || renderedSize > best.size || (renderedSize === best.size && distance < best.distance)) {
+            best = { record, distance, size: renderedSize };
           }
         });
         return best
           ? {
             record: best.record,
             size: best.size,
-            zOffset: state.entries.length ? best.size / Math.max(...state.entries.map((entry) => entry.size), 1) : 0,
+            zOffset: best.size / maximumSize,
           }
           : null;
       },
@@ -2110,30 +2914,34 @@
   function applyMarkerAppearance(record, element) {
     const colorBy = layerFilters.datacenters.colorBy;
     const outlineBy = layerFilters.datacenters.outlineBy;
+    const brightness = normalizeBrightness(layerFilters.datacenters.brightness);
     const glow = dataCenterGlow(record, layerFilters.datacenters.glowBy);
     const glowDistance = normalizeGlowDistance(layerFilters.datacenters.glowDistance);
     const glowBlur = normalizeGlowBlur(layerFilters.datacenters.glowBlur);
-    element.style.setProperty('--marker-icon-fill', iconFillForRecord(record, colorBy));
-    const outline = outlineColorForRecord(record, outlineBy);
+    element.style.setProperty('--marker-icon-fill', adjustHexBrightness(iconFillForRecord(record, colorBy), brightness));
+    const outline = adjustHexBrightness(outlineColorForRecord(record, outlineBy), brightness);
     element.style.setProperty('--marker-outline-color', outline);
-    element.style.setProperty('--marker-glow-color', glow.color);
+    element.style.setProperty('--marker-brightness', String(brightness));
+    element.style.opacity = String(layerCustomColorAlpha('datacenters'));
+    element.querySelector('.dc-map-icon')?.style.setProperty('filter', `brightness(${brightness})`);
+    element.style.setProperty('--marker-glow-color', adjustHexBrightness(glow.color, brightness));
     element.style.setProperty('--marker-glow-opacity', String(glow.opacity));
     element.style.setProperty('--marker-glow-scale', String(glow.scale * glowDistance));
     element.style.setProperty('--marker-glow-blur', String(glowBlur));
-    element.style.setProperty('--marker-glow-edge-color', glow.edgeColor || glow.color);
+    element.style.setProperty('--marker-glow-edge-color', adjustHexBrightness(glow.edgeColor || glow.color, brightness));
     element.style.setProperty('--marker-glow-edge-opacity', glow.edgeOpacity || '0%');
     element.style.setProperty('--marker-glow-edge-soft-opacity', glow.edgeSoftOpacity || '0%');
-    element.style.setProperty('--marker-glow-ring-width', String(glow.ringWidth || .045));
+    element.style.setProperty('--marker-glow-ring-width', String(glow.ringWidth ?? .045));
     element.style.setProperty('--marker-glow-edge-spread', String(glow.edgeSpread || .24));
     element.dataset.glow = glow.kind;
-    element.dataset.exportColors = JSON.stringify(stylePaletteForRecord(record, colorBy).map((entry) => entry.color));
+    element.dataset.exportColors = JSON.stringify(stylePaletteForRecord(record, colorBy).map((entry) => adjustHexBrightness(entry.color, brightness)));
     element.dataset.exportOutline = outline;
-    element.dataset.exportGlowColor = glow.color;
-    element.dataset.exportGlowEdgeColor = glow.edgeColor || glow.color;
+    element.dataset.exportGlowColor = adjustHexBrightness(glow.color, brightness);
+    element.dataset.exportGlowEdgeColor = adjustHexBrightness(glow.edgeColor || glow.color, brightness);
     element.dataset.exportGlowOpacity = String(glow.opacity);
     element.dataset.exportGlowScale = String(glow.scale * glowDistance);
     element.dataset.exportGlowBlur = String(glowBlur);
-    element.dataset.exportGlowRingWidth = String(glow.ringWidth || .045);
+    element.dataset.exportGlowRingWidth = String(glow.ringWidth ?? .045);
   }
 
   function dataCenterGlow(record, glowBy) {
@@ -2144,13 +2952,13 @@
       return { kind: 'contested', color: '#ff263f', edgeColor: '#ff263f', edgeOpacity: '0%', edgeSoftOpacity: '0%', opacity: 1, scale: 2.15 };
     }
     if (record.contestation_score === 3) {
-      return { kind: 'contested', color: '#ff4b5f', edgeColor: '#ff4b5f', edgeOpacity: '0%', edgeSoftOpacity: '0%', opacity: .68, scale: 1.9 };
+      return { kind: 'contested', color: '#ff4b5f', edgeColor: '#ff4b5f', edgeOpacity: '0%', edgeSoftOpacity: '0%', opacity: .68, scale: 2.15 };
     }
     if (record.contestation_score === 0) {
       if (isPlannedUncontestedDataCenter(record)) {
-        return { kind: 'planned-uncontested', color: '#fff15f', edgeColor: '#ffb000', edgeOpacity: '100%', edgeSoftOpacity: '80%', ringWidth: .12, edgeSpread: .5, opacity: 1, scale: 2.15 };
+        return { kind: 'planned-uncontested', color: '#fff15f', edgeColor: '#fff15f', edgeOpacity: '0%', edgeSoftOpacity: '0%', ringWidth: 0, edgeSpread: .34, opacity: .42, scale: 2.15 };
       }
-      return { kind: 'quiet', color: '#ffffff', edgeColor: '#32dfff', edgeOpacity: '100%', edgeSoftOpacity: '82%', ringWidth: .12, edgeSpread: .52, opacity: 1, scale: 2.1 };
+      return { kind: 'quiet', color: '#19c37d', edgeColor: '#19c37d', edgeOpacity: '0%', edgeSoftOpacity: '0%', ringWidth: 0, edgeSpread: .24, opacity: .26, scale: 2.15 };
     }
     return { kind: 'none', color: 'transparent', edgeColor: 'transparent', opacity: 0, scale: 1 };
   }
@@ -2253,29 +3061,95 @@
   let esriBuildingsEnabled = false;
   let aerialAnimationSettings = { speed: 1, distance: 1 };
   let activeTagFilters = [];
+  let powerPlantScope = 'MD';
+  let globalPowerPlantScope = 'NA';
+  let nationwidePowerPlantRecords = [];
+  let globalPowerPlantRecords = [];
+  let naceiPowerPlantRecords = [];
   let tagFilterMode = 'and';
   let inspectorHoverKey = null;
   let inspectorPinnedKey = null;
   let inspectorHoverLayerId = null;
   let inspectorPinnedLayerId = null;
+  let datacenterNewsItems = [];
   const mobileInspectorQuery = window.matchMedia(MOBILE_INSPECTOR_MEDIA);
   let hoveredDataCenterElement = null;
   let visibleDataCenterHoverEntries = [];
   let deckHoverTarget = null;
   let streetStyleLayerIds = [];
   const layerFilters = {
-    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'reported_power_capacity_mw' },
-    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, sizeBy: 'planning_sustained_output_mw', outlineScale: 1.04 },
-    neonStreets: { scope: 'i95', lineWidth: 1 },
-    enviroscreen: { text: '', scoreBand: 'all', community: 'all' },
-    parcels: { text: '' },
+    datacenters: { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, iconScale: 1, brightness: 1, sizeBy: 'reported_power_capacity_mw' },
+    powerPlants: { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', outlineWidth: 1.5, outlineScale: 1.04, renderMaterial: 'standard', adaptiveLod: false },
+    neonStreets: { scope: 'i95', lineWidth: 1, brightness: 1 },
+    enviroscreen: { text: '', scoreBand: 'all', community: 'all', brightness: 1 },
+    parcels: { text: '', brightness: 1 },
   };
   let layerSearch = '';
   let layerOrder = [];
   let layerOrderDragId = null;
+  let remoteStyleRehydrateTimer = null;
+  let queryStateCompressionEnabled = false;
+  let compressedPersistSequence = 0;
   let activeLayerConfigId = null;
   let activeLayerColorId = null;
   let activeLayerContext = null;
+
+  function supportsCompressedQueryState() {
+    return typeof CompressionStream === 'function' && typeof DecompressionStream === 'function';
+  }
+
+  function syncCompressedQueryToggle() {
+    const toggle = document.getElementById('compress-query-state');
+    if (!toggle) return;
+    const supported = supportsCompressedQueryState();
+    toggle.checked = queryStateCompressionEnabled && supported;
+    toggle.disabled = !supported;
+    toggle.title = supported
+      ? 'Store map state in a compressed share URL'
+      : 'This browser does not support compressed share URLs';
+  }
+
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+  }
+
+  function bytesToBase64Url(bytes) {
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let index = 0; index < bytes.length; index += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+    }
+    return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '');
+  }
+
+  function base64UrlToBytes(value) {
+    const padded = String(value || '').replaceAll('-', '+').replaceAll('_', '/').padEnd(Math.ceil(String(value || '').length / 4) * 4, '=');
+    return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+  }
+
+  async function compressUiStateForQuery(state) {
+    if (!supportsCompressedQueryState()) throw new Error('Compressed query state is not supported by this browser');
+    const stream = new Blob([JSON.stringify(state)]).stream().pipeThrough(new CompressionStream('gzip'));
+    return bytesToBase64Url(new Uint8Array(await new Response(stream).arrayBuffer()));
+  }
+
+  async function decompressUiStateFromQuery(value) {
+    if (!supportsCompressedQueryState()) throw new Error('Compressed query state is not supported by this browser');
+    const stream = new Blob([base64UrlToBytes(value)]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return JSON.parse(await new Response(stream).text());
+  }
 
   function defaultLayerZoomRange(layerId) {
     const bounded = (min, max) => normalizeZoomRange(min, max, { min: MAP_MIN_ZOOM, max: MAP_MAX_ZOOM });
@@ -2357,7 +3231,7 @@
       ['energy', 'Energy profile'],
     ],
     datacenterIconGlow: [
-      ['contestation', 'Contestation · red / planned yellow / quiet white'],
+      ['contestation', 'Contestation halos · red / planned yellow / peaceful green'],
       ['none', 'No glow'],
     ],
     plantIconColor: [
@@ -2376,6 +3250,7 @@
       ['resource-adjusted-utilization', 'Resource-adjusted annual utilization'],
       ['custom', 'Custom fraction from bottom'],
     ],
+    plantRenderMaterial: POWER_PLANT_RENDER_MATERIAL_OPTIONS,
     sentiment: [
       ['all', 'All public-response evidence'],
       ['opposed', 'Documented opposition'],
@@ -2412,9 +3287,24 @@
     return Number.isFinite(width) ? Math.max(.25, Math.min(5, width)) : 1;
   }
 
+  function defaultLineWidthBy(config) {
+    if (config?.geometry !== 'line') return 'zoom';
+    return config.defaultLineWidthBy || config.lineWidthFields?.[0]?.[0] || 'zoom';
+  }
+
   function normalizeLineWidthBy(config, value) {
-    const selected = String(value || 'zoom');
-    return lineWidthFieldOptions(config).some(([field]) => field === selected) ? selected : 'zoom';
+    const fallback = defaultLineWidthBy(config);
+    const selected = String(value || fallback);
+    return lineWidthFieldOptions(config).some(([field]) => field === selected) ? selected : fallback;
+  }
+
+  function defaultLineColorTheme(config) {
+    return config?.geometry === 'line' ? 'uniform' : (config?.lineColorThemes ? 'uniform' : 'default');
+  }
+
+  function normalizePointRenderMode(config, value) {
+    if (!config || config.geometry !== 'point') return 'points';
+    return value === 'gpu-splat' ? 'gpu-splat' : 'points';
   }
 
   function normalizeGlowDistance(value) {
@@ -2427,9 +3317,19 @@
     return Number.isFinite(blur) ? Math.max(0, Math.min(2.5, blur)) : 1;
   }
 
-  function normalizeBoltOutlineScale(value) {
+  function normalizeIconScale(value) {
     const scale = Number(value);
-    return Number.isFinite(scale) ? Math.max(.5, Math.min(2, scale)) : 1.04;
+    return Number.isFinite(scale) ? Math.max(.25, Math.min(4, scale)) : 1;
+  }
+
+  function normalizeBrightness(value) {
+    const brightness = Number(value);
+    return Number.isFinite(brightness) ? Math.max(.25, Math.min(3, brightness)) : 1;
+  }
+
+  function normalizeBoltOutlineWidth(value) {
+    const width = Number(value);
+    return Number.isFinite(width) ? Math.max(.5, Math.min(5, width)) : 1.5;
   }
 
   function scaledLineWidth(expression, multiplier) {
@@ -2501,17 +3401,46 @@
   }
 
   function normalizePowerPlantLayerFilters(filters) {
-    filters.outlineScale = normalizeBoltOutlineScale(filters.outlineScale);
+    filters.iconScale = normalizeIconScale(filters.iconScale);
+    filters.brightness = normalizeBrightness(filters.brightness);
+    filters.outlineWidth = normalizeBoltOutlineWidth(filters.outlineWidth);
+    filters.renderMaterial = normalizePowerPlantRenderMaterial(filters.renderMaterial);
+    filters.adaptiveLod = filters.adaptiveLod === true;
     if (filters.fillBy === 'resource-adjusted-utilization' && (!filters.sizeBy || filters.sizeBy === 'none')) {
       filters.sizeBy = 'planning_sustained_output_mw';
     }
     return filters;
   }
 
+  function normalizePowerPlantRenderMaterial(value) {
+    const normalized = String(value || 'standard');
+    return POWER_PLANT_RENDER_MATERIAL_OPTIONS.some(([option]) => option === normalized) ? normalized : 'standard';
+  }
+
+  function powerPlantRenderMaterialMode(value) {
+    switch (normalizePowerPlantRenderMaterial(value)) {
+      case 'brushed-metal': return 1;
+      case 'polished-metal': return 2;
+      case 'iridescent': return 3;
+      case 'pearl': return 4;
+      case 'glass': return 5;
+      case 'emissive': return 6;
+      case 'hologram': return 7;
+      case 'xray': return 8;
+      case 'phong': return 9;
+      case 'toon': return 10;
+      case 'normal': return 11;
+      case 'wireframe': return 12;
+      default: return 0;
+    }
+  }
+
   function layerOrderIds() {
     return [
       'datacenters',
       'power-plants',
+      'global-power-plants',
+      'nacei-power-plants',
       'neon-streets',
       'enviroscreen',
       'parcels',
@@ -2534,7 +3463,7 @@
   }
 
   function renderedLayerIdsForUiLayer(layerId) {
-    if (layerId === 'power-plants') return [POWER_PLANT_WEBGL_LAYER_ID];
+    if (['power-plants', 'global-power-plants', 'nacei-power-plants'].includes(layerId)) return [POWER_PLANT_WEBGL_LAYER_ID];
     if (layerId === 'neon-streets') return [NEON_STREET_GLOW_LAYER_ID, NEON_STREET_CORE_LAYER_ID, NEON_STREET_LABEL_LAYER_ID];
     if (layerId === 'enviroscreen') return [ENVIROSCREEN_FILL_ID, ENVIROSCREEN_LINE_ID];
     if (layerId === 'parcels') return [PARCEL_LAYER_ID, PARCEL_HOVER_FILL_ID, PARCEL_HOVER_LINE_ID];
@@ -2567,16 +3496,38 @@
     });
   }
 
-  function readUiState() {
-    let state = cloneDefaultUiState();
-    try {
-      state = { ...state, ...JSON.parse(localStorage.getItem(UI_STATE_STORAGE_KEY) || '{}') };
-    } catch (_error) {
-      state = cloneDefaultUiState();
-    }
-    const parameters = new URLSearchParams(window.location.search);
+  function applyWorkflowQueryState(state, parameters) {
+    const workflow = String(parameters.get('workflow') || parameters.get('wf') || '').trim().toLowerCase();
+    if (!['power-bolts', 'power-plants', 'uniform-power-bolts'].includes(workflow)) return state;
+    state.powerPlantScope = 'US';
+    state.globalPowerPlantScope = 'WORLD';
+    state.layers = ['power-plants', 'global-power-plants', 'nacei-power-plants'];
+    state.hover = ['power-plants', 'global-power-plants', 'nacei-power-plants'];
+    state.center = [-102, 40];
+    state.zoom = 2.55;
+    state.orientation = { bearing: 0, pitch: 0 };
+    state.filters = {
+      ...state.filters,
+      powerPlants: {
+        ...state.filters.powerPlants,
+        sizeBy: 'planning_sustained_output_mw',
+        fillBy: 'resource-adjusted-utilization',
+        fillFraction: 1,
+        outlineWidth: 1.5,
+        iconScale: 1,
+        renderMaterial: 'standard',
+        adaptiveLod: false,
+      },
+    };
+    return state;
+  }
+
+  function applyExpandedQueryState(state, parameters) {
+    state = applyWorkflowQueryState(state, parameters);
     if (parameters.has('theme')) state.theme = parameters.get('theme');
     if (parameters.has('base')) state.baseLayer = parameters.get('base');
+    if (parameters.has('powerScope')) state.powerPlantScope = parameters.get('powerScope');
+    if (parameters.has('globalPowerScope')) state.globalPowerPlantScope = parameters.get('globalPowerScope');
     if (parameters.has('layers')) state.layers = parameters.get('layers').split(',').filter(Boolean);
     if (parameters.has('order')) state.layerOrder = parameters.get('order').split(',').filter(Boolean);
     if (parameters.has('hover')) state.hover = parameters.get('hover').split(',').filter(Boolean);
@@ -2603,6 +3554,13 @@
       } catch (_error) {
         // Ignore a malformed share URL and retain any valid locally stored filters.
       }
+    }
+    if (parameters.has('powerPlantCull')) {
+      state.filters = state.filters || {};
+      state.filters.powerPlants = {
+        ...(state.filters.powerPlants || {}),
+        adaptiveLod: parameters.get('powerPlantCull') === '1',
+      };
     }
     if (parameters.has('animation')) {
       const [speed, distance] = parameters.get('animation').split(',').map(Number);
@@ -2659,8 +3617,44 @@
     window.location.assign(cleanUrl);
   }
 
+  async function readUiState() {
+    let state = cloneDefaultUiState();
+    try {
+      const storedState = JSON.parse(localStorage.getItem(UI_STATE_STORAGE_KEY) || '{}');
+      state = {
+        ...state,
+        ...storedState,
+        filters: { ...state.filters, ...(storedState.filters || {}) },
+      };
+    } catch (_error) {
+      state = cloneDefaultUiState();
+    }
+    const parameters = new URLSearchParams(window.location.search);
+    queryStateCompressionEnabled = parameters.has(COMPRESSED_STATE_QUERY_PARAM) || parameters.get(COMPACT_STATE_QUERY_PARAM) === '1';
+    syncCompressedQueryToggle();
+    if (parameters.has(COMPRESSED_STATE_QUERY_PARAM)) {
+      try {
+        const compressedState = await decompressUiStateFromQuery(parameters.get(COMPRESSED_STATE_QUERY_PARAM));
+        if (compressedState && typeof compressedState === 'object') {
+          state = {
+            ...state,
+            ...compressedState,
+            filters: { ...state.filters, ...(compressedState.filters || {}) },
+          };
+        }
+      } catch (_error) {
+        // Fall back to local storage and any expanded query parameters below.
+      }
+    }
+    return applyExpandedQueryState(state, parameters);
+  }
+
   function applyUiState(state, themeSelect) {
     if (state.theme && BASEMAP_STYLES[state.theme]) themeSelect.value = state.theme;
+    powerPlantScope = state.powerPlantScope === 'US' ? 'US' : 'MD';
+    document.getElementById('power-plant-scope').value = powerPlantScope;
+    globalPowerPlantScope = state.globalPowerPlantScope === 'WORLD' ? 'WORLD' : 'NA';
+    document.getElementById('global-power-plant-scope').value = globalPowerPlantScope;
     if (Array.isArray(state.layers)) {
       document.querySelectorAll('input[id^="show-"]:not(.dc-base-layer-toggle):not(#show-map-title)').forEach((input) => {
         input.checked = state.layers.includes(input.id.slice(5));
@@ -2682,17 +3676,29 @@
       Object.assign(layerFilters.datacenters, state.filters.datacenters);
       layerFilters.datacenters.glowDistance = normalizeGlowDistance(layerFilters.datacenters.glowDistance);
       layerFilters.datacenters.glowBlur = normalizeGlowBlur(layerFilters.datacenters.glowBlur);
+      layerFilters.datacenters.iconScale = normalizeIconScale(layerFilters.datacenters.iconScale);
+      layerFilters.datacenters.brightness = normalizeBrightness(layerFilters.datacenters.brightness);
     }
     if (state.filters?.powerPlants) {
       Object.assign(layerFilters.powerPlants, state.filters.powerPlants);
       normalizePowerPlantLayerFilters(layerFilters.powerPlants);
     }
-    if (state.filters?.neonStreets) Object.assign(layerFilters.neonStreets, state.filters.neonStreets);
-    if (state.filters?.enviroscreen) Object.assign(layerFilters.enviroscreen, state.filters.enviroscreen);
-    if (state.filters?.parcels) Object.assign(layerFilters.parcels, state.filters.parcels);
+    if (state.filters?.neonStreets) {
+      Object.assign(layerFilters.neonStreets, state.filters.neonStreets);
+      layerFilters.neonStreets.brightness = normalizeBrightness(layerFilters.neonStreets.brightness);
+    }
+    if (state.filters?.enviroscreen) {
+      Object.assign(layerFilters.enviroscreen, state.filters.enviroscreen);
+      layerFilters.enviroscreen.brightness = normalizeBrightness(layerFilters.enviroscreen.brightness);
+    }
+    if (state.filters?.parcels) {
+      Object.assign(layerFilters.parcels, state.filters.parcels);
+      layerFilters.parcels.brightness = normalizeBrightness(layerFilters.parcels.brightness);
+    }
     layerCustomColors.clear();
     Object.entries(state.colors || {}).forEach(([layerId, color]) => {
-      if (/^#[0-9a-f]{6}$/i.test(String(color))) layerCustomColors.set(layerId, String(color).toLowerCase());
+      const normalized = normalizeLayerColorSetting(color);
+      if (normalized) layerCustomColors.set(layerId, normalized);
     });
     layerZoomRanges.clear();
     Object.entries(state.filters?.zoomRanges || {}).forEach(([layerId, range]) => {
@@ -2710,7 +3716,10 @@
       const savedFilter = state.filters?.remote?.[config.id] || {};
       remoteState.text = String(savedFilter.text || '').trim().toLowerCase();
       remoteState.sizeBy = String(savedFilter.sizeBy || config.defaultSizeBy || 'none');
-      remoteState.colorTheme = String(savedFilter.colorTheme || (config.lineColorThemes ? 'uniform' : 'default'));
+      remoteState.iconScale = normalizeIconScale(savedFilter.iconScale);
+      remoteState.brightness = normalizeBrightness(savedFilter.brightness);
+      remoteState.pointRenderMode = normalizePointRenderMode(config, savedFilter.pointRenderMode);
+      remoteState.colorTheme = String(savedFilter.colorTheme || defaultLineColorTheme(config));
       remoteState.lineWidth = normalizeLineWidthMultiplier(savedFilter.lineWidth);
       remoteState.lineWidthBy = normalizeLineWidthBy(config, savedFilter.lineWidthBy);
     });
@@ -2744,11 +3753,15 @@
     REMOTE_LAYERS.forEach((config) => {
       const text = remoteLayerStates.get(config.id)?.text || '';
       const remoteState = remoteLayerStates.get(config.id);
-      const defaultColorTheme = config.lineColorThemes ? 'uniform' : 'default';
-      if (text || remoteState?.sizeBy !== 'none' || remoteState?.colorTheme !== defaultColorTheme || remoteState?.lineWidth !== 1 || remoteState?.lineWidthBy !== 'zoom') {
+      const defaultColorTheme = defaultLineColorTheme(config);
+      const defaultWidthBy = defaultLineWidthBy(config);
+      if (text || remoteState?.sizeBy !== 'none' || remoteState?.iconScale !== 1 || remoteState?.brightness !== 1 || remoteState?.pointRenderMode !== 'points' || remoteState?.colorTheme !== defaultColorTheme || remoteState?.lineWidth !== 1 || remoteState?.lineWidthBy !== defaultWidthBy) {
         remoteFilters[config.id] = {
           text,
           sizeBy: remoteState?.sizeBy || 'none',
+          iconScale: normalizeIconScale(remoteState?.iconScale),
+          brightness: normalizeBrightness(remoteState?.brightness),
+          pointRenderMode: normalizePointRenderMode(config, remoteState?.pointRenderMode),
           colorTheme: remoteState?.colorTheme || defaultColorTheme,
           lineWidth: normalizeLineWidthMultiplier(remoteState?.lineWidth),
           lineWidthBy: normalizeLineWidthBy(config, remoteState?.lineWidthBy),
@@ -2768,6 +3781,8 @@
     return {
       theme: document.getElementById('map-theme').value,
       baseLayer: selectedBaseLayer ? selectedBaseLayer.id.slice(5) : 'none',
+      powerPlantScope,
+      globalPowerPlantScope,
       layers: checkedIds('show-'),
       layerOrder: normalizeLayerOrder(layerOrder),
       hover: checkedIds('hover-'),
@@ -2791,16 +3806,11 @@
     };
   }
 
-  function persistUiState(map = activeLayerContext?.map || null) {
-    const state = currentUiState(map);
-    try {
-      localStorage.setItem(UI_STATE_STORAGE_KEY, JSON.stringify(state));
-    } catch (_error) {
-      // URL state remains available when storage is disabled or full.
-    }
-    const url = new URL(window.location.href);
+  function writeExpandedUiStateToUrl(url, state) {
     url.searchParams.set('theme', state.theme);
     url.searchParams.set('base', state.baseLayer);
+    url.searchParams.set('powerScope', state.powerPlantScope);
+    url.searchParams.set('globalPowerScope', state.globalPowerPlantScope);
     url.searchParams.set('layers', state.layers.join(','));
     url.searchParams.set('order', state.layerOrder.join(','));
     url.searchParams.set('hover', state.hover.join(','));
@@ -2817,8 +3827,164 @@
     if (Number.isFinite(state.zoom)) url.searchParams.set('z', String(state.zoom));
     if (state.orientation) url.searchParams.set('o', `${state.orientation.bearing},${state.orientation.pitch}`);
     url.searchParams.set('filters', JSON.stringify(state.filters));
+  }
+
+  async function buildShareUrl(map = activeLayerContext?.map || null, options = {}) {
+    const { preferCompressed = true } = options;
+    const state = currentUiState(map);
+    const url = new URL(window.location.href);
+    url.search = '';
+    if (preferCompressed && supportsCompressedQueryState()) {
+      url.searchParams.set(COMPRESSED_STATE_QUERY_PARAM, await compressUiStateForQuery(state));
+      return url.toString();
+    }
+    writeExpandedUiStateToUrl(url, state);
+    return url.toString();
+  }
+
+  function shareTitle() {
+    return document.getElementById('map-title-input')?.value.trim() || 'Maryland Data Centers and Energy';
+  }
+
+  function shareText() {
+    return `${shareTitle()} · Maryland data centers and energy map`;
+  }
+
+  function setShareStatus(message) {
+    const status = document.getElementById('map-share-status');
+    if (status) status.textContent = message;
+  }
+
+  function setShareSheetOpen(open) {
+    const trigger = document.getElementById('open-share-sheet');
+    const sheet = document.getElementById('map-share-sheet');
+    if (!trigger || !sheet) return;
+    trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+    sheet.hidden = !open;
+  }
+
+  async function populateShareTargets(map = activeLayerContext?.map || null) {
+    const url = await buildShareUrl(map, { preferCompressed: true });
+    const title = shareTitle();
+    const text = shareText();
+    const encodedUrl = encodeURIComponent(url);
+    const encodedTitle = encodeURIComponent(title);
+    const encodedText = encodeURIComponent(`${text} ${url}`);
+    document.getElementById('share-x').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodedUrl}`;
+    document.getElementById('share-bluesky').href = `https://bsky.app/intent/compose?text=${encodedText}`;
+    document.getElementById('share-linkedin').href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+    document.getElementById('share-facebook').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+    document.getElementById('share-email').href = `mailto:?subject=${encodedTitle}&body=${encodedText}`;
+    return { url, title, text };
+  }
+
+  function setupShareSheet(map) {
+    const trigger = document.getElementById('open-share-sheet');
+    const sheet = document.getElementById('map-share-sheet');
+    const copyButton = document.getElementById('copy-compressed-url');
+    const nativeShareButton = document.getElementById('native-share-url');
+    if (!trigger || !sheet || !copyButton || !nativeShareButton) return;
+    nativeShareButton.hidden = typeof navigator.share !== 'function';
+    setShareSheetOpen(false);
+    trigger.addEventListener('click', async () => {
+      const opening = trigger.getAttribute('aria-expanded') !== 'true';
+      if (!opening) {
+        setShareSheetOpen(false);
+        return;
+      }
+      try {
+        await populateShareTargets(map);
+        setShareStatus('Share links updated.');
+        setShareSheetOpen(true);
+      } catch (_error) {
+        setShareStatus('Unable to build the share URL.');
+      }
+    });
+    copyButton.addEventListener('click', async () => {
+      try {
+        const { url } = await populateShareTargets(map);
+        await copyTextToClipboard(url);
+        setShareStatus('Compact share URL copied to clipboard.');
+        setShareSheetOpen(false);
+      } catch (_error) {
+        setShareStatus('Unable to copy the share URL.');
+      }
+    });
+    nativeShareButton.addEventListener('click', async () => {
+      try {
+        const { url, title, text } = await populateShareTargets(map);
+        await navigator.share({ title, text, url });
+        setShareStatus('Share sheet opened.');
+        setShareSheetOpen(false);
+      } catch (_error) {
+        setShareStatus('Unable to open the native share sheet.');
+      }
+    });
+    sheet.querySelectorAll('a.dc-map-share-link').forEach((link) => {
+      link.addEventListener('pointerdown', () => setShareSheetOpen(false));
+      link.addEventListener('click', () => setShareSheetOpen(false));
+    });
+    document.addEventListener('click', (event) => {
+      if (sheet.hidden) return;
+      if (event.target === trigger || trigger.contains(event.target) || sheet.contains(event.target)) return;
+      setShareSheetOpen(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setShareSheetOpen(false);
+    });
+    window.addEventListener('blur', () => setShareSheetOpen(false));
+    window.addEventListener('pagehide', () => setShareSheetOpen(false));
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') setShareSheetOpen(false);
+    });
+  }
+
+  async function writeCompressedUiStateToUrl(state, sequence) {
+    try {
+      const compressed = await compressUiStateForQuery(state);
+      if (sequence !== compressedPersistSequence) return;
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set(COMPRESSED_STATE_QUERY_PARAM, compressed);
+      history.replaceState(null, '', `${url.pathname}?${url.searchParams}${url.hash}`);
+    } catch (_error) {
+      const url = new URL(window.location.href);
+      url.search = '';
+      writeExpandedUiStateToUrl(url, state);
+      history.replaceState(null, '', `${url.pathname}?${url.searchParams}${url.hash}`);
+    }
+  }
+
+  function persistUiState(map = activeLayerContext?.map || null) {
+    const state = currentUiState(map);
+    try {
+      localStorage.setItem(UI_STATE_STORAGE_KEY, JSON.stringify(state));
+    } catch (_error) {
+      // URL state remains available when storage is disabled or full.
+    }
+    if (queryStateCompressionEnabled && supportsCompressedQueryState()) {
+      compressedPersistSequence += 1;
+      writeCompressedUiStateToUrl(state, compressedPersistSequence);
+      syncCompressedQueryToggle();
+      return;
+    }
+    const url = new URL(window.location.href);
+    url.searchParams.delete(COMPRESSED_STATE_QUERY_PARAM);
+    url.searchParams.delete(COMPACT_STATE_QUERY_PARAM);
+    writeExpandedUiStateToUrl(url, state);
     history.replaceState(null, '', `${url.pathname}?${url.searchParams}${url.hash}`);
+    syncCompressedQueryToggle();
     updatePageStateIndicator(map);
+  }
+
+  function setupCompressedQueryToggle(map) {
+    const toggle = document.getElementById('compress-query-state');
+    if (!toggle) return;
+    syncCompressedQueryToggle();
+    toggle.addEventListener('change', () => {
+      queryStateCompressionEnabled = Boolean(toggle.checked);
+      persistUiState(map);
+    });
   }
 
   function setupUiStatePersistence(map) {
@@ -2867,14 +4033,14 @@
 
   function syncDataCenterMarkerZOrder() {
     const z = layerZIndex('datacenters');
-    document.querySelectorAll('.dc-map-marker--center').forEach((element) => {
+    const elements = [...document.querySelectorAll('.dc-map-marker--center')]
+      .sort((left, right) => Number(left.dataset.renderSize || 0) - Number(right.dataset.renderSize || 0));
+    elements.forEach((element, index) => {
       if (z < 0 || element.hidden) {
         element.style.zIndex = '';
         return;
       }
-      const markerSize = Number.parseFloat(element.style.getPropertyValue('--marker-size')) || 22;
-      const markerPriority = Math.round(markerSize * 10);
-      element.style.zIndex = String(1000 + (z * 1000) + markerPriority);
+      element.style.zIndex = String(1000 + (z * 1000) + index);
     });
   }
 
@@ -3076,7 +4242,8 @@
     if (!map.getSource('openmaptiles')) return;
 
     const firstLabel = style.layers.find((layer) => layer.type === 'symbol' && streetStyleLayerIds.includes(layer.id))?.id;
-    const color = layerCustomColors.get('neon-streets') || '#00eaff';
+    const brightness = normalizeBrightness(layerFilters.neonStreets.brightness);
+    const color = adjustHexBrightness(layerCustomColorHex('neon-streets') || '#00eaff', brightness);
     const filter = neonStreetFilter();
     if (!map.getLayer(NEON_STREET_GLOW_LAYER_ID)) {
       map.addLayer({
@@ -3090,7 +4257,7 @@
           'line-color': color,
           'line-width': scaledLineWidth(['interpolate', ['exponential', 1.35], ['zoom'], 5, 3, 9, 5, 13, 10, 17, 22], layerFilters.neonStreets.lineWidth),
           'line-blur': ['interpolate', ['linear'], ['zoom'], 5, 2, 12, 4, 17, 8],
-          'line-opacity': .72,
+          'line-opacity': Math.min(1, .72 * brightness * layerCustomColorAlpha('neon-streets')),
         },
       }, firstLabel);
     }
@@ -3103,9 +4270,9 @@
         filter,
         layout: { 'line-cap': 'round', 'line-join': 'round' },
         paint: {
-          'line-color': '#e8ffff',
+          'line-color': adjustHexBrightness('#e8ffff', brightness),
           'line-width': scaledLineWidth(['interpolate', ['exponential', 1.3], ['zoom'], 5, .8, 9, 1.15, 13, 2.2, 17, 5], layerFilters.neonStreets.lineWidth),
-          'line-opacity': .98,
+          'line-opacity': Math.min(1, .98 * brightness * layerCustomColorAlpha('neon-streets')),
         },
       }, firstLabel);
     }
@@ -3126,7 +4293,7 @@
           'text-keep-upright': true,
         },
         paint: {
-          'text-color': '#f2ffff',
+          'text-color': adjustHexBrightness('#f2ffff', brightness),
           'text-halo-color': color,
           'text-halo-width': 2.4,
           'text-halo-blur': 1.2,
@@ -3137,6 +4304,12 @@
       map.setFilter(layerId, filter);
       map.setLayoutProperty(layerId, 'visibility', enabled && shownAtZoom ? 'visible' : 'none');
     });
+    map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-color', color);
+    map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-opacity', Math.min(1, .72 * brightness * layerCustomColorAlpha('neon-streets')));
+    map.setPaintProperty(NEON_STREET_CORE_LAYER_ID, 'line-color', adjustHexBrightness('#e8ffff', brightness));
+    map.setPaintProperty(NEON_STREET_CORE_LAYER_ID, 'line-opacity', Math.min(1, .98 * brightness * layerCustomColorAlpha('neon-streets')));
+    map.setPaintProperty(NEON_STREET_LABEL_LAYER_ID, 'text-color', adjustHexBrightness('#f2ffff', brightness));
+    map.setPaintProperty(NEON_STREET_LABEL_LAYER_ID, 'text-halo-color', color);
     applyMapLayerOrder(map);
     map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-color', color);
     map.setPaintProperty(NEON_STREET_GLOW_LAYER_ID, 'line-width', scaledLineWidth(['interpolate', ['exponential', 1.35], ['zoom'], 5, 3, 9, 5, 13, 10, 17, 22], layerFilters.neonStreets.lineWidth));
@@ -3427,10 +4600,13 @@
       document.getElementById('record-detail').innerHTML = `<h2>Data unavailable</h2><p>${escapeHtml(error.message)}</p>`;
     });
 
-  function initialize(data) {
+  async function initialize(data) {
     const sourceById = new Map(data.sources.map((source) => [source.id, source]));
+    datacenterNewsItems = Array.isArray(data.datacenterNews?.items) ? data.datacenterNews.items : [];
+    setupNewsHoverTargets();
+    renderIdleInspectorNews(true);
     const themeSelect = document.getElementById('map-theme');
-    const restoredUiState = readUiState();
+    const restoredUiState = await readUiState();
     document.getElementById('close-record-detail').addEventListener('click', closePinnedInspector);
     document.getElementById('reset-page-state').addEventListener('click', () => {
       document.getElementById('reset-page-modal').showModal();
@@ -3463,6 +4639,8 @@
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-left');
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
     document.getElementById('download-map-png').addEventListener('click', () => downloadMapPng(map));
+    setupCompressedQueryToggle(map);
+    setupShareSheet(map);
     map.on('style.load', () => {
       streetStyleLayerIds = map.getStyle().layers.map((layer) => layer.id);
       if (themeSelect.value === 'collective') applyCollectiveTheme(map);
@@ -3472,9 +4650,10 @@
       restoreRemoteLayers(map);
       updateEsriBuildingsLayer(map);
       ensurePowerPlantBoltLayer(map);
-      powerPlantBoltLayer?.setRecords(allRecords.filter((record) => record.record_type === 'power_plant' && matchesFilters(record)));
+      renderResults(allRecords, markerById);
       renderLayerOrderControls(map);
     });
+    map.on('styledata', () => scheduleRemoteLayerRehydrate(map));
     themeSelect.addEventListener('change', () => {
       map.setStyle(BASEMAP_STYLES[themeSelect.value]);
     });
@@ -3488,6 +4667,9 @@
     }));
     const dataCenters = allRecords.filter((record) => record.record_type === 'data_center');
     const powerPlants = allRecords.filter((record) => record.record_type === 'power_plant');
+    let nationwidePowerPlantsPromise = null;
+    let globalPowerPlantsPromise = null;
+    let naceiPowerPlantsPromise = null;
     setupRemoteLayerControls(map);
     setupEsriBuildingsControl(map);
     setupBaseLayerControls(map);
@@ -3556,6 +4738,7 @@
         clearTimeout(parcelHoverTimer);
         parcelHoverAbort?.abort();
         clearParcelHighlight(map);
+        clearInspectorHover('parcel:');
         map.getCanvas().style.cursor = '';
       }
       updateParcelStatus(map);
@@ -3566,6 +4749,165 @@
       persistUiState();
     });
     setupLayerFilterUi(map, allRecords, markerById);
+    const powerPlantScopeSelect = document.getElementById('power-plant-scope');
+    const globalPowerPlantScopeSelect = document.getElementById('global-power-plant-scope');
+    const featureRecords = (payload) => payload.features.map((feature) => ({
+      ...feature.properties,
+      id: feature.id || feature.properties.id,
+      latitude: feature.geometry.coordinates[1],
+      longitude: feature.geometry.coordinates[0],
+      record_type: 'power_plant',
+    }));
+    const checkedInventory = (promise, label) => promise.then((response) => {
+      if (!response.ok) throw new Error(`${label} returned HTTP ${response.status}`);
+      return response.json();
+    }).then((payload) => {
+      if (!Array.isArray(payload.features) || payload.features.length !== payload.metadata?.record_count) {
+        throw new Error(`${label} failed its record-count check`);
+      }
+      return payload;
+    });
+    const applyPowerPlantScope = async (requestedScope, { recenter = false, save = false } = {}) => {
+      const select = powerPlantScopeSelect;
+      const status = document.getElementById('power-plant-scope-status');
+      const nationwideConfig = REMOTE_LAYERS.find((config) => config.id === 'nationwide-eia-power-plants');
+      const nationwideState = remoteLayerStates.get(nationwideConfig.id);
+      const scope = requestedScope === 'US' ? 'US' : 'MD';
+      select.value = scope;
+      select.disabled = true;
+      try {
+        if (scope === 'US') {
+          status.textContent = 'Loading final 2024 U.S. EIA inventory…';
+          nationwidePowerPlantsPromise ||= checkedInventory(
+            fetch(NATIONWIDE_POWER_PLANTS_URL, { cache: 'no-store' }),
+            'U.S. EIA inventory',
+          );
+          const nationwide = await nationwidePowerPlantsPromise;
+          nationwidePowerPlantRecords = featureRecords(nationwide);
+          powerPlantScope = scope;
+          nationwideState.enabled = false;
+          nationwideState.data = nationwide;
+          hideRemoteLayer(map, nationwideConfig);
+          document.getElementById('power-plant-layer-count').textContent = number(nationwide.metadata.record_count);
+          status.textContent = `${number(nationwide.metadata.record_count)} U.S. plants · final EIA 2024`;
+          if (recenter) map.easeTo({ center: [-98.5, 38.5], zoom: 3.1, duration: 850 });
+        } else {
+          powerPlantScope = 'MD';
+          nationwideState.enabled = false;
+          hideRemoteLayer(map, nationwideConfig);
+          document.getElementById('power-plant-layer-count').textContent = number(powerPlants.length);
+          status.textContent = `${number(powerPlants.length)} Maryland plants · final EIA 2024`;
+          if (recenter) map.easeTo({ center: [-76.75, 39.05], zoom: 7.25, duration: 650 });
+        }
+        closePinnedInspector();
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } catch (error) {
+        nationwidePowerPlantsPromise = null;
+        select.value = 'MD';
+        powerPlantScope = 'MD';
+        nationwideState.enabled = false;
+        hideRemoteLayer(map, nationwideConfig);
+        document.getElementById('power-plant-layer-count').textContent = number(powerPlants.length);
+        status.textContent = `Broader inventory unavailable · ${error.message}`;
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } finally {
+        select.disabled = false;
+      }
+    };
+    const applyGlobalPowerPlantScope = async (requestedScope, { recenter = false, save = false } = {}) => {
+      const select = globalPowerPlantScopeSelect;
+      const status = document.getElementById('global-power-plant-scope-status');
+      const enabled = document.getElementById('show-global-power-plants').checked;
+      globalPowerPlantScope = requestedScope === 'WORLD' ? 'WORLD' : 'NA';
+      select.value = globalPowerPlantScope;
+      if (!enabled) {
+        status.textContent = 'Off · WRI records load only when Render is enabled; source year and original source are retained per plant';
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+        return;
+      }
+      select.disabled = true;
+      try {
+        status.textContent = 'Loading WRI Global Power Plant Database v1.3.0…';
+        globalPowerPlantsPromise ||= checkedInventory(
+          fetch(GLOBAL_POWER_PLANTS_URL, { cache: 'no-store' }),
+          'WRI global inventory',
+        );
+        const global = await globalPowerPlantsPromise;
+        globalPowerPlantRecords = featureRecords(global).map((record) => ({ ...record, inventory_source: 'WRI' }));
+        const selected = globalPowerPlantScope === 'WORLD'
+          ? globalPowerPlantRecords
+          : globalPowerPlantRecords.filter((record) => ['CAN', 'MEX'].includes(record.country_code));
+        document.getElementById('global-power-plant-layer-count').textContent = number(selected.length);
+        status.textContent = globalPowerPlantScope === 'WORLD'
+          ? `${number(selected.length)} plants across ${number(global.metadata.country_count)} countries · WRI v${global.metadata.release}; source years vary`
+          : `${number(selected.length)} plants · Canada ${number(global.metadata.country_counts.CAN)} + Mexico ${number(global.metadata.country_counts.MEX)} · WRI source years vary`;
+        if (recenter) map.easeTo(globalPowerPlantScope === 'WORLD'
+          ? { center: [5, 20], zoom: 1.25, duration: 850 }
+          : { center: [-102, 40], zoom: 2.55, duration: 850 });
+        closePinnedInspector();
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } catch (error) {
+        globalPowerPlantsPromise = null;
+        document.getElementById('show-global-power-plants').checked = false;
+        document.getElementById('global-power-plant-layer-count').textContent = '—';
+        status.textContent = `WRI global inventory unavailable · ${error.message}`;
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } finally {
+        select.disabled = false;
+      }
+    };
+    const applyNaceiPowerPlants = async ({ recenter = false, save = false } = {}) => {
+      const status = document.getElementById('nacei-power-plant-scope-status');
+      const enabled = document.getElementById('show-nacei-power-plants').checked;
+      if (!enabled) {
+        status.textContent = 'Off · official threshold-limited comparison source, kept separate from WRI';
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+        return;
+      }
+      try {
+        status.textContent = 'Loading official NACEI Canada + Mexico inventory…';
+        naceiPowerPlantsPromise ||= checkedInventory(
+          fetch(NACEI_POWER_PLANTS_URL, { cache: 'no-store' }),
+          'NACEI inventory',
+        );
+        const nacei = await naceiPowerPlantsPromise;
+        naceiPowerPlantRecords = featureRecords(nacei).map((record) => ({ ...record, inventory_source: 'NACEI' }));
+        document.getElementById('nacei-power-plant-layer-count').textContent = number(naceiPowerPlantRecords.length);
+        status.textContent = `${number(naceiPowerPlantRecords.length)} official comparison plants · Canada ${number(nacei.metadata.country_counts.CAN)} + Mexico ${number(nacei.metadata.country_counts.MEX)} · ≥100 MW · August 2017`;
+        if (recenter) map.easeTo({ center: [-102, 40], zoom: 2.55, duration: 850 });
+        closePinnedInspector();
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      } catch (error) {
+        naceiPowerPlantsPromise = null;
+        document.getElementById('show-nacei-power-plants').checked = false;
+        document.getElementById('nacei-power-plant-layer-count').textContent = '—';
+        status.textContent = `NACEI inventory unavailable · ${error.message}`;
+        renderResults(allRecords, markerById);
+        if (save) persistUiState(map);
+      }
+    };
+    powerPlantScopeSelect.addEventListener('change', async (event) => {
+      await applyPowerPlantScope(event.target.value, { recenter: true, save: true });
+    });
+    globalPowerPlantScopeSelect.addEventListener('change', async (event) => {
+      await applyGlobalPowerPlantScope(event.target.value, { recenter: true, save: true });
+    });
+    document.getElementById('show-global-power-plants').addEventListener('change', async () => {
+      await applyGlobalPowerPlantScope(globalPowerPlantScope, { save: true });
+    });
+    document.getElementById('show-nacei-power-plants').addEventListener('change', async (event) => {
+      await applyNaceiPowerPlants({ recenter: event.target.checked, save: true });
+    });
+    await applyPowerPlantScope(powerPlantScope);
+    await applyGlobalPowerPlantScope(globalPowerPlantScope);
+    await applyNaceiPowerPlants();
     setupLayerColorUi();
     setupTagFilterUi();
     setupUiStatePersistence(map);
@@ -3582,6 +4924,12 @@
       topMapHoverTarget(map, new maplibregl.Point(point.x, point.y), sourceById);
       return window.__lastHoverArbitration;
     };
+    window.__showDatacenterHoverTarget = (point) => {
+      const target = topMapHoverTarget(map, new maplibregl.Point(point.x, point.y), sourceById);
+      showHoverTarget(map, target);
+      return window.__lastHoverArbitration;
+    };
+    window.__powerPlantBoltDiagnostics = () => powerPlantBoltLayer?.getDiagnostics() || null;
     map.on('click', (event) => handleMapClick(map, event, sourceById));
     map.getCanvas().addEventListener('mouseleave', () => {
       if (mobileInspectorMode()) return;
@@ -3599,7 +4947,7 @@
       if (document.getElementById('show-parcels').checked) setParcelVisibility(map, true);
       restoreRemoteLayers(map);
       ensurePowerPlantBoltLayer(map);
-      powerPlantBoltLayer?.setRecords(allRecords.filter((record) => record.record_type === 'power_plant' && matchesFilters(record)));
+      renderResults(allRecords, markerById);
       renderLayerOrderControls(map);
     }
     persistUiState(map);
@@ -3612,8 +4960,9 @@
 
   function remoteRenderLayerIds(config) {
     const sourceId = remoteSourceId(config);
-    if (config.geometry === 'point') return [`${sourceId}-point`];
+    if (config.geometry === 'point') return [`${sourceId}-splat`, `${sourceId}-point`];
     if (config.geometry === 'line') return [`${sourceId}-line`];
+    if (config.geometry === 'label') return [`${sourceId}-label`];
     return [`${sourceId}-fill`, `${sourceId}-line`];
   }
 
@@ -3657,7 +5006,7 @@
 
   function remoteMaxAllowableOffset(config, zoom) {
     const normalizedZoom = Math.max(0, zoom - 6);
-    if (config.geometry === 'polygon') return Math.max(.00005, .012 / (2 ** normalizedZoom));
+    if (config.geometry === 'polygon' || config.geometry === 'label') return Math.max(.00005, .012 / (2 ** normalizedZoom));
     if (config.geometry === 'line') return Math.max(.00002, .006 / (2 ** normalizedZoom));
     return Math.max(.000005, .003 / (2 ** Math.max(0, zoom - 7)));
   }
@@ -3668,6 +5017,57 @@
     if (zoom < 5) return '1200';
     if (zoom < 8) return '1600';
     return '2000';
+  }
+
+  function geojsonExceededTransferLimit(data) {
+    return Boolean(data?.exceededTransferLimit || data?.properties?.exceededTransferLimit);
+  }
+
+  function remoteFeatureIdentity(feature, index) {
+    const properties = feature?.properties || {};
+    return feature?.id
+      ?? properties.OBJECTID
+      ?? properties.OBJECTID_1
+      ?? properties.FID
+      ?? properties.ID
+      ?? properties.MAP_NAME
+      ?? `feature-${index}`;
+  }
+
+  async function fetchRemoteLayerData(service, parameters, signal, pageSize, maxPages = 8) {
+    const allFeatures = [];
+    const seen = new Set();
+    let exceededTransferLimit = false;
+    let responseTemplate = null;
+    for (let pageIndex = 0; pageIndex < maxPages; pageIndex += 1) {
+      const pageParameters = new URLSearchParams(parameters);
+      if (pageIndex > 0) pageParameters.set('resultOffset', String(pageIndex * pageSize));
+      const response = await fetch(`${service}/query?${pageParameters}`, { signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const responseData = await response.json();
+      if (responseData.error) throw new Error(responseData.error.message || 'Service query failed');
+      const pageFeatures = (responseData.features || []).filter((feature) => feature.geometry);
+      pageFeatures.forEach((feature, index) => {
+        const identity = remoteFeatureIdentity(feature, allFeatures.length + index);
+        if (seen.has(identity)) return;
+        seen.add(identity);
+        allFeatures.push(feature);
+      });
+      exceededTransferLimit = exceededTransferLimit || geojsonExceededTransferLimit(responseData);
+      responseTemplate = responseTemplate || responseData;
+      if (!geojsonExceededTransferLimit(responseData) && pageFeatures.length < pageSize) {
+        return {
+          ...responseData,
+          features: allFeatures,
+          exceededTransferLimit,
+        };
+      }
+    }
+    return {
+      ...(responseTemplate || { type: 'FeatureCollection' }),
+      features: allFeatures,
+      exceededTransferLimit: true,
+    };
   }
 
   async function loadShardApiLayer(map, config, state, status) {
@@ -3740,8 +5140,8 @@
 
   function setupRemoteLayerControls(map) {
     const container = document.getElementById('remote-layer-controls');
-    container.innerHTML = REMOTE_LAYERS.map((config) => `
-      <div class="dc-layer-option dc-layer-option--remote" data-layer-preview="${escapeHtml(config.id)}">
+    container.innerHTML = REMOTE_LAYERS.filter((config) => !config.featuredControl).map((config) => `
+      <div class="dc-layer-option dc-layer-option--remote" data-layer-preview="${escapeHtml(config.id)}"${config.hiddenControl ? ' hidden' : ''}>
         <div class="dc-layer-toprow">
           <span class="dc-layer-name"><strong>${escapeHtml(config.name)}</strong><small>${escapeHtml(config.description)}</small></span>
           <span class="dc-layer-controls-row">
@@ -3766,9 +5166,12 @@
         requestKey: '',
         text: '',
         sizeBy: config.defaultSizeBy || 'none',
-        colorTheme: config.lineColorThemes ? 'uniform' : 'default',
+        iconScale: 1,
+        brightness: 1,
+        pointRenderMode: config.defaultPointRenderMode || 'points',
+        colorTheme: defaultLineColorTheme(config),
         lineWidth: 1,
-        lineWidthBy: 'zoom',
+        lineWidthBy: defaultLineWidthBy(config),
       });
       layerPreviewSearchIndex.set(config.id, [
         config.name,
@@ -3848,6 +5251,7 @@
 
   function renderLayerCardSources(config) {
     const sources = [[config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
+      .map(([label, href]) => [label, safeExternalUrl(href)])
       .filter(([label, href]) => label && href);
     return `<div class="dc-record-sources"><strong>Sources</strong><ul>${sources.map(([label, href]) => `<li><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul></div>`;
   }
@@ -4055,15 +5459,51 @@
   }
 
   function remoteLineColor(config) {
-    const selectedTheme = remoteLayerStates.get(config.id)?.colorTheme || (config.lineColorThemes ? 'uniform' : 'default');
-    if (selectedTheme === 'uniform') return layerCustomColors.get(config.id) || config.lineColor || config.color;
+    const selectedTheme = remoteLayerStates.get(config.id)?.colorTheme || defaultLineColorTheme(config);
+    if (selectedTheme === 'uniform') return adjustHexBrightness(layerCustomColorHex(config.id) || config.color, remoteLayerStates.get(config.id)?.brightness);
     return config.lineColorThemes?.find((theme) => theme.id === selectedTheme)?.expression
-      || config.lineColor
-      || config.color;
+      || adjustHexBrightness(layerCustomColorHex(config.id) || config.color, remoteLayerStates.get(config.id)?.brightness);
   }
 
   function remoteLayerColor(config) {
-    return layerCustomColors.get(config.id) || config.color;
+    return adjustHexBrightness(layerCustomColorHex(config.id) || config.color, remoteLayerStates.get(config.id)?.brightness);
+  }
+
+  function remoteLayerPaintColor(config, color) {
+    return Array.isArray(color) ? color : adjustHexBrightness(color, remoteLayerStates.get(config.id)?.brightness);
+  }
+
+  function brightnessScaledOpacity(config, opacity) {
+    return Math.max(0, Math.min(1, Number(opacity) * normalizeBrightness(remoteLayerStates.get(config.id)?.brightness) * layerCustomColorAlpha(config.id)));
+  }
+
+  function remotePointSplatPaint(config) {
+    const color = remoteLayerColor(config);
+    const iconScale = normalizeIconScale(remoteLayerStates.get(config.id)?.iconScale);
+    const brightness = normalizeBrightness(remoteLayerStates.get(config.id)?.brightness);
+    return {
+      'heatmap-weight': ['coalesce', ['get', '_dcPointScale'], 1],
+      'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, .7 * brightness, 12, 1.25 * brightness, 16, 1.8 * brightness],
+      'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 8 * iconScale, 10, 22 * iconScale, 14, 42 * iconScale, 18, 68 * iconScale],
+      'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 0, Math.min(1, .72 * brightness), 16, Math.min(1, .42 * brightness)],
+      'heatmap-color': [
+        'interpolate', ['linear'], ['heatmap-density'],
+        0, 'rgba(0, 0, 0, 0)',
+        .18, color,
+        .48, '#8fe8ff',
+        .72, '#f3c969',
+        1, '#ff263f',
+      ],
+    };
+  }
+
+  function remotePointSizeExpression(config) {
+    const factor = ['coalesce', ['get', '_dcPointScale'], 1];
+    const iconScale = normalizeIconScale(remoteLayerStates.get(config.id)?.iconScale);
+    if (config.pointSymbol === 'interchange-arrow') {
+      return ['interpolate', ['linear'], factor, .5, 14 * iconScale, 1, 22 * iconScale, 2, 34 * iconScale];
+    }
+    return ['interpolate', ['linear'], factor, .5, 3.5 * iconScale, 1, 5.5 * iconScale, 2, 9 * iconScale];
   }
 
   function transmissionStatusExpression() {
@@ -4077,7 +5517,7 @@
   function transmissionLineColorExpression(config) {
     const baseColor = remoteLineColor(config);
     return config.id.includes('transmission')
-      ? ['case', transmissionProposalExpression(), '#ff263f', baseColor]
+      ? ['case', transmissionProposalExpression(), adjustHexBrightness('#ff263f', remoteLayerStates.get(config.id)?.brightness), baseColor]
       : baseColor;
   }
 
@@ -4091,8 +5531,10 @@
   }
 
   function transmissionLineOpacityExpression(config) {
-    if (!config.id.includes('transmission')) return .88;
-    return ['case', transmissionProposalExpression(), 1, .88];
+    const brightness = normalizeBrightness(remoteLayerStates.get(config.id)?.brightness);
+    const alpha = layerCustomColorAlpha(config.id);
+    if (!config.id.includes('transmission')) return Math.min(1, .88 * brightness * alpha);
+    return ['case', transmissionProposalExpression(), Math.min(1, brightness * alpha), Math.min(1, .88 * brightness * alpha)];
   }
 
   function transmissionLineBlurExpression(config) {
@@ -4101,7 +5543,7 @@
   }
 
   function addRemoteLayer(map, config, data) {
-    if (!map.isStyleLoaded()) {
+    if (!map.getStyle?.()?.layers?.length) {
       window.setTimeout(() => addRemoteLayer(map, config, data), 250);
       return;
     }
@@ -4121,6 +5563,15 @@
     const firstLabel = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id;
     if (config.geometry === 'point') {
       const layerId = `${sourceId}-point`;
+      const splatLayerId = `${sourceId}-splat`;
+      if (!map.getLayer(splatLayerId)) {
+        map.addLayer({
+          id: splatLayerId,
+          type: 'heatmap',
+          source: sourceId,
+          paint: remotePointSplatPaint(config),
+        }, firstLabel);
+      }
       if (!map.getLayer(layerId)) {
         map.addLayer(config.pointSymbol === 'interchange-arrow' ? {
           id: layerId,
@@ -4128,10 +5579,8 @@
           source: sourceId,
           layout: {
             'text-field': '➤',
-            'text-size': ['interpolate', ['linear'], ['zoom'],
-              5, ['*', 15, ['coalesce', ['get', '_dcPointScale'], 1]],
-              9, ['*', 22, ['coalesce', ['get', '_dcPointScale'], 1]],
-              14, ['*', 30, ['coalesce', ['get', '_dcPointScale'], 1]]],
+            'text-size': remotePointSizeExpression(config),
+            'symbol-sort-key': ['coalesce', ['get', '_dcPointScale'], 1],
             'text-rotate': ['+',
               ['coalesce', ['get', 'axis_rotation_degrees'], 0],
               ['case', ['==', ['downcase', ['coalesce', ['get', 'statewide_flow_direction'], '']], 'net import'], 0, 180]],
@@ -4150,16 +5599,54 @@
           id: layerId,
           type: 'circle',
           source: sourceId,
+          layout: { 'circle-sort-key': ['coalesce', ['get', '_dcPointScale'], 1] },
           paint: {
-            'circle-radius': ['*', ['interpolate', ['linear'], ['zoom'], config.minZoom, 3.5, 14, 7], ['coalesce', ['get', '_dcPointScale'], 1]],
+            'circle-radius': remotePointSizeExpression(config),
             'circle-color': remoteLayerColor(config),
             'circle-stroke-color': '#ffffff',
             'circle-stroke-width': 1.2,
-            'circle-opacity': .84,
+            'circle-opacity': brightnessScaledOpacity(config, .84),
           },
         });
       }
       map.setPaintProperty(layerId, config.pointSymbol === 'interchange-arrow' ? 'text-color' : 'circle-color', remoteLayerColor(config));
+      if (config.pointSymbol === 'interchange-arrow') map.setPaintProperty(layerId, 'text-opacity', brightnessScaledOpacity(config, .94));
+      if (config.pointSymbol !== 'interchange-arrow') map.setPaintProperty(layerId, 'circle-opacity', brightnessScaledOpacity(config, .84));
+      if (config.pointSymbol === 'interchange-arrow') map.setLayoutProperty(layerId, 'text-size', remotePointSizeExpression(config));
+      else map.setPaintProperty(layerId, 'circle-radius', remotePointSizeExpression(config));
+      map.setLayoutProperty(layerId, config.pointSymbol === 'interchange-arrow' ? 'symbol-sort-key' : 'circle-sort-key', ['coalesce', ['get', '_dcPointScale'], 1]);
+      Object.entries(remotePointSplatPaint(config)).forEach(([property, value]) => {
+        map.setPaintProperty(splatLayerId, property, value);
+      });
+      const renderMode = normalizePointRenderMode(config, state?.pointRenderMode);
+      map.setLayoutProperty(layerId, 'visibility', renderMode === 'points' ? 'visible' : 'none');
+      map.setLayoutProperty(splatLayerId, 'visibility', renderMode === 'gpu-splat' ? 'visible' : 'none');
+    } else if (config.geometry === 'label') {
+      const labelId = `${sourceId}-label`;
+      if (!map.getLayer(labelId)) {
+        map.addLayer({
+          id: labelId,
+          type: 'symbol',
+          source: sourceId,
+          layout: {
+            'text-field': ['coalesce', ['get', 'COUNTY'], ['get', 'county'], ['get', 'name'], 'County'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 8, 13, 12, 18],
+            'text-letter-spacing': .08,
+            'text-transform': 'uppercase',
+            'text-allow-overlap': false,
+            'text-ignore-placement': false,
+          },
+          paint: {
+            'text-color': remoteLayerColor(config),
+            'text-halo-color': '#002a61',
+            'text-halo-width': 2.4,
+            'text-halo-blur': .6,
+          },
+        });
+      }
+      map.setLayoutProperty(labelId, 'text-size', ['interpolate', ['linear'], ['zoom'], 5, 10, 8, 13, 12, 18]);
+      map.setPaintProperty(labelId, 'text-color', remoteLayerColor(config));
+      map.setPaintProperty(labelId, 'text-opacity', brightnessScaledOpacity(config, .94));
     } else if (config.geometry === 'line') {
       const lineId = `${sourceId}-line`;
       if (!map.getLayer(lineId)) {
@@ -4187,7 +5674,7 @@
           id: fillId,
           type: 'fill',
           source: sourceId,
-          paint: { 'fill-color': layerCustomColors.get(config.id) || config.fillColor || config.color, 'fill-opacity': config.fillOpacity ?? .3 },
+          paint: { 'fill-color': remoteLayerPaintColor(config, config.fillColor || config.color), 'fill-opacity': brightnessScaledOpacity(config, config.fillOpacity ?? .3) },
         }, firstLabel);
       }
       if (!map.getLayer(lineId)) {
@@ -4196,20 +5683,29 @@
           type: 'line',
           source: sourceId,
           paint: {
-            'line-color': layerCustomColors.get(config.id) || config.lineColor || config.color,
+            'line-color': remoteLayerPaintColor(config, config.lineColor || config.color),
             'line-width': config.lineWidth || 0,
-            'line-opacity': config.lineOpacity ?? 0,
+            'line-opacity': brightnessScaledOpacity(config, config.lineOpacity ?? 0),
           },
         }, firstLabel);
       }
-      map.setPaintProperty(fillId, 'fill-color', layerCustomColors.get(config.id) || config.fillColor || config.color);
-      map.setPaintProperty(lineId, 'line-color', layerCustomColors.get(config.id) || config.lineColor || config.color);
+      map.setPaintProperty(fillId, 'fill-color', remoteLayerPaintColor(config, config.fillColor || config.color));
+      map.setPaintProperty(fillId, 'fill-opacity', brightnessScaledOpacity(config, config.fillOpacity ?? .3));
+      map.setPaintProperty(lineId, 'line-color', remoteLayerPaintColor(config, config.lineColor || config.color));
+      map.setPaintProperty(lineId, 'line-opacity', brightnessScaledOpacity(config, config.lineOpacity ?? 0));
     }
     remoteRenderLayerIds(config).forEach((layerId) => {
       if (!map.getLayer(layerId)) return;
       const range = zoomRangeForLayer(config.id);
       if (map.setLayerZoomRange) map.setLayerZoomRange(layerId, range.min, range.max);
-      map.setLayoutProperty(layerId, 'visibility', layerShownAtZoom(config.id, map.getZoom()) ? 'visible' : 'none');
+      const shownAtZoom = layerShownAtZoom(config.id, map.getZoom());
+      if (config.geometry === 'point') {
+        const renderMode = normalizePointRenderMode(config, state?.pointRenderMode);
+        const isSplatLayer = layerId.endsWith('-splat');
+        map.setLayoutProperty(layerId, 'visibility', shownAtZoom && ((renderMode === 'gpu-splat') === isSplatLayer) ? 'visible' : 'none');
+      } else {
+        map.setLayoutProperty(layerId, 'visibility', shownAtZoom ? 'visible' : 'none');
+      }
     });
     applyMapLayerOrder(map);
   }
@@ -4225,41 +5721,73 @@
   }
 
   function rehydrateRemoteLayerAfterStyleSettles(map, config) {
-    [0, 250, 1000].forEach((delay) => {
+    const rehydrate = () => {
+      const state = remoteLayerStates.get(config.id);
+      if (!state?.enabled || !state.data) return;
+      if (!map.getStyle?.()?.layers?.length) return;
+      if (!remoteLayerRendered(map, config)) addRemoteLayer(map, config, state.data);
+    };
+    [0, 250, 1000, 2500].forEach((delay) => {
       window.setTimeout(() => {
-        const state = remoteLayerStates.get(config.id);
-        if (!state?.enabled || !state.data) return;
-        if (!map.isStyleLoaded()) return;
-        if (!remoteLayerRendered(map, config)) addRemoteLayer(map, config, state.data);
+        rehydrate();
       }, delay);
     });
+    map.once('idle', rehydrate);
+  }
+
+  function scheduleRemoteLayerRehydrate(map) {
+    window.clearTimeout(remoteStyleRehydrateTimer);
+    remoteStyleRehydrateTimer = window.setTimeout(() => {
+      if (!map.getStyle?.()?.layers?.length) return;
+      REMOTE_LAYERS.forEach((config) => {
+        const state = remoteLayerStates.get(config.id);
+        if (!state?.enabled || !state.data || remoteLayerRendered(map, config)) return;
+        addRemoteLayer(map, config, state.data);
+      });
+    }, 80);
   }
 
   function staticLayerLoadingText(config) {
+    if (config.id === 'baltimore-red-line') return 'Loading Baltimore Red Line alignment…';
     if (config.id === 'power-interchanges') return 'Loading documented transmission crossings…';
+    if (config.id === 'data-center-moratoriums') return 'Loading local operating environment…';
     if (config.id === 'county-power-estimates') return 'Loading county residential power estimates…';
+    if (config.id === 'county-total-power-estimates') return 'Loading county total power planning estimates…';
     return `Loading ${config.name.toLowerCase()}…`;
   }
 
   function staticLayerStatus(config, data) {
     const featureCount = data?.features?.length || 0;
+    if (config.id === 'baltimore-red-line') return `${number(featureCount)} Red Line alignment segments`;
     if (config.id === 'power-interchanges') {
       const lineCount = data?.metadata?.line_crossing_count;
       return lineCount
         ? `${number(featureCount)} border corridors · ${number(lineCount)} line crossings · 2024 net import`
         : `${number(featureCount)} border corridors · 2024 Maryland net import`;
     }
+    if (config.id === 'data-center-moratoriums') {
+      const counts = data?.metadata?.status_counts || {};
+      return `${number(featureCount)} localities · ${number(counts.operating || 0)} operating · ${number(counts.open || 0)} open · ${number(counts.pending_action || 0)} pending · ${number(counts.restricted || 0)} restricted`;
+    }
     if (config.id === 'county-power-estimates') {
       const averageMw = data?.metadata?.statewide_residential_average_mw;
       const averageText = Number.isFinite(Number(averageMw)) ? ` · ${number(Number(averageMw), 1)} MW statewide residential average` : '';
       return `${number(featureCount)} counties · residential demand estimates${averageText}`;
     }
+    if (config.id === 'county-total-power-estimates') {
+      const averageMw = data?.metadata?.statewide_all_sector_average_mw;
+      const averageText = Number.isFinite(Number(averageMw)) ? ` · ${number(Number(averageMw), 1)} MW statewide all-sector average` : '';
+      return `${number(featureCount)} counties · total demand planning estimates${averageText}`;
+    }
     return `${number(featureCount)} features`;
   }
 
   function staticLayerErrorText(config, error) {
+    if (config.id === 'baltimore-red-line') return `Baltimore Red Line alignment unavailable · ${error.message}`;
     if (config.id === 'power-interchanges') return `Crossing inventory unavailable · ${error.message}`;
+    if (config.id === 'data-center-moratoriums') return `Operating environment unavailable · ${error.message}`;
     if (config.id === 'county-power-estimates') return `County power estimates unavailable · ${error.message}`;
+    if (config.id === 'county-total-power-estimates') return `County total power estimates unavailable · ${error.message}`;
     return `${config.name} unavailable · ${error.message}`;
   }
 
@@ -4277,6 +5805,43 @@
       state.abort?.abort();
       hideRemoteLayer(map, config);
       status.textContent = `Visible only from zoom ${number(range.min, 2)} through ${number(range.max, 2)}`;
+      return;
+    }
+    if (config.viewportDataUrl) {
+      const bounds = map.getBounds();
+      const precision = remoteRequestPrecision(zoom);
+      const boundsKey = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()]
+        .map((value) => Number(value).toFixed(precision)).join(',');
+      const requestKey = `${config.viewportDataUrl}|${boundsKey}`;
+      if (requestKey === state.requestKey && state.data) {
+        addRemoteLayer(map, config, state.data);
+        rehydrateRemoteLayerAfterStyleSettles(map, config);
+        return;
+      }
+      state.abort?.abort();
+      state.abort = new AbortController();
+      status.textContent = 'Querying current map view…';
+      const endpoint = new URL(config.viewportDataUrl, window.location.origin);
+      endpoint.searchParams.set('bbox', boundsKey);
+      try {
+        const response = await fetch(endpoint, { cache: 'no-store', signal: state.abort.signal });
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload.error || `HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        if (!state.enabled) return;
+        state.data = { ...data, features: (data.features || []).filter((feature) => feature.geometry) };
+        state.requestKey = requestKey;
+        addRemoteLayer(map, config, state.data);
+        rehydrateRemoteLayerAfterStyleSettles(map, config);
+        const timestamp = data.metadata?.generated_at;
+        const freshness = timestamp ? ` · source ${new Date(timestamp).toLocaleString('en-US')}` : '';
+        status.textContent = `${number(state.data.features.length)} features in current view${freshness}`;
+      } catch (error) {
+        if (error.name === 'AbortError') return;
+        status.textContent = `${config.name} unavailable · ${error.message}`;
+      }
       return;
     }
     if (config.staticDataUrl) {
@@ -4340,10 +5905,8 @@
       f: 'geojson',
     });
     try {
-      const response = await fetch(`${service}/query?${parameters}`, { signal: state.abort.signal });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const responseData = await response.json();
-      if (responseData.error) throw new Error(responseData.error.message || 'Service query failed');
+      const pageSize = Number(remoteResultRecordCount(config, zoom));
+      const responseData = await fetchRemoteLayerData(service, parameters, state.abort.signal, pageSize);
       const returnedCount = responseData.features?.length || 0;
       const features = (responseData.features || []).filter((feature) => feature.geometry);
       if (returnedCount && !features.length) throw new Error('service returned records without map geometry');
@@ -4354,7 +5917,7 @@
       addRemoteLayer(map, config, data);
       rehydrateRemoteLayerAfterStyleSettles(map, config);
       const count = data.features.length;
-      status.textContent = data.exceededTransferLimit || count >= Number(remoteResultRecordCount(config, zoom))
+      status.textContent = geojsonExceededTransferLimit(data) || count >= pageSize
         ? `${number(count)} features · zoom in for complete results`
         : `${number(count)} features in current view`;
     } catch (error) {
@@ -4470,11 +6033,11 @@
 
   function refreshLayerColorSwatches() {
     document.querySelectorAll('[data-layer-color]').forEach((button) => {
-      const color = layerCustomColors.get(button.dataset.layerColor);
+      const color = layerCustomColorSetting(button.dataset.layerColor);
       button.classList.toggle('has-custom-color', Boolean(color));
-      if (color) button.style.setProperty('--layer-custom-color', color);
+      if (color) button.style.setProperty('--layer-custom-color', colorValueString(color.color, color.alpha));
       else button.style.removeProperty('--layer-custom-color');
-      button.title = color ? `Custom layer color ${color.toUpperCase()}` : 'Change layer color';
+      button.title = color ? `Custom layer color ${formatLayerColorValue(color.color, color.alpha)}` : 'Change layer color';
     });
   }
 
@@ -4496,7 +6059,8 @@
       addEnviroScreenLayers(map, enviroScreenData || { type: 'FeatureCollection', features: [] });
     }
     if (layerId === 'parcels' && map.getLayer(PARCEL_LAYER_ID)) {
-      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', layerCustomColors.get('parcels') || 'rgba(121, 207, 241, .82)');
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#79cff1', layerFilters.parcels.brightness));
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-opacity', Math.min(1, .82 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')));
       ensureParcelHoverLayers(map, map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id);
     }
     const remoteConfig = REMOTE_LAYERS.find((config) => config.id === layerId);
@@ -4509,10 +6073,12 @@
     const config = layerColorConfig(layerId);
     if (!config) return;
     activeLayerColorId = layerId;
-    const color = layerCustomColors.get(layerId) || defaultLayerColor(layerId);
+    const color = layerCustomColorSetting(layerId) || { color: defaultLayerColor(layerId), alpha: 1 };
     document.getElementById('layer-color-title').textContent = `${config.name} color`;
-    document.getElementById('layer-color-input').value = color;
-    document.getElementById('layer-color-value').value = color.toUpperCase();
+    document.getElementById('layer-color-input').value = color.color;
+    document.getElementById('layer-alpha-input').value = String(color.alpha);
+    document.getElementById('layer-color-value').value = formatLayerColorValue(color.color, color.alpha);
+    document.getElementById('layer-alpha-value').value = `${Math.round(color.alpha * 100)}%`;
     document.getElementById('layer-color-help').textContent = layerCustomColors.has(layerId)
       ? 'A custom color overrides the source or semantic palette. Use source colors to restore the original styling.'
       : 'Choosing a color overrides the source or semantic palette for this layer.';
@@ -4525,9 +6091,13 @@
     });
     const modal = document.getElementById('layer-color-modal');
     const input = document.getElementById('layer-color-input');
-    input.addEventListener('input', () => {
-      document.getElementById('layer-color-value').value = input.value.toUpperCase();
-    });
+    const alphaInput = document.getElementById('layer-alpha-input');
+    const updateColorOutputs = () => {
+      document.getElementById('layer-color-value').value = formatLayerColorValue(input.value, alphaInput.value);
+      document.getElementById('layer-alpha-value').value = `${Math.round(normalizeLayerAlpha(alphaInput.value) * 100)}%`;
+    };
+    input.addEventListener('input', updateColorOutputs);
+    alphaInput.addEventListener('input', updateColorOutputs);
     modal.addEventListener('click', (event) => {
       if (event.target === modal) modal.close('cancel');
     });
@@ -4543,8 +6113,11 @@
         modal.close('cancel');
         return;
       }
-      if (activeLayerColorId && /^#[0-9a-f]{6}$/i.test(input.value)) {
-        layerCustomColors.set(activeLayerColorId, input.value.toLowerCase());
+      if (activeLayerColorId && isLayerColorHex(input.value)) {
+        layerCustomColors.set(activeLayerColorId, {
+          color: input.value.toLowerCase(),
+          alpha: normalizeLayerAlpha(alphaInput.value),
+        });
         applyLayerColor(activeLayerColorId);
       }
       modal.close('apply');
@@ -4565,6 +6138,10 @@
       applyAllLayerFilters();
     });
     const modal = document.getElementById('layer-filter-modal');
+    modal.addEventListener('input', (event) => {
+      if (!event.target.matches('[data-icon-scale-range]')) return;
+      event.target.closest('.dc-modal-scale')?.querySelector('output')?.replaceChildren(`${normalizeIconScale(event.target.value)}×`);
+    });
     modal.addEventListener('click', (event) => {
       if (event.target === modal) modal.close('cancel');
     });
@@ -4596,6 +6173,15 @@
 
   function numberFieldMarkup(label, name, value, { min = 0, max = 1, step = 0.01, help = '' } = {}) {
     return `<label class="dc-modal-field">${escapeHtml(label)}<input name="${escapeHtml(name)}" type="number" min="${escapeHtml(min)}" max="${escapeHtml(max)}" step="${escapeHtml(step)}" value="${escapeHtml(value)}"></label>${help ? `<p class="dc-modal-help">${escapeHtml(help)}</p>` : ''}`;
+  }
+
+  function checkboxFieldMarkup(label, name, checked, help = '') {
+    return `<label class="dc-modal-field"><span><input name="${escapeHtml(name)}" type="checkbox"${checked ? ' checked' : ''}> ${escapeHtml(label)}</span></label>${help ? `<p class="dc-modal-help">${escapeHtml(help)}</p>` : ''}`;
+  }
+
+  function scaleFieldMarkup(label, name, value) {
+    const scale = normalizeIconScale(value);
+    return `<label class="dc-modal-field dc-modal-scale"><span>${escapeHtml(label)} <output>${escapeHtml(`${scale}×`)}</output></span><input data-icon-scale-range name="${escapeHtml(name)}" type="range" min="0.25" max="4" step="0.05" value="${escapeHtml(scale)}"></label>`;
   }
 
   function zoomRangeMarkup(layerId) {
@@ -4630,9 +6216,11 @@
         + fieldMarkup('Power scale', 'powerScale', filters.powerScale, FILTER_OPTIONS.powerScale, 'Uses reported grid demand when available; otherwise a published capacity envelope is labeled as a proxy. Backup generation is excluded.')
         + fieldMarkup('Icon color uses', 'colorBy', filters.colorBy, FILTER_OPTIONS.datacenterIconColor)
         + fieldMarkup('Icon outline uses', 'outlineBy', filters.outlineBy, FILTER_OPTIONS.datacenterIconOutline)
-        + fieldMarkup('Icon glow uses', 'glowBy', filters.glowBy, FILTER_OPTIONS.datacenterIconGlow, 'Strongly contested facilities glow red. Planned or developing facilities with no documented contestation glow yellow; quiet operating facilities glow white. Intermediate and unknown scores do not glow.')
+        + fieldMarkup('Icon glow uses', 'glowBy', filters.glowBy, FILTER_OPTIONS.datacenterIconGlow, 'Only the halo changes here. Planned or developing facilities with no documented contestation keep their normal icon colors and get a yellow halo; operational unopposed facilities get a faint green halo. Intermediate and unknown scores do not glow.')
         + numberFieldMarkup('Glow distance', 'glowDistance', normalizeGlowDistance(filters.glowDistance), { min: .35, max: 2.5, step: .05, help: 'Scales how far the glow extends from each data center icon.' })
         + numberFieldMarkup('Glow blur', 'glowBlur', normalizeGlowBlur(filters.glowBlur), { min: 0, max: 2.5, step: .05, help: 'Scales the softness of the glow edge.' })
+        + scaleFieldMarkup('Icon scale', 'iconScale', filters.iconScale)
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(filters.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens rendered data-center icons and halos.' })
         + fieldMarkup('Icon size uses', 'sizeBy', filters.sizeBy, dataCenterPointScaleOptions(records), 'Projected demand applies only to unbuilt facilities and uses planning estimates with explicit confidence. Net draw uses published normal grid demand. Total draw uses projected demand for unbuilt facilities and the best published capacity envelope otherwise; it is not measured consumption. Icons without the selected value use the smallest size.');
     } else if (layerId === 'power-plants') {
       title = 'Power plant layer filters';
@@ -4643,8 +6231,12 @@
         + fieldMarkup('Icon color uses', 'colorBy', layerFilters.powerPlants.colorBy, FILTER_OPTIONS.plantIconColor)
         + fieldMarkup('Bolt outline uses', 'outlineBy', layerFilters.powerPlants.outlineBy, FILTER_OPTIONS.plantBoltOutline, 'A real silhouette outline is drawn independently from the fill. Choose Neutral light outline for a fixed pale border.')
         + fieldMarkup('Bolt fill uses', 'fillBy', layerFilters.powerPlants.fillBy || 'none', FILTER_OPTIONS.plantBoltFill, 'Fill the bolt from the bottom. Resource-adjusted annual utilization compares annual output to a technology-specific planning envelope, so solar and wind are not judged as if they should run at nameplate all year.')
+        + fieldMarkup('Render material', 'renderMaterial', normalizePowerPlantRenderMaterial(layerFilters.powerPlants.renderMaterial), FILTER_OPTIONS.plantRenderMaterial, 'Reuses the full AgnuQuena appearance menu for the WebGL bolt renderer.')
+        + checkboxFieldMarkup('Cull dense plants for performance', 'adaptiveLod', layerFilters.powerPlants.adaptiveLod === true, 'At world zooms, keeps the highest-output plant in each small screen cell and at high zoom only sends plants near the viewport. Off by default; rendered bolts keep the same full mesh and output-derived screen size.')
         + numberFieldMarkup('Custom fill fraction', 'fillFraction', layerFilters.powerPlants.fillFraction ?? 1, { min: 0, max: 1, step: 0.01, help: 'Only used when Bolt fill uses is set to Custom fraction from bottom.' })
-        + numberFieldMarkup('Bolt outline size', 'outlineScale', normalizeBoltOutlineScale(layerFilters.powerPlants.outlineScale), { min: .5, max: 2, step: 0.01, help: 'Scales the WebGL outline pass with fractional values. 1.04 is the compact default; use values below 1 for inset outlines or above 1 for stronger separation from imagery.' })
+        + numberFieldMarkup('Bolt outline width', 'outlineWidth', normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth), { min: .5, max: 5, step: .25, help: 'Sets the silhouette trace width in screen pixels.' })
+        + scaleFieldMarkup('Icon scale', 'iconScale', layerFilters.powerPlants.iconScale)
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(layerFilters.powerPlants.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens the WebGL bolt fill, glow, and outline colors.' })
         + fieldMarkup('Icon size uses', 'sizeBy', layerFilters.powerPlants.sizeBy, numericPointScaleOptions(records, [['planning_sustained_output_mw', 'Planning output · annual average (MW)'], ['average_generation_mwh', 'Average generation / output (MWh)']]), 'Choose annual-average planning output to scale bolts by year-round production rather than spikes.');
     } else if (layerId === 'neon-streets') {
       title = 'Neon streets layer filters';
@@ -4655,18 +6247,21 @@
         ['major', 'Interstates and major roads'],
         ['all', 'All streets'],
       ], 'I-95 is the default. Broader modes reuse the same vector tiles without downloading a second road dataset.')
-        + numberFieldMarkup('Line width', 'lineWidth', layerFilters.neonStreets.lineWidth, { min: .25, max: 5, step: .25, help: 'Scales both the bright road core and its glow while preserving zoom-dependent widths.' });
+        + numberFieldMarkup('Line width', 'lineWidth', layerFilters.neonStreets.lineWidth, { min: .25, max: 5, step: .25, help: 'Scales both the bright road core and its glow while preserving zoom-dependent widths.' })
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(layerFilters.neonStreets.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens the neon road core and glow.' });
     } else if (layerId === 'enviroscreen') {
       title = 'EnviroScreen layer filters';
       const filters = layerFilters.enviroscreen;
       body.innerHTML = zoomRangeMarkup(layerId)
         + fieldMarkup('Tract text match', 'text', filters.text)
         + fieldMarkup('Minimum EJ score', 'scoreBand', filters.scoreBand, FILTER_OPTIONS.enviroScoreBand)
-        + fieldMarkup('Community flag', 'community', filters.community, FILTER_OPTIONS.enviroCommunity);
+        + fieldMarkup('Community flag', 'community', filters.community, FILTER_OPTIONS.enviroCommunity)
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(filters.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens the rendered EnviroScreen fill.' });
     } else if (layerId === 'parcels') {
       title = 'Parcel layer filters';
       body.innerHTML = zoomRangeMarkup(layerId)
-        + fieldMarkup('Account ID text match', 'text', layerFilters.parcels.text, null, 'Filters currently loaded parcel boundaries by public account ID.');
+        + fieldMarkup('Account ID text match', 'text', layerFilters.parcels.text, null, 'Filters currently loaded parcel boundaries by public account ID.')
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(layerFilters.parcels.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens rendered parcel boundaries.' });
     } else if (layerId === ESRI_BUILDINGS.id) {
       title = `${ESRI_BUILDINGS.name} layer settings`;
       body.innerHTML = zoomRangeMarkup(layerId)
@@ -4677,6 +6272,14 @@
       title = `${config.name} layer filters`;
       body.innerHTML = zoomRangeMarkup(layerId)
         + fieldMarkup('Feature text match', 'text', remoteLayerStates.get(config.id)?.text || '', null, 'Matches the fields returned from the official live service for the current map view.')
+        + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(remoteLayerStates.get(config.id)?.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens this layer using color and opacity where supported by the renderer.' })
+        + (config.geometry === 'point' ? fieldMarkup(
+          'Point rendering',
+          'pointRenderMode',
+          normalizePointRenderMode(config, remoteLayerStates.get(config.id)?.pointRenderMode),
+          POINT_RENDER_OPTIONS,
+          'GPU Splat uses a WebGL heatmap pass to show smoother point density from the same filtered features.',
+        ) : '')
         + (config.geometry === 'point' ? fieldMarkup(
           'Point size uses',
           'sizeBy',
@@ -4687,6 +6290,7 @@
           ),
           'Numeric values are normalized to a bounded screen-space size.',
         ) : '')
+        + (config.geometry === 'point' ? scaleFieldMarkup('Icon scale', 'iconScale', remoteLayerStates.get(config.id)?.iconScale) : '')
         + (config.lineColorThemes ? fieldMarkup(
           'Line color theme',
           'colorTheme',
@@ -4705,7 +6309,7 @@
           'lineWidthBy',
           normalizeLineWidthBy(config, remoteLayerStates.get(config.id)?.lineWidthBy),
           lineWidthFieldOptions(config),
-          'Voltage class is a capacity proxy; utility load and hosting layers use published MW/kW capacity fields. These controls do not estimate live line flow.',
+          'By default, line width carries the available flow, electrical capacity, gas segment, or liquid/water magnitude when the source exposes a usable field. These controls do not estimate live flow.',
         ) : '')
         + `<p class="dc-modal-note">${escapeHtml(config.description)}</p>`;
     }
@@ -4727,6 +6331,8 @@
         glowBy: String(formData.get('glowBy') || 'contestation'),
         glowDistance: normalizeGlowDistance(formData.get('glowDistance')),
         glowBlur: normalizeGlowBlur(formData.get('glowBlur')),
+        iconScale: normalizeIconScale(formData.get('iconScale')),
+        brightness: normalizeBrightness(formData.get('brightness')),
         sizeBy: String(formData.get('sizeBy') || 'none'),
       };
     } else if (activeLayerConfigId === 'power-plants') {
@@ -4737,29 +6343,39 @@
         outlineBy: String(formData.get('outlineBy') || 'technology'),
         fillBy: String(formData.get('fillBy') || 'none'),
         fillFraction: Math.max(0, Math.min(1, Number(formData.get('fillFraction') || 1))),
-        outlineScale: normalizeBoltOutlineScale(formData.get('outlineScale')),
+        outlineWidth: normalizeBoltOutlineWidth(formData.get('outlineWidth')),
+        iconScale: normalizeIconScale(formData.get('iconScale')),
+        brightness: normalizeBrightness(formData.get('brightness')),
         sizeBy: String(formData.get('sizeBy') || 'none'),
+        renderMaterial: normalizePowerPlantRenderMaterial(formData.get('renderMaterial')),
+        adaptiveLod: formData.has('adaptiveLod'),
       };
       normalizePowerPlantLayerFilters(layerFilters.powerPlants);
     } else if (activeLayerConfigId === 'neon-streets') {
       const scope = String(formData.get('scope') || 'i95');
       layerFilters.neonStreets.scope = ['i95', 'interstates', 'major', 'all'].includes(scope) ? scope : 'i95';
       layerFilters.neonStreets.lineWidth = normalizeLineWidthMultiplier(formData.get('lineWidth'));
+      layerFilters.neonStreets.brightness = normalizeBrightness(formData.get('brightness'));
     } else if (activeLayerConfigId === 'enviroscreen') {
       layerFilters.enviroscreen = {
         text: String(formData.get('text') || '').trim().toLowerCase(),
         scoreBand: String(formData.get('scoreBand') || 'all'),
         community: String(formData.get('community') || 'all'),
+        brightness: normalizeBrightness(formData.get('brightness')),
       };
     } else if (activeLayerConfigId === 'parcels') {
       layerFilters.parcels.text = String(formData.get('text') || '').trim().toLowerCase();
+      layerFilters.parcels.brightness = normalizeBrightness(formData.get('brightness'));
     } else {
       const config = REMOTE_LAYERS.find((candidate) => candidate.id === activeLayerConfigId);
       const state = remoteLayerStates.get(activeLayerConfigId);
       if (state) {
         state.text = String(formData.get('text') || '').trim().toLowerCase();
         state.sizeBy = String(formData.get('sizeBy') || 'none');
-        state.colorTheme = String(formData.get('colorTheme') || (config?.lineColorThemes ? 'uniform' : 'default'));
+        state.iconScale = config?.geometry === 'point' ? normalizeIconScale(formData.get('iconScale')) : 1;
+        state.brightness = normalizeBrightness(formData.get('brightness'));
+        state.pointRenderMode = normalizePointRenderMode(config, formData.get('pointRenderMode'));
+        state.colorTheme = String(formData.get('colorTheme') || defaultLineColorTheme(config));
         state.lineWidth = normalizeLineWidthMultiplier(formData.get('lineWidth'));
         state.lineWidthBy = normalizeLineWidthBy(config, formData.get('lineWidthBy'));
       }
@@ -4770,24 +6386,27 @@
   function resetActiveLayerFilter() {
     layerZoomRanges.delete(activeLayerConfigId);
     if (activeLayerConfigId === 'datacenters') {
-      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, sizeBy: 'reported_power_capacity_mw' };
+      layerFilters.datacenters = { text: '', status: 'all', energy: 'all', sentiment: 'all', powerScale: 'all', colorBy: 'energy', outlineBy: 'lifecycle', glowBy: 'contestation', glowDistance: 1, glowBlur: 1, iconScale: 1, brightness: 1, sizeBy: 'reported_power_capacity_mw' };
     } else if (activeLayerConfigId === 'power-plants') {
-      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineScale: 1.04, sizeBy: 'planning_sustained_output_mw' };
+      layerFilters.powerPlants = { text: '', energy: 'all', colorBy: 'energy', outlineBy: 'technology', fillBy: 'resource-adjusted-utilization', fillFraction: 1, outlineWidth: 1.5, outlineScale: 1.04, iconScale: 1, brightness: 1, sizeBy: 'planning_sustained_output_mw', renderMaterial: 'standard', adaptiveLod: false };
     } else if (activeLayerConfigId === 'neon-streets') {
-      layerFilters.neonStreets = { scope: 'i95', lineWidth: 1 };
+      layerFilters.neonStreets = { scope: 'i95', lineWidth: 1, brightness: 1 };
     } else if (activeLayerConfigId === 'enviroscreen') {
-      layerFilters.enviroscreen = { text: '', scoreBand: 'all', community: 'all' };
+      layerFilters.enviroscreen = { text: '', scoreBand: 'all', community: 'all', brightness: 1 };
     } else if (activeLayerConfigId === 'parcels') {
-      layerFilters.parcels = { text: '' };
+      layerFilters.parcels = { text: '', brightness: 1 };
     } else {
       const config = REMOTE_LAYERS.find((candidate) => candidate.id === activeLayerConfigId);
       const state = remoteLayerStates.get(activeLayerConfigId);
       if (state) {
         state.text = '';
         state.sizeBy = 'none';
-        state.colorTheme = config?.lineColorThemes ? 'uniform' : 'default';
+        state.iconScale = 1;
+        state.brightness = 1;
+        state.pointRenderMode = 'points';
+        state.colorTheme = defaultLineColorTheme(config);
         state.lineWidth = 1;
-        state.lineWidthBy = 'zoom';
+        state.lineWidthBy = defaultLineWidthBy(config);
       }
     }
   }
@@ -4963,6 +6582,16 @@
     if (!map.getSource(ENVIROSCREEN_SOURCE_ID)) {
       map.addSource(ENVIROSCREEN_SOURCE_ID, { type: 'geojson', data });
     }
+    const enviroscreenBrightness = normalizeBrightness(layerFilters.enviroscreen.brightness);
+    const enviroscreenFillColor = layerCustomColorHex('enviroscreen')
+      ? adjustHexBrightness(layerCustomColorHex('enviroscreen'), enviroscreenBrightness)
+      : [
+        'step', ['coalesce', ['get', 'P_EJ'], 0],
+        '#01856f', 25,
+        '#81ccbf', 50,
+        '#dec17e', 75,
+        '#a6601b',
+      ];
     const firstLabel = map.getStyle().layers.find((layer) => layer.type === 'symbol')?.id;
     if (!map.getLayer(ENVIROSCREEN_FILL_ID)) {
       map.addLayer({
@@ -4970,14 +6599,8 @@
         type: 'fill',
         source: ENVIROSCREEN_SOURCE_ID,
         paint: {
-          'fill-color': layerCustomColors.get('enviroscreen') || [
-            'step', ['coalesce', ['get', 'P_EJ'], 0],
-            '#01856f', 25,
-            '#81ccbf', 50,
-            '#dec17e', 75,
-            '#a6601b',
-          ],
-          'fill-opacity': .48,
+          'fill-color': enviroscreenFillColor,
+          'fill-opacity': Math.min(1, .48 * enviroscreenBrightness * layerCustomColorAlpha('enviroscreen')),
         },
       }, firstLabel);
     }
@@ -4995,13 +6618,8 @@
     const visibility = layerShownAtZoom('enviroscreen', map.getZoom()) ? 'visible' : 'none';
     map.setLayoutProperty(ENVIROSCREEN_FILL_ID, 'visibility', visibility);
     map.setLayoutProperty(ENVIROSCREEN_LINE_ID, 'visibility', visibility);
-    map.setPaintProperty(ENVIROSCREEN_FILL_ID, 'fill-color', layerCustomColors.get('enviroscreen') || [
-      'step', ['coalesce', ['get', 'P_EJ'], 0],
-      '#01856f', 25,
-      '#81ccbf', 50,
-      '#dec17e', 75,
-      '#a6601b',
-    ]);
+    map.setPaintProperty(ENVIROSCREEN_FILL_ID, 'fill-color', enviroscreenFillColor);
+    map.setPaintProperty(ENVIROSCREEN_FILL_ID, 'fill-opacity', Math.min(1, .48 * enviroscreenBrightness * layerCustomColorAlpha('enviroscreen')));
     applyMapLayerOrder(map);
   }
 
@@ -5066,14 +6684,16 @@
           minzoom: parcelRange.min,
           maxzoom: parcelRange.max,
           paint: {
-            'line-color': layerCustomColors.get('parcels') || 'rgba(121, 207, 241, .82)',
+            'line-color': adjustHexBrightness(layerCustomColorHex('parcels') || '#79cff1', layerFilters.parcels.brightness),
             'line-width': ['interpolate', ['linear'], ['zoom'], 13, .7, 16, 1.2, 19, 1.8],
+            'line-opacity': Math.min(1, .82 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')),
           },
         }, firstLabel);
       }
       const parcelRange = zoomRangeForLayer('parcels');
       if (map.getLayer(PARCEL_LAYER_ID) && map.setLayerZoomRange) map.setLayerZoomRange(PARCEL_LAYER_ID, parcelRange.min, parcelRange.max);
-      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', layerCustomColors.get('parcels') || 'rgba(121, 207, 241, .82)');
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#79cff1', layerFilters.parcels.brightness));
+      map.setPaintProperty(PARCEL_LAYER_ID, 'line-opacity', Math.min(1, .82 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')));
       map.setLayoutProperty(PARCEL_LAYER_ID, 'visibility', 'visible');
       ensureParcelHoverLayers(map, firstLabel);
       loadParcelBoundaries(map);
@@ -5095,7 +6715,7 @@
         id: PARCEL_HOVER_FILL_ID,
         type: 'fill',
         source: PARCEL_HOVER_SOURCE_ID,
-        paint: { 'fill-color': layerCustomColors.get('parcels') || '#f3a712', 'fill-opacity': .16 },
+        paint: { 'fill-color': adjustHexBrightness(layerCustomColorHex('parcels') || '#f3a712', layerFilters.parcels.brightness), 'fill-opacity': Math.min(1, .16 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')) },
       }, firstLabel);
     }
     if (!map.getLayer(PARCEL_HOVER_LINE_ID)) {
@@ -5103,13 +6723,15 @@
         id: PARCEL_HOVER_LINE_ID,
         type: 'line',
         source: PARCEL_HOVER_SOURCE_ID,
-        paint: { 'line-color': layerCustomColors.get('parcels') || '#ffd582', 'line-width': 2 },
+        paint: { 'line-color': adjustHexBrightness(layerCustomColorHex('parcels') || '#ffd582', layerFilters.parcels.brightness), 'line-width': 2, 'line-opacity': layerCustomColorAlpha('parcels') },
       }, firstLabel);
     }
     map.setLayoutProperty(PARCEL_HOVER_FILL_ID, 'visibility', 'visible');
     map.setLayoutProperty(PARCEL_HOVER_LINE_ID, 'visibility', 'visible');
-    map.setPaintProperty(PARCEL_HOVER_FILL_ID, 'fill-color', layerCustomColors.get('parcels') || '#f3a712');
-    map.setPaintProperty(PARCEL_HOVER_LINE_ID, 'line-color', layerCustomColors.get('parcels') || '#ffd582');
+    map.setPaintProperty(PARCEL_HOVER_FILL_ID, 'fill-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#f3a712', layerFilters.parcels.brightness));
+    map.setPaintProperty(PARCEL_HOVER_FILL_ID, 'fill-opacity', Math.min(1, .16 * normalizeBrightness(layerFilters.parcels.brightness) * layerCustomColorAlpha('parcels')));
+    map.setPaintProperty(PARCEL_HOVER_LINE_ID, 'line-color', adjustHexBrightness(layerCustomColorHex('parcels') || '#ffd582', layerFilters.parcels.brightness));
+    map.setPaintProperty(PARCEL_HOVER_LINE_ID, 'line-opacity', layerCustomColorAlpha('parcels'));
     if (hoveredParcel) map.getSource(PARCEL_HOVER_SOURCE_ID).setData(hoveredParcel);
     applyMapLayerOrder(map);
   }
@@ -5224,7 +6846,7 @@
   }
 
   function topMapHoverTarget(map, point, sourceById) {
-    const queryPoint = { x: point.x, y: point.y };
+    const queryPoint = new maplibregl.Point(point.x, point.y);
     const candidates = [];
     const dataCenter = topDataCenterHoverRecord(map, point);
     if (dataCenter) {
@@ -5239,22 +6861,33 @@
       });
     }
     if (deckHoverTarget) candidates.push({ ...deckHoverTarget, z: layerZIndex(deckHoverTarget.layerId) });
-    if (
-      document.getElementById('show-power-plants').checked
-      && document.getElementById('hover-power-plants').checked
-    ) {
+    const eiaPlantHoverEnabled = document.getElementById('show-power-plants').checked
+      && document.getElementById('hover-power-plants').checked;
+    const globalPlantHoverEnabled = document.getElementById('show-global-power-plants').checked
+      && document.getElementById('hover-global-power-plants').checked;
+    const naceiPlantHoverEnabled = document.getElementById('show-nacei-power-plants').checked
+      && document.getElementById('hover-nacei-power-plants').checked;
+    if (eiaPlantHoverEnabled || globalPlantHoverEnabled || naceiPlantHoverEnabled) {
       const hit = powerPlantBoltLayer?.hitTest(point);
       if (hit?.record) {
         const record = hit.record;
-        const layerZ = layerZIndex('power-plants');
-        candidates.push({
-          kind: 'power-plant',
-          key: `record:${record.id}`,
-          layerId: 'power-plants',
-          record,
-          z: layerZ + Math.min(.99, Math.max(0, hit.zOffset || 0)),
-          render: () => selectRecord(record, sourceById),
-        });
+        const sourceLayerId = record.inventory_source === 'NACEI'
+          ? 'nacei-power-plants'
+          : record.inventory_source === 'WRI' ? 'global-power-plants' : 'power-plants';
+        const sourceHoverEnabled = sourceLayerId === 'power-plants'
+          ? eiaPlantHoverEnabled
+          : sourceLayerId === 'global-power-plants' ? globalPlantHoverEnabled : naceiPlantHoverEnabled;
+        if (sourceHoverEnabled) {
+          const layerZ = layerZIndex(sourceLayerId);
+          candidates.push({
+            kind: 'power-plant',
+            key: `record:${record.id}`,
+            layerId: sourceLayerId,
+            record,
+            z: layerZ + Math.min(.99, Math.max(0, hit.zOffset || 0)),
+            render: () => selectRecord(record, sourceById),
+          });
+        }
       }
     }
 
@@ -5281,7 +6914,8 @@
       }));
     }
     REMOTE_LAYERS.forEach((config) => {
-      if (!remoteLayerStates.get(config.id)?.enabled || !document.getElementById(`hover-${config.id}`).checked || !layerShownAtZoom(config.id, map.getZoom())) return;
+      const hoverEnabled = config.hiddenControl || document.getElementById(`hover-${config.id}`).checked;
+      if (!remoteLayerStates.get(config.id)?.enabled || !hoverEnabled || !layerShownAtZoom(config.id, map.getZoom())) return;
       remoteRenderLayerIds(config).forEach((layerId) => {
         if (!map.getLayer(layerId)) return;
         layerTargets.set(layerId, (feature) => ({
@@ -5398,6 +7032,15 @@
 
   function displayRemoteValue(value, field) {
     if (value === null || value === undefined || String(value).trim() === '') return known(null);
+    if (Array.isArray(value)) return escapeHtml(value.join(', '));
+    if (typeof value === 'string' && value.startsWith('[') && value.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(value);
+        if (Array.isArray(parsed)) return escapeHtml(parsed.join(', '));
+      } catch (_error) {
+        // Render non-JSON bracketed source text unchanged.
+      }
+    }
     if (field === 'UPDATEYR' && /^\d{4}/.test(String(value))) return escapeHtml(String(value).slice(0, 4));
     if (typeof value === 'number' && value > 100000000000) {
       return escapeHtml(new Date(value).toLocaleDateString('en-US'));
@@ -5427,7 +7070,7 @@
     const selectedThemeId = remoteLayerStates.get(config.id)?.colorTheme || (config.lineColorThemes ? 'uniform' : 'default');
     const selectedTheme = config.lineColorThemes?.find((theme) => theme.id === selectedThemeId);
     if (selectedTheme?.id === 'uniform') {
-      const color = layerCustomColors.get(config.id) || config.lineColor || config.color;
+      const color = colorValueString(layerCustomColorHex(config.id) || config.lineColor || config.color, layerCustomColorAlpha(config.id));
       return `<section class="dc-feature-color-key" aria-label="${escapeHtml(config.name)} uniform color"><span class="dc-color-key-swatch" style="--dc-key-color:${escapeHtml(color)}" aria-hidden="true"></span><span><strong>Uniform line color</strong><small>${escapeHtml(selectedTheme.label)}</small></span></section>`;
     }
     if (selectedTheme && selectedTheme.id !== 'default') {
@@ -5443,17 +7086,22 @@
     const active = legend.entries.find((entry) => entry.value === value || entry.aliases?.includes(value));
     const activeEntry = active || legend.fallback;
     const displayedValue = active?.label || value || legend.fallback.label;
-    return `<section class="dc-feature-color-key" aria-label="${escapeHtml(config.name)} color"><span class="dc-color-key-swatch" style="--dc-key-color:${activeEntry.color}" aria-hidden="true"></span><span><strong>Line color</strong><small>${escapeHtml(legend.label)} · ${escapeHtml(displayedValue)}</small></span></section>`;
+    return `<section class="dc-feature-color-key" aria-label="${escapeHtml(config.name)} color"><span class="dc-color-key-swatch" style="--dc-key-color:${activeEntry.color}" aria-hidden="true"></span><span><strong>${config.geometry === 'line' ? 'Line color' : 'Map color'}</strong><small>${escapeHtml(legend.label)} · ${escapeHtml(displayedValue)}</small></span></section>`;
   }
 
   function renderRemoteLayerDetail(config, properties) {
     const title = config.titleFields.map((field) => properties[field]).find((value) => value != null && value !== '') || config.name;
     const facts = config.facts.map(([label, field, suffix = '']) => [label, `${displayRemoteValue(properties[field], field)}${escapeHtml(suffix)}`]);
-    const sources = [[config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])];
-    const recordType = config.staticDataUrl ? 'derived official inventory' : 'live official service';
-    const provenanceNote = config.staticDataUrl
+    const recordSource = config.recordSourceFields
+      ? [[properties[config.recordSourceFields[0]], properties[config.recordSourceFields[1]]]]
+      : [];
+    const sources = [...recordSource, [config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
+      .map(([label, url]) => [label, safeExternalUrl(url)])
+      .filter(([label, url]) => label && url);
+    const recordType = config.recordType || (config.staticDataUrl ? 'derived official inventory' : 'live public service');
+    const provenanceNote = config.provenanceNote || (config.staticDataUrl
       ? 'This point was generated from the cited official boundary and transmission geometry. It is stored locally for fast display and reproducible review.'
-      : 'This feature was queried on demand for the current map view and is not stored by this site.';
+      : 'This feature was queried on demand for the current map view and is not stored by this site.');
     const detail = prepareInspectorDetail();
     detail.innerHTML = `
       <h2>${escapeHtml(title)}</h2>
@@ -5566,6 +7214,7 @@
   }
 
   function visibleType(record) {
+    if (record.record_type === 'power_plant' && powerPlantScope !== 'MD') return false;
     const layerId = record.record_type === 'data_center' ? 'datacenters' : 'power-plants';
     if (!document.getElementById(`show-${layerId}`).checked) return false;
     const map = activeLayerContext?.map;
@@ -5601,28 +7250,98 @@
     return (families[energyFilter] || [energyFilter]).some((code) => codes.includes(code));
   }
 
+  function worldLodPowerPlantRepresentatives(records, map) {
+    if (!map || layerFilters.powerPlants.adaptiveLod === false || map.getZoom() >= 5 || records.length < 1000) {
+      return records;
+    }
+    const cellSize = 64;
+    const width = map.getCanvas().clientWidth;
+    const height = map.getCanvas().clientHeight;
+    const cells = new Map();
+    const sizeFactors = pointScaleFactors(records, layerFilters.powerPlants.sizeBy);
+    records.forEach((record) => {
+      const point = map.project([record.longitude, record.latitude]);
+      if (point.x < -cellSize || point.x > width + cellSize || point.y < -cellSize || point.y > height + cellSize) return;
+      const key = `${Math.floor(point.x / cellSize)}:${Math.floor(point.y / cellSize)}`;
+      const current = cells.get(key);
+      const outputScale = sizeFactors.get(record) || 1;
+      if (!current || outputScale > current.outputScale || (outputScale === current.outputScale && record.id < current.record.id)) {
+        cells.set(key, { record, outputScale });
+      }
+    });
+    return [...cells.values()].map((entry) => entry.record);
+  }
+
   function renderResults(records, markerById) {
     const matches = records.filter((record) => matchesFilters(record));
     const matchedIds = new Set(matches.map((record) => record.id));
     const matchingDataCenters = matches.filter((record) => record.record_type === 'data_center');
     const dataCenterSizeFactors = pointScaleFactors(matchingDataCenters, layerFilters.datacenters.sizeBy);
+    const dataCenterIconScale = normalizeIconScale(layerFilters.datacenters.iconScale);
+    const map = activeLayerContext?.map || null;
+    const cullToViewport = Boolean(map && records.length > LARGE_INVENTORY_MARKER_THRESHOLD);
+    const bounds = cullToViewport ? map.getBounds() : null;
+    const longitudePadding = bounds ? (bounds.getEast() - bounds.getWest()) * LARGE_INVENTORY_VIEW_PADDING : 0;
+    const latitudePadding = bounds ? (bounds.getNorth() - bounds.getSouth()) * LARGE_INVENTORY_VIEW_PADDING : 0;
+    const recordInViewport = (record) => !bounds || !Number.isFinite(record.latitude) || !Number.isFinite(record.longitude)
+      || (record.longitude >= bounds.getWest() - longitudePadding
+        && record.longitude <= bounds.getEast() + longitudePadding
+        && record.latitude >= bounds.getSouth() - latitudePadding
+        && record.latitude <= bounds.getNorth() + latitudePadding);
     records.forEach((record) => {
       const marker = markerById.get(record.id);
       if (!marker) return;
       applyMarkerAppearance(record, marker.getElement());
-      const size = 22 * (dataCenterSizeFactors.get(record) || 1);
+      const size = 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1);
       marker.getElement().style.setProperty('--marker-size', `${size}px`);
-      marker.getElement().hidden = !matchedIds.has(record.id);
+      marker.getElement().dataset.renderSize = String(size);
+      marker.getElement().hidden = !matchedIds.has(record.id) || !recordInViewport(record);
     });
     syncDataCenterMarkerZOrder();
     visibleDataCenterHoverEntries = matchingDataCenters
-      .filter((record) => Number.isFinite(record.latitude) && Number.isFinite(record.longitude) && markerById.has(record.id))
+      .filter((record) => Number.isFinite(record.latitude) && Number.isFinite(record.longitude) && markerById.has(record.id) && recordInViewport(record))
       .map((record) => ({
         record,
-        size: 22 * (dataCenterSizeFactors.get(record) || 1),
+        size: 22 * dataCenterIconScale * (dataCenterSizeFactors.get(record) || 1),
       }))
       .sort((left, right) => left.size - right.size || left.record.id.localeCompare(right.record.id));
-    powerPlantBoltLayer?.setRecords(matches.filter((record) => record.record_type === 'power_plant'));
+    const eiaPowerPlantsVisible = document.getElementById('show-power-plants').checked
+      && (!map || layerShownAtZoom('power-plants', map.getZoom()));
+    const globalPowerPlantsVisible = document.getElementById('show-global-power-plants').checked
+      && (!map || layerShownAtZoom('global-power-plants', map.getZoom()));
+    const naceiPowerPlantsVisible = document.getElementById('show-nacei-power-plants').checked
+      && (!map || layerShownAtZoom('nacei-power-plants', map.getZoom()));
+    const cullNationwideBolts = Boolean(map && layerFilters.powerPlants.adaptiveLod === true && map.getZoom() >= 5);
+    const nationwideBounds = cullNationwideBolts ? map.getBounds() : null;
+    const nationwideLongitudePadding = nationwideBounds ? (nationwideBounds.getEast() - nationwideBounds.getWest()) * .15 : 0;
+    const nationwideLatitudePadding = nationwideBounds ? (nationwideBounds.getNorth() - nationwideBounds.getSouth()) * .15 : 0;
+    const nationwideRecordInViewport = (record) => !nationwideBounds
+      || (record.longitude >= nationwideBounds.getWest() - nationwideLongitudePadding
+        && record.longitude <= nationwideBounds.getEast() + nationwideLongitudePadding
+        && record.latitude >= nationwideBounds.getSouth() - nationwideLatitudePadding
+        && record.latitude <= nationwideBounds.getNorth() + nationwideLatitudePadding);
+    const matchingEiaPowerPlantDomain = !eiaPowerPlantsVisible ? [] : powerPlantScope === 'US'
+      ? nationwidePowerPlantRecords.filter((record) => matchesFilters(record, false))
+      : matches.filter((record) => record.record_type === 'power_plant');
+    const matchingGlobalPowerPlantDomain = !globalPowerPlantsVisible ? [] : globalPowerPlantRecords
+      .filter((record) => globalPowerPlantScope === 'WORLD' || ['CAN', 'MEX'].includes(record.country_code))
+      .filter((record) => matchesFilters(record, false));
+    const matchingNaceiPowerPlantDomain = !naceiPowerPlantsVisible ? [] : naceiPowerPlantRecords
+      .filter((record) => matchesFilters(record, false));
+    const matchingEiaPowerPlants = matchingEiaPowerPlantDomain.filter(nationwideRecordInViewport);
+    const matchingGlobalPowerPlants = matchingGlobalPowerPlantDomain.filter(nationwideRecordInViewport);
+    const matchingNaceiPowerPlants = matchingNaceiPowerPlantDomain.filter(nationwideRecordInViewport);
+    const powerPlantScaleDomain = [
+      ...matchingEiaPowerPlantDomain,
+      ...matchingGlobalPowerPlantDomain,
+      ...matchingNaceiPowerPlantDomain,
+    ];
+    const allMatchingPowerPlants = [...matchingEiaPowerPlants, ...matchingGlobalPowerPlants, ...matchingNaceiPowerPlants];
+    powerPlantBoltLayer?.setRecords(
+      worldLodPowerPlantRepresentatives(allMatchingPowerPlants, map),
+      powerPlantScaleDomain.length,
+      powerPlantScaleDomain,
+    );
     applyMapLayerOrder(activeLayerContext?.map);
   }
 
@@ -5640,6 +7359,87 @@
       : '<h2>Hover a map icon</h2><p>Move over a visible icon or map feature to see what it represents.</p>';
   }
 
+  function renderIdleInspectorNews(force = false) {
+    if (inspectorPinnedKey || inspectorHoverKey) return false;
+    const detail = prepareInspectorDetail();
+    if (mobileInspectorMode()) {
+      detail.dataset.inspectorMode = 'default';
+      detail.innerHTML = defaultInspectorMarkup();
+      return true;
+    }
+    if (!force && detail.dataset.inspectorMode === 'news') return false;
+    const news = [...datacenterNewsItems]
+      .filter((item) => item?.title && item?.url)
+      .sort((left, right) => String(right.published_date || '').localeCompare(String(left.published_date || '')))
+      .slice(0, 6);
+    detail.dataset.inspectorMode = 'news';
+    if (!news.length) {
+      detail.innerHTML = '<h2>Hover a map icon</h2><p>Move over a visible icon or map feature to see what it represents.</p>';
+      return true;
+    }
+    detail.innerHTML = `
+      <h2>Latest data-center news</h2>
+      <p class="dc-type">Idle inspector · Maryland-first policy, permitting, grid, and development coverage</p>
+      <div class="dc-news-list">
+        ${news.map((item) => `
+          <article class="dc-news-card" data-news-id="${escapeHtml(item.id)}" data-target-record-id="${escapeHtml(item.target_record_id || '')}" data-target-longitude="${escapeHtml(item.target?.longitude ?? '')}" data-target-latitude="${escapeHtml(item.target?.latitude ?? '')}" data-target-zoom="${escapeHtml(item.target?.zoom ?? '')}">
+            <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">
+              <span>${escapeHtml(formatNewsDate(item.published_date))} · ${escapeHtml(item.publisher || 'Source')}</span>
+              <strong>${escapeHtml(item.title)}</strong>
+            </a>
+            <p>${escapeHtml(item.summary || '')}</p>
+            ${item.tags?.length ? `<div class="dc-news-tags">${item.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join('')}</div>` : ''}
+          </article>
+        `).join('')}
+      </div>
+      <p class="dc-record-note">This is a dated public-news snapshot for orientation. Facility facts on the map remain tied to the source register and record-specific evidence.</p>
+    `;
+    return true;
+  }
+
+  function newsTargetForElement(element) {
+    const recordId = element?.dataset?.targetRecordId;
+    if (recordId && activeLayerContext?.records) {
+      const record = activeLayerContext.records.find((candidate) => candidate.id === recordId);
+      if (record && Number.isFinite(record.longitude) && Number.isFinite(record.latitude)) {
+        return {
+          center: [record.longitude, record.latitude],
+          zoom: record.record_type === 'data_center' ? 11.6 : 9.2,
+        };
+      }
+    }
+    const longitude = Number(element?.dataset?.targetLongitude);
+    const latitude = Number(element?.dataset?.targetLatitude);
+    if (Number.isFinite(longitude) && Number.isFinite(latitude)) {
+      const zoom = Number(element.dataset.targetZoom);
+      return { center: [longitude, latitude], zoom: Number.isFinite(zoom) ? zoom : 8.5 };
+    }
+    return null;
+  }
+
+  function shiftMapToNewsTarget(element) {
+    const map = activeLayerContext?.map;
+    if (!map || inspectorPinnedKey) return;
+    const target = newsTargetForElement(element);
+    if (!target) return;
+    map.easeTo({
+      center: target.center,
+      zoom: Math.max(map.getZoom(), target.zoom),
+      duration: 650,
+      essential: true,
+    });
+  }
+
+  function setupNewsHoverTargets() {
+    const detail = document.getElementById('record-detail');
+    const hover = (event) => {
+      const card = event.target.closest?.('.dc-news-card');
+      if (card && detail.contains(card)) shiftMapToNewsTarget(card);
+    };
+    detail.addEventListener('pointerover', hover);
+    detail.addEventListener('focusin', hover);
+  }
+
   function renderHoveredInspector(key, render, layerId = null) {
     if (mobileInspectorMode()) return false;
     if (inspectorPinnedKey) return false;
@@ -5648,6 +7448,7 @@
     inspectorHoverLayerId = layerId;
     updateLayerSelectionHighlight();
     render();
+    document.getElementById('record-detail').dataset.inspectorMode = 'detail';
     return true;
   }
 
@@ -5657,6 +7458,7 @@
     inspectorHoverKey = null;
     inspectorHoverLayerId = null;
     updateLayerSelectionHighlight();
+    renderIdleInspectorNews();
   }
 
   function pinInspector(key, render, layerId = null) {
@@ -5666,6 +7468,7 @@
     inspectorHoverLayerId = layerId;
     updateLayerSelectionHighlight();
     render();
+    document.getElementById('record-detail').dataset.inspectorMode = 'detail';
     document.querySelector('.dc-detail').classList.add('is-pinned');
     document.getElementById('close-record-detail').hidden = false;
     return true;
@@ -5679,8 +7482,7 @@
     updateLayerSelectionHighlight();
     document.querySelector('.dc-detail').classList.remove('is-pinned');
     document.getElementById('close-record-detail').hidden = true;
-    const detail = prepareInspectorDetail();
-    detail.innerHTML = defaultInspectorMarkup();
+    renderIdleInspectorNews(true);
   }
 
   function pinHoverTarget(target) {
@@ -5701,7 +7503,9 @@
   }
 
   function recordLayerId(record) {
-    return record?.record_type === 'power_plant' ? 'power-plants' : 'datacenters';
+    if (record?.record_type !== 'power_plant') return 'datacenters';
+    if (record.inventory_source === 'NACEI') return 'nacei-power-plants';
+    return record.inventory_source === 'WRI' ? 'global-power-plants' : 'power-plants';
   }
 
   function updateLayerSelectionHighlight() {
@@ -5724,8 +7528,8 @@
     });
   }
 
-  function matchesFilters(record) {
-      if (!visibleType(record)) return false;
+  function matchesFilters(record, requireVisible = true) {
+      if (requireVisible && !visibleType(record)) return false;
       const isDataCenter = record.record_type === 'data_center';
       const statusFilter = isDataCenter ? layerFilters.datacenters.status : 'all';
       const energyFilter = isDataCenter ? layerFilters.datacenters.energy : layerFilters.powerPlants.energy;
@@ -5745,7 +7549,7 @@
         if (sentimentFilter === 'unknown' && score !== null) return false;
       }
       if (powerScaleFilter !== 'all' && record.power_scale_class !== powerScaleFilter) return false;
-      const haystack = [record.name, record.operator, record.county, record.city, record.primary_technology, ...(record.technology_tags || [])]
+      const haystack = [record.name, record.operator, record.county, record.city, record.primary_technology, ...(record.location_tags || []), ...(record.technology_tags || [])]
         .filter(Boolean).join(' ').toLowerCase();
       if (textFilter && !haystack.includes(textFilter)) return false;
       if (activeTagFilters.length) {
@@ -5783,6 +7587,7 @@
       ...(record.record_type === 'data_center' && record.contestation_label ? [`Contestation: ${record.contestation_label}`] : []),
       ...(record.status_tags || []),
       ...(record.technology_tags || []),
+      ...(record.location_tags || []),
     ].flatMap(splitTagLabel);
     return labels.filter((label, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === label.toLowerCase()) === index);
   }
@@ -5799,7 +7604,7 @@
   }
 
   function contestationColor(record) {
-    return ['#668096', '#89a9bc', '#e0b052', '#e77b45', '#d94b50'][record.contestation_score] || '#668096';
+    return ['#19c37d', '#89a9bc', '#e0b052', '#e77b45', '#d94b50'][record.contestation_score] || '#19c37d';
   }
 
   function iconStyleDescription(record) {
@@ -5848,17 +7653,8 @@
 
   function renderDetail(record, sourceById) {
     const detail = prepareInspectorDetail();
+    const recordSourceIds = collectRecordSourceIds(record);
     if (record.record_type === 'data_center') {
-      const recordSourceIds = [...new Set([
-        ...(record.source_ids || []),
-        ...(record.profile_source_ids || []),
-        ...(record.year_built_source_ids || []),
-        ...(record.status_source_ids || []),
-        ...(record.power_scale_source_ids || []),
-        ...(record.projected_power_demand_source_ids || []),
-        ...(record.contestation_source_ids || []),
-        ...(record.salient_news_source_ids || []),
-      ])];
       detail.innerHTML = `
         ${renderHoveredIconHeading(record)}
         ${renderEnergySummary(record)}
@@ -5868,7 +7664,13 @@
         ${renderFactGroup('Facility', [
           ['Operator', known(record.operator)],
           ['Owner', known(record.owner)],
+          ['Facility aliases', known(record.facility_alias_ids?.join(', '))],
           ['Address', known([record.street_address, record.city, record.state, record.postal_code].filter(Boolean).join(', '))],
+          ['Location tags', known(record.location_tags?.join(', '))],
+          ['Census state FIPS', known(record.census_state_fips)],
+          ['Census county FIPS', known(record.census_county_fips)],
+          ['Census place FIPS', known(record.census_place_fips)],
+          ['ISO region', known(record.iso_region)],
           ['Year built', Number.isInteger(record.year_built) ? `${record.year_built} · ${escapeHtml(record.year_built_basis)}` : `${known(record.year_built_status)} · ${escapeHtml(record.year_built_basis)}`],
           ['Development status', known(record.development_status)],
           ['Plan', known(record.plan_detail)],
@@ -5901,6 +7703,8 @@
           ['UPS energy', known(record.ups_energy_mwh, ' MWh')],
           ['Cooling/water', known(record.cooling_water_detail)],
         ])}
+        ${renderFundingBreakdown(record, sourceById)}
+        ${renderOperationalFinance(record, sourceById)}
         ${renderFactGroup('Permits, finance, and public response', [
           ['Permit status', known(record.permit_status)],
           ['Air permit', known(record.air_permit_status)],
@@ -5919,29 +7723,47 @@
         ${renderRecordSources(recordSourceIds, sourceById)}
       `;
     } else {
+      const isGlobalPlant = Boolean(record.country_code);
+      const isWriPlant = record.inventory_source === 'WRI';
+      const isNaceiPlant = record.inventory_source === 'NACEI';
+      const originalSourceUrl = safeExternalUrl(record.source_url);
       detail.innerHTML = `
         ${renderHoveredIconHeading(record)}
-        <p class="dc-type">EIA plant ${record.eia_plant_code}</p>
+        <p class="dc-type">${isGlobalPlant
+          ? `${isNaceiPlant ? 'NACEI official comparison plant' : 'WRI global plant'} · ${escapeHtml(record.country)} · ISO3 ${escapeHtml(record.country_code)}`
+          : `EIA plant ${record.eia_plant_code}`}</p>
         ${renderEnergySummary(record)}
         ${renderPlantImage(record)}
         ${renderFactGroup('Plant profile', [
+          ['Country', known(record.country)],
+          ['ISO3 country code', known(record.country_code)],
           ['Operator', known(record.operator)],
           ['County', known(record.county)],
+          ['Location tags', known(record.location_tags?.join(', '))],
+          ['Census state FIPS', known(record.census_state_fips)],
+          ['Census county FIPS', known(record.census_county_fips)],
+          ['Census place FIPS', known(record.census_place_fips)],
+          ['ISO region', known(record.iso_region)],
           ['Earliest operating year', Number.isInteger(record.year_built) ? `${record.year_built} · ${escapeHtml(record.year_built_basis)}` : known(record.year_built_status)],
           ['Generator status', known(record.development_status)],
           ['EIA status codes', known(record.generator_status_codes?.join(', '))],
           ['Primary technology', known(record.primary_technology)],
           ['All technologies', known(record.technology_tags?.join(', '))],
-          ['Fuel codes', known(record.energy_source_codes.join(', '))],
-          ['Coordinate confidence', known(`${record.coordinate_confidence} · ${record.latitude_decimal_places}/${record.longitude_decimal_places} decimal places`)],
-          ['Shared coordinate', record.shared_coordinate_count > 1 ? `Yes · ${record.shared_coordinate_count} plant records` : 'No'],
-          ['Aerial frame', `${number(record.aerial_frame_width_m)} × ${number(record.aerial_frame_height_m)} m`],
+          ['Fuel codes', known(record.energy_source_codes?.join(', '))],
+          ['Capacity source year', known(record.source_year)],
+          ['Original source', known(record.source_name)],
+          ['Geolocation source', known(record.geolocation_source)],
+          ['Coordinate confidence', isGlobalPlant ? known(record.coordinate_confidence) : known(`${record.coordinate_confidence} · ${record.latitude_decimal_places}/${record.longitude_decimal_places} decimal places`)],
+          ['Shared coordinate', isGlobalPlant ? known(null) : record.shared_coordinate_count > 1 ? `Yes · ${record.shared_coordinate_count} plant records` : 'No'],
+          ['Aerial frame', isGlobalPlant ? known(null) : `${number(record.aerial_frame_width_m)} × ${number(record.aerial_frame_height_m)} m`],
         ])}
         ${renderFactGroup('Production', [
           ['Capacity', known(record.nameplate_capacity_mw, ' MW')],
           ['Planning output', record.planning_sustained_output_mw == null ? known(null) : `${number(record.planning_sustained_output_mw, 2)} MW`],
           ['Capacity factor', record.annual_capacity_factor == null ? known(null) : `${number(record.annual_capacity_factor * 100, 1)}%`],
-          ['Planning basis', known(record.planning_output_basis)],
+          ['Planning basis', known(record.planning_output_basis || (isGlobalPlant
+            ? 'Code Collective fuel-family heuristic for visual scaling; not publisher-reported output.'
+            : null))],
           ['Generators', known(record.generator_count)],
           ['Average generation', powerPlantAverageGeneration(record) == null ? known(null) : `${number(powerPlantAverageGeneration(record), 1)} MWh`],
         ])}
@@ -5950,13 +7772,13 @@
           ['Air permit', known(record.air_permit_status)],
           ['Legal status', known(record.legal_status)],
         ])}
-        <p class="dc-record-note">${escapeHtml(record.coordinate_confidence_basis)}</p>
-        ${renderRecordSources([...new Set([
-          record.capacity_source_id,
-          record.generation_source_id,
-          ...(record.year_built_source_ids || []),
-          ...(record.status_source_ids || []),
-        ].filter(Boolean))], sourceById)}
+        <p class="dc-record-note">${escapeHtml(isGlobalPlant
+          ? isNaceiPlant
+            ? 'Official NACEI comparison record limited to North American plants of at least 100 MW and dated August 2017. It is intentionally separate from the broader WRI baseline.'
+            : 'WRI Global Power Plant Database v1.3.0 is an older research baseline. Capacity source years vary and are shown above; coordinates have not been independently surveyed by Code Collective.'
+          : record.coordinate_confidence_basis)}</p>
+        ${isGlobalPlant ? `<div class="dc-record-sources"><strong>Sources</strong><ul><li><a href="${isWriPlant ? 'https://datasets.wri.org/datasets/global-power-plant-database' : 'https://open.canada.ca/data/en/dataset/40fbe40c-01cd-49d3-8add-0d20ed64c90d'}" target="_blank" rel="noopener noreferrer">${isWriPlant ? 'WRI Global Power Plant Database v1.3.0' : 'North American Cooperation on Energy Information'}</a></li>${isWriPlant && originalSourceUrl ? `<li><a href="${escapeHtml(originalSourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(record.source_name || 'Original country source')}</a></li>` : ''}</ul></div>` : ''}
+        ${renderRecordSources(recordSourceIds, sourceById)}
       `;
     }
     bindInspectorTagFilters(detail);
@@ -6002,7 +7824,7 @@
   }
 
   function renderPlantImage(record) {
-    return renderEntityImage(record) + renderSiteAnimation(record);
+    return renderEntityImage(record) + (record.country_code ? '' : renderSiteAnimation(record));
   }
 
   function renderEntityImage(record) {
@@ -6154,10 +7976,10 @@
       image.classList.remove('is-aerial-ready');
       image.closest('.dc-aerial-motion')?.classList.remove('is-aerial-ready');
       image.alt = `Generated infrastructure illustration for ${record.name}`;
-      const figure = image.closest('.dc-plant-image');
-      figure.classList.remove('dc-plant-image--aerial');
-      figure.classList.add('dc-plant-image--illustration');
-      const label = figure.querySelector('[data-aerial-status]');
+      const figure = image.closest('.dc-plant-image, .dc-entity-image');
+      figure?.classList.remove('dc-plant-image--aerial');
+      figure?.classList.add('dc-plant-image--illustration');
+      const label = figure?.querySelector('[data-aerial-status]');
       if (label) label.textContent = 'Aerial imagery unavailable';
     }
   }
@@ -6359,6 +8181,93 @@
     </section>`;
   }
 
+  function fundingAmountLabel(item) {
+    if (Number.isFinite(item?.amount_usd)) return `$${number(item.amount_usd)}`;
+    if (Number.isFinite(item?.aggregate_amount_usd)) return `$${number(item.aggregate_amount_usd)} aggregate`;
+    return 'Amount not isolated';
+  }
+
+  function pieSlicePath(start, end) {
+    const radius = 47;
+    const center = 50;
+    const startX = center + radius * Math.cos(start);
+    const startY = center + radius * Math.sin(start);
+    const endX = center + radius * Math.cos(end);
+    const endY = center + radius * Math.sin(end);
+    const largeArc = end - start > Math.PI ? 1 : 0;
+    return `M ${center} ${center} L ${startX.toFixed(3)} ${startY.toFixed(3)} A ${radius} ${radius} 0 ${largeArc} 1 ${endX.toFixed(3)} ${endY.toFixed(3)} Z`;
+  }
+
+  function renderFundingPie(items) {
+    const funded = items
+      .filter((item) => Number.isFinite(item?.amount_usd) && item.amount_usd > 0);
+    const total = funded.reduce((sum, item) => sum + item.amount_usd, 0);
+    if (!funded.length || total <= 0) return '';
+    const colors = ['#8bd7ff', '#f6c85f', '#7bd88f', '#f17c67', '#b89cff', '#64e5d2'];
+    let cursor = -Math.PI / 2;
+    const slices = funded.map((item, index) => {
+      const next = cursor + (Math.PI * 2 * item.amount_usd / total);
+      const slice = `<path d="${pieSlicePath(cursor, next)}" fill="${colors[index % colors.length]}"><title>${escapeHtml(item.funder)} · ${fundingAmountLabel(item)}</title></path>`;
+      cursor = next;
+      return slice;
+    }).join('');
+    return `<svg class="dc-funding-pie" viewBox="0 0 100 100" role="img" aria-label="Known funder breakdown">${slices}<circle cx="50" cy="50" r="47" fill="none" stroke="rgba(255,255,255,.74)" stroke-width="1.2"></circle></svg>`;
+  }
+
+  function renderFundingBreakdown(record, sourceById) {
+    const items = Array.isArray(record.funding_breakdown) ? record.funding_breakdown : [];
+    const sourceIds = new Set(record.funding_source_ids || []);
+    items.forEach((item) => (item.source_ids || []).forEach((id) => sourceIds.add(id)));
+    const list = items.length
+      ? items.map((item, index) => `
+        <li>
+          <span class="dc-funding-swatch" style="--dc-funding-color: ${['#8bd7ff', '#f6c85f', '#7bd88f', '#f17c67', '#b89cff', '#64e5d2'][index % 6]}" aria-hidden="true"></span>
+          <span><strong>${escapeHtml(item.funder || 'Unnamed funder')}</strong><small>${escapeHtml(fundingAmountLabel(item))}${item.amount_status ? ` · ${escapeHtml(item.amount_status)}` : ''}</small>${item.basis ? `<em>${escapeHtml(item.basis)}</em>` : ''}</span>
+        </li>`).join('')
+      : '<li><span><strong>No named funder breakdown found</strong><small>Amounts and responsible funders were not isolated in reviewed records.</small></span></li>';
+    return `<section class="dc-funding" aria-label="Financial data and funders">
+      <div class="dc-funding-head">
+        <h3>Financial data</h3>
+        <strong>${record.funding_total_known_usd == null ? 'No chartable total' : `$${number(record.funding_total_known_usd)}`}</strong>
+      </div>
+      <p>${escapeHtml(record.funding_summary || 'No facility-specific funder breakdown was identified in the reviewed records.')}</p>
+      <div class="dc-funding-body">
+        ${renderFundingPie(items)}
+        <ul>${list}</ul>
+      </div>
+      ${renderRecordSources([...sourceIds], sourceById)}
+    </section>`;
+  }
+
+  function renderOperationalFinance(record, sourceById) {
+    const sourceIds = new Set(record.operational_finance_source_ids || []);
+    const items = Array.isArray(record.operational_finance_items) ? record.operational_finance_items : [];
+    items.forEach((item) => (item.source_ids || []).forEach((id) => sourceIds.add(id)));
+    const rows = [
+      ['Estimated annual electricity use', record.estimated_annual_electricity_use_mwh == null ? known(null) : `${number(record.estimated_annual_electricity_use_mwh, 1)} MWh`],
+      ['Estimated annual electricity cost', record.estimated_annual_electricity_cost_usd == null ? known(null) : `$${number(record.estimated_annual_electricity_cost_usd)}`],
+      ['Electricity price proxy', record.electricity_cost_rate_cents_per_kwh == null ? known(null) : `${number(record.electricity_cost_rate_cents_per_kwh, 2)}¢/kWh`],
+      ['Cost basis', known(record.electricity_cost_basis)],
+    ];
+    const itemList = items.length ? `
+      <ul class="dc-operational-finance-list">
+        ${items.map((item) => `
+          <li>
+            <strong>${escapeHtml(item.label || 'Operational finance item')}</strong>
+            <span>${item.amount_usd == null ? escapeHtml(item.amount_status || 'Amount not isolated') : `$${number(item.amount_usd)} · ${escapeHtml(item.amount_status || 'estimate')}`}</span>
+            <em>${escapeHtml(item.basis || '')}</em>
+          </li>
+        `).join('')}
+      </ul>` : '';
+    return `<section class="dc-operational-finance" aria-label="Operational finance">
+      <h3>Operational finance</h3>
+      <p>${escapeHtml(record.operational_finance_summary || 'No facility-specific operational finance was isolated in the reviewed records.')}</p>
+      <dl class="dc-facts">${rows.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${value}</dd>`).join('')}</dl>
+      ${itemList}
+      ${renderRecordSources([...sourceIds], sourceById)}
+    </section>`;
+  }
+
   function renderRecordSources(ids, sourceById) {
     const links = (ids || []).map((id) => sourceById.get(id)).filter(Boolean).map((source) => {
       const href = source.local_path || source.url;
@@ -6367,9 +8276,25 @@
     return links ? `<div class="dc-record-sources"><strong>Sources</strong><ul>${links}</ul></div>` : '';
   }
 
+  function collectRecordSourceIds(record) {
+    const ids = new Set();
+    const visit = (value, key = '') => {
+      if (key.endsWith('_source_id') && typeof value === 'string') ids.add(value);
+      if ((key === 'source_ids' || key.endsWith('_source_ids')) && Array.isArray(value)) {
+        value.filter((item) => typeof item === 'string').forEach((item) => ids.add(item));
+      }
+      if (Array.isArray(value)) value.forEach((item) => visit(item));
+      else if (value && typeof value === 'object') {
+        Object.entries(value).forEach(([childKey, childValue]) => visit(childValue, childKey));
+      }
+    };
+    visit(record);
+    return [...ids];
+  }
+
   function renderSources(sources) {
     document.getElementById('source-list').innerHTML = sources.map((source) => `
-      <article class="dc-source-card">
+      <article class="dc-source-card" data-source-id="${escapeHtml(source.id)}">
         <h3>${escapeHtml(source.title)}</h3>
         <p>${escapeHtml(source.publisher)} · ${escapeHtml(source.source_tier)} · retrieved ${escapeHtml(source.retrieved_date)}</p>
         <p>${escapeHtml(source.used_for)}</p>

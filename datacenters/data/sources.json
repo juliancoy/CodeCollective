@@ -1,5 +1,17 @@
 [
   {
+    "id": "frederick-oed-data-centers-2026",
+    "title": "Data Centers",
+    "publisher": "Frederick County Office of Economic Development",
+    "document_date": null,
+    "retrieved_date": "2026-08-10",
+    "url": "https://www.discoverfrederickmd.com/171/Data-Centers",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local government economic-development page",
+    "used_for": "Frederick County data-center coverage check, Quantum Frederick campus scale, utilities context, and legacy SSA and Fannie Mae facility summaries"
+  },
+  {
     "id": "mde-frederick-data-center-hub",
     "title": "Frederick Data Center Sampling/Reports",
     "publisher": "Maryland Department of the Environment",
@@ -99,6 +111,18 @@
     "used_for": "site-plan identity and acreage"
   },
   {
+    "id": "frederick-planning-bauxite-ii-iii-2024",
+    "title": "Frederick County Planning Commission Agenda: Bauxite II and Bauxite III Site Plan Decisions",
+    "publisher": "Frederick County Planning Commission",
+    "document_date": "2024-12-11",
+    "retrieved_date": "2026-08-10",
+    "url": "https://www.frederickcountymd.gov/AgendaCenter/ViewFile/Agenda/580?html=true",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local government",
+    "used_for": "Bauxite II and Bauxite III site-plan identities, square footage, acreage, locations, zoning, planning region, and agenda status"
+  },
+  {
     "id": "eia-860-2024-final",
     "title": "Form EIA-860 2024 Final Data",
     "publisher": "U.S. Energy Information Administration",
@@ -137,6 +161,18 @@
     "used_for": "statewide residential price, sales, revenue, and customer count"
   },
   {
+    "id": "eia-retail-sales-md-all-sectors-2024",
+    "title": "Electricity Retail Sales: Maryland All Sectors, 2024",
+    "publisher": "U.S. Energy Information Administration",
+    "document_date": "2025",
+    "retrieved_date": "2026-08-10",
+    "url": "https://api.eia.gov/v2/electricity/retail-sales/data/?api_key=DEMO_KEY&frequency=annual&data[0]=sales&data[1]=customers&data[2]=price&facets[stateid][]=MD&start=2024&end=2024",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary federal survey",
+    "used_for": "statewide all-sector, commercial, industrial, transportation, and residential retail electricity sales used in county total-demand planning estimates"
+  },
+  {
     "id": "acs-2024-b25003-md-counties",
     "title": "ACS 2024 5-year Table B25003: Tenure by Maryland County",
     "publisher": "U.S. Census Bureau via Census Reporter",
@@ -147,6 +183,18 @@
     "local_sha256": null,
     "source_tier": "primary federal survey via public API",
     "used_for": "occupied housing units used as the county allocation proxy for residential electricity-demand estimates"
+  },
+  {
+    "id": "acs-2024-b23025-md-counties",
+    "title": "ACS 2024 5-year Table B23025: Employment Status by Maryland County",
+    "publisher": "U.S. Census Bureau via Census Reporter",
+    "document_date": "2024",
+    "retrieved_date": "2026-08-10",
+    "url": "https://api.censusreporter.org/1.0/data/show/latest?table_ids=B23025&geo_ids=050%7C04000US24",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary federal survey via public API",
+    "used_for": "employed resident population used as the county allocation proxy for non-residential electricity-demand estimates"
   },
   {
     "id": "maryland-commerce-data-center-incentive",
@@ -185,11 +233,23 @@
     "used_for": "address-to-coordinate conversion only"
   },
   {
+    "id": "census-geocoder",
+    "title": "U.S. Census Geocoder",
+    "publisher": "U.S. Census Bureau",
+    "document_date": null,
+    "retrieved_date": "2026-08-10",
+    "url": "https://geocoding.geo.census.gov/geocoder/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary federal geocoder",
+    "used_for": "address-to-coordinate conversion for Frederick County data-center additions"
+  },
+  {
     "id": "mdp-sdat-parcel-property",
     "title": "MDP/SDAT Statewide Parcel Boundaries",
     "publisher": "Maryland Department of Planning / State Department of Assessments and Taxation",
     "document_date": null,
-    "retrieved_date": "2026-08-09",
+    "retrieved_date": "2026-08-11",
     "url": "https://mdgeodata.md.gov/imap/rest/services/PlanningCadastre/MD_ParcelBoundaries/MapServer/0",
     "local_path": null,
     "local_sha256": null,
@@ -197,97 +257,388 @@
     "used_for": "parcel-intersected structure year built and property context for operating data-center sites"
   },
   {
-    "id": "maryland-dgs-annapolis-data-center", "title": "DGS Managed State Facilities: Annapolis Data Center", "publisher": "Maryland Department of General Services", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://dgs.maryland.gov/Pages/Facilities/locations_detail.aspx?LID=1", "local_path": null, "local_sha256": null, "source_tier": "primary government", "used_for": "facility address, state ownership context, year built, floor area, agency"
+    "id": "maryland-dgs-annapolis-data-center",
+    "title": "DGS Managed State Facilities: Annapolis Data Center",
+    "publisher": "Maryland Department of General Services",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://dgs.maryland.gov/Pages/Facilities/locations_detail.aspx?LID=1",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary government",
+    "used_for": "facility address, state ownership context, year built, floor area, agency"
   },
   {
-    "id": "maryland-doit-cloud-hosting", "title": "Cloud Hosting, Backup and Storage Services", "publisher": "Maryland Department of Information Technology", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://doit.maryland.gov/services/chbs/Pages/default.aspx", "local_path": null, "local_sha256": null, "source_tier": "primary government", "used_for": "current access to Annapolis Data Center and state use of TierPoint colocation"
+    "id": "maryland-doit-cloud-hosting",
+    "title": "Cloud Hosting, Backup and Storage Services",
+    "publisher": "Maryland Department of Information Technology",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://doit.maryland.gov/services/chbs/Pages/default.aspx",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary government",
+    "used_for": "current access to Annapolis Data Center and state use of TierPoint colocation"
   },
   {
-    "id": "maryland-comptroller-adc-rfp", "title": "Comptroller Integrated Tax System RFP E00B8400029", "publisher": "Comptroller of Maryland", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://doit.maryland.gov/contracts/Documents/catsPlus_torfp_status/E00B8400029-ComptrollerofMD-ITS-RFP.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary government procurement", "used_for": "Annapolis Data Center role as a state mainframe facility"
+    "id": "maryland-comptroller-adc-rfp",
+    "title": "Comptroller Integrated Tax System RFP E00B8400029",
+    "publisher": "Comptroller of Maryland",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://doit.maryland.gov/contracts/Documents/catsPlus_torfp_status/E00B8400029-ComptrollerofMD-ITS-RFP.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary government procurement",
+    "used_for": "Annapolis Data Center role as a state mainframe facility"
   },
   {
-    "id": "tierpoint-baltimore", "title": "Baltimore Data Center", "publisher": "TierPoint", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://www.tierpoint.com/data-centers/maryland/baltimore/", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "operating status, address, space, generators and support"
+    "id": "tierpoint-baltimore",
+    "title": "Baltimore Data Center",
+    "publisher": "TierPoint",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.tierpoint.com/data-centers/maryland/baltimore/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "operating status, address, space, generators and support"
   },
   {
-    "id": "tierpoint-baltimore-spec", "title": "Baltimore (BAL) Data Center Specification Sheet", "publisher": "TierPoint", "document_date": "2023", "retrieved_date": "2026-08-07", "url": "https://web.tierpoint.com/hubfs/data-center/md-baltimore-data-center-spec-sheet.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "generator and UPS configuration, utility and facility space"
+    "id": "tierpoint-baltimore-spec",
+    "title": "Baltimore (BAL) Data Center Specification Sheet",
+    "publisher": "TierPoint",
+    "document_date": "2023",
+    "retrieved_date": "2026-08-07",
+    "url": "https://web.tierpoint.com/hubfs/data-center/md-baltimore-data-center-spec-sheet.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "generator and UPS configuration, utility and facility space"
   },
   {
-    "id": "tierpoint-bwi", "title": "Baltimore - BWI Data Center", "publisher": "TierPoint", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://www.tierpoint.com/data-centers/maryland/baltimore-bwi/", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "operating status, address, space, generators and support"
+    "id": "tierpoint-bwi",
+    "title": "Baltimore - BWI Data Center",
+    "publisher": "TierPoint",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.tierpoint.com/data-centers/maryland/baltimore-bwi/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "operating status, address, space, generators and support"
   },
   {
-    "id": "tierpoint-bwi-spec", "title": "Baltimore (BWI) Data Center Specification Sheet", "publisher": "TierPoint", "document_date": "2023", "retrieved_date": "2026-08-07", "url": "https://web.tierpoint.com/hubfs/data-center/md-baltimore-bwi-data-center-spec-sheet.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "generator and UPS configuration, utility and facility space"
+    "id": "tierpoint-bwi-spec",
+    "title": "Baltimore (BWI) Data Center Specification Sheet",
+    "publisher": "TierPoint",
+    "document_date": "2023",
+    "retrieved_date": "2026-08-07",
+    "url": "https://web.tierpoint.com/hubfs/data-center/md-baltimore-bwi-data-center-spec-sheet.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "generator and UPS configuration, utility and facility space"
   },
   {
-    "id": "tierpoint-bwi-investment", "title": "TierPoint to Build Second Data Center in Baltimore", "publisher": "TierPoint", "document_date": "2017-08-29", "retrieved_date": "2026-08-07", "url": "https://www.tierpoint.com/news/tierpoint-build-second-data-center-baltimore/", "local_path": null, "local_sha256": null, "source_tier": "primary operator announcement", "used_for": "initial investment floor and original development plan"
+    "id": "tierpoint-bwi-investment",
+    "title": "TierPoint to Build Second Data Center in Baltimore",
+    "publisher": "TierPoint",
+    "document_date": "2017-08-29",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.tierpoint.com/news/tierpoint-build-second-data-center-baltimore/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator announcement",
+    "used_for": "initial investment floor and original development plan"
   },
   {
-    "id": "expedient-tide-point-spec", "title": "Baltimore Tide Point Data Center Specification Sheet", "publisher": "Expedient", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://expedient.com/uploads/exp__sell_sheet-dc__tidepoint-1.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "address, critical IT load, generator and UPS configuration, facility space"
+    "id": "expedient-tide-point-spec",
+    "title": "Baltimore Tide Point Data Center Specification Sheet",
+    "publisher": "Expedient",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://expedient.com/uploads/exp__sell_sheet-dc__tidepoint-1.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "address, critical IT load, generator and UPS configuration, facility space"
   },
   {
-    "id": "expedient-owings-mills-spec", "title": "Baltimore Owings Mills Data Center Specification Sheet", "publisher": "Expedient", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://expedient.com/uploads/exp__sell_sheet-dc__owings_mills-1.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "address, critical IT load, generator and UPS configuration, facility space"
+    "id": "expedient-owings-mills-spec",
+    "title": "Baltimore Owings Mills Data Center Specification Sheet",
+    "publisher": "Expedient",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://expedient.com/uploads/exp__sell_sheet-dc__owings_mills-1.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "address, critical IT load, generator and UPS configuration, facility space"
   },
   {
-    "id": "expedient-baltimore-investment-2013", "title": "Expedient Announces Second Data Center Opening", "publisher": "Expedient", "document_date": "2013-05-28", "retrieved_date": "2026-08-07", "url": "https://expedient.com/about/media/2013-05-28-expedient-formerly-datapoint-announces-second-data-center-opening/", "local_path": null, "local_sha256": null, "source_tier": "primary operator announcement", "used_for": "private upgrade investment and opening history for Tide Point and Owings Mills"
+    "id": "expedient-baltimore-investment-2013",
+    "title": "Expedient Announces Second Data Center Opening",
+    "publisher": "Expedient",
+    "document_date": "2013-05-28",
+    "retrieved_date": "2026-08-07",
+    "url": "https://expedient.com/about/media/2013-05-28-expedient-formerly-datapoint-announces-second-data-center-opening/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator announcement",
+    "used_for": "private upgrade investment and opening history for Tide Point and Owings Mills"
   },
   {
-    "id": "databank-bwi1-2020", "title": "BWI1 Downtown Baltimore Data Center Fact Sheet", "publisher": "DataBank", "document_date": "2020", "retrieved_date": "2026-08-07", "url": "https://www.databank.com/wp-content/uploads/2020/10/DB_DCTR_BWI1_Q32020_v2.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "address, facility space, critical and site power, UPS, backup-power description"
+    "id": "databank-bwi1-2020",
+    "title": "BWI1 Downtown Baltimore Data Center Fact Sheet",
+    "publisher": "DataBank",
+    "document_date": "2020",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.databank.com/wp-content/uploads/2020/10/DB_DCTR_BWI1_Q32020_v2.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "address, facility space, critical and site power, UPS, backup-power description"
   },
   {
-    "id": "databridge-home", "title": "DataBridge Sites Maryland Data Center", "publisher": "DataBridge Sites", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://databridgesites.com/", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "operating status and address"
+    "id": "databridge-home",
+    "title": "DataBridge Sites Maryland Data Center",
+    "publisher": "DataBridge Sites",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://databridgesites.com/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "operating status and address"
   },
   {
-    "id": "databridge-services", "title": "DataBridge Sites Services and Infrastructure", "publisher": "DataBridge Sites", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://databridgesites.com/services", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "marketed power capacity, generator count and rating, UPS and staffing descriptions"
+    "id": "databridge-services",
+    "title": "DataBridge Sites Services and Infrastructure",
+    "publisher": "DataBridge Sites",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://databridgesites.com/services",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "marketed power capacity, generator count and rating, UPS and staffing descriptions"
   },
   {
-    "id": "aligned-hyperscale-campus", "title": "Hyperscale Campus and Build to Scale", "publisher": "Aligned Data Centers", "document_date": null, "retrieved_date": "2026-08-09", "url": "https://aligneddc.com/hyperscale-and-build-to-scale-campus/", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "Aligned Maryland workload positioning for AI, HPC, cloud, and enterprise deployments"
+    "id": "aligned-maryland-data-centers",
+    "title": "Adaptive Data Centers in Frederick County, Maryland",
+    "publisher": "Aligned Data Centers",
+    "document_date": null,
+    "retrieved_date": "2026-08-10",
+    "url": "https://aligneddc.com/maryland-data-centers/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "IAD-04 address, 75-acre campus description, Tier III design claim, backup-generator unit size, UPS line-up size, power distribution, cooling, and security details"
   },
   {
-    "id": "aligned-cooling-innovation", "title": "Cooling Innovation", "publisher": "Aligned Data Centers", "document_date": null, "retrieved_date": "2026-08-09", "url": "https://aligneddc.com/cooling-innovation/", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "Aligned high-density air and liquid cooling platform details for AI and HPC inference"
+    "id": "aligned-hyperscale-campus",
+    "title": "Hyperscale Campus and Build to Scale",
+    "publisher": "Aligned Data Centers",
+    "document_date": null,
+    "retrieved_date": "2026-08-09",
+    "url": "https://aligneddc.com/hyperscale-and-build-to-scale-campus/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "Aligned Maryland workload positioning for AI, HPC, cloud, and enterprise deployments"
   },
   {
-    "id": "aws-global-infrastructure", "title": "AWS Global Infrastructure", "publisher": "Amazon Web Services", "document_date": null, "retrieved_date": "2026-08-09", "url": "https://aws.amazon.com/about-aws/global-infrastructure/", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "operator-level statement that AWS regions and availability zones are built from multiple data centers hosting cloud services"
+    "id": "aligned-cooling-innovation",
+    "title": "Cooling Innovation",
+    "publisher": "Aligned Data Centers",
+    "document_date": null,
+    "retrieved_date": "2026-08-09",
+    "url": "https://aligneddc.com/cooling-innovation/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "Aligned high-density air and liquid cooling platform details for AI and HPC inference"
   },
   {
-    "id": "expedient-baltimore", "title": "Baltimore Data Center", "publisher": "Expedient", "document_date": null, "retrieved_date": "2026-08-09", "url": "https://expedient.com/data-centers/baltimore/", "local_path": null, "local_sha256": null, "source_tier": "primary operator", "used_for": "Baltimore-site service mix including enterprise cloud, colocation, disaster recovery, edge, and AI positioning"
+    "id": "aws-global-infrastructure",
+    "title": "AWS Global Infrastructure",
+    "publisher": "Amazon Web Services",
+    "document_date": null,
+    "retrieved_date": "2026-08-09",
+    "url": "https://aws.amazon.com/about-aws/global-infrastructure/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "operator-level statement that AWS regions and availability zones are built from multiple data centers hosting cloud services"
   },
   {
-    "id": "jhu-arch-about", "title": "About ARCH", "publisher": "Advanced Research Computing at Hopkins", "document_date": null, "retrieved_date": "2026-08-09", "url": "https://www.arch.jhu.edu/about-arch/", "local_path": null, "local_sha256": null, "source_tier": "primary institutional", "used_for": "Johns Hopkins Bayview HPC, storage, and scientific-computing mission"
+    "id": "expedient-baltimore",
+    "title": "Baltimore Data Center",
+    "publisher": "Expedient",
+    "document_date": null,
+    "retrieved_date": "2026-08-09",
+    "url": "https://expedient.com/data-centers/baltimore/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary operator",
+    "used_for": "Baltimore-site service mix including enterprise cloud, colocation, disaster recovery, edge, and AI positioning"
   },
   {
-    "id": "montgomery-dickerson-case", "title": "CU 24-13 Statement of Case and Operations", "publisher": "Montgomery County", "document_date": "2026", "retrieved_date": "2026-08-07", "url": "https://assets.montgomerycountymd.gov/files/2026-05/CU24-13.a.A-Exhibit-4-a-Final-Statement-of-Case-and-Operations.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary local land-use filing", "used_for": "Dickerson applicant, owner, site, proposed data-center and battery uses"
+    "id": "jhu-arch-about",
+    "title": "About ARCH",
+    "publisher": "Advanced Research Computing at Hopkins",
+    "document_date": null,
+    "retrieved_date": "2026-08-09",
+    "url": "https://www.arch.jhu.edu/about-arch/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary institutional",
+    "used_for": "Johns Hopkins Bayview HPC, storage, and scientific-computing mission"
   },
   {
-    "id": "mde-atmosphere-npdes", "title": "Public Meetings for NPDES Permits: Atmosphere Data Center", "publisher": "Maryland Department of the Environment", "document_date": "2026", "retrieved_date": "2026-08-07", "url": "https://mde.maryland.gov/programs/permits/WaterManagementPermits/Pages/Public-Meetings-for-NPDES-Permits.aspx", "local_path": null, "local_sha256": null, "source_tier": "primary government", "used_for": "Dickerson NPDES application 26-DP-3903 and public-meeting status"
+    "id": "montgomery-dickerson-case",
+    "title": "CU 24-13 Statement of Case and Operations",
+    "publisher": "Montgomery County",
+    "document_date": "2026",
+    "retrieved_date": "2026-08-07",
+    "url": "https://assets.montgomerycountymd.gov/files/2026-05/CU24-13.a.A-Exhibit-4-a-Final-Statement-of-Case-and-Operations.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local land-use filing",
+    "used_for": "Dickerson applicant, owner, site, proposed data-center and battery uses"
   },
   {
-    "id": "montgomery-zta-26-01", "title": "Ordinance 20-35 (ZTA 26-01): Commercial Uses - Data Center", "publisher": "Montgomery County Council", "document_date": "2026-07-28", "retrieved_date": "2026-08-09", "url": "https://assets.montgomerycountymd.gov/files/2026-07/Ordinance%2020-35%20%28ZTA%2026-01%29.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary local law", "used_for": "enacted countywide data-center zoning prohibition, August 17, 2026 effective date, and transition rule"
+    "id": "mde-atmosphere-npdes",
+    "title": "Public Meetings for NPDES Permits: Atmosphere Data Center",
+    "publisher": "Maryland Department of the Environment",
+    "document_date": "2026",
+    "retrieved_date": "2026-08-07",
+    "url": "https://mde.maryland.gov/programs/permits/WaterManagementPermits/Pages/Public-Meetings-for-NPDES-Permits.aspx",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary government",
+    "used_for": "Dickerson NPDES application 26-DP-3903 and public-meeting status"
   },
   {
-    "id": "montgomery-data-center-pause-2026", "title": "Montgomery County Council Approves 18-Month Data Center Pause", "publisher": "Washington Business Journal", "document_date": "2026-07-28", "retrieved_date": "2026-08-07", "url": "https://www.bizjournals.com/washington/news/2026/07/28/montgomery-county-pause-data-centers-zoning.html", "local_path": null, "local_sha256": null, "source_tier": "reputable reporting", "used_for": "current final vote and effect on the Dickerson proposal pending publication of updated official text"
+    "id": "montgomery-zta-26-01",
+    "title": "Ordinance 20-35 (ZTA 26-01): Commercial Uses - Data Center",
+    "publisher": "Montgomery County Council",
+    "document_date": "2026-07-28",
+    "retrieved_date": "2026-08-09",
+    "url": "https://assets.montgomerycountymd.gov/files/2026-07/Ordinance%2020-35%20%28ZTA%2026-01%29.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local law",
+    "used_for": "enacted countywide data-center zoning prohibition, August 17, 2026 effective date, and transition rule"
   },
   {
-    "id": "pg-central-avenue-kickoff", "title": "Central Avenue-Blue/Silver Line Sector Plan Public Kickoff Q&A", "publisher": "Maryland-National Capital Park and Planning Commission", "document_date": "2025", "retrieved_date": "2026-08-07", "url": "https://pgplanning.org/wp-content/uploads/2024/04/Public-Kickoff-Summary-of-QandA-and-Polls-English.pdf", "local_path": null, "local_sha256": null, "source_tier": "primary local planning record", "used_for": "property-owner indication that a data center may be built at former Landover Mall"
+    "id": "montgomery-data-center-pause-2026",
+    "title": "Montgomery County Council Approves 18-Month Data Center Pause",
+    "publisher": "Washington Business Journal",
+    "document_date": "2026-07-28",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.bizjournals.com/washington/news/2026/07/28/montgomery-county-pause-data-centers-zoning.html",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "reputable reporting",
+    "used_for": "current final vote and effect on the Dickerson proposal pending publication of updated official text"
   },
   {
-    "id": "pg-qualified-data-centers", "title": "Qualified Data Centers Planning Initiative", "publisher": "Prince George's County Planning Department", "document_date": null, "retrieved_date": "2026-08-07", "url": "https://pgplanning.org/projects/qualified-data-centers/", "local_path": null, "local_sha256": null, "source_tier": "primary local government", "used_for": "task-force process, community meetings, policy and impact topics"
+    "id": "pg-central-avenue-kickoff",
+    "title": "Central Avenue-Blue/Silver Line Sector Plan Public Kickoff Q&A",
+    "publisher": "Maryland-National Capital Park and Planning Commission",
+    "document_date": "2025",
+    "retrieved_date": "2026-08-07",
+    "url": "https://pgplanning.org/wp-content/uploads/2024/04/Public-Kickoff-Summary-of-QandA-and-Polls-English.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local planning record",
+    "used_for": "property-owner indication that a data center may be built at former Landover Mall"
   },
   {
-    "id": "pg-executive-orders-2026", "title": "Prince George's County Executive Orders", "publisher": "Prince George's County", "document_date": "2026", "retrieved_date": "2026-08-07", "url": "https://www.princegeorgescountymd.gov/departments-offices/law/executive-orders", "local_path": null, "local_sha256": null, "source_tier": "primary local government", "used_for": "Executive Order 2026-15 extending the qualified-data-center moratorium"
+    "id": "pg-qualified-data-centers",
+    "title": "Qualified Data Centers Planning Initiative",
+    "publisher": "Prince George's County Planning Department",
+    "document_date": null,
+    "retrieved_date": "2026-08-07",
+    "url": "https://pgplanning.org/projects/qualified-data-centers/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local government",
+    "used_for": "task-force process, community meetings, policy and impact topics"
   },
   {
-    "id": "axios-landover-opposition-2025", "title": "Maryland Becomes New Data Center Battleground as Demand Soars", "publisher": "Axios", "document_date": "2025-12-15", "retrieved_date": "2026-08-07", "url": "https://www.axios.com/local/washington-dc/2025/12/15/maryland-data-center-growth-frederick-prince-georges", "local_path": null, "local_sha256": null, "source_tier": "reputable reporting", "used_for": "Landover rally, petition exceeding 20,000 signatures, and proposal context"
+    "id": "pg-executive-orders-2026",
+    "title": "Prince George's County Executive Orders",
+    "publisher": "Prince George's County",
+    "document_date": "2026",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.princegeorgescountymd.gov/departments-offices/law/executive-orders",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local government",
+    "used_for": "Executive Order 2026-15 extending the qualified-data-center moratorium"
   },
   {
-    "id": "wbj-landover-concept-2024", "title": "$5B Data Center Campus on Former Landover Mall Footprint Could Break Ground by 2026", "publisher": "Washington Business Journal", "document_date": "2024-10-28", "retrieved_date": "2026-08-07", "url": "https://www.bizjournals.com/washington/news/2024/10/28/landover-mall-lerner-tower-data-centers-fbi.html", "local_path": null, "local_sha256": null, "source_tier": "reputable reporting", "used_for": "five-building concept and reported investment"
+    "id": "axios-landover-opposition-2025",
+    "title": "Maryland Becomes New Data Center Battleground as Demand Soars",
+    "publisher": "Axios",
+    "document_date": "2025-12-15",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.axios.com/local/washington-dc/2025/12/15/maryland-data-center-growth-frederick-prince-georges",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "reputable reporting",
+    "used_for": "Landover rally, petition exceeding 20,000 signatures, and proposal context"
   },
   {
-    "id": "baltimore-ordinance-26-128", "title": "Ordinance 26-128: Data Centers - Moratorium", "publisher": "Baltimore City Council", "document_date": "2026-06-16", "retrieved_date": "2026-08-07", "url": "https://baltimore.legistar.com/LegislationDetail.aspx?GUID=0F67C3A9-D166-4BFE-91D3-10070032F578&ID=7958934&Options=ID%7CText%7C&Search=26-0158", "local_path": null, "local_sha256": null, "source_tier": "primary local law", "used_for": "enacted temporary citywide data-center prohibition and policy context"
+    "id": "wbj-landover-concept-2024",
+    "title": "$5B Data Center Campus on Former Landover Mall Footprint Could Break Ground by 2026",
+    "publisher": "Washington Business Journal",
+    "document_date": "2024-10-28",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.bizjournals.com/washington/news/2024/10/28/landover-mall-lerner-tower-data-centers-fbi.html",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "reputable reporting",
+    "used_for": "five-building concept and reported investment"
   },
   {
-    "id": "jhu-bayview-project-2026", "title": "Johns Hopkins University Plans $196M Data Center at Bayview", "publisher": "Baltimore Business Journal", "document_date": "2026-05-06", "retrieved_date": "2026-08-07", "url": "https://www.bizjournals.com/baltimore/news/2026/05/06/johns-hopkins-university-bayview-data-center.html", "local_path": null, "local_sha256": null, "source_tier": "reputable reporting", "used_for": "project plan, location and reported total cost"
+    "id": "baltimore-ordinance-26-128",
+    "title": "Ordinance 26-128: Data Centers - Moratorium",
+    "publisher": "Baltimore City Council",
+    "document_date": "2026-06-16",
+    "retrieved_date": "2026-08-07",
+    "url": "https://baltimore.legistar.com/LegislationDetail.aspx?GUID=0F67C3A9-D166-4BFE-91D3-10070032F578&ID=7958934&Options=ID%7CText%7C&Search=26-0158",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary local law",
+    "used_for": "enacted temporary citywide data-center prohibition and policy context"
   },
   {
-    "id": "jhu-bayview-state-grant-2026", "title": "Johns Hopkins Gets $9M for New Data Center as Baltimore Debates a Pause", "publisher": "The Baltimore Banner", "document_date": "2026-05-08", "retrieved_date": "2026-08-07", "url": "https://www.thebanner.com/economy/data-center-moratorium-johns-hopkins-baltimore-F3Q2CUPMX5EBPAM2IBEV2UQHD4/", "local_path": null, "local_sha256": null, "source_tier": "reputable reporting citing Maryland DGS and Board of Public Works", "used_for": "Board of Public Works grant approval and research purposes"
+    "id": "jhu-bayview-project-2026",
+    "title": "Johns Hopkins University Plans $196M Data Center at Bayview",
+    "publisher": "Baltimore Business Journal",
+    "document_date": "2026-05-06",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.bizjournals.com/baltimore/news/2026/05/06/johns-hopkins-university-bayview-data-center.html",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "reputable reporting",
+    "used_for": "project plan, location and reported total cost"
+  },
+  {
+    "id": "jhu-bayview-state-grant-2026",
+    "title": "Johns Hopkins Gets $9M for New Data Center as Baltimore Debates a Pause",
+    "publisher": "The Baltimore Banner",
+    "document_date": "2026-05-08",
+    "retrieved_date": "2026-08-07",
+    "url": "https://www.thebanner.com/economy/data-center-moratorium-johns-hopkins-baltimore-F3Q2CUPMX5EBPAM2IBEV2UQHD4/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "reputable reporting citing Maryland DGS and Board of Public Works",
+    "used_for": "Board of Public Works grant approval and research purposes"
   },
   {
     "id": "peeringdb-md-facilities",
@@ -479,7 +830,19 @@
     "local_path": null,
     "local_sha256": null,
     "source_tier": "primary federal geospatial dataset",
-    "used_for": "Maryland county-equivalent polygons used by the county residential electricity-demand estimate layer"
+    "used_for": "Maryland county-equivalent polygons used by the county residential and total electricity-demand estimate layers"
+  },
+  {
+    "id": "census-tigerweb-places-cousub",
+    "title": "TIGERweb Places and County Subdivisions",
+    "publisher": "U.S. Census Bureau",
+    "document_date": "2025",
+    "retrieved_date": "2026-08-10",
+    "url": "https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/Places_CouSub_ConCity_SubMCD/MapServer",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary federal geospatial dataset",
+    "used_for": "live optional municipal, incorporated-place, census-designated-place, and county-subdivision boundary layers"
   },
   {
     "id": "pjm-maryland-dc-infrastructure-report-2025",
@@ -518,6 +881,18 @@
     "used_for": "site-specific reporting that Amazon's Bauxite I permit for 99 diesel backup generators was highly contested"
   },
   {
+    "id": "dcd-rowan-bauxite-ii-iii-approval-2024",
+    "title": "Rowan's Two Data Center Projects in Maryland Get Approval",
+    "publisher": "Data Center Dynamics",
+    "document_date": "2024-12-18",
+    "retrieved_date": "2026-08-10",
+    "url": "https://www.datacenterdynamics.com/en/news/rowans-two-data-center-projects-in-maryland-get-approval/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "specialist industry reporting",
+    "used_for": "Bauxite II and Bauxite III planning approval vote counts, relationship to Bauxite I, and Rowan/Quantum Frederick context"
+  },
+  {
     "id": "dcd-aligned-planning-approval-2023",
     "title": "Aligned Gains Planning Approval for First Data Center at Quantum Loophole Campus",
     "publisher": "Data Center Dynamics",
@@ -539,7 +914,7 @@
     "local_path": null,
     "local_sha256": null,
     "source_tier": "specialist industry reporting",
-    "used_for": "developer challenge to the permit moratorium and direct effect on the proposed 360 MW Dickerson campus"
+    "used_for": "Atmosphere challenge to Montgomery County's six-month permit moratorium, five-building 360 MW Dickerson campus description, 226,850-square-foot building size, Terra Energy 2023 plan-submission context, and blocked stormwater/fire-access review status"
   },
   {
     "id": "banner-landover-moratorium-2026",
@@ -602,6 +977,54 @@
     "used_for": "directory coverage check, facility names, operators, addresses, and brief directory descriptions for Baltimore-area listings"
   },
   {
+    "id": "fannie-mae-contact-urbana-tech-center",
+    "title": "Contact Us",
+    "publisher": "Fannie Mae",
+    "document_date": null,
+    "retrieved_date": "2026-08-10",
+    "url": "https://www.fanniemae.com/about-us/contact-us",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "operator / owner primary page",
+    "used_for": "Fannie Mae Urbana Technology Center name and address"
+  },
+  {
+    "id": "jll-fannie-mae-tech-center-2026",
+    "title": "Fannie Mae Tech Center",
+    "publisher": "JLL",
+    "document_date": "2026",
+    "retrieved_date": "2026-08-10",
+    "url": "https://invest.jll.com/us/en/listings/land/fannie-mae-tech-center",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "broker offering materials",
+    "used_for": "Fannie Mae Tech Center year built, critical capacity, expansion capacity, acreage, gross area, Tier III-equivalent rating, and pending disposition context"
+  },
+  {
+    "id": "southland-ssa-national-support-center",
+    "title": "Social Security Administration National Support Center",
+    "publisher": "Southland Industries",
+    "document_date": null,
+    "retrieved_date": "2026-08-10",
+    "url": "https://southlandind.com/project/social-security-administration-national-support-center",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "project contractor profile",
+    "used_for": "SSA National Support Center Tier III data-center role, approximate IT server load, employment, size, water-storage resilience, and mechanical design details"
+  },
+  {
+    "id": "som-ssa-national-support-center",
+    "title": "Social Security Administration National Support Center",
+    "publisher": "Skidmore, Owings & Merrill",
+    "document_date": null,
+    "retrieved_date": "2026-08-10",
+    "url": "https://www.som.com/projects/social-security-administration-national-support-center/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "architect project profile",
+    "used_for": "SSA National Support Center site area, gross area, design performance, and Urbana location context"
+  },
+  {
     "id": "openstreetmap-nominatim-geocoder",
     "title": "Nominatim OpenStreetMap Search",
     "publisher": "OpenStreetMap Foundation and contributors",
@@ -612,5 +1035,137 @@
     "local_sha256": null,
     "source_tier": "open geocoder",
     "used_for": "point-address coordinates for newly added directory-listed Baltimore-area facilities"
+  },
+  {
+    "id": "baltimore-red-line-alternative-4c",
+    "title": "Baltimore Red Line Alternative 4C",
+    "publisher": "Public ArcGIS web map",
+    "document_date": null,
+    "retrieved_date": "2026-08-11",
+    "url": "https://www.arcgis.com/home/item.html?id=ea0cc16a76c444968b7f634e3d8dc737",
+    "local_path": "/datacenters/data/baltimore-red-line.json",
+    "local_sha256": "091982859a8e8e3ddc7d50012ae9060507c1bbeaa46fc1e68402b7456d31d412",
+    "source_tier": "public geospatial map artifact",
+    "used_for": "static local copy of the contested Baltimore Red Line alignment so the route remains reproducible even if the public web map changes"
+  },
+  {
+    "id": "eia-lng-import-export-terminals",
+    "title": "Liquefied Natural Gas Import Export Terminals",
+    "publisher": "U.S. Energy Information Administration",
+    "document_date": null,
+    "retrieved_date": "2026-08-11",
+    "url": "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/Liquefied_Natural_Gas_Import_Export_Terminals/FeatureServer/0",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary federal geospatial dataset",
+    "used_for": "Maryland LNG import and export terminal layer, including Cove Point terminal names, statuses, and point geometry"
+  },
+  {
+    "id": "eia-natural-gas-pipelines",
+    "title": "Natural Gas Interstate and Intrastate Pipelines",
+    "publisher": "U.S. Energy Information Administration",
+    "document_date": null,
+    "retrieved_date": "2026-08-11",
+    "url": "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/Natural_Gas_Interstate_and_Intrastate_Pipelines_1/FeatureServer/0",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "primary federal geospatial dataset",
+    "used_for": "live natural-gas pipeline layer showing interstate and intrastate pipeline segments in the current Maryland map view"
+  },
+  {
+    "id": "kimi-nih-environmental-management-system-91aa240c2b",
+    "title": "Joe Musa Transcript - NEMS NIH Environmental Management System",
+    "publisher": "NIH Environmental Management System",
+    "document_date": "2023-08-02",
+    "retrieved_date": "2026-08-16",
+    "url": "https://nems.nih.gov/Documents/Newsletter/Joe%20Musa%20Transcript.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "NIH Cogeneration Facility permit_status: NIH Bethesda Campus operates under a five-year renewable Title V Permit under COMAR 26.11.03.01; classified as a major source for air emissions with NOx greater than 25 tons in Montgomery County; program manager is point of contact with MDE and EPA"
+  },
+  {
+    "id": "kimi-maryland-department-of-the-environment-a3fc392ce7",
+    "title": "Ingenco T5 Docket 2023",
+    "publisher": "Maryland Department of the Environment",
+    "document_date": null,
+    "retrieved_date": "2026-08-16",
+    "url": "https://mde.maryland.gov/programs/permits/AirManagementPermits/Documents/Public-Review/new%20Title%20V%20public%20review/Ingenco%20T5%20Docket%20%202023.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "Wicomico permit_status: MDE ARA completed review of a renewal Part 70 Operating Permit application for Ingenco Wholesale Power in 2023"
+  },
+  {
+    "id": "kimi-maryland-department-of-the-environment-213883cd00",
+    "title": "For the Record – April 2020",
+    "publisher": "Maryland Department of the Environment",
+    "document_date": "2020-05-11",
+    "retrieved_date": "2026-08-16",
+    "url": "https://news.maryland.gov/mde/2020/05/11/for-the-record-april-7/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "Berlin air_permit_status: Application received for Amended Synthetic Minor 2020 permit 047-0044 Amend/Renew Syn Minor SPTO for Berlin Town Power Plant at 309 Williams St, Berlin, MD 21811"
+  },
+  {
+    "id": "kimi-u-s-nuclear-regulatory-commission-ead70a6fe8",
+    "title": "Calvert Cliffs Nuclear Power Plant, Units 1 and 2 - Amendment No. 334 to Renewed Facility Operating License No. DPR-53",
+    "publisher": "U.S. Nuclear Regulatory Commission",
+    "document_date": "2025-05-13",
+    "retrieved_date": "2026-08-16",
+    "url": "https://www.nrc.gov/docs/ML2511/ML25118A150.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "Calvert Cliffs Nuclear Power Plant permit_status: NRC issued Amendment No. 334 to Renewed Facility Operating License No. DPR-53 for Calvert Cliffs Unit 1 on May 13, 2025"
+  },
+  {
+    "id": "kimi-u-s-nuclear-regulatory-commission-e85d9490c4",
+    "title": "Calvert Cliffs Nuclear Power Plant, Units 1 and 2 - Issuance of Amendment Nos. 350 and 327",
+    "publisher": "U.S. Nuclear Regulatory Commission",
+    "document_date": "2024-05-31",
+    "retrieved_date": "2026-08-16",
+    "url": "https://www.nrc.gov/docs/ML2412/ML24121A180.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "Calvert Cliffs Nuclear Power Plant permit_status: NRC issued Amendment No. 350 to Renewed License DPR-53 (Unit 1) and Amendment No. 327 to Renewed License DPR-69 (Unit 2) on May 31, 2024, confirming active renewed operating licenses"
+  },
+  {
+    "id": "kimi-u-s-nuclear-regulatory-commission-76a184ad58",
+    "title": "Initial Operator Licensing Examination Report 05000317/2025301 and 05000318/2025301",
+    "publisher": "U.S. Nuclear Regulatory Commission",
+    "document_date": "2025-08-18",
+    "retrieved_date": "2026-08-16",
+    "url": "https://www.nrc.gov/docs/ML2523/ML25231A007.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "Calvert Cliffs Nuclear Power Plant permit_status: NRC conducted operator licensing examinations at Calvert Cliffs in June-July 2025 and issued licenses July 31, 2025, confirming ongoing operational status under NRC oversight"
+  },
+  {
+    "id": "kimi-maryland-department-of-the-environment-049b9b1e6a",
+    "title": "For the Record – February 2016",
+    "publisher": "Maryland Department of the Environment",
+    "document_date": "2016-02-25",
+    "retrieved_date": "2026-08-16",
+    "url": "https://news.maryland.gov/mde/2016/02/25/for-the-record-february-2/",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "Central Utility Plant at White Oak air_permit_status: Application received for 2015 031-2552 Initial SPTO for Fuel Burning Equipment at FDA Federal Research Center at White Oak, 10903 New Hampshire Ave, Silver Spring, MD 20903"
+  },
+  {
+    "id": "kimi-maryland-department-of-the-environment-7b8b99999e",
+    "title": "Air and Radiation Administration Draft Part 70 Operating Permit",
+    "publisher": "Maryland Department of the Environment",
+    "document_date": null,
+    "retrieved_date": "2026-08-16",
+    "url": "https://mde.maryland.gov/programs/permits/AirManagementPermits/Documents/Public-Review/new%20Title%20V%20public%20review/Docket%20for%20web.pdf",
+    "local_path": null,
+    "local_sha256": null,
+    "source_tier": "audited government",
+    "used_for": "Central Utility Plant at White Oak air_permit_status: GSA Federal Research Center at White Oak, located in Silver Spring, MD at 10903 New Hampshire Ave, listed in a Title V (Part 70) operating permit public review docket"
   }
 ]

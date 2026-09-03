@@ -1,5 +1,7 @@
 # Code Collective 
 
+[![Update Calendar](https://github.com/juliancoy/CodeCollective/actions/workflows/update-calendar.yml/badge.svg?branch=main)](https://github.com/juliancoy/CodeCollective/actions/workflows/update-calendar.yml)
+
 The official website of Code Collective.  
 The main branch here is hosted directly as:  
 https://codecollective.us/  
@@ -104,8 +106,7 @@ sudo gdebi GitHubDesktop-linux-3.1.1-linux1.deb
 
 11. **Push your branch** to the remote repository:
 
-    - In GitHub Desktop:
-      - Click `Push origin` in the toolbar.
+    - Click `Push origin` in the toolbar.
 
     or via command line:
 
@@ -127,9 +128,9 @@ sudo gdebi GitHubDesktop-linux-3.1.1-linux1.deb
 
 ### Additional Guidelines for Contributors
 
-- **Write Clear Commit Messages**: Your commit messages should clearly describe the changes made. This helps maintainers and other contributors understand your work.
+- **Write Clear Commit Messages**: Your commit messages should clearly describe the changes made. This helps maintainers and other contributors understand the changes.
 - **Follow Coding Standards**: Ensure your code adheres to the project's coding standards. Consistent style and formatting are crucial for maintaining a clean codebase.
 
 - **Ask for Help**: If you're unsure about any part of the process, feel free to ask for help by opening an issue or commenting on an existing one. The community is here to support you!
 
-- **Review the Documentation**: Before contributing, itâ€™s a good idea to review the existing documentation to understand the project's structure and guidelines.
+- **Review the Documentation**: Before contributing, it’s a good idea to review the existing documentation to understand the project's structure and guidelines.
