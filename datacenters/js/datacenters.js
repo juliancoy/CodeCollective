@@ -1683,6 +1683,7 @@
     tagFilterMode: 'and',
     mapTitle: 'Infrastructure map',
     showMapTitle: false,
+    performanceMode: false,
     colors: {},
     center: [-76.92167, 39.07408],
     zoom: 7.95,
@@ -3093,6 +3094,11 @@
   let activeLayerConfigId = null;
   let activeLayerColorId = null;
   let activeLayerContext = null;
+  let pendingMapHoverFrame = 0;
+  let pendingMapHoverEvent = null;
+  let lastMapHoverPointKey = '';
+  let slowMapFrameCount = 0;
+  let slowMapPromptShown = false;
 
   function supportsCompressedQueryState() {
     return typeof CompressionStream === 'function' && typeof DecompressionStream === 'function';
@@ -3576,6 +3582,7 @@
     if (parameters.has('tagMode')) state.tagFilterMode = parameters.get('tagMode');
     if (parameters.has('mapTitle')) state.mapTitle = parameters.get('mapTitle');
     if (parameters.has('showTitle')) state.showMapTitle = parameters.get('showTitle') === '1';
+    if (parameters.has('perf')) state.performanceMode = parameters.get('perf') === '1';
     if (parameters.has('colors')) {
       try {
         state.colors = JSON.parse(parameters.get('colors'));
@@ -3709,6 +3716,7 @@
     tagFilterMode = state.tagFilterMode === 'or' ? 'or' : 'and';
     document.getElementById('map-title-input').value = String(state.mapTitle || 'Infrastructure map').slice(0, 120);
     document.getElementById('show-map-title').checked = Boolean(state.showMapTitle);
+    document.getElementById('optimize-map-performance').checked = Boolean(state.performanceMode);
     REMOTE_LAYERS.forEach((config) => {
       const remoteState = remoteLayerStates.get(config.id);
       if (!remoteState) return;
@@ -3792,6 +3800,7 @@
       tagFilterMode,
       mapTitle: document.getElementById('map-title-input').value.trim() || 'Infrastructure map',
       showMapTitle: document.getElementById('show-map-title').checked,
+      performanceMode: document.getElementById('optimize-map-performance').checked,
       colors: Object.fromEntries(layerCustomColors),
       ...viewState,
       filters: {
@@ -3820,6 +3829,7 @@
     url.searchParams.set('tagMode', state.tagFilterMode);
     url.searchParams.set('mapTitle', state.mapTitle);
     url.searchParams.set('showTitle', state.showMapTitle ? '1' : '0');
+    url.searchParams.set('perf', state.performanceMode ? '1' : '0');
     url.searchParams.set('colors', JSON.stringify(state.colors));
     if (Array.isArray(state.center) && state.center.length === 2) {
       url.searchParams.set('c', `${state.center[0]},${state.center[1]}`);
@@ -3987,8 +3997,53 @@
     });
   }
 
+  function mapPerformanceModeEnabled() {
+    return Boolean(document.getElementById('optimize-map-performance')?.checked);
+  }
+
+  function hideSlowMapPrompt() {
+    const status = document.getElementById('map-performance-status');
+    if (status) status.hidden = true;
+  }
+
+  function showSlowMapPrompt() {
+    if (slowMapPromptShown || mapPerformanceModeEnabled()) return;
+    slowMapPromptShown = true;
+    const status = document.getElementById('map-performance-status');
+    if (status) status.hidden = false;
+  }
+
+  function setupPerformanceModeUi(map) {
+    const toggle = document.getElementById('optimize-map-performance');
+    const enableButton = document.getElementById('enable-map-performance-mode');
+    toggle?.addEventListener('change', () => {
+      if (toggle.checked) hideSlowMapPrompt();
+      cancelScheduledMapHover();
+      persistUiState(map);
+    });
+    enableButton?.addEventListener('click', () => {
+      if (toggle) toggle.checked = true;
+      hideSlowMapPrompt();
+      cancelScheduledMapHover();
+      persistUiState(map);
+    });
+  }
+
+  function monitorMapPerformance() {
+    let lastFrame = performance.now();
+    const sample = (now) => {
+      const elapsed = now - lastFrame;
+      lastFrame = now;
+      if (elapsed > 140) slowMapFrameCount += 1;
+      else slowMapFrameCount = Math.max(0, slowMapFrameCount - 1);
+      if (slowMapFrameCount >= 3) showSlowMapPrompt();
+      requestAnimationFrame(sample);
+    };
+    requestAnimationFrame(sample);
+  }
+
   function setupUiStatePersistence(map) {
-    document.querySelectorAll('#map-theme, input[id^="show-"], input[id^="hover-"]').forEach((control) => {
+    document.querySelectorAll('#map-theme, #optimize-map-performance, input[id^="show-"], input[id^="hover-"]').forEach((control) => {
       control.addEventListener('change', () => persistUiState(map));
     });
     let pendingPersistenceFrame = 0;
@@ -4911,6 +4966,8 @@
     setupLayerColorUi();
     setupTagFilterUi();
     setupUiStatePersistence(map);
+    setupPerformanceModeUi(map);
+    monitorMapPerformance();
     updatePageStateIndicator(map);
 
     renderResults(allRecords, markerById);
@@ -4918,7 +4975,8 @@
     renderSources(data.sources);
     map.on('mousemove', (event) => {
       if (mobileInspectorMode()) return;
-      handleMapHover(map, event, sourceById);
+      if (mapPerformanceModeEnabled()) scheduleMapHover(map, event, sourceById);
+      else handleMapHover(map, event, sourceById);
     });
     window.__resolveDatacenterHoverTargets = (point) => {
       topMapHoverTarget(map, new maplibregl.Point(point.x, point.y), sourceById);
@@ -4933,6 +4991,7 @@
     map.on('click', (event) => handleMapClick(map, event, sourceById));
     map.getCanvas().addEventListener('mouseleave', () => {
       if (mobileInspectorMode()) return;
+      cancelScheduledMapHover();
       updateHoveredDataCenterMarker(null);
       powerPlantBoltLayer?.setHoveredRecord(null);
       clearInspectorHover();
@@ -6823,6 +6882,31 @@
     }
   }
 
+  function scheduleMapHover(map, event, sourceById) {
+    const pointKey = `${Math.round(event.point.x)},${Math.round(event.point.y)}`;
+    if (!pendingMapHoverFrame && pointKey === lastMapHoverPointKey) return;
+    pendingMapHoverEvent = {
+      point: new maplibregl.Point(event.point.x, event.point.y),
+      lngLat: event.lngLat,
+    };
+    lastMapHoverPointKey = pointKey;
+    if (pendingMapHoverFrame) return;
+    pendingMapHoverFrame = requestAnimationFrame(() => {
+      pendingMapHoverFrame = 0;
+      const latestEvent = pendingMapHoverEvent;
+      pendingMapHoverEvent = null;
+      if (!latestEvent || mobileInspectorMode()) return;
+      handleMapHover(map, latestEvent, sourceById);
+    });
+  }
+
+  function cancelScheduledMapHover() {
+    if (pendingMapHoverFrame) cancelAnimationFrame(pendingMapHoverFrame);
+    pendingMapHoverFrame = 0;
+    pendingMapHoverEvent = null;
+    lastMapHoverPointKey = '';
+  }
+
   function showHoverTarget(map, target) {
     updateHoveredDataCenterMarker(target);
     powerPlantBoltLayer?.setHoveredRecord(target?.kind === 'power-plant' ? target.record : null);
@@ -7457,6 +7541,7 @@
     if (prefix && !inspectorHoverKey?.startsWith(prefix)) return;
     inspectorHoverKey = null;
     inspectorHoverLayerId = null;
+    lastMapHoverPointKey = '';
     updateLayerSelectionHighlight();
     renderIdleInspectorNews();
   }
@@ -7479,6 +7564,7 @@
     inspectorHoverKey = null;
     inspectorPinnedLayerId = null;
     inspectorHoverLayerId = null;
+    lastMapHoverPointKey = '';
     updateLayerSelectionHighlight();
     document.querySelector('.dc-detail').classList.remove('is-pinned');
     document.getElementById('close-record-detail').hidden = true;

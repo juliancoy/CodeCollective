@@ -2351,8 +2351,9 @@ def read_probe(driver: webdriver.Remote) -> dict:
 
 
 def dispatch_hover(driver: webdriver.Remote, x: float, y: float) -> None:
-    driver.execute_script(
+    driver.execute_async_script(
         """
+        const done = arguments[arguments.length - 1];
         const canvas = document.querySelector('#datacenter-map canvas.maplibregl-canvas');
         const rect = canvas.getBoundingClientRect();
         const clientX = rect.left + arguments[0];
@@ -2367,11 +2368,13 @@ def dispatch_hover(driver: webdriver.Remote, x: float, y: float) -> None:
             clientY
           }));
         }
+        window.__showDatacenterHoverTarget?.({x: arguments[0], y: arguments[1]});
         window.__ccDatacenterProbe.hovers.push({
           at: performance.now(),
           x: arguments[0],
           y: arguments[1]
         });
+        requestAnimationFrame(() => requestAnimationFrame(done));
         """,
         x,
         y,
