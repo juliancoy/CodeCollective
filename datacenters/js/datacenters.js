@@ -158,6 +158,52 @@
     },
   ];
   const BASE_LAYER_IDS = new Set(BASE_LAYER_CONFIGS.map((config) => config.id));
+  const COUNTY_MORATORIUM_REVIEW_DATE = 'August 12, 2026';
+  const COUNTY_DATA_CENTER_MORATORIA = {
+    frederick: {
+      active: true,
+      label: 'Active through December 31, 2026',
+      summary: 'Frederick County is pausing acceptance and processing of new data-center applications while the State of Maryland completes its data-center impact analysis.',
+      details: [
+        ['Status', 'Active county data-center pause'],
+        ['Effective window', 'July 1, 2026 through December 31, 2026'],
+        ['Basis', 'County executive order pausing new Critical Digital Infrastructure applications pending the state report'],
+      ],
+      links: [
+        ['Frederick County data centers page', 'https://frederickcountymd.gov/9310/Data-Centers'],
+        ['Frederick County pause announcement', 'https://www.frederickcountymd.gov/CivicAlerts.aspx?AID=5845'],
+      ],
+    },
+    montgomery: {
+      active: false,
+      label: 'No active countywide moratorium identified',
+      summary: 'No active countywide data-center moratorium was identified in reviewed Montgomery County sources as of August 12, 2026. The County Council enacted a countywide zoning prohibition that is scheduled to take effect on August 17, 2026.',
+      details: [
+        ['Status', 'No active moratorium identified in reviewed county sources'],
+        ['Pending rule', 'Countywide zoning prohibition effective August 17, 2026'],
+        ['Basis', 'Ordinance 20-35 (ZTA 26-01) prohibits large data centers countywide after its effective date'],
+      ],
+      links: [
+        ['Montgomery County Ordinance 20-35 (ZTA 26-01)', 'https://assets.montgomerycountymd.gov/files/2026-07/Ordinance%2020-35%20%28ZTA%2026-01%29.pdf'],
+        ['Montgomery County Council press release on ZTA 26-01', 'https://www2.montgomerycountymd.gov/mcgportalapps/Press_Detail.aspx?Item_ID=48105'],
+      ],
+    },
+    'prince george\'s': {
+      active: true,
+      label: 'Active county moratorium',
+      summary: 'Prince George’s County has an active county executive hold on accepting, considering, and processing qualified-data-center permits while the county works through task-force recommendations.',
+      details: [
+        ['Status', 'Active county data-center moratorium'],
+        ['Current basis', 'Executive Order 15-2026 extended the temporary hold'],
+        ['Scope', 'Acceptance, consideration, and processing of qualified-data-center permit applications'],
+      ],
+      links: [
+        ['Prince George’s County executive orders page', 'https://www.princegeorgescountymd.gov/departments-offices/law/executive-orders'],
+        ['Executive Order 15-2026 PDF', 'https://www.princegeorgescountymd.gov/sites/default/files/media-document/EO%2015-2026%20In%20Support%20of%20Recommendations%20Forthcoming%20from%20the%20Qualified%20Data%20Centers%20Task%20Force%2C%20Extending%20Temporary%20Hold.pdf'],
+        ['Prince George’s County Planning qualified data centers page', 'https://pgplanning.org/projects/qualified-data-centers/'],
+      ],
+    },
+  };
   const CORE_LAYER_PREVIEWS = {
     ...Object.fromEntries(BASE_LAYER_CONFIGS.map((config) => [config.id, config])),
     datacenters: {
@@ -3757,6 +3803,49 @@
     return document.getElementById(`status-${config.id}`)?.textContent?.trim() || 'Ready';
   }
 
+  function normalizeCountyName(value) {
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u2018\u2019']/g, '\'')
+      .replace(/[^a-zA-Z\s']/g, ' ')
+      .replace(/\bcounty\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase()
+      .replace(/^prince georges$/, 'prince george\'s')
+      .replace(/^prince geroges$/, 'prince george\'s')
+      .replace(/^queen annes$/, 'queen anne\'s');
+  }
+
+  function countyMoratoriumRecord(properties) {
+    const normalizedCounty = normalizeCountyName(properties?.COUNTY || properties?.County || properties?.county);
+    return COUNTY_DATA_CENTER_MORATORIA[normalizedCounty] || {
+      active: false,
+      label: 'No active countywide moratorium identified',
+      summary: `No active countywide data-center moratorium was identified in reviewed project sources for this county as of ${COUNTY_MORATORIUM_REVIEW_DATE}.`,
+      details: [
+        ['Status', 'No active moratorium identified in reviewed project sources'],
+        ['Review date', COUNTY_MORATORIUM_REVIEW_DATE],
+      ],
+      links: [],
+    };
+  }
+
+  function renderCountyMoratoriumSection(properties) {
+    const moratorium = countyMoratoriumRecord(properties);
+    const facts = moratorium.details.map(([label, value]) => [label, escapeHtml(value)]);
+    const links = moratorium.links.length
+      ? `<div class="dc-record-sources"><strong>County websites</strong><ul>${moratorium.links.map(([label, url]) => `<li><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul></div>`
+      : '';
+    return `
+      <section class="dc-fact-group">
+        <h3>Data-center moratorium</h3>
+        <p>${escapeHtml(moratorium.summary)}</p>
+        <dl class="dc-facts">${facts.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${value}</dd>`).join('')}</dl>
+      </section>
+      ${links}`;
+  }
+
   function renderLayerCardSources(config) {
     const sources = [[config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
       .filter(([label, href]) => label && href);
@@ -5371,6 +5460,7 @@
       <p class="dc-type">${escapeHtml(config.name)} · ${escapeHtml(recordType)}</p>
       ${renderRemoteColorLegend(config, properties)}
       ${renderFactGroup('Layer record', facts)}
+      ${config.id === 'maryland-county-boundaries' ? renderCountyMoratoriumSection(properties) : ''}
       <p class="dc-record-note">${escapeHtml(provenanceNote)}</p>
       <div class="dc-record-sources"><strong>Sources</strong><ul>${sources.map(([label, url]) => `<li><a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(label)}</a></li>`).join('')}</ul></div>`;
   }
