@@ -9,7 +9,7 @@
   <link rel="icon" href="/images/favicons/favicon.png">
   <link rel="stylesheet" href="/css/master.css?v=20260807-project-menu">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260811-datacenter-defaults">
+  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260831-power-plant-controls">
 </head>
 <body id="body" class="datacenter-page">
   <video id="bg-video" autoplay loop muted playsinline poster="/images/general_encircled_banner.webp">
@@ -92,7 +92,7 @@
             <div class="dc-layer-section-title">Infrastructure and analysis</div>
             <div class="dc-layer-option" data-layer-preview="datacenters">
               <div class="dc-layer-toprow">
-                <span class="dc-layer-name"><strong>Data centers</strong><small>Campuses, facilities, and proposals</small></span>
+                <span class="dc-layer-name"><strong>Maryland curated data centers</strong><small>Campuses, facilities, and proposals · record-specific sources</small></span>
                 <span class="dc-layer-controls-row">
                   <span id="datacenter-layer-count" class="dc-layer-count" aria-label="Data center count">—</span>
                   <button class="dc-layer-color" type="button" data-layer-color="datacenters" aria-label="Change Data centers color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--center" aria-hidden="true"></i></button>
@@ -103,11 +103,31 @@
                 </span>
               </div>
             </div>
+            <div class="dc-layer-option" data-layer-preview="openstreetmap-us-data-centers">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>OpenStreetMap U.S. data centers</strong><small>Nationwide mapped inventory · ODbL · source snapshot 2026-08-27</small></span>
+                <span class="dc-layer-controls-row">
+                  <button class="dc-layer-color" type="button" data-layer-color="openstreetmap-us-data-centers" aria-label="Change OpenStreetMap U.S. data centers color" title="Change layer color"><i class="dc-layer-symbol" style="--layer-color: #ff8a3d" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="openstreetmap-us-data-centers">z 0–18</span>
+                  <label class="dc-layer-toggle"><input id="show-openstreetmap-us-data-centers" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-openstreetmap-us-data-centers" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-locate" type="button" data-layer-locate="openstreetmap-us-data-centers" aria-label="Zoom to United States data-center coverage" title="Zoom to nationwide coverage">⌖</button>
+                  <button class="dc-layer-gear" type="button" data-layer-config="openstreetmap-us-data-centers" aria-label="Configure OpenStreetMap U.S. data centers layer">⚙</button>
+                </span>
+              </div>
+              <p id="status-openstreetmap-us-data-centers" class="dc-layer-status" aria-live="polite">Off · 1,913 mapped U.S. features · OpenStreetMap snapshot 2026-08-27</p>
+            </div>
             <div class="dc-layer-option" data-layer-preview="power-plants">
               <div class="dc-layer-toprow">
-                <span class="dc-layer-name"><strong>Power plants</strong><small>EIA generation facilities</small></span>
+                <span class="dc-layer-name"><strong>U.S. EIA power plants</strong><small>Final 2024 EIA-860 and EIA-923</small></span>
                 <span class="dc-layer-controls-row">
                   <span id="power-plant-layer-count" class="dc-layer-count" aria-label="Power plant count">—</span>
+                  <label class="dc-layer-scope">Scope
+                    <select id="power-plant-scope" aria-label="Power plant geographic scope">
+                      <option value="MD" selected>Maryland only</option>
+                      <option value="US">United States</option>
+                    </select>
+                  </label>
                   <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change Power plants color" title="Change layer color"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
                   <span class="dc-layer-zoom" data-layer-zoom="power-plants">z 0–18</span>
                   <label class="dc-layer-toggle"><input id="show-power-plants" type="checkbox" checked> Render</label>
@@ -115,6 +135,41 @@
                   <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure power plant layer">⚙</button>
                 </span>
               </div>
+              <p id="power-plant-scope-status" class="dc-layer-status" aria-live="polite">Maryland default · switch Scope to United States for the complete final EIA inventory</p>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="global-power-plants">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>WRI Global Power Plant Database</strong><small>v1.3.0 research baseline · source years vary</small></span>
+                <span class="dc-layer-controls-row">
+                  <span id="global-power-plant-layer-count" class="dc-layer-count" aria-label="WRI global power plant count">—</span>
+                  <label class="dc-layer-scope">Scope
+                    <select id="global-power-plant-scope" aria-label="WRI global power plant geographic scope">
+                      <option value="NA" selected>Canada + Mexico</option>
+                      <option value="WORLD">Worldwide except U.S.</option>
+                    </select>
+                  </label>
+                  <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change WRI power plants color" title="Uses the shared power-plant style"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="global-power-plants">z 0–18</span>
+                  <label class="dc-layer-toggle"><input id="show-global-power-plants" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-global-power-plants" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure shared power plant style">⚙</button>
+                </span>
+              </div>
+              <p id="global-power-plant-scope-status" class="dc-layer-status" aria-live="polite">Off · WRI records load only when Render is enabled; source year and original source are retained per plant</p>
+            </div>
+            <div class="dc-layer-option" data-layer-preview="nacei-power-plants">
+              <div class="dc-layer-toprow">
+                <span class="dc-layer-name"><strong>NRCan / SENER / DOE NACEI</strong><small>Official Canada + Mexico comparison · ≥100 MW · August 2017</small></span>
+                <span class="dc-layer-controls-row">
+                  <span id="nacei-power-plant-layer-count" class="dc-layer-count" aria-label="NACEI power plant count">—</span>
+                  <button class="dc-layer-color" type="button" data-layer-color="power-plants" aria-label="Change NACEI power plants color" title="Uses the shared power-plant style"><i class="dc-layer-symbol dc-layer-symbol--plant" aria-hidden="true"></i></button>
+                  <span class="dc-layer-zoom" data-layer-zoom="nacei-power-plants">z 0–18</span>
+                  <label class="dc-layer-toggle"><input id="show-nacei-power-plants" type="checkbox"> Render</label>
+                  <label class="dc-layer-toggle"><input id="hover-nacei-power-plants" type="checkbox" checked> Hover</label>
+                  <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure shared power plant style">⚙</button>
+                </span>
+              </div>
+              <p id="nacei-power-plant-scope-status" class="dc-layer-status" aria-live="polite">Off · official threshold-limited comparison source, kept separate from WRI</p>
             </div>
             <div class="dc-layer-option" data-layer-preview="neon-streets">
               <div class="dc-layer-toprow">
@@ -190,6 +245,28 @@
               <button id="reset-page-state" class="dc-map-reset" type="button">Reset Page</button>
               <p id="page-state-indicator" class="dc-page-state-indicator" aria-live="polite">Defaults active</p>
               <span id="map-download-status" class="dc-visually-hidden" aria-live="polite"></span>
+              <div class="dc-map-share">
+                <button id="open-share-sheet" class="dc-map-share-trigger" type="button" aria-expanded="false" aria-controls="map-share-sheet">Share</button>
+                <div id="map-share-sheet" class="dc-map-share-sheet" role="dialog" aria-modal="false" aria-label="Share map" hidden>
+                  <div class="dc-map-share-actions">
+                    <button id="copy-compressed-url" class="dc-map-share-action" type="button">Copy compact URL</button>
+                    <button id="native-share-url" class="dc-map-share-action" type="button" hidden>Share…</button>
+                  </div>
+                  <div class="dc-map-share-links" aria-label="Share to social platforms">
+                    <a id="share-x" class="dc-map-share-link" href="#" target="_blank" rel="noopener noreferrer">X</a>
+                    <a id="share-bluesky" class="dc-map-share-link" href="#" target="_blank" rel="noopener noreferrer">Bluesky</a>
+                    <a id="share-linkedin" class="dc-map-share-link" href="#" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                    <a id="share-facebook" class="dc-map-share-link" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+                    <a id="share-email" class="dc-map-share-link" href="#">Email</a>
+                  </div>
+                  <p class="dc-map-share-note">Share links prefer the compressed `?s=` map state when this browser supports it.</p>
+                </div>
+                <span id="map-share-status" class="dc-visually-hidden" aria-live="polite"></span>
+              </div>
+              <label class="dc-map-query-toggle" for="compress-query-state">
+                <span>Compact URL</span>
+                <input id="compress-query-state" type="checkbox">
+              </label>
               <label for="map-theme">Map theme
                 <select id="map-theme">
                   <option value="collective">Code Collective</option>
@@ -224,7 +301,7 @@
         <div class="dc-disclosure-body">
           <p>Data centers are represented as one flat JSON array. The inventory combines government-verified state and permitted facilities, operator-documented commercial facilities, and named proposals. Each record says what kind of evidence establishes its status. Hardware and workflow notes are source-backed when operators or institutions publish them and explicitly labeled as inference when the public record only supports a likely use pattern. Missing energy, UPS, employment, investment, or tax-benefit values remain unknown rather than becoming zero.</p>
           <p>Public sentiment is an evidence rating, not opinion polling: <strong>-2</strong> means strong, sustained, site-specific opposition; <strong>-1</strong> documented opposition; <strong>0</strong> mixed or unclear evidence; <strong>+1/+2</strong> documented or strong support. A facility receives no score when the record is insufficient. Formal hearings, enacted restrictions, petitions, organizational letters, and attributable reporting outweigh unsourced social-media comments.</p>
-          <p>Power-plant capacity and locations come from final 2024 Form EIA-860 records. Production is annual net generation reported in final 2024 Form EIA-923 records. The residential price is EIA’s statewide annual average, not a household quote. County residential power estimates allocate that statewide EIA residential total by ACS occupied housing units; they are planning context, not utility-metered county load.</p>
+          <p>Power-plant capacity and locations come from final 2024 Form EIA-860 records. Production is annual net generation reported in final 2024 Form EIA-923 records. The residential price is EIA’s statewide annual average, not a household quote. County residential power estimates allocate statewide EIA residential sales by ACS occupied housing units. County total power estimates allocate statewide EIA all-sector sales by combining that residential estimate with a non-residential remainder allocated by ACS employed population, then show local power-plant generation and planned data-center additions separately. These are planning context, not utility-metered county load or coincident peak demand.</p>
           <p>Import/export icons mark public HIFLD transmission lines that cross the official Maryland iMAP state boundary. Nearby circuits are grouped within 120 meters for legibility. The physical lines can carry power in either direction; EIA publishes Maryland’s statewide annual net interstate trade, while actual direction and megawatts for each mapped circuit are not public. The layer scales arrows using an explicitly labeled estimated allocation of statewide average net import, weighted by voltage proxy and co-located circuit count; this is a planning guess, not a metered line-flow value.</p>
           <p class="dc-warning">Backup-generator megawatts describe emergency nameplate capacity. They must never be presented as data-center grid demand, consumption, or production.</p>
         </div>
@@ -237,6 +314,7 @@
         <div class="dc-disclosure-body">
           <div class="dc-downloads" aria-label="Download map data">
             <a href="/datacenters/data/infrastructure.json">Infrastructure JSON</a>
+            <a href="/datacenters/data/baltimore-red-line.json">Baltimore Red Line GeoJSON</a>
             <a href="/datacenters/data/power-interchanges.json">Power interchange JSON</a>
             <a href="/datacenters/data/power-estimates.json">Power estimates JSON</a>
             <a href="/datacenters/data/residential-electricity-rates.json">Residential rates JSON</a>
@@ -279,6 +357,10 @@
         <label class="dc-color-picker-field" for="layer-color-input">Color
           <input id="layer-color-input" name="color" type="color" value="#72b7d2">
         </label>
+        <label class="dc-color-alpha-field" for="layer-alpha-input">Alpha
+          <input id="layer-alpha-input" name="alpha" type="range" min="0" max="1" step="0.01" value="1">
+          <output id="layer-alpha-value" for="layer-alpha-input">100%</output>
+        </label>
         <output id="layer-color-value" for="layer-color-input">#72B7D2</output>
         <p id="layer-color-help" class="dc-modal-note">The selected color is applied immediately after you confirm.</p>
       </div>
@@ -315,6 +397,6 @@
   <script src="https://unpkg.com/deck.gl@9.2.11/dist.min.js"></script>
   <script src="https://unpkg.com/@loaders.gl/i3s@4.3.4/dist/dist.min.js"></script>
   <script type="module" src="/js/reusableComponents.js?v=20260807-project-menu"></script>
-  <script src="/datacenters/js/datacenters.js?v=20260811-datacenter-defaults" defer></script>
+  <script src="/datacenters/js/datacenters.js?v=20260831-power-plant-controls" defer></script>
 </body>
 </html>

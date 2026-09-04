@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kimi Research Observatory</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%232d6048'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --ink: #142119;
+      --paper: #f2efe6;
+      --panel: rgba(255, 253, 246, .86);
+      --line: #c8c5b7;
+      --moss: #2d6048;
+      --signal: #dd5d32;
+      --gold: #d3a62c;
+      --muted: #667169;
+      --danger: #a5332b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 82% 8%, rgba(211,166,44,.18), transparent 24rem),
+        linear-gradient(115deg, transparent 49.7%, rgba(20,33,25,.055) 50%, transparent 50.3%) 0 0/46px 46px,
+        var(--paper);
+      font-family: "Aptos", "Gill Sans", sans-serif;
+      min-height: 100vh;
+    }
+    .site-nav {
+      position: sticky; top: 0; z-index: 30;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      padding: .7rem clamp(1rem,4vw,4rem);
+      border-bottom: 1px solid var(--ink);
+      background: rgba(242,239,230,.96);
+      backdrop-filter: blur(10px);
+    }
+    .site-nav a {
+      color: var(--ink); text-decoration: none;
+      font: 700 .72rem "Courier New", monospace;
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+    .site-nav a:hover, .site-nav a:focus-visible { color: var(--signal); }
+    .site-nav-primary, .site-nav-projects { display:flex; align-items:center; gap:.85rem; flex-wrap:wrap; }
+    .site-nav-projects { justify-content:flex-end; }
+    header {
+      display: flex; align-items: end; justify-content: space-between; gap: 1rem;
+      padding: 2rem clamp(1rem,4vw,4rem) 1.35rem;
+      border-bottom: 1px solid var(--ink);
+    }
+    h1 { margin: 0; font: 700 clamp(2rem,5vw,4.6rem)/.88 Georgia, serif; letter-spacing: -.055em; }
+    .eyebrow, .label { font: 700 .7rem/1.2 "Courier New", monospace; letter-spacing: .14em; text-transform: uppercase; }
+    .connection { display: flex; align-items: center; gap: .55rem; font: 700 .78rem "Courier New", monospace; }
+    .dot { width: .7rem; height: .7rem; border-radius: 50%; background: var(--danger); box-shadow: 0 0 0 4px rgba(165,51,43,.12); }
+    .dot.live { background: var(--moss); box-shadow: 0 0 0 4px rgba(45,96,72,.14); animation: pulse 2s infinite; }
+    main { padding: 1.5rem clamp(1rem,4vw,4rem) 3rem; }
+    .grid { display: grid; grid-template-columns: repeat(12,1fr); gap: 1rem; }
+    .panel { background: var(--panel); border: 1px solid var(--line); box-shadow: 4px 5px 0 rgba(20,33,25,.09); padding: 1.1rem; }
+    .hero { grid-column: span 8; }
+    .controls { grid-column: span 4; }
+    .workflow { grid-column: span 12; }
+    .gates { grid-column: span 12; }
+    .metric { grid-column: span 3; min-height: 8.5rem; display: flex; flex-direction: column; justify-content: space-between; }
+    .chart { grid-column: span 8; }
+    .activity { grid-column: span 4; grid-row: span 2; }
+    .flight { grid-column: span 8; }
+    .received { grid-column: span 12; }
+    .big { font: 700 clamp(2rem,4vw,3.7rem)/1 Georgia, serif; letter-spacing: -.04em; }
+    .sub { color: var(--muted); font-size: .85rem; }
+    .progress-track { height: 1rem; background: #d9d6cb; border: 1px solid var(--ink); margin: 1rem 0 .55rem; }
+    .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg,var(--moss),#6d9b68); transition: width .7s ease; }
+    .hero-row { display:flex; justify-content:space-between; align-items:baseline; gap:1rem; }
+    button, input {
+      border: 1px solid var(--ink); background: #fffdf6; color: var(--ink); padding: .68rem .8rem;
+      font: 700 .75rem "Courier New", monospace;
+    }
+    button, input, select { min-height: 44px; }
+    button { cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
+    button:hover { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--ink); }
+    button.primary { background: var(--moss); color: white; }
+    button.stop { background: var(--danger); color: white; }
+    .control-row { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: .8rem; }
+    input { width: 4.2rem; }
+    .workflow-grid { display:grid; grid-template-columns:repeat(8,minmax(7rem,1fr)); gap:.65rem; align-items:end; margin-top:.8rem; }
+    .workflow-grid label { display:flex; flex-direction:column; gap:.3rem; color:var(--muted); font:.68rem "Courier New",monospace; text-transform:uppercase; letter-spacing:.06em; }
+    .workflow-grid label:first-child { grid-column:span 2; }
+    .workflow-grid input, .workflow-grid select { width:100%; border:1px solid var(--ink); background:#fffdf6; color:var(--ink); padding:.62rem; font:.72rem "Courier New",monospace; text-transform:none; letter-spacing:0; }
+    .workflow-checks { display:flex; flex-wrap:wrap; gap:.7rem; margin-top:.8rem; }
+    .workflow-checks label { display:inline-flex; align-items:center; gap:.4rem; color:var(--ink); font:.72rem "Courier New",monospace; }
+    .workflow-checks input { width:auto; }
+    .workflow-log { max-height:210px; overflow:auto; margin-top:.8rem; border:1px solid var(--line); background:#fffdf6; padding:.65rem; font:.68rem/1.4 "Courier New",monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .workflow-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:.55rem; margin-top:.8rem; }
+    .workflow-summary > span { border:1px solid var(--line); background:#fffdf6; padding:.6rem; font:.7rem/1.35 "Courier New",monospace; }
+    .gate-list { display:grid; gap:.6rem; margin-top:.8rem; }
+    .gate-card { border:1px solid var(--line); background:#fffdf6; padding:.75rem; }
+    .gate-head { display:flex; justify-content:space-between; align-items:start; gap:.6rem; }
+    .gate-fields { display:flex; flex-wrap:wrap; gap:.35rem; margin-top:.5rem; }
+    canvas { width: 100%; height: 230px; margin-top: .8rem; }
+    .legend { display:flex; gap:1rem; color:var(--muted); font: .72rem "Courier New", monospace; }
+    .swatch { display:inline-block; width:.8rem; height:.18rem; margin-right:.35rem; vertical-align:middle; }
+    .log { max-height: 430px; overflow:auto; margin-top:.8rem; border-top:1px solid var(--line); }
+    .log-item { padding:.62rem 0; border-bottom:1px solid var(--line); font:.74rem/1.35 "Courier New", monospace; }
+    .log-time { color:var(--muted); margin-right:.5rem; }
+    .log-item.error { color:var(--danger); } .log-item.control { color:#8c5e00; }
+    .flight-list { display:grid; grid-template-columns:repeat(2,1fr); gap:.65rem; margin-top:.8rem; }
+    .flight-item { border-left:5px solid var(--signal); background:#fffdf6; padding:.75rem; font:.78rem "Courier New",monospace; }
+    .stage { color:var(--signal); font-weight:bold; float:right; }
+    .error-banner { display:none; background:var(--danger); color:white; padding:.8rem; margin-bottom:1rem; font:700 .8rem "Courier New",monospace; }
+    .received-head, .inspector-head { display:flex; align-items:start; justify-content:space-between; gap:1rem; }
+    .received-actions { display:flex; align-items:end; gap:.75rem; flex-wrap:wrap; justify-content:flex-end; }
+    .received-actions select { border:1px solid var(--ink); background:#fffdf6; padding:.62rem; font:.72rem "Courier New",monospace; }
+    .distribution { display:flex; flex-wrap:wrap; gap:.45rem; margin:.8rem 0; }
+    .distribution span, .badge { display:inline-flex; align-items:center; gap:.3rem; border:1px solid var(--line); background:#fffdf6; padding:.28rem .5rem; font:700 .66rem "Courier New",monospace; }
+    .badge.medium, .badge.high, .badge.ok { color:#174e35; border-color:#67927a; background:#e2f0e6; }
+    .badge.low, .badge.review { color:#825500; border-color:#cfaa55; background:#fff2cb; }
+    .badge.insufficient, .badge.error { color:#8b2824; border-color:#c97970; background:#f8dfda; }
+    .filters { display:grid; grid-template-columns:minmax(12rem,2fr) repeat(3,minmax(8rem,1fr)); gap:.55rem; margin:.8rem 0; }
+    .filters input, .filters select { width:100%; border:1px solid var(--ink); background:#fffdf6; padding:.62rem; font:.72rem "Courier New",monospace; }
+    .record-table { width:100%; border-collapse:collapse; font:.72rem/1.3 "Courier New",monospace; }
+    .record-table th { text-align:left; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; padding:.55rem; border-bottom:1px solid var(--ink); }
+    .record-table td { padding:.65rem .55rem; border-bottom:1px solid var(--line); vertical-align:top; }
+    .record-row { cursor:pointer; } .record-row:hover { background:#fff8df; }
+    .record-name { display:block; font-weight:700; color:var(--ink); } .record-id { color:var(--muted); font-size:.65rem; }
+    .quality-pies { display:grid; grid-template-columns:repeat(auto-fill,minmax(15rem,1fr)); gap:.65rem; margin:.85rem 0 1rem; }
+    .quality-card { display:grid; grid-template-columns:4.35rem 1fr; gap:.7rem; align-items:center; min-height:5.4rem; border:1px solid var(--line); background:#fffdf6; padding:.65rem; text-align:left; box-shadow:none; cursor:pointer; }
+    .quality-card:hover { background:#fff8df; transform:none; box-shadow:2px 2px 0 var(--ink); }
+    .quality-pie { width:4rem; height:4rem; border-radius:50%; border:1px solid var(--ink); background:#e3dfd4; position:relative; }
+    .quality-pie::after { content:""; position:absolute; inset:.72rem; border-radius:50%; background:#fffdf6; border:1px solid var(--line); }
+    .quality-meta { min-width:0; }
+    .quality-score { font:700 1.4rem/1 Georgia,serif; letter-spacing:0; }
+    .quality-legend { display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.35rem; }
+    .quality-legend span { display:inline-flex; align-items:center; gap:.25rem; color:var(--muted); font:.62rem "Courier New",monospace; }
+    .quality-legend i { width:.55rem; height:.55rem; border:1px solid rgba(20,33,25,.25); display:inline-block; }
+    .inspector-shade { position:fixed; inset:0; z-index:20; background:rgba(20,33,25,.42); opacity:0; pointer-events:none; transition:opacity .18s ease; }
+    .inspector-shade.open { opacity:1; pointer-events:auto; }
+    .inspector {
+      position:fixed; z-index:21; right:0; top:0; bottom:0; width:min(720px,94vw); overflow:auto;
+      background:var(--paper); border-left:1px solid var(--ink); box-shadow:-12px 0 35px rgba(20,33,25,.2);
+      padding:1.25rem; transform:translateX(105%); transition:transform .22s ease;
+    }
+    .inspector.open { transform:translateX(0); }
+    .inspector h2 { margin:.2rem 0; font:700 2rem/1 Georgia,serif; }
+    .close { font-size:1.1rem; min-width:2.5rem; }
+    .fact-group { margin-top:1rem; padding-top:.8rem; border-top:1px solid var(--line); }
+    .fact-group h3 { margin:0 0 .55rem; font:700 .75rem "Courier New",monospace; letter-spacing:.1em; text-transform:uppercase; }
+    .facet-card { margin:.75rem 0; padding:.85rem; border:1px solid var(--line); background:var(--panel); }
+    .facet-head { display:flex; justify-content:space-between; gap:.7rem; align-items:start; }
+    .facet-head strong { text-transform:capitalize; }
+    .finding { margin:.7rem 0; font:1rem/1.45 Georgia,serif; }
+    .basis { color:var(--muted); font-size:.8rem; line-height:1.45; }
+    .source-card { margin-top:.55rem; padding:.65rem; border-left:4px solid var(--moss); background:#fffdf6; }
+    .source-card a { color:var(--moss); font-weight:700; } .source-card p { margin:.3rem 0 0; color:var(--muted); font-size:.75rem; }
+    details { margin-top:.55rem; border:1px solid var(--line); background:#fffdf6; }
+    summary { cursor:pointer; padding:.65rem; font:700 .72rem "Courier New",monospace; }
+    details > div, details > pre { margin:0; padding:.7rem; border-top:1px solid var(--line); }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; font:.67rem/1.4 "Courier New",monospace; color:#263c2d; }
+    .attempt { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; font:.68rem "Courier New",monospace; }
+    .empty { padding:1.5rem; color:var(--muted); text-align:center; font:italic 1rem Georgia,serif; }
+    @keyframes pulse { 50% { transform: scale(.75); opacity:.65; } }
+    @media (max-width: 900px) {
+      .hero,.controls,.workflow,.gates,.chart,.activity,.flight,.received { grid-column:span 12; }
+      .metric { grid-column:span 6; }
+      .activity { grid-row:auto; }
+    }
+    @media (max-width: 700px) { .filters,.workflow-grid { grid-template-columns:1fr 1fr; } .workflow-grid label:first-child { grid-column:span 2; } .record-table th:nth-child(3),.record-table td:nth-child(3),.record-table th:nth-child(5),.record-table td:nth-child(5) { display:none; } .attempt { grid-template-columns:1fr 1fr; } }
+    @media (max-width: 520px) { .metric { grid-column:span 12; } header { align-items:start; flex-direction:column; } .flight-list { grid-template-columns:1fr; } .filters,.workflow-grid { grid-template-columns:1fr; } .workflow-grid label:first-child { grid-column:span 1; } }
+  </style>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Code Collective navigation">
+    <div class="site-nav-primary">
+      <a href="http://127.0.0.1:8877/">Home</a>
+      <a href="http://127.0.0.1:8877/projects.html">Projects</a>
+      <a href="http://127.0.0.1:8877/kimi-inspector.html">Kimi Inspector</a>
+    </div>
+    <div class="site-nav-projects" aria-label="Project navigation">
+      <a href="http://127.0.0.1:8877/datacenters.html">Data Centers Map</a>
+      <a href="http://127.0.0.1:8877/branding.html">Branding</a>
+      <a href="https://127.0.0.1:5173/">R8 Rowhome</a>
+    </div>
+  </nav>
+  <header>
+    <div><div class="eyebrow">Inventory Operations / Live</div><h1>Research Observatory</h1></div>
+    <div class="connection"><span id="dot" class="dot"></span><span id="connection">CONNECTING</span></div>
+  </header>
+  <main>
+    <div id="error" class="error-banner"></div>
+    <div class="grid">
+      <section class="panel hero">
+        <div class="hero-row"><span class="label">Run Progress</span><span id="runId" class="sub">...</span></div>
+        <div class="hero-row"><span id="processed" class="big">0 / 0</span><span id="percent" class="big">0%</span></div>
+        <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+        <div class="hero-row sub"><span id="queue">0 queued</span><span id="state">unknown</span></div>
+      </section>
+      <section class="panel controls">
+        <div class="label">Flight Controls</div>
+        <div class="control-row"><button id="pause" class="primary">Pause</button><button id="resume">Resume</button><button id="stop" class="stop">Graceful stop</button></div>
+        <div class="control-row"><label class="sub">Workers <input id="workers" type="number" min="1" value="1"></label><button id="applyWorkers">Apply</button></div>
+        <div class="control-row"><button id="verbosity">Toggle verbose</button></div>
+        <p class="sub">Controls apply at facility and tier boundaries. Active HTTP calls drain safely.</p>
+      </section>
+      <section class="panel workflow">
+        <div class="received-head">
+          <div><div class="label">Evidence Workflow</div><p class="sub">Run research, audit, and promotion gates from the local inspector.</p></div>
+          <div class="received-actions"><span id="workflowState" class="badge">idle</span><button id="startWorkflow" class="primary">Start workflow</button><button id="stopWorkflow" class="stop">Stop workflow</button></div>
+        </div>
+        <div class="workflow-grid">
+          <label>Research profile <select id="workflowProfile"><option value="maryland-infrastructure">Maryland infrastructure</option><option value="worldwide-datacenter-power">Worldwide data-center power</option></select></label>
+          <label>Prompt profile <select id="workflowPromptProfile"><option value="auto">Auto</option><option value="maryland-infrastructure">Maryland infrastructure</option><option value="worldwide-datacenter-power">Worldwide data-center power</option></select></label>
+          <label>Record type <select id="workflowRecordType"><option value="data_center">Data center</option><option value="power_plant">Power plant</option></select></label>
+          <label>Max tier <select id="workflowTier"><option value="escalation">Escalation</option><option value="retry">Retry</option><option value="primary">Primary</option></select></label>
+          <label>Workers <input id="workflowWorkers" type="number" min="1" max="16" value="4"></label>
+          <label>Searches <input id="workflowSearches" type="number" min="1" max="20" value="5"></label>
+          <label>Audit workers <input id="workflowAuditWorkers" type="number" min="1" max="32" value="8"></label>
+          <label>Judge workers <input id="workflowJudgeWorkers" type="number" min="1" max="16" value="4"></label>
+          <label class="worldwide-only">Pilot limit <input id="workflowLimit" type="number" min="1" max="100" value="5"></label>
+          <label class="worldwide-only">ISO country <input id="workflowCountry" maxlength="3" placeholder="all"></label>
+          <label class="worldwide-only">Priority <select id="workflowPriority"><option value="1">1 · strongest</option><option value="2">2</option><option value="3">3</option><option value="4">4 · weakest</option></select></label>
+        </div>
+        <div class="workflow-checks">
+          <label class="worldwide-only"><input id="workflowPrepare" type="checkbox" checked> Prepare source inventory</label>
+          <label class="worldwide-only"><input id="workflowPreview" type="checkbox" checked> Preview only (no paid calls)</label>
+          <label><input id="workflowResearch" type="checkbox" checked> Research</label>
+          <label><input id="workflowAudit" type="checkbox" checked> Audit</label>
+          <label><input id="workflowPromote" type="checkbox" checked> Promote dry run</label>
+          <label><input id="workflowReuseAudit" type="checkbox" checked> Reuse source audit</label>
+          <label><input id="workflowApply" type="checkbox"> Apply promotion</label>
+        </div>
+        <div id="workflowSummary" class="workflow-summary"></div>
+        <div id="workflowLog" class="workflow-log">No local workflow has run in this dashboard session.</div>
+      </section>
+      <section class="panel gates">
+        <div class="received-head">
+          <div><div class="label">Worldwide Evidence Gates</div><p class="sub">Fetched evidence, audit decisions, judge results, repair reasons, and sparse-overlay publication state.</p></div>
+          <div class="received-actions"><span id="overlayCount" class="badge">0 promoted</span></div>
+        </div>
+        <div id="gateList" class="gate-list"><div class="empty">No worldwide evidence has been audited.</div></div>
+      </section>
+      <section class="panel metric"><span class="label">Current Spend</span><span id="cost" class="big">$0.00</span><span id="costRate" class="sub">$0.00 / record</span></section>
+      <section class="panel metric"><span class="label">Forecast Total</span><span id="forecastCost" class="big">$0.00</span><span id="remainingCost" class="sub">$0.00 remaining</span></section>
+      <section class="panel metric"><span class="label">Throughput</span><span id="rate" class="big">0.00</span><span class="sub">records / minute</span></section>
+      <section class="panel metric"><span class="label">ETA</span><span id="eta" class="big">--</span><span id="searchForecast" class="sub">-- searches forecast</span></section>
+      <section class="panel received">
+        <div class="received-head">
+          <div><div class="label">Received Data Inspector</div><p class="sub">Facility facts, confidence, evidence support, and model-stage provenance.</p></div>
+          <div class="received-actions"><label class="sub">Profile <select id="recordProfile"><option value="maryland-infrastructure">Maryland</option><option value="worldwide-datacenter-power">Worldwide power</option></select></label><label class="sub">Records <select id="recordScope"><option value="current">Current run</option><option value="all">All runs</option></select></label><span id="receivedCount" class="big">0</span></div>
+        </div>
+        <div id="distribution" class="distribution"></div>
+        <div class="filters">
+          <input id="recordSearch" type="search" placeholder="Search facility or facet">
+          <select id="statusFilter"><option value="">All outcomes</option><option value="ok">Accepted</option><option value="review">Review</option><option value="error">Error</option></select>
+          <select id="typeFilter"><option value="">All record types</option><option value="data_center">Data center</option><option value="power_plant">Power plant</option></select>
+          <select id="confidenceFilter"><option value="">All confidence</option><option>high</option><option>medium</option><option>low</option><option>insufficient</option></select>
+        </div>
+        <div id="qualityPies" class="quality-pies"></div>
+        <div id="recordList"></div>
+      </section>
+      <section class="panel chart">
+        <div class="label">Performance Over Time</div>
+        <div class="legend"><span><i class="swatch" style="background:#2d6048"></i>processed</span><span><i class="swatch" style="background:#dd5d32"></i>searches</span><span><i class="swatch" style="background:#d3a62c"></i>cost</span></div>
+        <canvas id="chart"></canvas>
+      </section>
+      <section class="panel activity"><div class="label">Activity Stream</div><div id="log" class="log"></div></section>
+      <section class="panel flight"><div class="label">In Flight</div><div id="flight" class="flight-list"></div></section>
+    </div>
+  </main>
+  <div id="inspectorShade" class="inspector-shade"></div>
+  <aside id="inspector" class="inspector" aria-label="Received research record" aria-hidden="true">
+    <div class="inspector-head"><div><div class="eyebrow">Evidence Record</div><h2 id="inspectorTitle">Loading</h2><div id="inspectorMeta" class="distribution"></div></div><button id="closeInspector" class="close" aria-label="Close inspector">×</button></div>
+    <div id="inspectorBody"></div>
+  </aside>
+  <script>
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+    const label = value => String(value || 'unknown').replaceAll('_',' ');
+    const confidenceRank = {high:4,medium:3,low:2,insufficient:1,unknown:0};
+    const qualityColors = {high:'#2d6048',medium:'#6d9b68',low:'#d3a62c',insufficient:'#a5332b',unknown:'#c8c5b7'};
+    let receivedRecords = [], lastRecordCount = -1;
+    const recordScope = () => $('recordScope')?.value || 'current';
+    const recordProfile = () => $('recordProfile')?.value || 'maryland-infrastructure';
+    const money = value => `$${Number(value || 0).toFixed(2)}`;
+    const duration = seconds => {
+      if (seconds == null) return '--';
+      if (seconds < 3600) return `${Math.ceil(seconds / 60)}m`;
+      return `${Math.floor(seconds / 3600)}h ${Math.ceil((seconds % 3600) / 60)}m`;
+    };
+    async function control(body) {
+      try {
+        const response = await fetch('/api/control', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        const value = await response.json();
+        if (!response.ok) throw new Error(value.error || 'Control failed');
+        $('error').style.display='none'; await refresh();
+      } catch (error) {
+        $('error').textContent=`Control failed: ${error.message}`; $('error').style.display='block';
+      }
+    }
+    $('pause').onclick = () => control({paused:true});
+    $('resume').onclick = () => control({paused:false});
+    $('applyWorkers').onclick = () => control({workers:Number($('workers').value)});
+    $('verbosity').onclick = () => control({verbose:!window.currentStatus?.verbose});
+    $('stop').onclick = () => confirm('Stop dispatching new facilities and drain active work?') && control({stop:true});
+    async function workflowRequest(body) {
+      const response = await fetch('/api/workflow', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const value = await response.json();
+      if (!response.ok) throw new Error(value.error || 'Workflow request failed');
+      renderWorkflow(value);
+    }
+    function workflowOptions() {
+      const worldwide = $('workflowProfile').value === 'worldwide-datacenter-power';
+      return {
+        action:'start',
+        profile:$('workflowProfile').value,
+        prompt_profile:$('workflowPromptProfile').value,
+        record_type:$('workflowRecordType').value,
+        max_tier:$('workflowTier').value,
+        workers:Number($('workflowWorkers').value),
+        max_searches:Number($('workflowSearches').value),
+        audit_workers:Number($('workflowAuditWorkers').value),
+        judge_workers:Number($('workflowJudgeWorkers').value),
+        limit:Number($('workflowLimit').value),
+        country:$('workflowCountry').value.trim().toUpperCase(),
+        priority:Number($('workflowPriority').value),
+        run_prepare:worldwide && $('workflowPrepare').checked,
+        preview_only:worldwide && $('workflowPreview').checked,
+        run_research:$('workflowResearch').checked,
+        run_audit:$('workflowAudit').checked,
+        run_promote:$('workflowPromote').checked,
+        reuse_source_audit:$('workflowReuseAudit').checked,
+        apply_promotion:$('workflowApply').checked,
+      };
+    }
+    const workflowQuery = new URLSearchParams(window.location.search);
+    const truthyQueryValue = value => ['1','true','yes','on'].includes(String(value || '').trim().toLowerCase());
+    const setSelectFromQuery = (id, value) => {
+      if (value == null || value === '') return;
+      const element = $(id);
+      if ([...element.options].some(option => option.value === value)) element.value = value;
+    };
+    const setNumberFromQuery = (id, value) => {
+      if (value == null || value === '') return;
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) $(id).value = parsed;
+    };
+    const setCheckboxFromQuery = (id, value) => {
+      if (value == null) return;
+      $(id).checked = truthyQueryValue(value);
+    };
+    function applyWorkflowQuery() {
+      const workflow = String(workflowQuery.get('workflow') || workflowQuery.get('wf') || '').trim().toLowerCase();
+      const dataCenterWorkflowAliases = new Set([
+        'data-centers',
+        'datacenters',
+        'kimi-datacenters',
+        'worldwide-datacenter-power',
+      ]);
+      const powerPlantWorkflowAliases = new Set([
+        'power-bolts',
+        'power-plants',
+        'powerplants',
+        'kimi-power-plants',
+      ]);
+      if (dataCenterWorkflowAliases.has(workflow)) {
+        $('workflowProfile').value = 'worldwide-datacenter-power';
+        $('recordProfile').value = 'worldwide-datacenter-power';
+        $('workflowRecordType').value = 'data_center';
+      } else if (powerPlantWorkflowAliases.has(workflow)) {
+        $('workflowProfile').value = 'maryland-infrastructure';
+        $('recordProfile').value = 'maryland-infrastructure';
+        $('workflowRecordType').value = 'power_plant';
+      }
+      setSelectFromQuery('workflowProfile', workflowQuery.get('profile'));
+      setSelectFromQuery('workflowPromptProfile', workflowQuery.get('prompt_profile') || workflowQuery.get('prompt'));
+      if (workflowQuery.get('profile') === 'worldwide-datacenter-power') {
+        $('recordProfile').value = 'worldwide-datacenter-power';
+      }
+      setSelectFromQuery('recordProfile', workflowQuery.get('records_profile') || workflowQuery.get('profile'));
+      setSelectFromQuery('recordScope', workflowQuery.get('scope'));
+      setSelectFromQuery('workflowRecordType', workflowQuery.get('record_type') || workflowQuery.get('type'));
+      setSelectFromQuery('workflowTier', workflowQuery.get('max_tier') || workflowQuery.get('tier'));
+      setSelectFromQuery('workflowPriority', workflowQuery.get('priority'));
+      setNumberFromQuery('workflowWorkers', workflowQuery.get('workers'));
+      setNumberFromQuery('workflowSearches', workflowQuery.get('searches') || workflowQuery.get('max_searches'));
+      setNumberFromQuery('workflowAuditWorkers', workflowQuery.get('audit_workers'));
+      setNumberFromQuery('workflowJudgeWorkers', workflowQuery.get('judge_workers'));
+      setNumberFromQuery('workflowLimit', workflowQuery.get('limit'));
+      if (workflowQuery.has('country')) $('workflowCountry').value = workflowQuery.get('country').trim().toUpperCase();
+      setCheckboxFromQuery('workflowPrepare', workflowQuery.get('prepare'));
+      setCheckboxFromQuery('workflowPreview', workflowQuery.get('preview'));
+      setCheckboxFromQuery('workflowResearch', workflowQuery.get('research'));
+      setCheckboxFromQuery('workflowAudit', workflowQuery.get('audit'));
+      setCheckboxFromQuery('workflowPromote', workflowQuery.get('promote'));
+      setCheckboxFromQuery('workflowReuseAudit', workflowQuery.get('reuse_audit'));
+      setCheckboxFromQuery('workflowApply', workflowQuery.get('apply'));
+    }
+    $('startWorkflow').onclick = async () => {
+      const worldwide=$('workflowProfile').value==='worldwide-datacenter-power';
+      if (worldwide && !$('workflowPreview').checked && !confirm(`This will make paid Kimi calls for at most ${$('workflowLimit').value} worldwide facilities. Continue?`)) return;
+      if ($('workflowApply').checked && !confirm(worldwide?'Apply only audited worldwide values to the sparse enrichment overlay?':'Apply promotion can edit canonical data files after the audit gate passes. Continue?')) return;
+      try { await workflowRequest(workflowOptions()); $('error').style.display='none'; }
+      catch (error) { $('error').textContent=`Workflow failed to start: ${error.message}`; $('error').style.display='block'; }
+    };
+    $('stopWorkflow').onclick = async () => {
+      try { await workflowRequest({action:'stop'}); }
+      catch (error) { $('error').textContent=`Workflow stop failed: ${error.message}`; $('error').style.display='block'; }
+    };
+    function renderWorkflow(workflow) {
+      const state=workflow?.state||'idle', phase=workflow?.phase||'idle';
+      $('workflowState').textContent=`${state} / ${phase}`;
+      $('workflowState').className=`badge ${state==='failed'?'error':state==='succeeded'?'ok':state==='running'?'medium':''}`;
+      $('startWorkflow').disabled=state==='running';
+      $('stopWorkflow').disabled=state!=='running';
+      const lines=(workflow?.log||[]).slice(-80).map(item=>`[${new Date(item.timestamp*1000).toLocaleTimeString()}] ${item.message}`);
+      $('workflowLog').textContent=lines.join('\n') || 'No local workflow has run in this dashboard session.';
+    }
+    function syncWorkflowProfile() {
+      const worldwide=$('workflowProfile').value==='worldwide-datacenter-power';
+      document.querySelectorAll('.worldwide-only').forEach(element=>element.hidden=!worldwide);
+      if (worldwide) {
+        $('workflowRecordType').value='data_center';
+        $('workflowRecordType').disabled=true;
+      } else {
+        $('workflowRecordType').disabled=false;
+      }
+    }
+    $('workflowProfile').addEventListener('change',syncWorkflowProfile);
+    applyWorkflowQuery();
+    syncWorkflowProfile();
+    async function refreshWorldwideSummary() {
+      try {
+        const response=await fetch('/api/worldwide-summary',{cache:'no-store'});
+        if (!response.ok) return;
+        const value=await response.json(), countries=Object.keys(value.country_counts||{}).length;
+        $('workflowSummary').innerHTML=`<span><b>Prepared</b><br>${value.prepared?'yes':'no'}</span><span><b>Eligible</b><br>${value.eligible_count||0}</span><span><b>Deferred</b><br>${value.deferred_count||0}</span><span><b>Countries</b><br>${countries}</span><span><b>Researched</b><br>${value.researched_count||0}</span><span><b>Audited</b><br>${value.audited_count||0}</span><span><b>Promotion ready</b><br>${value.promotion_ready_count||0}</span><span><b>Queues</b><br>${value.repair_count||0} repair · ${value.review_count||0} review</span>`;
+      } catch {}
+    }
+    async function refreshWorldwideGates() {
+      try {
+        const response=await fetch('/api/worldwide-gates',{cache:'no-store'});
+        if (!response.ok) return;
+        const value=await response.json(), rows=value.rows||[];
+        $('overlayCount').textContent=`${value.overlay_record_count||0} promoted`;
+        $('overlayCount').className=`badge ${value.overlay_record_count?'ok':''}`;
+        $('gateList').innerHTML=rows.length?rows.map(row=>{
+          const fields=Object.entries(row.fields||{}).filter(([,fieldValue])=>fieldValue!==null&&fieldValue!==''&&(!Array.isArray(fieldValue)||fieldValue.length));
+          const sources=(row.sources||[]).map(source=>`<li>${safeUrl(source.url)==='#'?esc(source.title):`<a href="${esc(safeUrl(source.url))}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>`} · ${esc(source.source_class||'other')} · ${source.usable?'usable':source.reachable?'reachable':'unavailable'}</li>`).join('');
+          return `<article class="gate-card"><div class="gate-head"><div><span class="record-name">${esc(row.facility_name||row.facility_id)}</span><span class="record-id">${esc(row.facility_id)} · ${esc(label(row.action))}</span></div><span class="badge ${esc(row.state)}">${esc(label(row.state))}</span></div>${row.value?`<p class="finding">${esc(row.value)}</p>`:''}<div class="gate-fields">${fields.map(([key,fieldValue])=>`<span class="badge"><b>${esc(label(key))}</b> ${esc(Array.isArray(fieldValue)?fieldValue.join(', '):fieldValue)}</span>`).join('')}</div>${(row.reasons||[]).length?`<details><summary>Audit reasons</summary><ul>${row.reasons.map(reason=>`<li>${esc(reason)}</li>`).join('')}</ul></details>`:''}${sources?`<details><summary>Evidence sources</summary><ul>${sources}</ul></details>`:''}${row.judge?`<details><summary>Judge result · ${esc(row.judge.verdict||'unknown')}</summary><pre>${esc(JSON.stringify(row.judge,null,2))}</pre></details>`:''}</article>`;
+        }).join(''):'<div class="empty">No worldwide evidence has been audited.</div>';
+      } catch {}
+    }
+    async function refreshWorkflow() {
+      try {
+        const response=await fetch('/api/workflow',{cache:'no-store'});
+        if (response.ok) renderWorkflow(await response.json());
+      } catch {}
+    }
+    function drawChart(history) {
+      const canvas = $('chart'), dpr = devicePixelRatio || 1, rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d'); ctx.scale(dpr,dpr);
+      const w=rect.width,h=rect.height,p=28;
+      ctx.strokeStyle='#c8c5b7'; ctx.lineWidth=1;
+      for(let i=0;i<5;i++){const y=p+(h-p*2)*i/4;ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(w-p,y);ctx.stroke();}
+      if(history.length<2) return;
+      const fields=[['processed','#2d6048'],['search_count','#dd5d32'],['estimated_cost_usd','#d3a62c']];
+      fields.forEach(([field,color])=>{
+        const max=Math.max(...history.map(x=>Number(x[field]||0)),1);ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.beginPath();
+        history.forEach((x,i)=>{const px=p+(w-p*2)*i/(history.length-1),py=h-p-(h-p*2)*Number(x[field]||0)/max;i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+      });
+    }
+    function render(data) {
+      const s=data.status||{}, f=data.forecast||{}, m=s.metrics||{}, total=s.total||0, processed=s.processed||0, pct=total?processed/total*100:0;
+      window.currentStatus=s;
+      $('dot').classList.toggle('live',data.connected); $('connection').textContent=data.connected?'LIVE':'DISCONNECTED';
+      $('error').style.display=data.error?'block':'none'; $('error').textContent=data.error||'';
+      $('runId').textContent=`run ${String(s.run_id||'unknown').slice(0,8)} / pipeline ${s.pipeline_id||'unknown'}`;
+      $('processed').textContent=`${processed} / ${total}`; $('percent').textContent=`${pct.toFixed(1)}%`; $('progressBar').style.width=`${pct}%`;
+      $('queue').textContent=`${s.queued||0} queued / ${Object.keys(s.in_flight||{}).length} in flight`; $('state').textContent=String(s.state||'unknown').toUpperCase();
+      $('cost').textContent=money(m.estimated_cost_usd); $('costRate').textContent=`${money(f.cost_per_record_usd)} blended / record`;
+      $('forecastCost').textContent=money(f.projected_total_cost_usd); $('remainingCost').textContent=`${money(f.projected_remaining_cost_usd)} remaining`;
+      $('rate').textContent=Number(f.records_per_minute||0).toFixed(2); $('eta').textContent=duration(f.eta_seconds);
+      $('searchForecast').textContent=`${f.projected_total_searches||0} searches forecast`; $('workers').value=s.workers||1; $('workers').max=s.max_workers||s.workers||1;
+      $('flight').innerHTML=Object.entries(s.in_flight||{}).map(([id,stage])=>`<div class="flight-item">${esc(id)}<span class="stage">${esc(stage)}</span></div>`).join('')||'<span class="sub">No active facilities</span>';
+      $('log').innerHTML=(data.activity||[]).map(x=>`<div class="log-item ${esc(x.level)}"><span class="log-time">${new Date(x.timestamp*1000).toLocaleTimeString()}</span>${esc(x.message)}</div>`).join('');
+      renderReceived(data.received||{});
+      if ((data.received?.records ?? 0) !== lastRecordCount) loadRecords();
+      drawChart(data.history||[]);
+    }
+    function distributionItems(title, values) {
+      return Object.entries(values||{}).sort((a,b)=>b[1]-a[1]).map(([key,count])=>`<span><b>${esc(label(key))}</b> ${count}</span>`).join('');
+    }
+    function renderReceived(received) {
+      $('receivedCount').textContent=received.records||0;
+      $('distribution').innerHTML=`<span><b>sources</b> ${received.sources||0}</span>${distributionItems('status',received.statuses)}${distributionItems('confidence',received.confidences)}${distributionItems('type',received.record_types)}`;
+    }
+    function recordConfidence(record) {
+      const values=Object.values(record.confidences||{});
+      return values.sort((a,b)=>(confidenceRank[a]||0)-(confidenceRank[b]||0))[0]||'unknown';
+    }
+    function filteredRecords() {
+      const query=$('recordSearch').value.trim().toLowerCase(), status=$('statusFilter').value, type=$('typeFilter').value, confidence=$('confidenceFilter').value;
+      return receivedRecords.filter(record=>{
+        const haystack=[record.facility_id,record.facility_name,...(record.requested_facets||[])].join(' ').toLowerCase();
+        return (!query||haystack.includes(query))&&(!status||record.status===status)&&(!type||record.record_type===type)&&(!confidence||Object.values(record.confidences||{}).includes(confidence));
+      });
+    }
+    function qualityGradient(counts) {
+      const entries=Object.entries(counts||{}).filter(([,count])=>Number(count)>0);
+      const total=entries.reduce((sum,[,count])=>sum+Number(count),0);
+      if (!total) return '#e3dfd4';
+      let cursor=0;
+      return `conic-gradient(${entries.map(([key,count])=>{
+        const start=cursor, end=cursor+Number(count)/total*100; cursor=end;
+        return `${qualityColors[key]||qualityColors.unknown} ${start}% ${end}%`;
+      }).join(',')})`;
+    }
+    function renderQualityPies(rows) {
+      $('qualityPies').innerHTML=rows.length?rows.map(record=>{
+        const counts=record.quality_counts||{}, labelText=label(record.quality_label||recordConfidence(record));
+        const legend=Object.entries(counts).filter(([,count])=>count).map(([key,count])=>`<span><i style="background:${qualityColors[key]||qualityColors.unknown}"></i>${esc(key)} ${count}</span>`).join('');
+        return `<button class="quality-card" data-id="${esc(record.facility_id)}" data-run-id="${esc(record.run_id||'')}" aria-label="${esc(record.facility_name)} quality ${Number(record.quality_score||0)} percent ${esc(labelText)}"><span class="quality-pie" style="background:${qualityGradient(counts)}"></span><span class="quality-meta"><span class="record-name">${esc(record.facility_name)}</span><span class="record-id">${esc(record.facility_id)} · ${esc(label(record.record_type))} · run ${esc(String(record.run_id||'unknown').slice(0,8))}</span><span class="quality-score">${Number(record.quality_score||0)}%</span> <span class="badge ${esc(record.quality_label||recordConfidence(record))}">${esc(labelText)}</span><span class="quality-legend">${legend||'<span>No facets</span>'}</span></span></button>`;
+      }).join(''):'';
+      document.querySelectorAll('.quality-card').forEach(card=>card.addEventListener('click',()=>openRecord(card.dataset.id, card.dataset.runId)));
+    }
+    async function loadRecords() {
+      const response=await fetch(`/api/records?scope=${encodeURIComponent(recordScope())}&profile=${encodeURIComponent(recordProfile())}`,{cache:'no-store'});
+      if (!response.ok) return;
+      receivedRecords=await response.json(); lastRecordCount=receivedRecords.length; renderRecordList();
+    }
+    function renderRecordList() {
+      const rows=filteredRecords();
+      renderQualityPies(rows);
+      $('recordList').innerHTML=rows.length?`<table class="record-table"><thead><tr><th>Facility</th><th>Outcome</th><th>Facets</th><th>Quality</th><th>Evidence</th><th>Cost</th></tr></thead><tbody>${rows.map(record=>`<tr class="record-row" data-id="${esc(record.facility_id)}" data-run-id="${esc(record.run_id||'')}"><td><span class="record-name">${esc(record.facility_name)}</span><span class="record-id">${esc(record.facility_id)} · ${esc(label(record.record_type))} · run ${esc(String(record.run_id||'unknown').slice(0,8))}</span></td><td><span class="badge ${esc(record.status)}">${esc(record.status)}</span><div class="record-id">${esc(record.final_stage||'none')}</div></td><td>${(record.requested_facets||[]).map(facet=>esc(label(facet))).join('<br>')}</td><td><span class="badge ${esc(record.quality_label||recordConfidence(record))}">${Number(record.quality_score||0)}% ${esc(label(record.quality_label||recordConfidence(record)))}</span></td><td>${record.source_count} sources<br><span class="record-id">${record.search_count} searches</span></td><td>${money(record.estimated_cost_usd)}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">No received records match these filters.</div>';
+      document.querySelectorAll('.record-row').forEach(row=>row.addEventListener('click',()=>openRecord(row.dataset.id, row.dataset.runId)));
+    }
+    function safeUrl(value) { try { const url=new URL(value); return ['http:','https:'].includes(url.protocol)?url.href:'#'; } catch { return '#'; } }
+    function sourceCard(source) {
+      const href=safeUrl(source.url), linked=href==='#'?esc(source.title):`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(source.title)}</a>`;
+      return `<div class="source-card">${linked}<div class="record-id">${esc(source.publisher)} · ${esc(source.source_type||'unknown')} ${source.document_date?'· '+esc(source.document_date):''}</div><p>${esc(source.supports)}</p></div>`;
+    }
+    function facetCard(name, facet) {
+      if (!facet||typeof facet!=='object') return `<div class="facet-card"><div class="facet-head"><strong>${esc(label(name))}</strong><span class="badge error">malformed</span></div></div>`;
+      const fields=facet.fields&&typeof facet.fields==='object'?`<div class="fact-group"><h3>Structured enhancement</h3><div class="distribution">${Object.entries(facet.fields).map(([key,value])=>`<span><b>${esc(label(key))}</b> ${esc(Array.isArray(value)?value.join(', ')||'unknown':value??'unknown')}</span>`).join('')}</div></div>`:'';
+      return `<article class="facet-card"><div class="facet-head"><strong>${esc(label(name))}</strong><span class="badge ${esc(facet.confidence)}">${esc(facet.confidence||'unknown')}</span></div><p class="finding">${esc(facet.value)}</p><p class="basis">${esc(facet.basis)}</p>${fields}<div class="fact-group"><h3>Evidence sources</h3>${(facet.sources||[]).map(sourceCard).join('')||'<div class="empty">No sources received</div>'}</div></article>`;
+    }
+    function attemptDisclosure(attempt) {
+      return `<details><summary>${esc(attempt.stage)} · ${esc(attempt.status)} · ${attempt.metrics?.search_count||0} searches · ${money(attempt.metrics?.estimated_cost_usd)}</summary><div><div class="attempt"><span>Model<br><b>${esc(attempt.model)}</b></span><span>Elapsed<br><b>${Number(attempt.elapsed_seconds||0).toFixed(1)}s</b></span><span>Prior searches<br><b>${(attempt.prior_search_queries||[]).length}</b></span><span>HTTP retries<br><b>${attempt.metrics?.http_retry_count||0}</b></span></div>${attempt.error?`<p class="basis"><b>Validation/API error:</b> ${esc(attempt.error)}</p>`:''}${(attempt.search_queries||[]).length?`<div class="fact-group"><h3>Queries</h3><ul>${attempt.search_queries.map(q=>`<li>${esc(q)}</li>`).join('')}</ul></div>`:''}${attempt.invalid_result?`<details><summary>Invalid structured result</summary><pre>${esc(JSON.stringify(attempt.invalid_result,null,2))}</pre></details>`:''}</div></details>`;
+    }
+    async function openRecord(id, runId='') {
+      $('inspector').classList.add('open'); $('inspectorShade').classList.add('open'); $('inspector').setAttribute('aria-hidden','false'); $('inspectorTitle').textContent='Loading'; $('inspectorBody').innerHTML='';
+      const response=await fetch(`/api/record?id=${encodeURIComponent(id)}&run_id=${encodeURIComponent(runId)}&scope=${encodeURIComponent(recordScope())}&profile=${encodeURIComponent(recordProfile())}`,{cache:'no-store'}), record=await response.json();
+      if (!response.ok) { $('inspectorTitle').textContent='Record unavailable'; $('inspectorBody').textContent=record.error||'Unknown error'; return; }
+      const result=record.final_result||{}, facets=result.facets||{};
+      $('inspectorTitle').textContent=record.facility_name||record.facility_id;
+      $('inspectorMeta').innerHTML=`<span>${esc(label(record.record_type))}</span><span class="badge ${esc(record.status)}">${esc(record.status)}</span><span>${esc(record.final_stage||'no final stage')}</span><span>run ${esc(String(record.run_id||'unknown').slice(0,8))}</span><span>${record.metrics?.search_count||0} searches</span><span>${money(record.metrics?.estimated_cost_usd)}</span>`;
+      $('inspectorBody').innerHTML=`<section class="fact-group"><h3>Received findings</h3>${Object.entries(facets).map(([name,facet])=>facetCard(name,facet)).join('')||'<div class="empty">No valid final facets received.</div>'}</section>${result.research_notes?`<section class="fact-group"><h3>Research notes</h3><p class="finding">${esc(result.research_notes)}</p></section>`:''}<section class="fact-group"><h3>Stage provenance</h3>${(record.attempts||[]).map(attemptDisclosure).join('')}</section><details><summary>Raw checkpoint record</summary><pre>${esc(JSON.stringify(record,null,2))}</pre></details>`;
+    }
+    function closeInspector(){ $('inspector').classList.remove('open'); $('inspectorShade').classList.remove('open'); $('inspector').setAttribute('aria-hidden','true'); }
+    $('closeInspector').onclick=closeInspector; $('inspectorShade').onclick=closeInspector; addEventListener('keydown',event=>{if(event.key==='Escape')closeInspector();});
+    ['recordSearch','statusFilter','typeFilter','confidenceFilter'].forEach(id=>$(id).addEventListener('input',renderRecordList));
+    ['recordScope','recordProfile'].forEach(id=>$(id).addEventListener('change',()=>{lastRecordCount=-1; loadRecords(); refresh();}));
+    async function refresh(){try{const r=await fetch(`/api/snapshot?scope=${encodeURIComponent(recordScope())}&profile=${encodeURIComponent(recordProfile())}`,{cache:'no-store'});render(await r.json());refreshWorkflow();refreshWorldwideSummary();refreshWorldwideGates();}catch(e){$('connection').textContent='DASHBOARD ERROR';}}
+    refresh(); setInterval(refresh,2000); addEventListener('resize',refresh);
+  </script>
+</body>
+</html>

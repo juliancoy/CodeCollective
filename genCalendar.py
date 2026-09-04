@@ -15,10 +15,12 @@ import scrape_partiful
 import scrape_timely
 import scrape_tribe
 import scrape_biotrac
+import scrape_active_data_calendar
 import scrape_web_events
 import scrape_legistar
 import scrape_thread_helpcenter
 import scrape_bniajfi
+import scrape_gbci
 import json
 import datetime
 import pytz
@@ -83,6 +85,8 @@ SOURCE_KIND_CONCURRENCY = {
     "timely": 2,
     "tribe_events": 2,
     "biotrac": 1,
+    "active_data_calendar_rss": 1,
+    "gbci_events": 1,
     "unknown": 2,
 }
 
@@ -516,6 +520,10 @@ def fetch_events_from_source(source, city):
             "Fetching events from",
             lambda: scrape_biotrac.scrape(source_url),
         ),
+        "active_data_calendar_rss": (
+            "Fetching events from",
+            lambda: scrape_active_data_calendar.scrape(source_url),
+        ),
         "web_events_page": (
             "Fetching events from",
             lambda: scrape_web_events.parse_web_events_page(source_url),
@@ -531,6 +539,10 @@ def fetch_events_from_source(source, city):
         "bniajfi_community_change_events": (
             "Fetching events from",
             lambda: scrape_bniajfi.scrape_bniajfi_community_change_events(source_url),
+        ),
+        "gbci_events": (
+            "Fetching events from",
+            lambda: scrape_gbci.scrape(source_url),
         ),
         "sjbc_events": (
             "Fetching events from",

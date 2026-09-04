@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Kimi Inspector Service | Code Collective</title>
+  <meta name="description" content="Configure and open the local Kimi Inspector Service for Code Collective infrastructure research." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://codecollective.us/kimi-inspector.html" />
+  <link rel="icon" href="/images/favicons/favicon.png" />
+  <link rel="stylesheet" href="/css/master.css?v=20260816-kimi-inspector" />
+</head>
+
+<body id="body">
+  <video id="bg-video" autoplay loop muted playsinline poster="/images/general_encircled_banner.webp">
+    <source src="/videos/craig_baltimore_video.mp4" type="video/mp4" media="(max-width: 768px)">
+    <source src="/videos/baltimorenight_15s_crossfaded.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <our-header></our-header>
+
+  <main id="wrapper" class="longform dark-mode" style="padding: 0; margin: 0;">
+    <section id="main" class="longform dark-mode" style="padding: 0; margin: 0;">
+      <section class="about-us kimi-page" aria-labelledby="kimi-title">
+        <div class="kimi-hero">
+          <div>
+            <p class="brand-kicker">Local research service</p>
+            <h1 id="kimi-title">Kimi Inspector Service</h1>
+            <p>Inspect received infrastructure records, review confidence quality, and optionally write corrected artifacts back to GitHub.</p>
+          </div>
+          <div class="kimi-status-card">
+            <span class="kimi-status-dot" id="kimiStatusDot" aria-hidden="true"></span>
+            <div>
+              <strong id="kimiStatus">Checking service</strong>
+              <p id="kimiStatusDetail">Looking for the local dashboard on port 8766.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="kimi-grid">
+          <section class="kimi-panel" aria-labelledby="kimi-key-title">
+            <h2 id="kimi-key-title">Kimi API Key</h2>
+            <p>The key is sent only to the local Docker dashboard at <code>127.0.0.1:8766</code> and saved into ignored file <code>.env.kimi</code>. Restart the runner after changing it so the research worker picks it up.</p>
+            <form id="kimiKeyForm" class="kimi-form">
+              <label for="moonshotApiKey">Moonshot API key</label>
+              <input id="moonshotApiKey" name="moonshotApiKey" type="password" autocomplete="off" placeholder="sk-...">
+              <button type="submit">Save key locally</button>
+            </form>
+            <p id="kimiKeyMessage" class="kimi-message" role="status"></p>
+          </section>
+
+          <section class="kimi-panel" aria-labelledby="github-title">
+            <h2 id="github-title">Optional GitHub Write</h2>
+            <p>Use a fine-scoped GitHub token when a reviewed artifact needs to be written directly to the repository. The token stays in this browser session.</p>
+            <form id="githubForm" class="kimi-form kimi-form--github">
+              <label for="githubToken">GitHub token</label>
+              <input id="githubToken" type="password" autocomplete="off" placeholder="github_pat_...">
+              <label for="githubRepo">Repository</label>
+              <input id="githubRepo" type="text" value="juliancoy/CodeCollective">
+              <label for="githubBranch">Branch</label>
+              <input id="githubBranch" type="text" value="main">
+              <label for="githubPath">File path</label>
+              <input id="githubPath" type="text" placeholder="datacenters/research/reviewed-record.json">
+              <label for="githubMessage">Commit message</label>
+              <input id="githubMessage" type="text" value="Update Kimi inspected record">
+              <label for="githubContent">File content</label>
+              <textarea id="githubContent" rows="9" spellcheck="false" placeholder="{&#10;  &quot;status&quot;: &quot;reviewed&quot;&#10;}"></textarea>
+              <button type="submit">Write file to GitHub</button>
+            </form>
+            <p id="githubMessageOut" class="kimi-message" role="status"></p>
+          </section>
+        </div>
+
+        <section class="kimi-panel kimi-dashboard-panel" aria-labelledby="dashboard-title">
+          <div class="kimi-dashboard-head">
+            <div>
+              <h2 id="dashboard-title">Live Inspector</h2>
+              <p>Open the local dashboard for run controls, all-run aggregation, quality pie charts, and record evidence.</p>
+            </div>
+            <a class="kimi-open-link" href="http://127.0.0.1:8766/" target="_blank" rel="noopener noreferrer">Open full dashboard</a>
+          </div>
+          <iframe id="kimiDashboard" class="kimi-dashboard-frame" title="Kimi Inspector dashboard" src="http://127.0.0.1:8766/"></iframe>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <our-footer></our-footer>
+  <our-slack-link></our-slack-link>
+
+  <script type="module" src="/js/reusableComponents.js?v=20260816-kimi-inspector"></script>
+  <script>
+    const dashboardBase = 'http://127.0.0.1:8766';
+    const setText = (id, value) => { document.getElementById(id).textContent = value; };
+    const statusDot = document.getElementById('kimiStatusDot');
+
+    async function refreshServiceStatus() {
+      try {
+        const response = await fetch(`${dashboardBase}/api/service-settings`, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const value = await response.json();
+        statusDot.classList.add('is-live');
+        setText('kimiStatus', 'Local service online');
+        setText('kimiStatusDetail', value.kimi_key_configured ? 'Kimi key is configured in .env.kimi.' : 'No Kimi key is configured yet.');
+      } catch (error) {
+        statusDot.classList.remove('is-live');
+        setText('kimiStatus', 'Local service offline');
+        setText('kimiStatusDetail', 'Start it with python3 run.py start, then reload this page.');
+      }
+    }
+
+    document.getElementById('kimiKeyForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const key = document.getElementById('moonshotApiKey').value.trim();
+      setText('kimiKeyMessage', 'Saving...');
+      try {
+        const response = await fetch(`${dashboardBase}/api/service-settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ moonshot_api_key: key }),
+        });
+        const value = await response.json();
+        if (!response.ok) throw new Error(value.error || 'Could not save key');
+        document.getElementById('moonshotApiKey').value = '';
+        setText('kimiKeyMessage', 'Saved to .env.kimi. Restart the runner before starting a new research worker.');
+        refreshServiceStatus();
+      } catch (error) {
+        setText('kimiKeyMessage', `Save failed: ${error.message}`);
+      }
+    });
+
+    function b64Utf8(value) {
+      return btoa(unescape(encodeURIComponent(value)));
+    }
+
+    async function githubRequest(url, token, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          Accept: 'application/vnd.github+json',
+          Authorization: `Bearer ${token}`,
+          'X-GitHub-Api-Version': '2022-11-28',
+          ...(options.headers || {}),
+        },
+      });
+      const value = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(value.message || `GitHub HTTP ${response.status}`);
+      return value;
+    }
+
+    document.getElementById('githubForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const token = document.getElementById('githubToken').value.trim();
+      const repo = document.getElementById('githubRepo').value.trim();
+      const branch = document.getElementById('githubBranch').value.trim();
+      const path = document.getElementById('githubPath').value.trim().replace(/^\/+/, '');
+      const message = document.getElementById('githubMessage').value.trim();
+      const content = document.getElementById('githubContent').value;
+      sessionStorage.setItem('kimiInspectorGithubRepo', repo);
+      sessionStorage.setItem('kimiInspectorGithubBranch', branch);
+      setText('githubMessageOut', 'Writing...');
+      try {
+        if (!token || !repo || !branch || !path || !message) throw new Error('Token, repo, branch, path, and message are required');
+        const base = `https://api.github.com/repos/${encodeURIComponent(repo).replace('%2F', '/')}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+        let sha;
+        try {
+          const existing = await githubRequest(`${base}?ref=${encodeURIComponent(branch)}`, token);
+          sha = existing.sha;
+        } catch (error) {
+          if (!/Not Found/i.test(error.message)) throw error;
+        }
+        const result = await githubRequest(base, token, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, content: b64Utf8(content), branch, sha }),
+        });
+        setText('githubMessageOut', `Committed ${result.commit?.sha?.slice(0, 12) || 'update'} to ${repo}:${branch}.`);
+      } catch (error) {
+        setText('githubMessageOut', `GitHub write failed: ${error.message}`);
+      }
+    });
+
+    document.getElementById('githubRepo').value = sessionStorage.getItem('kimiInspectorGithubRepo') || 'juliancoy/CodeCollective';
+    document.getElementById('githubBranch').value = sessionStorage.getItem('kimiInspectorGithubBranch') || 'main';
+    refreshServiceStatus();
+  </script>
+</body>
+
+</html>

@@ -10,7 +10,7 @@ sources = [
     {
         "name": "DevOps Columbia",
         "url": "https://www.meetup.com/devops-columbia/events/",
-        "tags": ["Tech Skills", "DevOps", "Cloud & Platform"],
+        "tags": ["Tech Skills", "DevOps", "Cloud", "Platform"],
     },
     {
         "name": "Baltimore Code and Coffee",
@@ -20,12 +20,12 @@ sources = [
     {
         "name": "Baltimore CryptoMondays",
         "url": "https://www.meetup.com/baltimore-cryptomondays/events/",
-        "tags": ["Finance", "Crypto & Web3"],
+        "tags": ["Finance", "Crypto", "Web3"],
     },
     {
         "name": "Ellicott City Cryptocurrency Meetup",
         "url": "https://www.meetup.com/ellicott-city-cryptocurrency-meetup-group/events/",
-        "tags": ["Finance", "Crypto & Web3"],
+        "tags": ["Finance", "Crypto", "Web3"],
     },
     {
         "name": "IT Social East US Data Technology Cybersecurity",
@@ -90,22 +90,22 @@ sources = [
     {
         "name": "Baltimore Bitcoin",
         "url": "https://www.meetup.com/baltimorebitcoin/events/",
-        "tags": ["Finance", "Crypto & Web3"],
+        "tags": ["Finance", "Crypto", "Web3"],
     },
     {
         "name": "Maryland Blockchain Association Meetup",
         "url": "https://www.meetup.com/www-marylandblockchainassociation-org/",
-        "tags": ["Finance", "Crypto & Web3", "Tech Community"],
+        "tags": ["Finance", "Crypto", "Web3", "Tech Community"],
     },
     {
         "name": "LFDT Maryland",
         "url": "https://www.meetup.com/lfdt-maryland/",
-        "tags": ["Crypto & Web3", "Tech Community"],
+        "tags": ["Crypto", "Web3", "Tech Community"],
     },
     {
         "name": "Distributed Computing Maryland",
         "url": "https://www.meetup.com/distributedcomputingmd/",
-        "tags": ["Crypto & Web3", "Tech Community"],
+        "tags": ["Crypto", "Web3", "Tech Community"],
     },
     {
         "name": "Fintech Maryland",
@@ -115,7 +115,7 @@ sources = [
     {
         "name": "Essex Bitcoin for Beginners",
         "url": "https://www.meetup.com/essex-bitcoin-for-beginners-meetup-group/",
-        "tags": ["Finance", "Crypto & Web3"],
+        "tags": ["Finance", "Crypto", "Web3"],
     },
     {
         "name": "Python Frederick",
@@ -135,7 +135,7 @@ sources = [
     {
         "name": "Baltimore SDN",
         "url": "https://www.meetup.com/baltomsdn/",
-        "tags": ["Tech Skills", "Cloud & Platform"],
+        "tags": ["Tech Skills", "Cloud", "Platform"],
     },
     {
         "name": "Pitch Labs",
@@ -151,7 +151,7 @@ sources = [
     {
         "name": "Maryland Red Hat User Group",
         "url": "https://www.meetup.com/maryland-red-hat-user-group/",
-        "tags": ["Tech Skills", "DevOps", "Cloud & Platform"],
+        "tags": ["Tech Skills", "DevOps", "Cloud", "Platform"],
     },
     {
         "name": "Columbia Politics Meetup",
@@ -161,13 +161,13 @@ sources = [
     {
         "name": "AI Performance Engineering Washington DC",
         "url": "https://www.meetup.com/ai-performance-engineering-washington-dc/",
-        "tags": ["Tech Skills", "AI", "Cloud & Platform"],
+        "tags": ["Tech Skills", "AI", "Cloud", "Platform"],
     },
     {
         "name": "Philanthropicode",
         "url": "https://www.meetup.com/philanthropicode/",
         "tags": [
-            "Code Collective & Partners",
+            "Code Collective", "Partners",
             "Community Organizing",
             "Tech Community",
         ],
@@ -313,7 +313,7 @@ sources = [
     {
         "name": "Maryland Blockchain Association Monthly Virtual Meetups",
         "url": "https://www.eventbrite.com/e/maryland-blockchain-association-monthly-virtual-meet-ups-tickets-1134555268349",
-        "tags": ["Finance", "Crypto & Web3", "Tech Community"],
+        "tags": ["Finance", "Crypto", "Web3", "Tech Community"],
     },
     {
         "name": "Impact Hub Baltimore",
@@ -408,6 +408,18 @@ sources = [
         "tags": ["Water", "Tech Community"],
     },
     {
+        "name": "Greater Baltimore Climate Initiative",
+        "url": "https://www.thecctfoundation.org/event",
+        "source_kind": "gbci_events",
+        "orgImageUrl": "https://www.google.com/s2/favicons?domain=www.thecctfoundation.org&sz=256",
+        "tags": [
+            "Environment",
+            "Climate", "Energy",
+            "Community Organizing",
+            "Policy",
+        ],
+    },
+    {
         "name": "BLK Tech Connect Luma",
         "url": "https://luma.com/blk-tech-connect-baltimore",
         "tags": ["Economic Development", "Tech Community", "Community Organizing"],
@@ -438,7 +450,7 @@ sources = [
         "group_name": "Code Collective",
         "orgImageUrl": "/images/general_encircled.png",
         "tags": [
-            "Code Collective & Partners",
+            "Code Collective", "Partners",
             "Tech Community",
             "Community Organizing",
         ],
@@ -531,7 +543,7 @@ sources = [
         "orgImageUrl": "https://images.lumacdn.com/avatars/4g/431276ef-4081-4db7-a077-9a45da105826.png",
         "tags": [
             "Finance",
-            "Crypto & Web3",
+            "Crypto", "Web3",
             "Tech Skills",
             "AI",
             "Economic Development",
@@ -546,7 +558,7 @@ sources = [
     {
         "name": "Luma User cTlmPNsi6jHYweP",
         "url": "https://api.lu.ma/user/profile/events-hosting?user_api_id=usr-cTlmPNsi6jHYweP",
-        "tags": ["Health & Wellness", "Culture", "Community"],
+        "tags": ["Health", "Wellness", "Culture", "Community"],
     },
     {
         "name": "Luma User 2eWBPcn6lj9Dzqz",
@@ -840,7 +852,8 @@ sources = [
     # Phase 5 Maryland and local government source expansion
     {
         "name": "Maryland Department of the Environment Events",
-        "url": "https://mde.maryland.gov/Pages/default.aspx",
+        "url": "https://www.doit.state.md.us/ActiveDataCalendar/RSSSyndicator.aspx?category=76-0&location=&type=N&binary=Y",
+        "source_kind": "active_data_calendar_rss",
         "tags": ["Government", "MarylandGov", "Politics", "Environment", "Water", "Purpose"],
     },
     {
