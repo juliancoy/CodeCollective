@@ -347,6 +347,7 @@ function ensureLoginModal() {
                 <a class="login-modal__option" data-login-provider="google" href="#">Continue with Google</a>
                 <a class="login-modal__option" data-login-provider="github" href="#">Continue with GitHub</a>
                 <a class="login-modal__option login-modal__option--secondary" data-login-provider="password" href="#">Use email and password</a>
+                <a class="login-modal__option login-modal__option--secondary" href="/p/users/register">Register</a>
             </div>
         </section>
     `;
