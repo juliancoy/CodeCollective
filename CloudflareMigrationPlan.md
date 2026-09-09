@@ -24,7 +24,7 @@ The first production milestone is intentionally narrow: keep the current website
   - jobs and vacants API data from R2 bindings
 - The portal is a submodule at `portal/`.
 - The portal codebase is effectively contained under `portal/`, but it is not one deployable service. Current service boundaries are:
-  - `portal/web/`: React/Vite frontend. This is already Cloudflare-migratable as static assets and has `portal/web/wrangler.toml`.
+  - `portal/web/`: React/Vite frontend embedded in the root site Worker at `/p/`. The former standalone frontend deployment has been retired; its Worker URL permanently redirects to this canonical path.
   - `portal/pidp/serverless/`: Cloudflare-native PIdP implemented with Hono, Workers, D1, and R2.
   - `portal/org-worker/`: Cloudflare-native org/contact/governance/ledger/UBI API implemented with Hono, Workers, and D1. This is the active `/api/org` target for Code Collective and the root `/api/governance` target.
   - `portal/org-backend/`: Python FastAPI org/network API. This remains as legacy/reference code and is no longer the Code Collective production fallback.

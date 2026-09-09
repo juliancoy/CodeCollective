@@ -2,25 +2,26 @@
 
 [![Update Calendar](https://github.com/juliancoy/CodeCollective/actions/workflows/update-calendar.yml/badge.svg?branch=main)](https://github.com/juliancoy/CodeCollective/actions/workflows/update-calendar.yml)
 
-The official website of Code Collective.  
-The main branch here is hosted directly as:  
-https://codecollective.us/  
-using GitHub pages
+The official website of Code Collective, deployed to Cloudflare Workers at
+https://codecollective.us/.
 
-## Deployment split
+## Cloudflare deployment
 
-- `codecollective.us` static site remains on your existing AWS S3 + CloudFront deployment.
-- `portal/` is now an independent submodule (`OrgPortal`) and should be deployed separately.
-- Use:
+The `codecollective-site` Worker is the only frontend deployment. It serves the
+main site and embeds the portal at `https://codecollective.us/p/` from the
+`portal/web` submodule. Build and deploy it from the repository root:
 
 ```bash
-./portal/scripts/deploy_portal.sh
+./cloudflare/scripts/build_cloudflare_site.sh
+npx wrangler deploy
 ```
 
-Optional env file for portal deploy settings:
+The former standalone `codecollective-portal` Worker is retained only as a
+permanent redirect so old links continue to work. Deploy that redirect only
+when `cloudflare/portal-redirect.js` changes:
 
 ```bash
-cp env.portal.example .env.portal
+npx wrangler deploy --config wrangler.portal-redirect.jsonc
 ```
 
 ## Calendar feed to org-backend
