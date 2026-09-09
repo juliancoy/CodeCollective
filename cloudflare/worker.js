@@ -119,6 +119,34 @@ function jsonResponse(payload, status = 200, headers = {}) {
   });
 }
 
+async function siteBuildMetadata(env) {
+  if (!env?.ASSETS) return {};
+  try {
+    const response = await env.ASSETS.fetch("https://codecollective.us/__deployment.json");
+    if (!response.ok) return {};
+    const data = await response.json();
+    return data && typeof data === "object" ? data : {};
+  } catch {
+    return {};
+  }
+}
+
+async function healthResponse(request, env, service = "codecollective-site") {
+  const url = new URL(request.url);
+  const metadata = await siteBuildMetadata(env);
+  return jsonResponse({
+    ok: true,
+    service,
+    time: new Date().toISOString(),
+    commit: metadata.commit ?? null,
+    dirty: metadata.dirty ?? null,
+    builtAt: metadata.builtAt ?? null,
+    workerVersionId: env?.CF_VERSION_METADATA?.id ?? null,
+    hostname: url.hostname,
+    environment: env?.ENVIRONMENT ?? "production",
+  }, 200, { "cache-control": "no-store" });
+}
+
 const PUBLIC_MAP_FEEDS = {
   flock: "https://flocklocations.com/api/cameras/export?format=geojson",
   chartIncidents: "https://chartexp1.sha.maryland.gov/CHARTExportClientService/getEventMapDataJSON.do",
@@ -599,6 +627,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    if (path === "/health" || path === "/version") {
+      return healthResponse(request, env);
+    }
 
     if (request.method === "GET" && path === "/p/clear-cache") {
       url.pathname = "/p/users/login";

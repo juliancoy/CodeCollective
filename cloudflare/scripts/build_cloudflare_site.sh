@@ -214,4 +214,35 @@ cat > "$OUT_DIR/_headers" <<'EOF'
   Cache-Control: public, max-age=2592000
 EOF
 
+echo "[cloudflare] writing deployment metadata"
+python3 - "$ROOT_DIR" "$OUT_DIR/__deployment.json" <<'PY'
+import json
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+root, output = sys.argv[1], sys.argv[2]
+
+def git(*args):
+    return subprocess.check_output(["git", "-c", f"safe.directory={root}", "-C", root, *args], text=True, stderr=subprocess.DEVNULL).strip()
+
+commit = None
+dirty = None
+try:
+    commit = git("rev-parse", "HEAD")
+    if not all(c in "0123456789abcdef" for c in commit.lower()) or len(commit) < 40:
+        commit = None
+    dirty = bool(git("status", "--porcelain", "--untracked-files=normal"))
+except Exception:
+    pass
+
+with open(output, "w", encoding="utf-8") as fh:
+    json.dump({
+        "commit": commit,
+        "dirty": dirty,
+        "builtAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }, fh, separators=(",", ":"))
+    fh.write("\n")
+PY
+
 echo "[cloudflare] done"
