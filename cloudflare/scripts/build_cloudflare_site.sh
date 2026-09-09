@@ -32,6 +32,7 @@ rsync -a \
   --exclude='**/.gitignore' \
   --exclude='.github/' \
   --exclude='.cloudflare/' \
+  --exclude='.docker-local/' \
   --exclude='portal/' \
   --exclude='portal_src/' \
   --exclude='r8-rowhome/' \
