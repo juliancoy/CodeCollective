@@ -40,7 +40,7 @@ photo and a link to the original listing. Member-only offers and requests are
 excluded. There is no copied listing data or second timebank service.
 
 The existing site Worker proxies this endpoint to `portal/org-worker`; apply the
-timebank migrations through `0021` before deploying the portal API and website.
+timebank migrations through `0024` before deploying the portal API and website.
 A plain static server alone cannot provide this API.
 
 Browser acceptance uses the actual site Worker, portal build and org Worker with
