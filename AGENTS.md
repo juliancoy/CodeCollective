@@ -73,4 +73,4 @@ After deploying, verify the first three URLs return HTTP 200, the asset referenc
 - `https://codecollective.us/p/`
 - `https://codecollective-portal.jcloiacon.workers.dev/`
 
-Record the Wrangler version IDs in the handoff response. The last full standalone portal version was `51779626-05f9-455f-859b-fbf86884d53d`; do not restore it unless the user explicitly reverses the retirement decision.
+Record the Wrangler version IDs in the handoff response. The standalone frontend was retired on 2026-09-09 at portal commit `b01dffaf08059fed0b4232e302c91dc3ac5d4f5d`. The resulting main-site version was `525ee96c-6b11-4539-9657-a89999c3da71`, and legacy redirect version was `85d3cc23-bc8b-4d1c-bfce-362347124978`. The last full standalone portal version was `51779626-05f9-455f-859b-fbf86884d53d`; do not restore it unless the user explicitly reverses the retirement decision.
