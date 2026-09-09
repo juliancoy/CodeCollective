@@ -35,10 +35,20 @@ async function proxyRequest(request, targetOrigin, options = {}) {
     cf: { cacheEverything: false },
   });
 
+  const responseHeaders = new Headers(upstream.headers);
+  if (requestUrl.hostname === "community.medtech.social" && options.stripPrefix === "/pidp") {
+    const cookies = upstream.headers.getSetCookie();
+    responseHeaders.delete("set-cookie");
+    for (const cookie of cookies) {
+      responseHeaders.append("set-cookie", cookie.replace(/;\s*Domain=[^;]+/gi, ""));
+    }
+    responseHeaders.set("cache-control", "no-store");
+    responseHeaders.set("referrer-policy", "no-referrer");
+  }
   return new Response(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
-    headers: upstream.headers,
+    headers: responseHeaders,
   });
 }
 
@@ -589,6 +599,23 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    if (request.method === "GET" && path === "/p/clear-cache") {
+      url.pathname = "/p/users/login";
+      return new Response(null, {
+        status: 303,
+        headers: {
+          "location": url.toString(),
+          "clear-site-data": '"cache"',
+          "cache-control": "no-store",
+        },
+      });
+    }
+
+    if (path === "/" && url.hostname === "community.medtech.social") {
+      url.pathname = "/p/";
+      return Response.redirect(url.toString(), 302);
+    }
 
     if (path === "/favicon.ico") {
       url.pathname = "/images/favicons/favicon.png";
