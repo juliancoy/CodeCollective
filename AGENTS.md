@@ -1,11 +1,11 @@
 # Agent deployment notes
 
-This repository has two related Cloudflare frontend deployment targets. Treat them as separate deployments built from the same `portal/web` source:
+This repository has one canonical Cloudflare frontend deployment:
 
 - `codecollective-site` is the main site. Its build script copies the legacy static site into `.cloudflare/site`, builds `portal/web` with a `/p/` base, embeds that build at `/p/`, and also builds `r8-rowhome` at `/r8-rowhome/`.
-- `codecollective-portal` is the standalone portal Worker. It builds `portal/web` for `/` and deploys it independently.
+- `codecollective-portal` is retired as a frontend deployment. It is a lightweight permanent redirect to `https://codecollective.us/p/`, configured by `wrangler.portal-redirect.jsonc`. Keep it only for old links while traffic is observed; it may be deleted later once no clients depend on it.
 
-The root `README.md` still contains older GitHub Pages/AWS wording. For the current Cloudflare deployment, use the repository's Wrangler configurations and scripts described here.
+The root `README.md` summarizes the current frontend deployment. Use the more detailed validation, submodule, and handoff requirements in this file when deploying.
 
 ## Critical submodule check
 
@@ -47,14 +47,7 @@ node --test cloudflare/*.test.mjs
 npm --prefix r8-rowhome test -- --run
 ```
 
-Deploy the standalone portal first. The checked-in script deploys only `portal/web`; it does not deploy the org, chat, or PIdP backend Workers.
-
-```bash
-./portal/scripts/deploy_portal.sh --skip-install -- --dry-run
-./portal/scripts/deploy_portal.sh --skip-install --skip-build
-```
-
-Then rebuild and deploy the main site so its `/p/` bundle is generated from the same portal checkout:
+Rebuild and deploy the main site so its `/p/` bundle is generated from the checked-out portal commit:
 
 ```bash
 ./cloudflare/scripts/build_cloudflare_site.sh
@@ -62,17 +55,22 @@ npx wrangler deploy --dry-run
 npx wrangler deploy
 ```
 
-Do not deploy the standalone portal after the root build with `--skip-build`: the root build leaves `portal/web/dist` configured for `/p/`, whereas the standalone portal needs a fresh `/` build. The sequence above avoids that mismatch.
+Do not deploy `portal/web` as a separate frontend. If the legacy redirect changes, validate and deploy only the redirect Worker:
+
+```bash
+npx wrangler deploy --config wrangler.portal-redirect.jsonc --dry-run
+npx wrangler deploy --config wrangler.portal-redirect.jsonc
+```
 
 If changes touch `portal/org-worker`, `portal/chat-worker`, or `portal/pidp/serverless`, treat their migrations, secrets, tests, and Worker deployments as separate backend work. Do not infer authorization to migrate a production D1 database merely from a request to deploy the site and portal frontend.
 
 ## Live checks
 
-After deploying, verify all of these return HTTP 200 and that the asset referenced by `/p/` also loads:
+After deploying, verify the first three URLs return HTTP 200, the asset referenced by `/p/` also loads, and the legacy Worker returns HTTP 308 with a `Location` under `https://codecollective.us/p/`:
 
 - `https://codecollective-site.jcloiacon.workers.dev/`
 - `https://codecollective.us/`
 - `https://codecollective.us/p/`
 - `https://codecollective-portal.jcloiacon.workers.dev/`
 
-Record the Wrangler version IDs in the handoff response. The 2026-09-09 deployment produced main-site version `0f7759c1-989a-4ede-a775-5b34706a9e2c` and standalone-portal version `51779626-05f9-455f-859b-fbf86884d53d`.
+Record the Wrangler version IDs in the handoff response. The last full standalone portal version was `51779626-05f9-455f-859b-fbf86884d53d`; do not restore it unless the user explicitly reverses the retirement decision.
