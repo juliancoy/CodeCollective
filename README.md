@@ -44,9 +44,12 @@ timebank migrations through `0021` before deploying the portal API and website.
 A plain static server alone cannot provide this API.
 
 Browser acceptance uses the actual site Worker, portal build and org Worker with
-the local SQLite/identity fixture. With Node 24+ and portal dependencies installed:
+the local SQLite/identity fixture. With Node 24+:
 
 ```bash
+npm --prefix portal/web ci
+npm --prefix portal/org-worker ci
+npm --prefix portal/chat-worker ci
 VITE_PUBLIC_BASE=/p/ npm --prefix portal/web run build -- --outDir /tmp/codecollective-offers-portal
 docker run -d --rm --name codecollective-offers-selenium -p 4446:4444 --shm-size=2g selenium/standalone-chromium:latest
 node tests/community-offers-browser.mjs
