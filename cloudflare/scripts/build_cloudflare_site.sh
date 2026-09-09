@@ -62,7 +62,7 @@ rsync -a \
   --exclude='*.log' \
   --exclude='requirements.txt' \
   --exclude='package-lock.json' \
-  --exclude='wrangler.toml' \
+  --exclude='wrangler.*' \
   "$ROOT_DIR/" "$OUT_DIR/"
 
 echo "[cloudflare] building portal for /p/"
