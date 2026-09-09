@@ -97,7 +97,20 @@ individual facility. Distinguish operating grid demand, published capacity envel
 projected demand, IT or critical load, utility service, substation capacity, and backup
 generation. Do not use backup-generator capacity as facility demand. Every non-null
 number needs a facility-specific source, unit, scope, and URL. Use null when evidence
-does not establish a value. Do not invent or average values."""
+does not establish a value. Do not invent or average values.
+
+For each non-null numeric field, field_evidence[field_name] MUST be a non-empty array
+of exact URL strings also present in sources[].url, never prose or an object.
+fields.value_scope MUST be one of: building, facility, campus, availability_zone,
+portfolio, unknown. Put descriptions such as IT load or full-build capacity in basis,
+not value_scope. Never attach campus capacity to a mapped individual building without
+evidence that the OSM feature represents that entire campus. Use null for conflicting
+values that cannot be resolved from primary evidence. An estimated draw needs an
+explicit method; do not infer one from backup generation or an assumed utilization.
+Keep value and basis limited to facts the cited primary sources establish. Put search
+gaps and unsuccessful searches in research_notes, not claims that infrastructure or
+filings do not exist. Unknown fields stay null. Do not infer current operating status
+from an old construction announcement."""
 
 PROMPT_PROFILES = {
     "maryland-infrastructure": SYSTEM_PROMPT,

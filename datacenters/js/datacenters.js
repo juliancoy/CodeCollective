@@ -332,6 +332,8 @@
       category: 'Facility inventory',
       tags: ['data centers', 'OpenStreetMap', 'nationwide', 'United States', 'OSM', 'facilities'],
       staticDataUrl: NATIONWIDE_DATACENTERS_URL,
+      powerEnrichmentUrl: '/datacenters/data/data-centers-openstreetmap-world-enrichment.json',
+      defaultSizeBy: 'reported_power_capacity_mw',
       sourceUrl: 'https://www.openstreetmap.org/copyright',
       sourceLabel: 'OpenStreetMap contributors',
       attribution: '© OpenStreetMap contributors · ODbL',
@@ -2113,6 +2115,7 @@
     'eia_plant_code', 'generation_year', 'shared_coordinate_count',
     'aerial_frame_width_m', 'aerial_frame_height_m', 'public_sentiment_score',
     'net_generation_mwh',
+    'osm_id',
   ]);
 
   function pointScaleLabel(field) {
@@ -2184,6 +2187,84 @@
       factors.set(record, sizeFloor + (Math.max(0, Math.min(1, normalized)) * (sizeCeiling - sizeFloor)));
     });
     return factors;
+  }
+
+  const DATA_CENTER_DRAW_FIELDS = [
+    'reported_grid_demand_mw', 'reported_power_capacity_mw',
+    'projected_power_demand_mw', 'estimated_power_draw_mw',
+  ];
+  const DATA_CENTER_DRAW_HELP = 'Net draw is reported grid demand. Total draw uses a published capacity envelope or projected demand, not measured consumption. Estimates retain their method and confidence. Missing values use the smallest markers. OSM identifies mapped features; it does not establish power use.';
+
+  function mergeDataCenterPowerProfiles(data, overlay) {
+    const profiles = new Map((overlay.records || []).map((record) => [record.id, record]));
+    return {
+      ...data,
+      features: (data.features || []).map((feature) => {
+        const properties = feature.properties || {};
+        const enrichment = profiles.get(`osm-${properties.osm_type}-${properties.osm_id}`);
+        if (!enrichment || enrichment.osm_type !== properties.osm_type || enrichment.osm_id !== properties.osm_id) return feature;
+        const profile = enrichment.power_profile || {};
+        const draw = Object.fromEntries(DATA_CENTER_DRAW_FIELDS.map((field) => [field,
+          typeof profile[field] === 'number' && Number.isFinite(profile[field]) && profile[field] >= 0 ? profile[field] : null,
+        ]));
+        return { ...feature, properties: {
+          ...properties, ...draw,
+          power_summary: enrichment.value,
+          power_basis: enrichment.basis,
+          power_confidence: enrichment.confidence,
+          power_value_scope: profile.value_scope,
+          power_as_of_date: profile.as_of_date,
+          power_lifecycle_status: profile.lifecycle_status,
+          estimated_power_draw_method: profile.estimated_power_draw_method,
+          power_sources: enrichment.sources || [],
+        } };
+      }),
+    };
+  }
+
+  function dataCenterDrawCoverage(records) {
+    const counts = Object.fromEntries(DATA_CENTER_DRAW_FIELDS.map((field) => [field,
+      records.filter((record) => typeof record[field] === 'number' && Number.isFinite(record[field]) && record[field] >= 0).length,
+    ]));
+    const known = records.filter((record) => DATA_CENTER_DRAW_FIELDS.some((field) =>
+      typeof record[field] === 'number' && Number.isFinite(record[field]) && record[field] >= 0)).length;
+    return { counts, known, missing: records.length - known };
+  }
+
+  function dataCenterDrawCoverageMarkup(records) {
+    const { counts, known: covered, missing } = dataCenterDrawCoverage(records);
+    return renderFactGroup('Power data coverage', [
+      ['Mapped features with power data', `${number(covered)} / ${number(records.length)}`],
+      ['Net draw · reported demand', number(counts.reported_grid_demand_mw)],
+      ['Total draw · published envelope', number(counts.reported_power_capacity_mw)],
+      ['Projected demand', number(counts.projected_power_demand_mw)],
+      ['Estimated draw', number(counts.estimated_power_draw_mw)],
+      ['Power data missing', number(missing)],
+    ]) + '<p class="dc-modal-help">Counts describe mapped features. Campuses can have multiple mapped buildings, so these values are not summed into a national demand total.</p>';
+  }
+
+  function renderDataCenterDrawFacts(properties) {
+    const mw = (field) => properties[field] == null ? known(null) : `${number(properties[field], 2)} MW`;
+    return renderFactGroup('Power draw', [
+      ['Net draw · reported grid demand', mw('reported_grid_demand_mw')],
+      ['Total draw · published capacity envelope', mw('reported_power_capacity_mw')],
+      ['Projected demand', mw('projected_power_demand_mw')],
+      ['Estimated power draw', mw('estimated_power_draw_mw')],
+      ['Estimate method', known(properties.estimated_power_draw_method)],
+      ['Value scope', known(properties.power_value_scope)],
+      ['Lifecycle status', known(properties.power_lifecycle_status)],
+      ['As of', known(properties.power_as_of_date)],
+      ['Confidence', known(properties.power_confidence)],
+      ['Evidence basis', known(properties.power_basis)],
+    ]) + `<p class="dc-record-note">${escapeHtml(DATA_CENTER_DRAW_HELP)}</p>`;
+  }
+
+  function dataCenterPowerSources(properties) {
+    let sources = properties.power_sources || [];
+    if (typeof sources === 'string') {
+      try { sources = JSON.parse(sources); } catch { return []; }
+    }
+    return Array.isArray(sources) ? sources.map((source) => [source.title || source.publisher, source.retrieved_url]) : [];
   }
 
   let powerPlantBoltLayer = null;
@@ -3412,9 +3493,7 @@
     filters.outlineWidth = normalizeBoltOutlineWidth(filters.outlineWidth);
     filters.renderMaterial = normalizePowerPlantRenderMaterial(filters.renderMaterial);
     filters.adaptiveLod = filters.adaptiveLod === true;
-    if (filters.fillBy === 'resource-adjusted-utilization' && (!filters.sizeBy || filters.sizeBy === 'none')) {
-      filters.sizeBy = 'planning_sustained_output_mw';
-    }
+    filters.sizeBy ||= 'planning_sustained_output_mw';
     return filters;
   }
 
@@ -4481,7 +4560,7 @@
       const x = projected.x * scaleX;
       const y = projected.y * scaleY;
       if (x < 0 || y < 0 || x > context.canvas.width || y > context.canvas.height) return;
-      const height = Math.max(25 * scaleY, entry.size * scaleY);
+      const height = entry.size * scaleY;
       const width = height * .54;
       const fillFraction = Math.max(0, Math.min(1, Number(entry.fillFraction) || 0));
       context.save();
@@ -5817,6 +5896,10 @@
 
   function staticLayerStatus(config, data) {
     const featureCount = data?.features?.length || 0;
+    if (config.powerEnrichmentUrl) {
+      const coverage = dataCenterDrawCoverage((data.features || []).map((feature) => feature.properties || {}));
+      return `${number(featureCount)} features · ${number(coverage.known)} with power data · ${number(coverage.missing)} missing${data.powerEnrichmentError ? ' · power data unavailable' : ''}`;
+    }
     if (config.id === 'baltimore-red-line') return `${number(featureCount)} Red Line alignment segments`;
     if (config.id === 'power-interchanges') {
       const lineCount = data?.metadata?.line_crossing_count;
@@ -5917,6 +6000,16 @@
         const response = await fetch(config.staticDataUrl, { cache: 'no-store', signal: state.abort.signal });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
+        if (config.powerEnrichmentUrl) {
+          try {
+            const enrichmentResponse = await fetch(config.powerEnrichmentUrl, { cache: 'no-store', signal: state.abort.signal });
+            if (!enrichmentResponse.ok) throw new Error(`HTTP ${enrichmentResponse.status}`);
+            data.features = mergeDataCenterPowerProfiles(data, await enrichmentResponse.json()).features;
+          } catch (error) {
+            if (error.name === 'AbortError') throw error;
+            data.powerEnrichmentError = true;
+          }
+        }
         if (!state.enabled) return;
         state.data = data;
         state.requestKey = config.staticDataUrl;
@@ -6186,6 +6279,18 @@
 
   function setupLayerFilterUi(map, records, markerById) {
     activeLayerContext = { map, records, markerById };
+    syncPowerPlantScaleControl();
+    let scaleFrame = null;
+    document.getElementById('power-plant-scale').addEventListener('input', (event) => {
+      layerFilters.powerPlants.iconScale = normalizeIconScale(event.target.value);
+      syncPowerPlantScaleControl();
+      if (scaleFrame !== null) return;
+      scaleFrame = requestAnimationFrame(() => {
+        scaleFrame = null;
+        renderResults(records, markerById);
+      });
+    });
+    document.getElementById('power-plant-scale').addEventListener('change', () => persistUiState());
     document.querySelectorAll('.dc-layer-gear').forEach((button) => {
       button.addEventListener('click', () => openLayerFilterModal(button.dataset.layerConfig));
     });
@@ -6218,6 +6323,12 @@
 
   function optionMarkup(options, selected) {
     return options.map(([value, label]) => `<option value="${escapeHtml(value)}"${value === selected ? ' selected' : ''}>${escapeHtml(label)}</option>`).join('');
+  }
+
+  function syncPowerPlantScaleControl() {
+    const scale = normalizeIconScale(layerFilters.powerPlants.iconScale);
+    document.getElementById('power-plant-scale').value = scale;
+    document.getElementById('power-plant-scale-value').textContent = `${scale}×`;
   }
 
   function renderSearchInput(name, value, placeholder) {
@@ -6294,7 +6405,8 @@
         + checkboxFieldMarkup('Cull dense plants for performance', 'adaptiveLod', layerFilters.powerPlants.adaptiveLod === true, 'At world zooms, keeps the highest-output plant in each small screen cell and at high zoom only sends plants near the viewport. Off by default; rendered bolts keep the same full mesh and output-derived screen size.')
         + numberFieldMarkup('Custom fill fraction', 'fillFraction', layerFilters.powerPlants.fillFraction ?? 1, { min: 0, max: 1, step: 0.01, help: 'Only used when Bolt fill uses is set to Custom fraction from bottom.' })
         + numberFieldMarkup('Bolt outline width', 'outlineWidth', normalizeBoltOutlineWidth(layerFilters.powerPlants.outlineWidth), { min: .5, max: 5, step: .25, help: 'Sets the silhouette trace width in screen pixels.' })
-        + scaleFieldMarkup('Icon scale', 'iconScale', layerFilters.powerPlants.iconScale)
+        + scaleFieldMarkup('Scale all power plants', 'iconScale', layerFilters.powerPlants.iconScale)
+        + '<p class="dc-modal-help">Multiplies every EIA, WRI, and NACEI plant marker while keeping relative sizes. Select Uniform size below for equal-sized plants.</p>'
         + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(layerFilters.powerPlants.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens the WebGL bolt fill, glow, and outline colors.' })
         + fieldMarkup('Icon size uses', 'sizeBy', layerFilters.powerPlants.sizeBy, numericPointScaleOptions(records, [['planning_sustained_output_mw', 'Planning output · annual average (MW)'], ['average_generation_mwh', 'Average generation / output (MWh)']]), 'Choose annual-average planning output to scale bolts by year-round production rather than spikes.');
     } else if (layerId === 'neon-streets') {
@@ -6328,8 +6440,12 @@
     } else {
       const config = REMOTE_LAYERS.find((candidate) => candidate.id === layerId);
       if (!config) return;
+      const pointRecords = (remoteLayerStates.get(config.id)?.data?.features || []).map((feature) => feature.properties || {});
       title = `${config.name} layer filters`;
       body.innerHTML = zoomRangeMarkup(layerId)
+        + (config.powerEnrichmentUrl ? (remoteLayerStates.get(config.id)?.data
+          ? dataCenterDrawCoverageMarkup(pointRecords)
+          : '<p class="dc-modal-note">Enable Render to load this inventory and its power data coverage.</p>') : '')
         + fieldMarkup('Feature text match', 'text', remoteLayerStates.get(config.id)?.text || '', null, 'Matches the fields returned from the official live service for the current map view.')
         + numberFieldMarkup('Brightness', 'brightness', normalizeBrightness(remoteLayerStates.get(config.id)?.brightness), { min: .25, max: 3, step: .05, help: 'Dims or brightens this layer using color and opacity where supported by the renderer.' })
         + (config.geometry === 'point' ? fieldMarkup(
@@ -6343,11 +6459,8 @@
           'Point size uses',
           'sizeBy',
           remoteLayerStates.get(config.id)?.sizeBy || 'none',
-          numericPointScaleOptions(
-            (remoteLayerStates.get(config.id)?.data?.features || []).map((feature) => feature.properties || {}),
-            config.scaleFields || [],
-          ),
-          'Numeric values are normalized to a bounded screen-space size.',
+          config.powerEnrichmentUrl ? dataCenterPointScaleOptions(pointRecords) : numericPointScaleOptions(pointRecords, config.scaleFields || []),
+          config.powerEnrichmentUrl ? DATA_CENTER_DRAW_HELP : 'Numeric values are normalized to a bounded screen-space size.',
         ) : '')
         + (config.geometry === 'point' ? scaleFieldMarkup('Icon scale', 'iconScale', remoteLayerStates.get(config.id)?.iconScale) : '')
         + (config.lineColorThemes ? fieldMarkup(
@@ -6459,7 +6572,7 @@
       const state = remoteLayerStates.get(activeLayerConfigId);
       if (state) {
         state.text = '';
-        state.sizeBy = 'none';
+        state.sizeBy = config.defaultSizeBy || 'none';
         state.iconScale = 1;
         state.brightness = 1;
         state.pointRenderMode = 'points';
@@ -6482,6 +6595,7 @@
 
   function applyAllLayerFilters() {
     if (!activeLayerContext) return;
+    syncPowerPlantScaleControl();
     const { map, records, markerById } = activeLayerContext;
     renderResults(records, markerById);
     applyNeonStreetLayer(map);
@@ -7179,7 +7293,8 @@
     const recordSource = config.recordSourceFields
       ? [[properties[config.recordSourceFields[0]], properties[config.recordSourceFields[1]]]]
       : [];
-    const sources = [...recordSource, [config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
+    const powerSources = config.powerEnrichmentUrl ? dataCenterPowerSources(properties) : [];
+    const sources = [...powerSources, ...recordSource, [config.sourceLabel, config.sourceUrl], ...(config.additionalSources || [])]
       .map(([label, url]) => [label, safeExternalUrl(url)])
       .filter(([label, url]) => label && url);
     const recordType = config.recordType || (config.staticDataUrl ? 'derived official inventory' : 'live public service');
@@ -7191,6 +7306,7 @@
       <h2>${escapeHtml(title)}</h2>
       <p class="dc-type">${escapeHtml(config.name)} · ${escapeHtml(recordType)}</p>
       ${renderRemoteColorLegend(config, properties)}
+      ${config.powerEnrichmentUrl ? renderDataCenterDrawFacts(properties) : ''}
       ${renderFactGroup('Layer record', facts)}
       ${config.id === 'maryland-county-boundaries' ? renderCountyMoratoriumSection(properties) : ''}
       <p class="dc-record-note">${escapeHtml(provenanceNote)}</p>

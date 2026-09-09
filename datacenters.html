@@ -9,7 +9,7 @@
   <link rel="icon" href="/images/favicons/favicon.png">
   <link rel="stylesheet" href="/css/master.css?v=20260807-project-menu">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
-  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260831-power-plant-controls">
+  <link rel="stylesheet" href="/datacenters/css/datacenters.css?v=20260909-draw-controls">
 </head>
 <body id="body" class="datacenter-page">
   <video id="bg-video" autoplay loop muted playsinline poster="/images/general_encircled_banner.webp">
@@ -135,6 +135,11 @@
                   <button class="dc-layer-gear" type="button" data-layer-config="power-plants" aria-label="Configure power plant layer">⚙</button>
                 </span>
               </div>
+              <label class="dc-layer-scale" for="power-plant-scale">
+                <span>Scale all power plants <output id="power-plant-scale-value" for="power-plant-scale">1×</output></span>
+                <input id="power-plant-scale" type="range" min="0.25" max="4" step="0.05" value="1" aria-describedby="power-plant-scale-help">
+              </label>
+              <p id="power-plant-scale-help" class="dc-layer-status">Shared by EIA, WRI, and NACEI plants; keeps relative sizes.</p>
               <p id="power-plant-scope-status" class="dc-layer-status" aria-live="polite">Maryland default · switch Scope to United States for the complete final EIA inventory</p>
             </div>
             <div class="dc-layer-option" data-layer-preview="global-power-plants">
@@ -401,6 +406,6 @@
   <script src="https://unpkg.com/deck.gl@9.2.11/dist.min.js"></script>
   <script src="https://unpkg.com/@loaders.gl/i3s@4.3.4/dist/dist.min.js"></script>
   <script type="module" src="/js/reusableComponents.js?v=20260807-project-menu"></script>
-  <script src="/datacenters/js/datacenters.js?v=20260831-power-plant-controls" defer></script>
+  <script src="/datacenters/js/datacenters.js?v=20260909-draw-controls" defer></script>
 </body>
 </html>

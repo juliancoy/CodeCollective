@@ -39,6 +39,12 @@ FACET_TERMS = {
     ),
 }
 PRIMARY_TYPES = {"government", "court"}
+
+
+def primary_types_for_facet(facet: str) -> set[str]:
+    return PRIMARY_TYPES | {"operator", "utility", "grid_operator"} if facet == "power_profile" else PRIMARY_TYPES
+
+
 MAX_SOURCE_BYTES = 15 * 1024 * 1024
 USER_AGENT = "CodeCollectiveEvidenceAudit/1.0 (+local research validation)"
 AUTHORITY_REGISTRY = Path(__file__).with_name("data") / "international-research-authorities.json"
@@ -225,9 +231,32 @@ def _positions(text: str, needle: str, maximum: int = 30) -> list[int]:
     return positions
 
 
-def evidence_excerpt(text: str, record: dict[str, Any], facet: str, limit: int = 1500) -> str | None:
+def evidence_excerpt(text: str, record: dict[str, Any], facet: str, limit: int = 1500, supports: str = "") -> str | None:
     if not text:
         return None
+    if facet == "power_profile":
+        # Keep the claimed MW value and surrounding scope, including decimal points.
+        # A generic topic match can otherwise select navigation or portfolio figures.
+        power_pattern = re.compile(r"\b(\d[\d,]*(?:\.\d+)?)\s*(?:MW|megawatts?)\b", re.I)
+        claimed_mw = {float(match[1].replace(",", "")) for match in power_pattern.finditer(supports)}
+        positions = [match.start() for match in power_pattern.finditer(text)
+                     if float(match[1].replace(",", "")) in claimed_mw]
+        if positions:
+            name_words = set(normalize_text(str(record.get("name") or "")).split()) - {
+                "data", "center", "centers", "facility", "campus", "the", "of",
+            }
+            windows = [text[max(0, position - limit // 3):max(0, position - limit // 3) + limit]
+                       for position in positions]
+
+            def score(window: str) -> tuple[int, int]:
+                # Repeated MW figures can belong to different facilities on one page.
+                # Keep one coherent passage nearest the named facility, then prefer
+                # passages covering more of the cited power specifications.
+                words = set(normalize_text(window).split())
+                values = {float(match[1].replace(",", "")) for match in power_pattern.finditer(window)}
+                return len(name_words & words), len(claimed_mw & values)
+
+            return max(windows, key=score)
     normalized = normalize_text(text)
     identity_positions = [
         position
@@ -286,7 +315,7 @@ def audit_source(
         "document_date": source.get("document_date"),
         "supports": source.get("supports"),
         "normalized_url": normalize_url(url) if url else url,
-        "source_class": source_class(url),
+        "source_class": source_class(fetched_data.get("final_url") or url),
         "reported_source_type": source.get("source_type"),
         "http_status": fetched_data.get("status_code"),
         "final_url": fetched_data.get("final_url", url),
@@ -295,7 +324,7 @@ def audit_source(
         "fetch_error": fetched_data.get("error"),
         "identity_match": identity_matches(text, record) if text else False,
         "facet_match": facet_matches(text, facet) if text else False,
-        "excerpt": evidence_excerpt(text, record, facet),
+        "excerpt": evidence_excerpt(text, record, facet, supports=str(source.get("supports") or "")),
     }
     result["reachable"] = isinstance(result["http_status"], int) and 200 <= result["http_status"] < 400
     result["usable"] = bool(
@@ -363,7 +392,7 @@ def evaluate_facet(
         else:
             reasons.append("negative or absence finding requires human review")
     usable_primary = [
-        source for source in source_audits if source["usable"] and source["source_class"] in PRIMARY_TYPES
+        source for source in source_audits if source["usable"] and source["source_class"] in primary_types_for_facet(facet_name)
     ]
     if not usable_primary:
         reasons.append("no reachable facility-specific primary source text supports the facet")

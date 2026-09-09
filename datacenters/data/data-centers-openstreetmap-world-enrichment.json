@@ -1,0 +1,375 @@
+{
+  "version": 1,
+  "generated_at": "2026-09-09T13:08:11.510347+00:00",
+  "base_inventory": "OpenStreetMap U.S. mapped data centers",
+  "base_snapshot": "2026-08-27T01:15:20Z",
+  "record_count": 6,
+  "records": [
+    {
+      "id": "osm-node-9669405859",
+      "source_id": "openstreetmap",
+      "osm_type": "node",
+      "osm_id": 9669405859,
+      "power_profile": {
+        "reported_grid_demand_mw": null,
+        "reported_power_capacity_mw": 80,
+        "projected_power_demand_mw": null,
+        "estimated_power_draw_mw": null,
+        "estimated_power_draw_method": null,
+        "on_site_generation_capacity_mw": null,
+        "lifecycle_status": null,
+        "as_of_date": null,
+        "energy_source_codes": [],
+        "value_scope": "facility"
+      },
+      "value": "AiNET advertises 80 MW of power for One Market Center at 300 West Lexington Street, Baltimore.",
+      "basis": "Operator-published facility power envelope. The source does not quantify metered operating demand.",
+      "confidence": "high",
+      "field_evidence": {
+        "reported_power_capacity_mw": [
+          "https://www.ai.net/carrierhotel/"
+        ]
+      },
+      "sources": [
+        {
+          "title": "One Market Center carrier hotel",
+          "publisher": "AiNET",
+          "document_date": null,
+          "retrieved_url": "https://www.ai.net/carrierhotel/",
+          "source_class": "operator",
+          "content_sha256": "9780fda66fd8ab479ee4a6a04847a9cf07201753cf9141367b198ae1c8149886"
+        }
+      ],
+      "research": {
+        "run_id": "codex-primary-review-20260909",
+        "pipeline_id": "primary-source-review-20260909",
+        "input_fingerprint": "aea77d3766607b6c9ad167a35116da699abdffe57ae7ecd64ebf031ac3c718ce",
+        "audited_at": "2026-09-09T13:05:04.350115+00:00",
+        "judge": {
+          "model": "kimi-k2.6",
+          "verdict": "supported",
+          "reason": "The source directly states 'Totaling 80 Megawatts of power' for 'One Market Center (300 West Lexington Street)' and identifies it as 'Our Baltimore carrier hotel.' The claim's elements—80 MW, One Market Center, 300 West Lexington Street, Baltimore, and AiNET as the advertiser—are all explicitly present. The source is operator-published and describes this as a current facility attribute, not a draft or projection. The claim's qualifier 'advertises' is appropriate as this is marketing material. The basis note about not quantifying metered operating demand is consistent with the source, which states capacity, not measured demand.",
+          "supported_urls": [
+            "https://www.ai.net/carrierhotel/"
+          ],
+          "usage": {
+            "prompt_tokens": 705,
+            "completion_tokens": 155,
+            "total_tokens": 860,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "response_id": "chatcmpl-6aa159819142cedbfcfd5ea3"
+        }
+      }
+    },
+    {
+      "id": "osm-way-530024353",
+      "source_id": "openstreetmap",
+      "osm_type": "way",
+      "osm_id": 530024353,
+      "power_profile": {
+        "reported_grid_demand_mw": null,
+        "reported_power_capacity_mw": 88.9,
+        "projected_power_demand_mw": null,
+        "estimated_power_draw_mw": null,
+        "estimated_power_draw_method": null,
+        "on_site_generation_capacity_mw": 14,
+        "energy_source_codes": [],
+        "lifecycle_status": null,
+        "value_scope": "facility",
+        "as_of_date": null
+      },
+      "value": "Csquare specifies 88.9 MW utility capacity and 14 MW generator capacity for Lisle ORD4.",
+      "basis": "Operator-published utility connection capacity, with generator capacity recorded separately.",
+      "confidence": "high",
+      "field_evidence": {
+        "reported_power_capacity_mw": [
+          "https://www.csquare.com/data-centers/chicago"
+        ],
+        "on_site_generation_capacity_mw": [
+          "https://www.csquare.com/data-centers/chicago"
+        ]
+      },
+      "sources": [
+        {
+          "title": "Centersquare Lisle ORD4 Data Center operator specifications",
+          "publisher": "Csquare",
+          "document_date": null,
+          "retrieved_url": "https://www.csquare.com/data-centers/chicago",
+          "source_class": "operator",
+          "content_sha256": "59c1aba73b2e1af7f3104499d9180ccb8fb7eb118510ef3311d2f700f3e2d1ff"
+        }
+      ],
+      "research": {
+        "run_id": "codex-run25-review-20260909",
+        "pipeline_id": "run25-primary-source-review-20260909",
+        "input_fingerprint": "70ef31725f41d9c63bf2359009e51bcb44ade9d3b9da094203d0e8ec3e37b3dd",
+        "audited_at": "2026-09-09T13:07:48.666645+00:00",
+        "judge": {
+          "model": "kimi-k2.6",
+          "verdict": "supported",
+          "reason": "The source excerpt directly states 'Utility capacity: 88.9MW' and 'Generator capacity: 14MW' for Lisle ORD4 Data Center. Both numerical values match the claim exactly. The claim's basis that this is 'Operator-published utility connection capacity, with generator capacity recorded separately' is also directly supported by the operator-published specifications page where these figures appear in distinct labeled fields.",
+          "supported_urls": [
+            "https://www.csquare.com/data-centers/chicago"
+          ],
+          "usage": {
+            "prompt_tokens": 724,
+            "completion_tokens": 108,
+            "total_tokens": 832,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "response_id": "chatcmpl-6aa15a2a5c719a9207d1e9ba"
+        }
+      }
+    },
+    {
+      "id": "osm-way-635022480",
+      "source_id": "openstreetmap",
+      "osm_type": "way",
+      "osm_id": 635022480,
+      "power_profile": {
+        "reported_grid_demand_mw": null,
+        "reported_power_capacity_mw": 8.1,
+        "projected_power_demand_mw": null,
+        "estimated_power_draw_mw": null,
+        "estimated_power_draw_method": null,
+        "on_site_generation_capacity_mw": null,
+        "energy_source_codes": [],
+        "lifecycle_status": null,
+        "value_scope": "facility",
+        "as_of_date": null
+      },
+      "value": "Ascent advertises up to 8.1 MW available at its ATL1 data center in Alpharetta.",
+      "basis": "Available capacity advertised in the operator listing. Future campus expansion is described separately.",
+      "confidence": "high",
+      "field_evidence": {
+        "reported_power_capacity_mw": [
+          "https://www.ascentcorp.com/ascents-purpose-built-atl1-data-center-available-now-in-high-tech/"
+        ]
+      },
+      "sources": [
+        {
+          "title": "Ascent - Atlanta Data Center operator specifications",
+          "publisher": "Ascent",
+          "document_date": null,
+          "retrieved_url": "https://www.ascentcorp.com/ascents-purpose-built-atl1-data-center-available-now-in-high-tech/",
+          "source_class": "operator",
+          "content_sha256": "d1f5a8e589363c3119ac67a4d4d96d523acf1e586fb7634fca5a531d6a51425b"
+        }
+      ],
+      "research": {
+        "run_id": "codex-run25-review-20260909",
+        "pipeline_id": "run25-primary-source-review-20260909",
+        "input_fingerprint": "4a89d4de75ff83a1700e82616a126c500b66b0ffd1233bd512706957117028bd",
+        "audited_at": "2026-09-09T13:07:48.666645+00:00",
+        "judge": {
+          "model": "kimi-k2.6",
+          "verdict": "supported",
+          "reason": "The source excerpt directly states 'ATL1 currently has up to 8.1MW available' — matching the claim's 8.1 MW advertised capacity at ATL1 in Alpharetta. The 'currently' confirms present-tense availability (not a draft or old projection). The facility name (ATL1), location context (Alpharetta mentioned later in the excerpt), and capacity figure (8.1 MW) are all explicitly supported. The claim's note about future campus expansion being described separately is also consistent with the source, which mentions 'expansion capabilities for two additional phases' as distinct from the current availability.",
+          "supported_urls": [
+            "https://www.ascentcorp.com/ascents-purpose-built-atl1-data-center-available-now-in-high-tech/"
+          ],
+          "usage": {
+            "prompt_tokens": 719,
+            "completion_tokens": 167,
+            "total_tokens": 886,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "response_id": "chatcmpl-6aa15a259d8667a088174e07"
+        }
+      }
+    },
+    {
+      "id": "osm-way-713410334",
+      "source_id": "openstreetmap",
+      "osm_type": "way",
+      "osm_id": 713410334,
+      "power_profile": {
+        "reported_grid_demand_mw": null,
+        "reported_power_capacity_mw": 81.5,
+        "projected_power_demand_mw": null,
+        "estimated_power_draw_mw": null,
+        "estimated_power_draw_method": null,
+        "on_site_generation_capacity_mw": 23.5,
+        "energy_source_codes": [],
+        "lifecycle_status": null,
+        "value_scope": "facility",
+        "as_of_date": null
+      },
+      "value": "Csquare specifies 81.5 MW utility capacity and 23.5 MW generator capacity for Lithia Springs ATL1.",
+      "basis": "Operator-published utility connection capacity, with generator capacity recorded separately.",
+      "confidence": "high",
+      "field_evidence": {
+        "reported_power_capacity_mw": [
+          "https://www.csquare.com/data-centers/atlanta"
+        ],
+        "on_site_generation_capacity_mw": [
+          "https://www.csquare.com/data-centers/atlanta"
+        ]
+      },
+      "sources": [
+        {
+          "title": "Centersquare Atlanta ATL1 operator specifications",
+          "publisher": "Csquare",
+          "document_date": null,
+          "retrieved_url": "https://www.csquare.com/data-centers/atlanta",
+          "source_class": "operator",
+          "content_sha256": "17857f987cecc8485d1c6ce24df0e457ebf08fc6157ec0deb0693585e8d861eb"
+        }
+      ],
+      "research": {
+        "run_id": "codex-run25-review-20260909",
+        "pipeline_id": "run25-primary-source-review-20260909",
+        "input_fingerprint": "a6bcdf71f43a91f54d29e29ef5de2c8e9cafcc16171aefddb4a43961d36f5690",
+        "audited_at": "2026-09-09T13:07:48.666645+00:00",
+        "judge": {
+          "model": "kimi-k2.6",
+          "verdict": "supported",
+          "reason": "The excerpt directly states 'Utility capacity: 81.5MW' and 'Generator capacity: 23.5MW' for the Lithia Springs ATL1 data center, matching both numerical values in the claim. The facility name 'Lithia Springs ATL1' is explicitly mentioned in the source. The basis description ('Operator-published utility connection capacity, with generator capacity recorded separately') is consistent with how the data is presented in the source. No material clause is unsupported or inferred from outdated information.",
+          "supported_urls": [
+            "https://www.csquare.com/data-centers/atlanta"
+          ],
+          "usage": {
+            "prompt_tokens": 732,
+            "completion_tokens": 131,
+            "total_tokens": 863,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "response_id": "chatcmpl-6aa15a251ca8305d7f6c74de"
+        }
+      }
+    },
+    {
+      "id": "osm-way-1317915930",
+      "source_id": "openstreetmap",
+      "osm_type": "way",
+      "osm_id": 1317915930,
+      "power_profile": {
+        "reported_grid_demand_mw": null,
+        "reported_power_capacity_mw": 35.8,
+        "projected_power_demand_mw": null,
+        "estimated_power_draw_mw": null,
+        "estimated_power_draw_method": null,
+        "on_site_generation_capacity_mw": 20,
+        "energy_source_codes": [],
+        "lifecycle_status": "operating",
+        "value_scope": "facility",
+        "as_of_date": null
+      },
+      "value": "Facility utility power capacity of 35.8 MW, UPS capacity 16.8 MW, generator capacity 20 MW, with standard cage density up to 300W/sq. ft.",
+      "basis": "Operator Csquare (now Centersquare) publishes exact facility-specific power specifications on its official website: 35.8 MW utility capacity, 16.8 MW UPS, 20 MW generator capacity, and 57,927 sq. ft. raised floor with up to 300W/sq. ft. standard density. These figures represent the facility's power envelope as published by the operator. No government, regulator, grid-operator, or utility primary source was found for this specific facility. The US Data Center Map 2026 independently references the ~36 MW load figure, corroborating the operator claim.",
+      "confidence": "high",
+      "field_evidence": {
+        "reported_power_capacity_mw": [
+          "https://www.csquare.com/data-centers/northern-virginia"
+        ],
+        "on_site_generation_capacity_mw": [
+          "https://www.csquare.com/data-centers/northern-virginia"
+        ],
+        "lifecycle_status": [
+          "https://www.csquare.com/data-centers/northern-virginia"
+        ]
+      },
+      "sources": [
+        {
+          "title": "Northern Virginia Data Centers - Csquare",
+          "publisher": "Csquare (operator)",
+          "document_date": null,
+          "retrieved_url": "https://www.csquare.com/data-centers/northern-virginia",
+          "source_class": "operator",
+          "content_sha256": "2231a5b376092e94b454e829c241ebaea836494cebf4db5495834412ae2352af"
+        }
+      ],
+      "research": {
+        "run_id": "21ff45ba-5332-40ec-9f02-0e8707efa91a",
+        "pipeline_id": "5c54aa4ec6ec775d",
+        "input_fingerprint": "bd295f91ef1ea9648f8a0a4aa5bf75ef01f0209d9f8dd56dbf2e46c3cf96dff8",
+        "audited_at": "2026-09-09T13:05:12.048145+00:00",
+        "judge": {
+          "model": "kimi-k2.6",
+          "verdict": "supported",
+          "reason": "The Csquare operator source directly states all claimed figures: 35.8 MW utility power capacity, 16.8 MW UPS capacity, 20 MW generator capacity, 57,927 sq. ft. raised floor, and standard cage density up to 300W/sq. ft. The excerpt explicitly lists these as 'Quick Facts' and 'Specifications' for the Ashburn IAD4 Data Center facility. No unsupported material clauses, dates, identifiers, status inferences, or absence statements are present in the claim. The claim is facility-specific and matches the source verbatim.",
+          "supported_urls": [
+            "https://www.csquare.com/data-centers/northern-virginia"
+          ],
+          "usage": {
+            "prompt_tokens": 897,
+            "completion_tokens": 150,
+            "total_tokens": 1047,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "response_id": "chatcmpl-6aa15988b661a14e030c668c"
+        }
+      }
+    },
+    {
+      "id": "osm-way-1530200859",
+      "source_id": "openstreetmap",
+      "osm_type": "way",
+      "osm_id": 1530200859,
+      "power_profile": {
+        "reported_grid_demand_mw": null,
+        "reported_power_capacity_mw": 36,
+        "projected_power_demand_mw": null,
+        "estimated_power_draw_mw": null,
+        "estimated_power_draw_method": null,
+        "on_site_generation_capacity_mw": null,
+        "lifecycle_status": null,
+        "as_of_date": "2022-09-13",
+        "energy_source_codes": [],
+        "value_scope": "building"
+      },
+      "value": "Aligned announced 36 MW of critical capacity for the DFW-02 building at full build-out.",
+      "basis": "Published critical IT capacity for DFW-02 in the September 2022 announcement. This is a capacity envelope, not measured grid draw or a campus total.",
+      "confidence": "high",
+      "field_evidence": {
+        "reported_power_capacity_mw": [
+          "https://aligneddc.com/press-release/aligned-to-expand-dallas-fort-worth-metro-area-campus-with-second-hyperscale-data-center/"
+        ]
+      },
+      "sources": [
+        {
+          "title": "DFW-02 expansion announcement",
+          "publisher": "Aligned Data Centers",
+          "document_date": "2022-09-13",
+          "retrieved_url": "https://aligneddc.com/press-release/aligned-to-expand-dallas-fort-worth-metro-area-campus-with-second-hyperscale-data-center/",
+          "source_class": "operator",
+          "content_sha256": "ce63d0253cf58dd548e74b3b6a96a9bb45805ca5f18955d606e5a85e2ef62d57"
+        }
+      ],
+      "research": {
+        "run_id": "codex-primary-review-20260909",
+        "pipeline_id": "primary-source-review-20260909",
+        "input_fingerprint": "10ccd58ff82ef7a7308bf8cc1b293cda29e3e52532b62b7ad5f880844bf71da2",
+        "audited_at": "2026-09-09T13:05:04.350115+00:00",
+        "judge": {
+          "model": "kimi-k2.6",
+          "verdict": "supported",
+          "reason": "The source excerpt directly states: 'Once complete, DFW-02 will stand at 220,000 sq. ft. and offer 36 MW of critical capacity across 185,000 sq. ft. of data hall space.' This explicitly supports the claim that Aligned announced 36 MW of critical capacity for DFW-02 at full build-out. The September 13, 2022 date matches the 'September 2022 announcement' in the claim. The excerpt clearly distinguishes this as a building-level capacity figure ('DFW-02 will...offer 36 MW'), not a campus total.",
+          "supported_urls": [
+            "https://aligneddc.com/press-release/aligned-to-expand-dallas-fort-worth-metro-area-campus-with-second-hyperscale-data-center/"
+          ],
+          "usage": {
+            "prompt_tokens": 751,
+            "completion_tokens": 168,
+            "total_tokens": 919,
+            "completion_tokens_details": {
+              "reasoning_tokens": 1
+            }
+          },
+          "response_id": "chatcmpl-6aa15980ddad5ef2bf469b1b"
+        }
+      }
+    }
+  ]
+}
