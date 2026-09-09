@@ -15,6 +15,9 @@ const { chromium, expect } = require('@playwright/test');
 const portalBuild = process.env.PORTAL_BUILD_DIR || '/tmp/codecollective-offers-portal';
 const out = process.env.OFFERS_SHOTS || '/tmp/codecollective-offers-acceptance';
 const grid = process.env.SELENIUM_REMOTE_URL || 'http://127.0.0.1:4446';
+// Node requires duplex for the streamed request bodies forwarded by the Worker.
+const nativeFetch = globalThis.fetch;
+globalThis.fetch = (input, options) => nativeFetch(input, options?.body ? { ...options, duplex: 'half' } : options);
 const site = (await import(pathToFileURL(path.join(root, 'cloudflare/worker.js')).href)).default;
 await mkdir(out, { recursive: true });
 await readFile(path.join(portalBuild, 'index.html'));
@@ -82,7 +85,14 @@ try {
     // Identity calls remain inside the local fixture too.
     const response = url.hostname === 'id.codecollective.us'
       ? await fetch(`${upstream}${url.pathname}${url.search}`)
-      : await site.fetch(new Request(request.url(), { method: request.method(), headers: request.headers() }), env);
+      : await site.fetch(new Request(request.url(), { method: request.method(), headers: request.headers(), body: request.postDataBuffer() }), env);
+    // Playwright routes only the first request in an HTTP redirect chain.
+    // Start a fresh navigation so redirected pages also stay in this fixture;
+    // the Worker unit tests verify the actual HTTP status and Location header.
+    if (response.status >= 300 && response.status < 400 && response.headers.has('location')) {
+      const destination = JSON.stringify(response.headers.get('location')).replace(/</g, '\\u003c');
+      return route.fulfill({ status: 200, contentType: 'text/html', body: `<script>location.replace(${destination})</script>` });
+    }
     await route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body: Buffer.from(await response.arrayBuffer()) });
   });
   await page.goto('https://codecollective.us/', { waitUntil: 'domcontentloaded' });
@@ -129,7 +139,7 @@ try {
   assert.equal(await page.locator('#community-offers').evaluate(section => section.scrollWidth <= section.clientWidth), true);
   await bobCard.screenshot({ path: path.join(out, 'mobile-offer.png') });
   await bobCard.getByRole('link', { name: 'View offer: Bicycle repair with Bob' }).click();
-  await expect(page).toHaveURL(`https://bmoretimebank.codecollective.us/p/timebanking?listing=${bob.id}`);
+  await expect(page).toHaveURL(`https://bmoretimebank.codecollective.us/?listing=${bob.id}`);
   await expect(page.locator('dialog[open]')).toContainText('Bicycle repair with Bob');
   await expect(page.locator('dialog[open]')).toContainText('Shared by Bob');
   await page.screenshot({ path: path.join(out, 'portal-offer.png') });
@@ -151,8 +161,34 @@ try {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.locator('#community-offers')).toContainText(unsafeTitle);
   await expect(page.locator('#community-offers h3 img')).toHaveCount(0);
+  await api('/communities/timebank', { method: 'PUT', body: JSON.stringify({ name: 'Code Collective Timebank', tagline: 'Share time.', accent_color: '#155e59' }) });
+  const tenantOrigin = 'https://timebank.codecollective.us';
+  await page.goto(tenantOrigin, { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(`${tenantOrigin}/`);
+  await expect(page.locator('.tb-shell-brand')).toHaveText('Code Collective Timebank');
+  await expect(page.getByText('0 offers and 0 requests shown.', { exact: true })).toBeVisible();
+  await page.locator('.tb-signin').click();
+  await expect(page).toHaveURL(`${tenantOrigin}/users/login?next=%2F`);
+  await page.locator('input[type=email]').fill('alice@example.test');
+  await page.locator('input[type=password]').fill('timebank-test');
+  await page.getByRole('button', { name: 'Log In', exact: true }).click();
+  await expect(page).toHaveURL(`${tenantOrigin}/`);
+  await expect(page.locator('.tb-account-trigger')).toBeVisible();
+  const tenantListing = await post('Timebank tenant offer', { community: 'timebank.codecollective.us' });
+  await page.goto(`${tenantOrigin}/p/timebanking?listing=${tenantListing.id}`, { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(`${tenantOrigin}/?listing=${tenantListing.id}`);
+  await expect(page.locator('dialog[open]')).toContainText('Timebank tenant offer');
+  await page.keyboard.press('Escape');
+  await page.locator('.tb-shell-brand').click();
+  await expect(page).toHaveURL(`${tenantOrigin}/`);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('.tb-account-trigger')).toBeVisible();
+  await page.goto(`https://codecollective.us/p/auth/callback?community=timebank&next=${encodeURIComponent(`/?listing=${tenantListing.id}`)}`, { waitUntil: 'domcontentloaded' });
+  await expect(page).toHaveURL(`${tenantOrigin}/?listing=${tenantListing.id}`);
+  await expect(page.locator('dialog[open]')).toContainText('Timebank tenant offer');
+  await page.screenshot({ path: path.join(out, 'tenant-root-listing.png') });
   assert.deepEqual(errors, []);
-  console.log(JSON.stringify({ result: 'passed', checks: ['real Worker and shared database', 'public offers across communities', 'original portal detail navigation', 'public photo', 'pagination', 'desktop and mobile', 'visibility and closure updates', 'empty and retry states', 'member text rendered safely'], screenshots: out }, null, 2));
+  console.log(JSON.stringify({ result: 'passed', checks: ['real Worker and shared database', 'public offers across communities', 'original portal detail navigation', 'public photo', 'pagination', 'desktop and mobile', 'visibility and closure updates', 'empty and retry states', 'member text rendered safely', 'tenant root and canonical listing links', 'tenant sign-in and session reload', 'shared callback returns to tenant listing'], screenshots: out }, null, 2));
 } finally {
   if (browser) await browser.close();
   if (sessionId) await fetch(`${grid}/session/${sessionId}`, { method: 'DELETE' });

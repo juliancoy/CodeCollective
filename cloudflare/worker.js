@@ -53,7 +53,7 @@ async function proxyRequest(request, targetOrigin, options = {}) {
 }
 
 function isHtmlNavigation(request) {
-  if (request.method !== "GET") return false;
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
   const accept = request.headers.get("accept") || "";
   return accept.includes("text/html");
 }
@@ -78,7 +78,7 @@ function applyPublicCors(headers) {
 
 function spaEntrypointRequest(url, request, pathname) {
   return new Request(`${url.origin}${pathname}`, {
-    method: "GET",
+    method: request.method === "HEAD" ? "HEAD" : "GET",
     headers: request.headers,
   });
 }
@@ -627,13 +627,14 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const timebankDomain = url.hostname.endsWith(".codecollective.us") && url.hostname !== "www.codecollective.us";
 
     if (path === "/health" || path === "/version") {
       return healthResponse(request, env);
     }
 
-    if (request.method === "GET" && path === "/p/clear-cache") {
-      url.pathname = "/p/users/login";
+    if (request.method === "GET" && (path === "/p/clear-cache" || (timebankDomain && path === "/clear-cache"))) {
+      url.pathname = timebankDomain ? "/users/login" : "/p/users/login";
       return new Response(null, {
         status: 303,
         headers: {
@@ -649,20 +650,8 @@ export default {
       return Response.redirect(url.toString(), 302);
     }
 
-    // A connected community subdomain opens its timebank directly.
-    if (path === "/" && url.hostname.endsWith(".codecollective.us") && url.hostname !== "www.codecollective.us") {
-      const community = await fetch(`${trimTrailingSlash(env.ORG_API_ORIGIN)}/api/timebank/community`, {
-        headers: { "x-forwarded-host": url.hostname },
-      });
-      if (community.ok) {
-        url.pathname = "/p/timebanking";
-        return Response.redirect(url.toString(), 302);
-      }
-      return new Response("This community is not available yet.", { status: community.status === 404 ? 404 : 503 });
-    }
-
     if (path === "/favicon.ico") {
-      url.pathname = "/images/favicons/favicon.png";
+      url.pathname = timebankDomain ? "/p/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);
     }
 
@@ -736,7 +725,7 @@ export default {
       return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN);
     }
 
-    if (path === "/auth/callback") {
+    if (path === "/auth/callback" && !timebankDomain) {
       url.pathname = "/p/auth/callback";
       return Response.redirect(url.toString(), 308);
     }
@@ -746,6 +735,32 @@ export default {
       if (audioResponse) {
         return audioResponse;
       }
+    }
+
+    // Timebank domains mount the shared portal at their root. The /p/ prefix
+    // remains an asset location, not part of the tenant's navigation URLs.
+    if (timebankDomain) {
+      const portalPath = pathMatchesPrefix(path, "/p") ? path.slice(2) || "/" : path;
+      const navigation = (request.method === "GET" || request.method === "HEAD")
+        && (isHtmlNavigation(request) || looksLikeSpaRoute(path) || path.endsWith(".html"));
+      if (navigation) {
+        const community = await fetch(`${trimTrailingSlash(env.ORG_API_ORIGIN)}/api/timebank/community`, {
+          headers: { "x-forwarded-host": url.hostname },
+        });
+        if (!community.ok) {
+          return new Response("This community is not available yet.", { status: community.status === 404 ? 404 : 503 });
+        }
+        const canonicalPath = ["/timebanking", "/timebanking/", "/index.html"].includes(portalPath) ? "/" : portalPath;
+        if (path !== canonicalPath) {
+          url.pathname = canonicalPath;
+          return Response.redirect(url.toString(), 308);
+        }
+        const response = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/p/"));
+        return applyStaticCachePolicy("/p/index.html", response);
+      }
+      url.pathname = `/p${portalPath}`;
+      const response = await env.ASSETS.fetch(new Request(url, request));
+      return applyStaticCachePolicy(url.pathname, response);
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
