@@ -16,14 +16,6 @@ main site and embeds the portal at `https://codecollective.us/p/` from the
 npx wrangler deploy
 ```
 
-The former standalone `codecollective-portal` Worker is retained only as a
-permanent redirect so old links continue to work. Deploy that redirect only
-when `cloudflare/portal-redirect.js` changes:
-
-```bash
-npx wrangler deploy --config wrangler.portal-redirect.jsonc
-```
-
 ## Calendar feed to org-backend
 
 `update-calendar.yml` can now push newly generated events + organizations into the org backend ingest endpoint.

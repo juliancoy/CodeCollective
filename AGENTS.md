@@ -3,7 +3,8 @@
 This repository has one canonical Cloudflare frontend deployment:
 
 - `codecollective-site` is the main site. Its build script copies the legacy static site into `.cloudflare/site`, builds `portal/web` with a `/p/` base, embeds that build at `/p/`, and also builds `r8-rowhome` at `/r8-rowhome/`.
-- `codecollective-portal` is retired as a frontend deployment. It is a lightweight permanent redirect to `https://codecollective.us/p/`, configured by `wrangler.portal-redirect.jsonc`. Keep it only for old links while traffic is observed; it may be deleted later once no clients depend on it.
+
+The former `codecollective-portal` standalone Worker was deleted on 2026-09-09. Do not recreate it. The only supported portal URL is `https://codecollective.us/p/`.
 
 The root `README.md` summarizes the current frontend deployment. Use the more detailed validation, submodule, and handoff requirements in this file when deploying.
 
@@ -55,22 +56,16 @@ npx wrangler deploy --dry-run
 npx wrangler deploy
 ```
 
-Do not deploy `portal/web` as a separate frontend. If the legacy redirect changes, validate and deploy only the redirect Worker:
-
-```bash
-npx wrangler deploy --config wrangler.portal-redirect.jsonc --dry-run
-npx wrangler deploy --config wrangler.portal-redirect.jsonc
-```
+Do not deploy `portal/web` as a separate frontend.
 
 If changes touch `portal/org-worker`, `portal/chat-worker`, or `portal/pidp/serverless`, treat their migrations, secrets, tests, and Worker deployments as separate backend work. Do not infer authorization to migrate a production D1 database merely from a request to deploy the site and portal frontend.
 
 ## Live checks
 
-After deploying, verify the first three URLs return HTTP 200, the asset referenced by `/p/` also loads, and the legacy Worker returns HTTP 308 with a `Location` under `https://codecollective.us/p/`:
+After deploying, verify all three URLs return HTTP 200 and that the asset referenced by `/p/` also loads:
 
 - `https://codecollective-site.jcloiacon.workers.dev/`
 - `https://codecollective.us/`
 - `https://codecollective.us/p/`
-- `https://codecollective-portal.jcloiacon.workers.dev/`
 
-Record the Wrangler version IDs in the handoff response. The standalone frontend was retired on 2026-09-09 at portal commit `b01dffaf08059fed0b4232e302c91dc3ac5d4f5d`. The resulting main-site version was `525ee96c-6b11-4539-9657-a89999c3da71`, and legacy redirect version was `85d3cc23-bc8b-4d1c-bfce-362347124978`. The last full standalone portal version was `51779626-05f9-455f-859b-fbf86884d53d`; do not restore it unless the user explicitly reverses the retirement decision.
+Record the main-site Wrangler version ID in the handoff response. The standalone frontend was retired and deleted on 2026-09-09 at portal commit `b01dffaf08059fed0b4232e302c91dc3ac5d4f5d`; do not recreate it unless the user explicitly reverses that decision. The resulting main-site version was `525ee96c-6b11-4539-9657-a89999c3da71`.
