@@ -14,7 +14,7 @@ mkdir -p "$OUT_DIR"
 
 echo "[cloudflare] syncing legacy static site"
 rsync -a \
-  --exclude='.git/' \
+  --exclude='.git' \
   --exclude='.wrangler/' \
   --exclude='.codex' \
   --exclude='.codexignore' \
