@@ -32,6 +32,31 @@ Configure these repository secrets in `CodeCollective`:
 - `ORG_BACKEND_INGEST_URL` (example: `https://codecollective.us/api/org/api/network/ingest/calendar`)
 - `ORG_BACKEND_INGEST_TOKEN` (must match the Cloudflare org Worker `ORG_INGEST_TOKEN` secret)
 
+## Community offers on the homepage
+
+The homepage reads public, open offers from the shared portal through
+`/api/org/api/timebank/public-offers`. Cards include the member, timebank, hours,
+photo and a link to the original listing. Member-only offers and requests are
+excluded. There is no copied listing data or second timebank service.
+
+The existing site Worker proxies this endpoint to `portal/org-worker`; apply the
+timebank migrations through `0021` before deploying the portal API and website.
+A plain static server alone cannot provide this API.
+
+Browser acceptance uses the actual site Worker, portal build and org Worker with
+the local SQLite/identity fixture. With Node 24+ and portal dependencies installed:
+
+```bash
+VITE_PUBLIC_BASE=/p/ npm --prefix portal/web run build -- --outDir /tmp/codecollective-offers-portal
+docker run -d --rm --name codecollective-offers-selenium -p 4446:4444 --shm-size=2g selenium/standalone-chromium:latest
+node tests/community-offers-browser.mjs
+docker stop codecollective-offers-selenium
+```
+
+Screenshots are saved to `/tmp/codecollective-offers-acceptance`. The test covers
+public visibility across communities, portal links, photos, pagination, desktop
+and mobile layouts, empty/error states and safe rendering of member text.
+
 ## Contributing to the Project
 
 Thank you for your interest in contributing to the Code Collective website! Below are instructions to help you get started with testing your changes locally, creating pull requests, and ensuring your contributions follow our guidelines.
