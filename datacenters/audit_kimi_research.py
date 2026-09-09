@@ -24,6 +24,7 @@ from kimi_research_quality import (
     fetch_source,
     load_jsonl,
     normalize_url,
+    primary_types_for_facet,
 )
 
 
@@ -205,7 +206,7 @@ def judge_prompt(audit: dict[str, Any], facet_name: str, decision: dict[str, Any
             "excerpt": source.get("excerpt"),
         }
         for source in decision.get("sources", [])
-        if source.get("usable") and source.get("source_class") in {"government", "court"}
+        if source.get("usable") and source.get("source_class") in primary_types_for_facet(facet_name)
     ]
     return f"""Act as a strict evidence auditor. Decide whether the supplied source excerpts directly
 support every material clause in the proposed facility-specific claim. Do not use outside

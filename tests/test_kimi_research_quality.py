@@ -89,6 +89,53 @@ def test_international_authority_registry_classifies_known_public_domains():
     assert quality.source_class("https://operator.example.com/specification") == "other"
 
 
+def test_reviewed_operator_evidence_is_eligible_only_for_power_profiles():
+    url = "https://aligneddc.com/specification"
+    assert quality.source_class(url) == "operator"
+    assert quality.source_class("https://aligneddc.com.evil.example/specification") == "other"
+    record = {"name": "DFW-02", "operator": "Aligned Data Centers"}
+    facet = {"value": "DFW-02 offers 36 MW capacity.", "confidence": "high",
+             "basis": "Operator specification.", "sources": [source(url)]}
+    fetched_source = {"status_code": 200, "content_sha256": "test",
+                      "final_url": url, "text": "DFW-02 offers 36 MW power capacity. Permit approved."}
+    cache = {quality.normalize_url(url): fetched_source}
+    decision = quality.audit_facet("power_profile", facet, record, cache)
+    assert decision["promotion_ready"]
+    prompt = auditor.judge_prompt({"facility_id": "test", "facility_name": "DFW-02"}, "power_profile", decision)
+    assert '"source_class": "operator"' in prompt
+    assert '36 mw' in prompt.lower()
+    assert not quality.audit_facet("permit_status", facet, record, cache)["promotion_ready"]
+    fetched_source["final_url"] = "https://directory.example/specification"
+    assert not quality.audit_facet("power_profile", facet, record, cache)["promotion_ready"]
+
+
+def test_power_excerpt_keeps_the_cited_number_and_scope_instead_of_navigation():
+    text = ("Aligned navigation: new 540 MW campus. " * 60
+            + "DFW-02 offers 36 MW of critical capacity at full build-out. "
+            + "DFW-03 is a separate building with 0.8 MW. "
+            + "Footer links and other portfolio developments. " * 60)
+    excerpt = quality.evidence_excerpt(text, {"name": "DFW-02", "operator": "Aligned"},
+                                      "power_profile", supports="DFW-02 offers 36 MW critical capacity.")
+    assert "DFW-02 offers 36 MW of critical capacity at full build-out" in excerpt
+    assert "0.8 MW" in excerpt
+    assert len(excerpt) <= 1500
+
+
+def test_power_excerpt_distinguishes_facilities_with_the_same_capacity():
+    text = ("Sterling IAD2 Data Center. Utility capacity 35.8 MW. UPS capacity 8.5 MW. "
+            "Generator capacity 20 MW. " + "Sterling services and amenities. " * 80
+            + "Ashburn IAD4 Data Center. Utility capacity 35.8 MW. UPS capacity 16.8 MW. "
+            "Generator capacity 20 MW. " + "Ashburn services and amenities. " * 80)
+    excerpt = quality.evidence_excerpt(
+        text, {"name": "Centersquare Ashburn IAD4 Data Center"}, "power_profile",
+        supports="Utility capacity 35.8 MW; UPS capacity 16.8 MW; generator capacity 20 MW.",
+    )
+    assert "Ashburn IAD4 Data Center" in excerpt
+    assert "UPS capacity 16.8 MW" in excerpt
+    assert "UPS capacity 8.5 MW" not in excerpt
+    assert len(excerpt) <= 1500
+
+
 def test_negative_air_claim_is_not_accepted_from_generation_data():
     eia_source = source("https://www.eia.gov/electricity/data/eia860/example.zip")
     facet = {

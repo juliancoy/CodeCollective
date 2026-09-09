@@ -1264,7 +1264,7 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert "return vec2(value.x, -((value.y * cos(tilt)) - (value.z * sin(tilt))));" in script
     assert "mix(v_accentColor, vec3(1.0), 0.3)" in script
     assert "attribute float a_hover" in script
-    assert "float glowAlpha = mix(0.38, 0.92, v_hover) * max(0.42, materialAlpha);" in script
+    assert "float glowAlpha = mix(0.5, 0.88, v_hover) * max(0.5, materialAlpha);" in script
     assert "if (filled < 0.5) discard;" in script
     assert script.index("if (u_glowPass > 0.5)") < script.index("if (filled < 0.5) discard;")
     assert "gl_FragColor = vec4(materialColor * materialAlpha * u_globalAlpha, materialAlpha * u_globalAlpha);" in script
@@ -1285,9 +1285,9 @@ def test_power_plant_markers_use_a_custom_webgl_layer_with_instanced_bolts():
     assert "Float32Array(state.entries.length * 12)" in script
     assert "uniform mediump float u_outlineOnly;" in script
     assert script.count("uniform highp float u_time;") == 2
-    assert "drawArraysInstanced(gl.TRIANGLES, 0, state.silhouetteVertexCount" in script
-    assert "gl.disableVertexAttribArray(state.attribs.position)" in script
-    assert "gl.vertexAttrib3f(state.attribs.normal, 0, 0, 1)" in script
+    assert "drawElementsInstanced(gl.TRIANGLES, state.indexCount, gl.UNSIGNED_INT, 0, state.entries.length)" in script
+    assert "gl.enableVertexAttribArray(state.attribs.position)" in script
+    assert "gl.vertexAttribPointer(state.attribs.normal, 3, gl.FLOAT, false, 0, 0)" in script
     assert "silhouetteEdgeCount: state.silhouetteEdgeCount" in script
     assert "if (state.antialiasSamples > 1) gl.enable(gl.SAMPLE_ALPHA_TO_COVERAGE)" in script
     assert "antialiasSamples: state.antialiasSamples" in script
@@ -1486,7 +1486,7 @@ def test_esri_3d_buildings_stream_through_a_persisted_hoverable_layer():
     assert 'id="hover-${ESRI_BUILDINGS.id}" type="checkbox" checked' in script
     assert "input[id^=\"show-\"]" in script
     assert "input[id^=\"hover-\"]" in script
-    assert "20260831-power-plant-controls" in page
+    assert "20260909-draw-controls" in page
 
 
 def test_optional_maryland_grid_layers_use_official_live_services():
@@ -1814,7 +1814,7 @@ def test_county_power_estimates_layer_is_optional_hoverable_and_source_backed():
     assert "Power estimates JSON" in page
     assert "not utility-metered county load" in page
     assert "not utility-metered county load or coincident peak demand" in page
-    assert "20260831-power-plant-controls" in page
+    assert "20260909-draw-controls" in page
     assert {
         "eia-retail-sales-md-residential-2024",
         "eia-retail-sales-md-all-sectors-2024",
@@ -2082,7 +2082,7 @@ def test_point_layer_gears_scale_markers_by_numeric_attributes():
     assert "factors.set(record, missingFactor)" in script
     assert "factors.set(record, sizeFloor + (Math.max(0, Math.min(1, normalized)) * (sizeCeiling - sizeFloor)))" in script
     assert "function normalizePowerPlantLayerFilters(filters)" in script
-    assert "filters.fillBy === 'resource-adjusted-utilization' && (!filters.sizeBy || filters.sizeBy === 'none')" in script
+    assert "filters.sizeBy ||= 'planning_sustained_output_mw'" in script
     assert "fieldMarkup('Icon size uses', 'sizeBy'" in script
     assert "Average generation / output (MWh)" in script
     assert "Planning output · annual average (MW)" in script
@@ -2133,7 +2133,8 @@ def test_icon_layer_gears_have_persisted_scale_sliders():
     assert "Math.max(.25, Math.min(4, scale))" in script
     assert "function scaleFieldMarkup(label, name, value)" in script
     assert 'data-icon-scale-range name="${escapeHtml(name)}" type="range" min="0.25" max="4" step="0.05"' in script
-    assert script.count("scaleFieldMarkup('Icon scale', 'iconScale'") == 3
+    assert script.count("scaleFieldMarkup('Icon scale', 'iconScale'") == 2
+    assert "scaleFieldMarkup('Scale all power plants', 'iconScale'" in script
     assert "event.target.closest('.dc-modal-scale')?.querySelector('output')?.replaceChildren" in script
     assert "iconScale: normalizeIconScale(formData.get('iconScale'))" in script
     assert "remoteState.iconScale = normalizeIconScale(savedFilter.iconScale)" in script

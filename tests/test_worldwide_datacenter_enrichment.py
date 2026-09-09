@@ -95,3 +95,20 @@ def test_overlay_promotion_requires_audited_supported_source_and_osm_identity():
     assert overlay["records"][0]["power_profile"]["reported_power_capacity_mw"] == 24
     audit["facets"]["power_profile"]["judge"]["supported_urls"] = []
     assert promote.candidate_overlay([audit], base)["record_count"] == 0
+    # Failed research leaves the prior approved profile intact.
+    assert promote.candidate_overlay([], base, overlay)["record_count"] == 1
+    assert promote.candidate_overlay([audit], base, overlay)["records"] == overlay["records"]
+    audit["facets"]["power_profile"]["judge"]["supported_urls"] = [url]
+    audit["facets"]["power_profile"]["field_evidence"] = {}
+    assert promote.candidate_overlay([audit], base)["record_count"] == 0
+    audit["facets"]["power_profile"]["field_evidence"] = {"reported_power_capacity_mw": [url]}
+    audit["facets"]["power_profile"]["fields"]["value_scope"] = "portfolio"
+    assert promote.candidate_overlay([audit], base)["record_count"] == 0
+    assert promote.candidate_overlay([audit], base, overlay)["records"] == overlay["records"]
+    audit["facets"]["power_profile"]["fields"] = {
+        "reported_power_capacity_mw": 30, "value_scope": "facility",
+    }
+    replacement = promote.candidate_overlay([audit], base, overlay)
+    assert replacement["record_count"] == 1
+    assert replacement["records"][0]["power_profile"]["reported_power_capacity_mw"] == 30
+    assert promote.candidate_overlay([], {"features": []}, overlay)["record_count"] == 0

@@ -41,16 +41,24 @@ def base_identities(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return result
 
 
-def candidate_overlay(audits: list[dict[str, Any]], base: dict[str, Any]) -> dict[str, Any]:
+def candidate_overlay(
+    audits: list[dict[str, Any]], base: dict[str, Any], previous: dict[str, Any] | None = None
+) -> dict[str, Any]:
     identities = base_identities(base)
-    records = []
-    for audit in audits:
+    latest = {audit.get("facility_id"): audit for audit in audits}
+    # An unapproved research attempt is not evidence against an approved profile.
+    # Replace a published profile only after its new candidate passes every gate.
+    records = [record for record in (previous or {}).get("records", [])
+               if record.get("id") in identities]
+    for audit in latest.values():
         facility_id = audit.get("facility_id")
         decision = (audit.get("facets") or {}).get("power_profile") or {}
         if not decision.get("promotion_ready") or facility_id not in identities:
             continue
         fields = decision.get("fields")
         if not isinstance(fields, dict):
+            continue
+        if fields.get("value_scope") not in {"building", "facility", "campus"}:
             continue
         supported = {
             normalize_url(url)
@@ -71,7 +79,21 @@ def candidate_overlay(audits: list[dict[str, Any]], base: dict[str, Any]) -> dic
         ]
         if not sources:
             continue
+        supported_source_urls = {normalize_url(source["retrieved_url"]) for source in sources}
+        numeric_fields = (
+            "reported_grid_demand_mw", "reported_power_capacity_mw",
+            "projected_power_demand_mw", "estimated_power_draw_mw",
+            "on_site_generation_capacity_mw",
+        )
+        evidence = decision.get("field_evidence") or {}
+        if any(fields.get(field) is not None and not (
+            isinstance(evidence.get(field), list)
+            and any(isinstance(url, str) and normalize_url(url) in supported_source_urls
+                    for url in evidence[field])
+        ) for field in numeric_fields):
+            continue
         properties = identities[facility_id]
+        records = [record for record in records if record["id"] != facility_id]
         records.append(
             {
                 "id": facility_id,
@@ -107,7 +129,8 @@ def candidate_overlay(audits: list[dict[str, Any]], base: dict[str, Any]) -> dic
 def main() -> int:
     args = parse_args()
     payload = candidate_overlay(
-        load_jsonl(args.audit), json.loads(args.base.read_text(encoding="utf-8"))
+        load_jsonl(args.audit), json.loads(args.base.read_text(encoding="utf-8")),
+        json.loads(args.overlay.read_text(encoding="utf-8")) if args.overlay.exists() else None,
     )
     digest = hashlib.sha256(json.dumps(payload["records"], sort_keys=True).encode()).hexdigest()
     print(f"Promotion-ready worldwide profiles: {payload['record_count']}")
