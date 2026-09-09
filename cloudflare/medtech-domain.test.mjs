@@ -2,6 +2,27 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import worker from './worker.js';
 
+test('site health reports deployment metadata without caching', async () => {
+  const response = await worker.fetch(new Request('https://bmoretimebank.codecollective.us/health'), {
+    CF_VERSION_METADATA: { id: 'worker-version-fixture' },
+    ASSETS: {
+      fetch: async () => Response.json({ commit: 'a'.repeat(40), dirty: false, builtAt: '2026-09-09T00:00:00.000Z' }),
+    },
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  const payload = await response.json();
+  assert.equal(payload.ok, true);
+  assert.equal(payload.service, 'codecollective-site');
+  assert.equal(payload.commit, 'a'.repeat(40));
+  assert.equal(payload.dirty, false);
+  assert.equal(payload.builtAt, '2026-09-09T00:00:00.000Z');
+  assert.equal(payload.workerVersionId, 'worker-version-fixture');
+  assert.equal(payload.hostname, 'bmoretimebank.codecollective.us');
+  assert.equal(payload.environment, 'production');
+  assert.match(payload.time, /^\d{4}-\d{2}-\d{2}T/);
+});
+
 test('the cache link clears only the current origin cache and returns to the requested login', async () => {
   const query = '?portalProfile=baltimore-medtech&next=%2Fcommunity';
   const response = await worker.fetch(new Request(`https://community.medtech.social/p/clear-cache${query}`), {});
