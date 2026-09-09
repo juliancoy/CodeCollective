@@ -617,6 +617,18 @@ export default {
       return Response.redirect(url.toString(), 302);
     }
 
+    // A connected community subdomain opens its timebank directly.
+    if (path === "/" && url.hostname.endsWith(".codecollective.us") && url.hostname !== "www.codecollective.us") {
+      const community = await fetch(`${trimTrailingSlash(env.ORG_API_ORIGIN)}/api/timebank/community`, {
+        headers: { "x-forwarded-host": url.hostname },
+      });
+      if (community.ok) {
+        url.pathname = "/p/timebanking";
+        return Response.redirect(url.toString(), 302);
+      }
+      return new Response("This community is not available yet.", { status: community.status === 404 ? 404 : 503 });
+    }
+
     if (path === "/favicon.ico") {
       url.pathname = "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);

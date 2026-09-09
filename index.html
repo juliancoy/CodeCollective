@@ -40,6 +40,8 @@
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/master.css?v=20260608-avataronly" />
   <link rel="stylesheet" href="/css/carousel.css">
+  <link rel="stylesheet" href="/css/community-offers.css">
+  <script src="/js/communityOffers.js" defer></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <script type="application/ld+json">
@@ -113,6 +115,21 @@
           </div>
         </div>
       </div>
+      <section id="community-offers" class="community-offers" aria-labelledby="community-offers-title">
+        <div class="community-offers-heading">
+          <div>
+            <h2 id="community-offers-title">Community offers</h2>
+            <p>Skills and help shared by our timebank communities. One hour of help earns one timebank hour.</p>
+          </div>
+          <a class="community-offers-action" href="/p/timebanking">Share an offer</a>
+        </div>
+        <p id="community-offers-status" role="status" aria-live="polite"></p>
+        <ul id="community-offers-list" class="community-offers-list" aria-label="Public offers"></ul>
+        <button id="community-offers-more" class="community-offers-action" type="button" hidden>Show more offers</button>
+        <button id="community-offers-retry" class="community-offers-action" type="button" hidden>Try again</button>
+        <noscript><p><a href="/p/timebanking">Browse community offers in the timebank portal.</a></p></noscript>
+      </section>
+
       <h2 style="margin: 10px 0; font-size: 4vw; text-align: center">Events</h2>
       <section class="code-collective-events" aria-label="Events">
         <div id="code-collective-events-container">
