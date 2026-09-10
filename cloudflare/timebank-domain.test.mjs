@@ -10,7 +10,7 @@ const env = {
 
 function community(t, status = 200) {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
-    assert.equal(url, 'https://org.example/api/timebank/community');
+    assert.equal(url, 'https://org.example/api/portal/tenant');
     assert.equal(options.headers['x-forwarded-host'], 'timebank.codecollective.us');
     return Response.json({ id: 'timebank' }, { status });
   });
@@ -97,4 +97,17 @@ test('tenant API requests retain the hostname and bypass page routing', async t 
     headers: { 'x-forwarded-host': 'bmoretimebank.codecollective.us' },
   }), env);
   assert.equal((await response.json()).community.id, 'timebank');
+});
+
+test('configured custom domains mount the same tenant portal root', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, 'https://org.example/api/portal/tenant');
+    assert.equal(options.headers['x-forwarded-host'], 'community.medtech.social');
+    return Response.json({ id: 'baltimore-medtech' });
+  });
+  const response = await worker.fetch(new Request('https://community.medtech.social/community', {
+    headers: { accept: 'text/html' },
+  }), { ...env, ORGPORTAL_TENANT_HOSTS: 'community.medtech.social' });
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), '/p/');
 });
