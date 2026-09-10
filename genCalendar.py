@@ -87,6 +87,7 @@ SOURCE_KIND_CONCURRENCY = {
     "biotrac": 1,
     "active_data_calendar_rss": 1,
     "gbci_events": 1,
+    "bsfs_events": 1,
     "unknown": 2,
 }
 
@@ -547,6 +548,10 @@ def fetch_events_from_source(source, city):
         "sjbc_events": (
             "Fetching events from",
             lambda: importlib.import_module("baltimore.scrape_sjbc").scrape_events(source_url),
+        ),
+        "bsfs_events": (
+            "Fetching events from",
+            lambda: importlib.import_module("baltimore.scrape_bsfs").scrape_events(source_url),
         ),
     }
 
