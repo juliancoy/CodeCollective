@@ -26,6 +26,8 @@ DEV_GOVERNANCE_API_ORIGIN="${DEV_GOVERNANCE_API_ORIGIN:-$PROD_GOVERNANCE_API_ORI
 DEV_ORG_API_ORIGIN="${DEV_ORG_API_ORIGIN:-$PROD_ORG_API_ORIGIN}"
 DEV_PIDP_API_ORIGIN="${DEV_PIDP_API_ORIGIN:-$PROD_PIDP_API_ORIGIN}"
 DEV_PIDP_PROXY_ORIGIN="${DEV_PIDP_PROXY_ORIGIN:-$PROD_PIDP_PROXY_ORIGIN}"
+PROD_ORGPORTAL_TENANT_HOSTS="${PROD_ORGPORTAL_TENANT_HOSTS:-community.medtech.social,medtech.social}"
+DEV_ORGPORTAL_TENANT_HOSTS="${DEV_ORGPORTAL_TENANT_HOSTS:-$PROD_ORGPORTAL_TENANT_HOSTS}"
 
 PIDP_WORKER_NAME="${PIDP_WORKER_NAME:-pidp-codecollective}"
 PIDP_APP_NAME="${PIDP_APP_NAME:-Code Collective ID}"
@@ -539,6 +541,7 @@ deploy_target() {
   local org_origin="$4"
   local pidp_origin="$5"
   local pidp_proxy_origin="$6"
+  local tenant_hosts="$7"
 
   echo "[deploy][$label] deploying worker: $worker_name" >&2
   local deploy_log
@@ -557,6 +560,7 @@ deploy_target() {
         --var "ORG_API_ORIGIN:$org_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
+        --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
         "${wrangler_args[@]}"
     ) 2>&1 | tee "$deploy_log" >&2
   else
@@ -568,6 +572,7 @@ deploy_target() {
         --var "ORG_API_ORIGIN:$org_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
+        --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
         "${wrangler_args[@]}"
     ) 2>&1 \
       | tee "$deploy_log" \
@@ -630,12 +635,12 @@ if [[ "$deploy_org" -eq 1 ]]; then
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "dev" || "$TARGET" == "both" ) ]]; then
-  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN")"
+  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN" "$DEV_ORGPORTAL_TENANT_HOSTS")"
   echo "[deploy][dev] updated url: $DEV_URL"
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "prod" || "$TARGET" == "both" ) ]]; then
-  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN")"
+  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN" "$PROD_ORGPORTAL_TENANT_HOSTS")"
   echo "[deploy][prod] updated url: $PROD_URL"
 fi
 
