@@ -217,6 +217,7 @@ EOF
 echo "[cloudflare] writing deployment metadata"
 python3 - "$ROOT_DIR" "$OUT_DIR/__deployment.json" <<'PY'
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -228,13 +229,23 @@ def git(*args):
 
 commit = None
 dirty = None
+explicit_commit = None
+explicit_dirty = None
+if os.environ.get("CODECOLLECTIVE_BUILD_COMMIT"):
+    explicit_commit = os.environ["CODECOLLECTIVE_BUILD_COMMIT"].strip().lower()
+if os.environ.get("CODECOLLECTIVE_BUILD_DIRTY", "").lower() in {"true", "false"}:
+    explicit_dirty = os.environ["CODECOLLECTIVE_BUILD_DIRTY"].lower() == "true"
 try:
     commit = git("rev-parse", "HEAD")
     if not all(c in "0123456789abcdef" for c in commit.lower()) or len(commit) < 40:
         commit = None
+except Exception:
+    commit = explicit_commit
+
+try:
     dirty = bool(git("status", "--porcelain", "--untracked-files=normal"))
 except Exception:
-    pass
+    dirty = explicit_dirty
 
 with open(output, "w", encoding="utf-8") as fh:
     json.dump({
