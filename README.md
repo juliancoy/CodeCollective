@@ -16,21 +16,32 @@ main site and embeds the portal at `https://codecollective.us/p/` from the
 npx wrangler deploy
 ```
 
-### Timebank tenants
+### OrgPortal tenants
 
-Both timebank domains connect to the existing `codecollective-site` Worker and
-serve its shared `/p/` portal bundle:
+OrgPortal is the independent open-source application. Code Collective, MedTech
+and timebank communities are tenants selected at runtime by hostname, not
+separate frontend deployments. Tenant domains connect to the existing
+`codecollective-site` Worker and serve its shared `/p/` portal bundle:
 
 | Domain | Community ID | Name |
 | --- | --- | --- |
 | `bmoretimebank.codecollective.us` | `bmoretimebank` | Bmore Timebank |
 | `timebank.codecollective.us` | `timebank` | Code Collective Timebank |
+| `community.medtech.social` | configured in OrgPortal | Baltimore MedTech |
+| `medtech.social` | configured in OrgPortal | Baltimore MedTech |
 
-The hostname selects a row in the existing org database's `timebank_communities`
-table. Each community has separate listings, exchanges, hour balances and
-timebank notifications, while sharing portal identities and application code.
-The main portal's `code-collective` community remains separate from `timebank`.
-Public offers also appear in the main website's shared community offers feed.
+The edge Worker recognizes Code Collective tenant subdomains automatically and
+uses `ORGPORTAL_TENANT_HOSTS` for custom domains such as MedTech. Before serving
+tenant navigation at the domain root, it verifies the hostname through
+OrgPortal's generic `GET /api/portal/tenant` endpoint. Today that endpoint is
+backed by configured timebank communities; it is the runtime seam for user-owned
+groups to set appearance, enabled functionality and custom domains without a new
+Worker or fork.
+
+Each tenant has separate listings, exchanges, hour balances and notifications,
+while sharing portal identities and application code. The main portal's
+`code-collective` community remains separate from `timebank`. Public offers also
+appear in the main website's shared community offers feed.
 
 To provision the `timebank` community in an existing database with the timebank
 schema already applied:
@@ -40,15 +51,15 @@ npx wrangler d1 execute org --remote --config portal/org-worker/wrangler.jsonc -
 ```
 
 This inserts only the tenant configuration and preserves existing settings on
-repeat runs. Connect `timebank.codecollective.us` as a Cloudflare Custom Domain
-on `codecollective-site`, like Bmore Timebank. Custom Domains are managed in
-Cloudflare, outside `wrangler.toml`. The running Worker serves the timebank at the
-domain root and forwards its hostname to the org API. Tenant navigation uses `/`,
-`/users/login` and `/chat`; listing links use `/?listing=…`. The shared assets
-remain under `/p/`, and redundant `/p/timebanking` URLs redirect to `/` with their
-query strings preserved. Sign-in uses the
-shared `https://codecollective.us/p/auth/callback?community=timebank` callback and
-returns to this tenant. Adding a tenant requires no new Worker or schema migration.
+repeat runs. Connect tenant hostnames as Cloudflare Custom Domains on
+`codecollective-site`; Custom Domains are managed in Cloudflare, outside
+`wrangler.toml`. The running Worker serves tenants at the domain root and
+forwards the hostname to the org API. Tenant navigation uses `/`, `/users/login`
+and `/chat`; listing links use `/?listing=…`. The shared assets remain under
+`/p/`, and redundant `/p/timebanking` URLs redirect to `/` with their query
+strings preserved. Sign-in uses the shared
+`https://codecollective.us/p/auth/callback?community=<id>` callback and returns
+to the tenant.
 
 ## Calendar feed to org-backend
 
