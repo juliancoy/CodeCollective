@@ -87,6 +87,26 @@ echo "[cloudflare] syncing portal dist -> /p/"
 mkdir -p "$OUT_DIR/p"
 rsync -a --delete "$PORTAL_WEB_DIR/dist/" "$OUT_DIR/p/"
 
+echo "[cloudflare] building portal for tenant root mounts"
+pushd "$PORTAL_WEB_DIR" >/dev/null
+if [[ "$STRICT_TS" == "1" ]]; then
+  echo "[cloudflare] strict mode: running TypeScript + Vite build for tenant root mounts"
+  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/mobile-update.json npm run build
+else
+  echo "[cloudflare] deploy mode: running Vite build for tenant root mounts"
+  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/mobile-update.json npx vite build
+fi
+popd >/dev/null
+
+if [[ ! -f "$PORTAL_WEB_DIR/dist/index.html" ]]; then
+  echo "[cloudflare] error: expected portal/web/dist/index.html after tenant root build" >&2
+  exit 1
+fi
+
+echo "[cloudflare] syncing portal dist -> /__portal_root/"
+mkdir -p "$OUT_DIR/__portal_root"
+rsync -a --delete "$PORTAL_WEB_DIR/dist/" "$OUT_DIR/__portal_root/"
+
 echo "[cloudflare] building r8-rowhome for /r8-rowhome/"
 R8_ROWHOME_DIR="$ROOT_DIR/r8-rowhome"
 if [[ -d "$R8_ROWHOME_DIR" ]]; then
