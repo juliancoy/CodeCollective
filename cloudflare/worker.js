@@ -127,7 +127,7 @@ function applyStaticCachePolicy(path, response) {
   ) {
     headers.set("cache-control", "public, max-age=2592000");
   } else if (path.endsWith(".html") || path === "/" || path === "/p/" || path === "/p") {
-    headers.set("cache-control", "public, max-age=300");
+    headers.set("cache-control", "public, max-age=0, must-revalidate");
   }
 
   if (isPublicCalendarAsset(path)) {
