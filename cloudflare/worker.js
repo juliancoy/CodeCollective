@@ -36,15 +36,6 @@ async function proxyRequest(request, targetOrigin, options = {}) {
   });
 
   const responseHeaders = new Headers(upstream.headers);
-  if (requestUrl.hostname === "community.medtech.social" && options.stripPrefix === "/pidp") {
-    const cookies = upstream.headers.getSetCookie();
-    responseHeaders.delete("set-cookie");
-    for (const cookie of cookies) {
-      responseHeaders.append("set-cookie", cookie.replace(/;\s*Domain=[^;]+/gi, ""));
-    }
-    responseHeaders.set("cache-control", "no-store");
-    responseHeaders.set("referrer-policy", "no-referrer");
-  }
   return new Response(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
@@ -643,11 +634,6 @@ export default {
           "cache-control": "no-store",
         },
       });
-    }
-
-    if (path === "/" && url.hostname === "community.medtech.social") {
-      url.pathname = "/p/";
-      return Response.redirect(url.toString(), 302);
     }
 
     if (path === "/favicon.ico") {
