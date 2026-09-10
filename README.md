@@ -34,9 +34,10 @@ The edge Worker recognizes Code Collective tenant subdomains automatically and
 uses `ORGPORTAL_TENANT_HOSTS` for custom domains such as MedTech. Before serving
 tenant navigation at the domain root, it verifies the hostname through
 OrgPortal's generic `GET /api/portal/tenant` endpoint. Today that endpoint is
-backed by configured timebank communities; it is the runtime seam for user-owned
-groups to set appearance, enabled functionality and custom domains without a new
-Worker or fork.
+backed by `portal_tenants`, seeded from the known CodeCollective, timebank and
+MedTech hosts. That table is the runtime seam for user-owned groups to set
+appearance, enabled functionality and custom domains without a new Worker or
+fork.
 
 Each tenant has separate listings, exchanges, hour balances and notifications,
 while sharing portal identities and application code. The main portal's
