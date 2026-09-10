@@ -120,8 +120,10 @@ function spaEntrypointRequest(url, request, pathname) {
 function applyStaticCachePolicy(path, response) {
   const headers = new Headers(response.headers);
 
-  if (path.startsWith("/p/assets/") || path.startsWith("/r8-rowhome/assets/")) {
+  if (path.startsWith("/assets/") || path.startsWith("/__portal_root/assets/") || path.startsWith("/p/assets/") || path.startsWith("/r8-rowhome/assets/")) {
     headers.set("cache-control", "public, max-age=31536000, immutable");
+  } else if (path === "/__portal_root/index.html") {
+    headers.set("cache-control", "public, max-age=0, must-revalidate");
   } else if (
     /\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf|mp4|webm|mp3|wav)$/i.test(path)
   ) {
@@ -680,7 +682,7 @@ export default {
     }
 
     if (path === "/favicon.ico") {
-      url.pathname = tenantHost ? "/p/codecollective_logo.png" : "/images/favicons/favicon.png";
+      url.pathname = tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);
     }
 
@@ -774,6 +776,32 @@ export default {
     // prefix remains an asset location, not part of tenant navigation URLs.
     if (tenantHost) {
       const portalPath = pathMatchesPrefix(path, "/p") ? path.slice(2) || "/" : path;
+      const tenantStaticPath = pathMatchesPrefix(path, "/p") ? portalPath : path;
+      if (pathMatchesPrefix(path, "/p") && !looksLikeSpaRoute(path)) {
+        const rootUrl = new URL(request.url);
+        rootUrl.pathname = `/__portal_root${tenantStaticPath}`;
+        const rootResponse = await env.ASSETS.fetch(new Request(rootUrl, request));
+        if (rootResponse.status !== 404) {
+          url.pathname = tenantStaticPath;
+          return Response.redirect(url.toString(), 308);
+        }
+        const response = await env.ASSETS.fetch(new Request(url, request));
+        return applyStaticCachePolicy(path, response);
+      }
+      if (
+        pathMatchesPrefix(path, "/assets")
+        || pathMatchesPrefix(path, "/css")
+        || pathMatchesPrefix(path, "/images")
+        || path === "/manifest.webmanifest"
+        || path === "/medtech.webmanifest"
+        || path === "/mobile-update.json"
+        || path === "/push-sw.js"
+        || path === "/codecollective_logo.png"
+      ) {
+        url.pathname = `/__portal_root${path}`;
+        const response = await env.ASSETS.fetch(new Request(url, request));
+        return applyStaticCachePolicy(path, response);
+      }
       const navigation = (request.method === "GET" || request.method === "HEAD")
         && (isHtmlNavigation(request) || looksLikeSpaRoute(path) || path.endsWith(".html"));
       if (navigation) {
@@ -786,12 +814,10 @@ export default {
           url.pathname = canonicalPath;
           return Response.redirect(url.toString(), 308);
         }
-        const response = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/p/"));
-        return applyStaticCachePolicy("/p/index.html", response);
+        const response = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/__portal_root/index.html"));
+        return applyStaticCachePolicy("/__portal_root/index.html", response);
       }
-      url.pathname = `/p${portalPath}`;
-      const response = await env.ASSETS.fetch(new Request(url, request));
-      return applyStaticCachePolicy(url.pathname, response);
+      return new Response("Not found", { status: 404 });
     }
 
     const assetResponse = await env.ASSETS.fetch(request);
