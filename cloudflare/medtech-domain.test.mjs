@@ -53,3 +53,15 @@ test('MedTech auth uses host-only secure cookies and preserves all cookie header
   assert.match(cookies[0], /HttpOnly; Secure; SameSite=Lax/);
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
+
+test('MedTech MCP protected-resource discovery proxies to the org worker without stripping the path', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, 'https://org.example/.well-known/oauth-protected-resource/api/org/mcp');
+    assert.equal(options.headers.get('x-forwarded-host'), 'community.medtech.social');
+    return Response.json({ resource: 'https://community.medtech.social/api/org/mcp' }, { headers: { 'cache-control': 'no-store' } });
+  });
+  const response = await worker.fetch(new Request('https://community.medtech.social/.well-known/oauth-protected-resource/api/org/mcp'), { ORG_API_ORIGIN: 'https://org.example' });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal((await response.json()).resource, 'https://community.medtech.social/api/org/mcp');
+});

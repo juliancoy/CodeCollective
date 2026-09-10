@@ -681,6 +681,10 @@ export default {
       return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
     }
 
+    if (pathMatchesPrefix(path, "/.well-known/oauth-protected-resource/api/org/mcp")) {
+      return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
+    }
+
     if (pathMatchesPrefix(path, "/api/org")) {
       return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN, { stripPrefix: "/api/org" });
     }
