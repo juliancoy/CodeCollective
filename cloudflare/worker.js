@@ -14,6 +14,49 @@ function pathMatchesPrefix(path, prefix) {
   return path === prefix || path.startsWith(`${prefix}/`);
 }
 
+function configuredTenantHosts(env) {
+  const raw = String(env?.ORGPORTAL_TENANT_HOSTS || "").trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(String);
+    if (parsed && typeof parsed === "object") return Object.keys(parsed);
+  } catch {
+    return raw.split(",");
+  }
+  return [];
+}
+
+function normalizeHostname(value) {
+  return String(value || "").toLowerCase().split(":")[0].trim();
+}
+
+function isOrgPortalTenantHost(hostname, env) {
+  const host = normalizeHostname(hostname);
+  if (!host) return false;
+  const configured = configuredTenantHosts(env).map(normalizeHostname).filter(Boolean);
+  if (configured.includes(host)) return true;
+  const reserved = new Set([
+    "codecollective.us",
+    "www.codecollective.us",
+    "id.codecollective.us",
+    "api.codecollective.us",
+    "org.codecollective.us",
+    "chat.codecollective.us",
+  ]);
+  return host.endsWith(".codecollective.us") && !reserved.has(host);
+}
+
+async function verifyOrgPortalTenant(hostname, env) {
+  const origin = trimTrailingSlash(env?.ORG_API_ORIGIN || env?.GOVERNANCE_API_ORIGIN);
+  if (!origin) return { ok: false, status: 502 };
+  const response = await fetch(`${origin}/api/portal/tenant`, {
+    headers: { "x-forwarded-host": hostname },
+    cf: { cacheEverything: false },
+  });
+  return { ok: response.ok, status: response.status };
+}
+
 async function proxyRequest(request, targetOrigin, options = {}) {
   const origin = trimTrailingSlash(targetOrigin);
   if (!origin) {
@@ -618,14 +661,14 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const timebankDomain = url.hostname.endsWith(".codecollective.us") && url.hostname !== "www.codecollective.us";
+    const tenantHost = isOrgPortalTenantHost(url.hostname, env);
 
     if (path === "/health" || path === "/version") {
       return healthResponse(request, env);
     }
 
-    if (request.method === "GET" && (path === "/p/clear-cache" || (timebankDomain && path === "/clear-cache"))) {
-      url.pathname = timebankDomain ? "/users/login" : "/p/users/login";
+    if (request.method === "GET" && (path === "/p/clear-cache" || (tenantHost && path === "/clear-cache"))) {
+      url.pathname = tenantHost ? "/users/login" : "/p/users/login";
       return new Response(null, {
         status: 303,
         headers: {
@@ -637,7 +680,7 @@ export default {
     }
 
     if (path === "/favicon.ico") {
-      url.pathname = timebankDomain ? "/p/codecollective_logo.png" : "/images/favicons/favicon.png";
+      url.pathname = tenantHost ? "/p/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);
     }
 
@@ -715,7 +758,7 @@ export default {
       return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN);
     }
 
-    if (path === "/auth/callback" && !timebankDomain) {
+    if (path === "/auth/callback" && !tenantHost) {
       url.pathname = "/p/auth/callback";
       return Response.redirect(url.toString(), 308);
     }
@@ -727,18 +770,16 @@ export default {
       }
     }
 
-    // Timebank domains mount the shared portal at their root. The /p/ prefix
-    // remains an asset location, not part of the tenant's navigation URLs.
-    if (timebankDomain) {
+    // Tenant domains mount the shared OrgPortal app at their root. The /p/
+    // prefix remains an asset location, not part of tenant navigation URLs.
+    if (tenantHost) {
       const portalPath = pathMatchesPrefix(path, "/p") ? path.slice(2) || "/" : path;
       const navigation = (request.method === "GET" || request.method === "HEAD")
         && (isHtmlNavigation(request) || looksLikeSpaRoute(path) || path.endsWith(".html"));
       if (navigation) {
-        const community = await fetch(`${trimTrailingSlash(env.ORG_API_ORIGIN)}/api/timebank/community`, {
-          headers: { "x-forwarded-host": url.hostname },
-        });
-        if (!community.ok) {
-          return new Response("This community is not available yet.", { status: community.status === 404 ? 404 : 503 });
+        const tenant = await verifyOrgPortalTenant(url.hostname, env);
+        if (!tenant.ok) {
+          return new Response("This community is not available yet.", { status: tenant.status === 404 ? 404 : 503 });
         }
         const canonicalPath = ["/timebanking", "/timebanking/", "/index.html"].includes(portalPath) ? "/" : portalPath;
         if (path !== canonicalPath) {
