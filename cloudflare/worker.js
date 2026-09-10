@@ -79,6 +79,20 @@ async function proxyRequest(request, targetOrigin, options = {}) {
   });
 
   const responseHeaders = new Headers(upstream.headers);
+  if (options.hostOnlyCookies) {
+    const cookies = typeof upstream.headers.getSetCookie === "function"
+      ? upstream.headers.getSetCookie()
+      : [];
+    responseHeaders.delete("set-cookie");
+    if (cookies.length) {
+      for (const cookie of cookies) {
+        responseHeaders.append("set-cookie", cookie.replace(/;\s*Domain=[^;]*/gi, ""));
+      }
+    } else {
+      const cookie = upstream.headers.get("set-cookie");
+      if (cookie) responseHeaders.append("set-cookie", cookie.replace(/;\s*Domain=[^;]*/gi, ""));
+    }
+  }
   return new Response(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
@@ -753,7 +767,10 @@ export default {
     }
 
     if (path.startsWith("/pidp")) {
-      return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN, { stripPrefix: "/pidp" });
+      return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN, {
+        stripPrefix: "/pidp",
+        hostOnlyCookies: Boolean(tenantHost),
+      });
     }
 
     if (path.startsWith("/auth/avatar/upload")) {
