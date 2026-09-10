@@ -666,7 +666,7 @@ export default {
       return new Response(null, { status: 204, headers });
     }
 
-    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data"))) {
+    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || pathMatchesPrefix(path, "/.well-known/oauth-protected-resource") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data"))) {
       return new Response(null, {
         status: 204,
         headers: {
