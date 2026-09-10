@@ -102,12 +102,12 @@ test('tenant API requests retain the hostname and bypass page routing', async t 
 test('configured custom domains mount the same tenant portal root', async t => {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     assert.equal(url, 'https://org.example/api/portal/tenant');
-    assert.equal(options.headers['x-forwarded-host'], 'community.medtech.social');
+    assert.equal(options.headers['x-forwarded-host'], 'medtech.social');
     return Response.json({ id: 'baltimore-medtech' });
   });
-  const response = await worker.fetch(new Request('https://community.medtech.social/community', {
+  const response = await worker.fetch(new Request('https://medtech.social/community', {
     headers: { accept: 'text/html' },
-  }), { ...env, ORGPORTAL_TENANT_HOSTS: 'community.medtech.social' });
+  }), { ...env, ORGPORTAL_TENANT_HOSTS: 'medtech.social' });
   assert.equal(response.status, 200);
   assert.equal(await response.text(), '/p/');
 });

@@ -27,7 +27,6 @@ separate frontend deployments. Tenant domains connect to the existing
 | --- | --- | --- |
 | `bmoretimebank.codecollective.us` | `bmoretimebank` | Bmore Timebank |
 | `timebank.codecollective.us` | `timebank` | Code Collective Timebank |
-| `community.medtech.social` | configured in OrgPortal | Baltimore MedTech |
 | `medtech.social` | configured in OrgPortal | Baltimore MedTech |
 
 The edge Worker recognizes Code Collective tenant subdomains automatically and
