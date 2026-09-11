@@ -22,7 +22,8 @@ test('tenant root and nested routes serve the shared portal without redirecting'
     const response = await worker.fetch(new Request(origin + path, { headers: { accept: 'text/html' } }), env);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('location'), null);
-    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.match(response.headers.get('cache-control') || '', /no-store/);
+    assert.equal(response.headers.get('cloudflare-cdn-cache-control'), 'no-store');
     assert.equal(await response.text(), '/__portal_root/index.html');
   }
 });
@@ -67,6 +68,12 @@ test('redundant tenant URLs redirect to the canonical route with query strings i
   }
 });
 
+test('tenant legacy calendar files redirect to the portal calendar', async () => {
+  const response = await worker.fetch(new Request(origin + '/calendar.html?source=legacy'), env);
+  assert.equal(response.status, 308);
+  assert.equal(response.headers.get('location'), origin + '/calendar?source=legacy');
+});
+
 test('tenant assets use the shared bundle and missing assets remain 404', async () => {
   const legacyAsset = await worker.fetch(new Request(origin + '/p/assets/index.js'), env);
   assert.equal(legacyAsset.status, 308);
@@ -97,7 +104,15 @@ test('tenant event routes inject event social preview metadata', async t => {
         social_description: 'Meet builders across health, medicine and biotech in Baltimore.',
         social_image_url: '/images/social/medtech-in-the-hut-preview.jpg',
         organization_name: 'Baltimore MedTech',
+        host_org_source_url: 'https://medtech.social/orgs/baltimore-medtech',
+        starts_at: '2026-10-15T22:00:00.000Z',
+        ends_at: '2026-10-16T00:00:00.000Z',
+        location: 'Baltimore, MD',
+        source_url: 'https://lu.ma/medtech-hut',
+        tags: ['health', 'medicine', 'biotech'],
         public_url: 'https://medtech.social/events/medtech-in-the-hut',
+        created_at: '2026-09-01T13:45:00.000Z',
+        updated_at: '2026-09-11T13:45:00.000Z',
       });
     }
     throw new Error(`Unexpected fetch ${url}`);
@@ -118,8 +133,16 @@ test('tenant event routes inject event social preview metadata', async t => {
   const html = await response.text();
   assert.match(html, /<title>MedTech in the Hut • Baltimore MedTech<\/title>/);
   assert.match(html, /property="og:title" content="MedTech in the Hut • Baltimore MedTech"/);
-  assert.match(html, /property="og:image" content="https:\/\/medtech.social\/images\/social\/medtech-in-the-hut-preview.jpg"/);
+  assert.match(html, /property="og:image" content="https:\/\/medtech.social\/images\/social\/medtech-in-the-hut-preview.jpg\?v=2026-09-11T13-45-00.000Z"/);
+  assert.match(html, /property="og:image:type" content="image\/jpeg"/);
+  assert.match(html, /property="event:start_time" content="2026-10-15T22:00:00.000Z"/);
+  assert.match(html, /name="keywords" content="health, medicine, biotech"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  assert.match(html, /<script type="application\/ld\+json">/);
+  assert.match(html, /"@type":"Event"/);
+  assert.match(html, /"startDate":"2026-10-15T22:00:00.000Z"/);
+  assert.match(html, /"location":\{"@type":"Place","name":"Baltimore, MD","address":"Baltimore, MD"\}/);
+  assert.match(html, /"url":"https:\/\/lu.ma\/medtech-hut"/);
 });
 
 
