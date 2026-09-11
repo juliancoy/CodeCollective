@@ -57,7 +57,7 @@ test('redundant tenant URLs redirect to the canonical route with query strings i
   for (const [path, destination] of [
     ['/p/timebanking?listing=abc&tab=home', '/?listing=abc&tab=home'],
     ['/timebanking?listing=abc', '/?listing=abc'],
-    ['/p/', '/'], ['/p', '/'], ['/p/index.html', '/index.html'],
+    ['/p/', '/'], ['/p', '/'], ['/p/index.html', '/'],
     ['/p/users/login?next=%2F', '/users/login?next=%2F'],
   ]) {
     const response = await worker.fetch(new Request(origin + path), env);

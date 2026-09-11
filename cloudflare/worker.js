@@ -790,20 +790,12 @@ export default {
     }
 
     // Tenant domains mount the shared OrgPortal app at their root. The /p/
-    // prefix remains an asset location, not part of tenant navigation URLs.
+    // prefix is a legacy shared-domain detail and should not appear on tenant URLs.
     if (tenantHost) {
       const portalPath = pathMatchesPrefix(path, "/p") ? path.slice(2) || "/" : path;
-      const tenantStaticPath = pathMatchesPrefix(path, "/p") ? portalPath : path;
-      if (pathMatchesPrefix(path, "/p") && !looksLikeSpaRoute(path)) {
-        const rootUrl = new URL(request.url);
-        rootUrl.pathname = `/__portal_root${tenantStaticPath}`;
-        const rootResponse = await env.ASSETS.fetch(new Request(rootUrl, request));
-        if (rootResponse.status !== 404) {
-          url.pathname = tenantStaticPath;
-          return Response.redirect(url.toString(), 308);
-        }
-        const response = await env.ASSETS.fetch(new Request(url, request));
-        return applyStaticCachePolicy(path, response);
+      if (pathMatchesPrefix(path, "/p")) {
+        url.pathname = ["/timebanking", "/timebanking/", "/index.html"].includes(portalPath) ? "/" : portalPath;
+        return Response.redirect(url.toString(), 308);
       }
       if (
         pathMatchesPrefix(path, "/assets")
