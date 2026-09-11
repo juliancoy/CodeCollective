@@ -71,7 +71,7 @@ test('tenant assets use the shared bundle and missing assets remain 404', async 
   const legacyAsset = await worker.fetch(new Request(origin + '/p/assets/index.js'), env);
   assert.equal(legacyAsset.status, 308);
   assert.equal(legacyAsset.headers.get('location'), `${origin}/assets/index.js`);
-  for (const path of ['/assets/index.js', '/push-sw.js', '/images/google-g-logo.svg']) {
+  for (const path of ['/assets/index.js', '/push-sw.js', '/images/google-g-logo.svg', '/images/timebank/timebank-mark.svg', '/timebank.webmanifest']) {
     const response = await worker.fetch(new Request(origin + path), env);
     assert.equal(await response.text(), `/__portal_root${path}`);
     assert.equal(response.headers.get('location'), null);
