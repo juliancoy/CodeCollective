@@ -255,17 +255,23 @@ if os.environ.get("CODECOLLECTIVE_BUILD_COMMIT"):
     explicit_commit = os.environ["CODECOLLECTIVE_BUILD_COMMIT"].strip().lower()
 if os.environ.get("CODECOLLECTIVE_BUILD_DIRTY", "").lower() in {"true", "false"}:
     explicit_dirty = os.environ["CODECOLLECTIVE_BUILD_DIRTY"].lower() == "true"
-try:
-    commit = git("rev-parse", "HEAD")
-    if not all(c in "0123456789abcdef" for c in commit.lower()) or len(commit) < 40:
-        commit = None
-except Exception:
+if explicit_commit:
     commit = explicit_commit
+else:
+    try:
+        commit = git("rev-parse", "HEAD")
+        if not all(c in "0123456789abcdef" for c in commit.lower()) or len(commit) < 40:
+            commit = None
+    except Exception:
+        commit = None
 
-try:
-    dirty = bool(git("status", "--porcelain", "--untracked-files=normal"))
-except Exception:
+if explicit_dirty is not None:
     dirty = explicit_dirty
+else:
+    try:
+        dirty = bool(git("status", "--porcelain", "--untracked-files=normal"))
+    except Exception:
+        dirty = None
 
 with open(output, "w", encoding="utf-8") as fh:
     json.dump({
