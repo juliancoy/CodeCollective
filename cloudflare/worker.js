@@ -900,6 +900,7 @@ export default {
         || pathMatchesPrefix(path, "/images")
         || path === "/manifest.webmanifest"
         || path === "/medtech.webmanifest"
+        || path === "/timebank.webmanifest"
         || path === "/mobile-update.json"
         || path === "/push-sw.js"
         || path === "/codecollective_logo.png"
