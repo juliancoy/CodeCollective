@@ -1,3 +1,4 @@
+import { handleDatasetApi as handleMedTechDatasetApi } from './medtech/datasets.js';
 function trimTrailingSlash(value) {
   return (value || "").replace(/\/+$/, "");
 }
@@ -12,6 +13,27 @@ function buildTargetUrl(requestUrl, targetOrigin, stripPrefix = "") {
 
 function pathMatchesPrefix(path, prefix) {
   return path === prefix || path.startsWith(`${prefix}/`);
+}
+
+
+function medTechSpecialtyRedirect(path) {
+  const redirects = {
+    "/map.html": "/specialty/baltimore-medtech/map.html",
+    "/datasets.html": "/specialty/baltimore-medtech/datasets.html",
+    "/taxonomy.html": "/specialty/baltimore-medtech/taxonomy.html",
+    "/need-availability-distortions.html": "/specialty/baltimore-medtech/need-availability-distortions.html",
+  };
+  return redirects[path] || null;
+}
+
+async function handleMedTechDatasetRequest(request, env, url) {
+  const rewritten = new URL(url.toString());
+  rewritten.pathname = rewritten.pathname.slice("/specialty/baltimore-medtech".length) || "/";
+  const response = await handleMedTechDatasetApi(new Request(rewritten.toString(), request), env, rewritten, `${url.origin}/specialty/baltimore-medtech`);
+  if (!response) return null;
+  const headers = new Headers(response.headers);
+  headers.set("access-control-allow-origin", "*");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 function configuredTenantHosts(env) {
@@ -159,7 +181,11 @@ function applyStaticCachePolicy(path, response) {
 
 function withNoStore(response) {
   const headers = new Headers(response.headers);
-  headers.set("cache-control", "no-store");
+  headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
+  headers.set("cdn-cache-control", "no-store");
+  headers.set("cloudflare-cdn-cache-control", "no-store");
+  headers.set("pragma", "no-cache");
+  headers.set("expires", "0");
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -187,9 +213,133 @@ function absolutePublicUrl(value, origin) {
   }
 }
 
+
+function versionedPublicUrl(value, origin, version) {
+  const absolute = absolutePublicUrl(value, origin);
+  if (!absolute) return "";
+  const cleanVersion = String(version || "").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  if (!cleanVersion) return absolute;
+  try {
+    const url = new URL(absolute);
+    url.searchParams.set("v", cleanVersion);
+    return url.toString();
+  } catch {
+    return absolute;
+  }
+}
+
+function eventSocialImageVersion(event, env) {
+  return event.social_image_updated_at || event.updated_at || event.created_at || env?.CF_VERSION_METADATA?.id || env?.SITE_BUILD_COMMIT || "";
+}
+
 function compactText(value, max = 240) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   return text.length > max ? `${text.slice(0, max - 1).trim()}…` : text;
+}
+
+function jsonForHtml(value) {
+  return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (char) => ({
+    "<": "\\u003c",
+    ">": "\\u003e",
+    "&": "\\u0026",
+    "\u2028": "\\u2028",
+    "\u2029": "\\u2029",
+  }[char] || char));
+}
+
+function optionalAbsolutePublicUrl(value, origin) {
+  return absolutePublicUrl(value, origin) || undefined;
+}
+
+function socialImageType(image) {
+  try {
+    const pathname = new URL(image).pathname.toLowerCase();
+    if (pathname.endsWith(".png")) return "image/png";
+    if (pathname.endsWith(".jpg") || pathname.endsWith(".jpeg")) return "image/jpeg";
+    if (pathname.endsWith(".webp")) return "image/webp";
+    if (pathname.endsWith(".svg")) return "image/svg+xml";
+  } catch {}
+  return "";
+}
+
+function eventKeywords(event) {
+  if (!Array.isArray(event?.tags)) return "";
+  return event.tags.map((tag) => String(tag || "").trim()).filter(Boolean).slice(0, 12).join(", ");
+}
+
+function eventJsonLd(event, metadata, url) {
+  const name = compactText(event.social_title || event.title, 120);
+  const canonical = metadata.canonical;
+  const organizerName = metadata.siteName || event.organization_name || event.host_org_name || event.host_user_name || "Org Portal";
+  const sourceUrl = optionalAbsolutePublicUrl(event.source_url, url.origin) || canonical;
+  const image = metadata.image ? [metadata.image] : undefined;
+  const location = event.location
+    ? {
+        "@type": "Place",
+        name: compactText(event.location, 160),
+        address: compactText(event.location, 240),
+      }
+    : undefined;
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${canonical}#webpage`,
+        url: canonical,
+        name: metadata.title,
+        description: metadata.description,
+        primaryImageOfPage: metadata.image ? { "@id": `${canonical}#primaryimage` } : undefined,
+        breadcrumb: { "@id": `${canonical}#breadcrumb` },
+        mainEntity: { "@id": `${canonical}#event` },
+      },
+      metadata.image ? {
+        "@type": "ImageObject",
+        "@id": `${canonical}#primaryimage`,
+        url: metadata.image,
+        contentUrl: metadata.image,
+        caption: metadata.title,
+      } : undefined,
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${canonical}#breadcrumb`,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Events", item: `${url.origin}/events` },
+          { "@type": "ListItem", position: 2, name, item: canonical },
+        ],
+      },
+      {
+        "@type": "Event",
+        "@id": `${canonical}#event`,
+        name,
+        description: metadata.description,
+        startDate: event.starts_at || undefined,
+        endDate: event.ends_at || undefined,
+        eventAttendanceMode: "https://schema.org/MixedEventAttendanceMode",
+        eventStatus: "https://schema.org/EventScheduled",
+        image,
+        url: canonical,
+        location,
+        organizer: {
+          "@type": "Organization",
+          name: organizerName,
+          url: event.host_org_source_url ? optionalAbsolutePublicUrl(event.host_org_source_url, url.origin) : undefined,
+        },
+        performer: {
+          "@type": "Organization",
+          name: organizerName,
+        },
+        offers: {
+          "@type": "Offer",
+          url: sourceUrl,
+          price: "0",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          validFrom: event.created_at || event.updated_at || undefined,
+        },
+      },
+    ].filter(Boolean),
+  };
 }
 
 async function eventSocialMetadata(url, request, env) {
@@ -214,9 +364,22 @@ async function eventSocialMetadata(url, request, env) {
   if (!title) return null;
   const group = compactText(event.organization_name || event.host_org_name || "Org Portal", 80);
   const description = compactText(event.social_description || event.description || `${title} hosted by ${group}.`, 240);
-  const image = absolutePublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin);
+  const image = versionedPublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin, eventSocialImageVersion(event, env));
   const canonical = absolutePublicUrl(event.public_url || url.pathname, url.origin) || url.toString();
-  return { title: `${title} • ${group}`, description, image, canonical, siteName: group };
+  const keywords = eventKeywords(event);
+  return {
+    title: `${title} • ${group}`,
+    description,
+    image,
+    imageType: socialImageType(image),
+    imageAlt: image ? `${title} event preview for ${group}` : "",
+    canonical,
+    siteName: group,
+    startsAt: event.starts_at || "",
+    endsAt: event.ends_at || "",
+    keywords,
+    jsonLd: eventJsonLd(event, { title: `${title} • ${group}`, description, image, canonical, siteName: group }, url),
+  };
 }
 
 async function withSocialMetadata(response, url, request, env) {
@@ -230,7 +393,10 @@ async function withSocialMetadata(response, url, request, env) {
     `<title>${escapeHtml(metadata.title)}</title>`,
     `<link rel="canonical" href="${escapeHtml(metadata.canonical)}" />`,
     `<meta name="description" content="${escapeHtml(metadata.description)}" />`,
+    `<meta name="robots" content="index,follow,max-image-preview:large" />`,
+    metadata.keywords ? `<meta name="keywords" content="${escapeHtml(metadata.keywords)}" />` : "",
     `<meta property="og:type" content="event" />`,
+    `<meta property="og:locale" content="en_US" />`,
     `<meta property="og:site_name" content="${escapeHtml(metadata.siteName)}" />`,
     `<meta property="og:title" content="${escapeHtml(metadata.title)}" />`,
     `<meta property="og:description" content="${escapeHtml(metadata.description)}" />`,
@@ -241,12 +407,24 @@ async function withSocialMetadata(response, url, request, env) {
   ];
   if (metadata.image) {
     tags.push(`<meta property="og:image" content="${escapeHtml(metadata.image)}" />`);
+    tags.push(`<meta property="og:image:secure_url" content="${escapeHtml(metadata.image)}" />`);
+    if (metadata.imageType) tags.push(`<meta property="og:image:type" content="${escapeHtml(metadata.imageType)}" />`);
     tags.push(`<meta property="og:image:width" content="1200" />`);
     tags.push(`<meta property="og:image:height" content="630" />`);
+    if (metadata.imageAlt) tags.push(`<meta property="og:image:alt" content="${escapeHtml(metadata.imageAlt)}" />`);
     tags.push(`<meta name="twitter:image" content="${escapeHtml(metadata.image)}" />`);
+    if (metadata.imageAlt) tags.push(`<meta name="twitter:image:alt" content="${escapeHtml(metadata.imageAlt)}" />`);
   }
-  html = html.replace(/<title>.*?<\/title>/i, "");
-  html = html.replace("</head>", `${tags.join("\n    ")}\n  </head>`);
+  if (metadata.startsAt) tags.push(`<meta property="event:start_time" content="${escapeHtml(metadata.startsAt)}" />`);
+  if (metadata.endsAt) tags.push(`<meta property="event:end_time" content="${escapeHtml(metadata.endsAt)}" />`);
+  tags.push(`<script type="application/ld+json">${jsonForHtml(metadata.jsonLd)}</script>`);
+  html = html
+    .replace(/<title>.*?<\/title>/i, "")
+    .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, "")
+    .replace(/<meta\s+name=["'](?:description|robots|keywords|twitter:[^"']+)["'][^>]*>/gi, "")
+    .replace(/<meta\s+property=["'](?:og:[^"']+|event:[^"']+)["'][^>]*>/gi, "")
+    .replace(/<script\s+type=["']application\/ld\+json["'][\s\S]*?<\/script>/gi, "");
+  html = html.replace("</head>", `${tags.filter(Boolean).join("\n    ")}\n  </head>`);
   const headers = new Headers(response.headers);
   headers.set("content-type", "text/html; charset=utf-8");
   headers.set("cache-control", "public, max-age=0, must-revalidate");
@@ -792,6 +970,11 @@ export default {
       });
     }
 
+    if (tenantHost && (path === "/calendar.html" || path === "/calendar_cards.html" || path === "/simplecalendar.html")) {
+      url.pathname = "/calendar";
+      return Response.redirect(url.toString(), 308);
+    }
+
     if (path === "/favicon.ico") {
       url.pathname = tenantHost && url.hostname.includes("timebank") ? "/images/timebank/favicon-64.png" : tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);
@@ -808,7 +991,7 @@ export default {
       return new Response(null, { status: 204, headers });
     }
 
-    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || pathMatchesPrefix(path, "/.well-known/oauth-protected-resource") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data"))) {
+    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || pathMatchesPrefix(path, "/.well-known/oauth-protected-resource") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data") || pathMatchesPrefix(path, "/specialty/baltimore-medtech/api/datasets"))) {
       return new Response(null, {
         status: 204,
         headers: {
@@ -833,6 +1016,11 @@ export default {
 
     if (pathMatchesPrefix(path, "/api/chat")) {
       return proxyRequest(request, env.CHAT_API_ORIGIN, { stripPrefix: "/api/chat" });
+    }
+
+    if (pathMatchesPrefix(path, "/specialty/baltimore-medtech/api/datasets")) {
+      const datasetResponse = await handleMedTechDatasetRequest(request, env, url);
+      if (datasetResponse) return datasetResponse;
     }
 
     if (pathMatchesPrefix(path, "/api/map-data")) {
@@ -889,6 +1077,15 @@ export default {
     // Tenant domains mount the shared OrgPortal app at their root. The /p/
     // prefix is a legacy shared-domain detail and should not appear on tenant URLs.
     if (tenantHost) {
+      const specialtyTarget = medTechSpecialtyRedirect(path);
+      if (specialtyTarget) {
+        url.pathname = specialtyTarget;
+        return Response.redirect(url.toString(), 308);
+      }
+      if (path === "/calendar.html" || path === "/calendar_cards.html" || path === "/simplecalendar.html") {
+        url.pathname = "/calendar";
+        return Response.redirect(url.toString(), 308);
+      }
       const portalPath = pathMatchesPrefix(path, "/p") ? path.slice(2) || "/" : path;
       if (pathMatchesPrefix(path, "/p")) {
         url.pathname = ["/timebanking", "/timebanking/", "/index.html"].includes(portalPath) ? "/" : portalPath;
@@ -896,6 +1093,7 @@ export default {
       }
       if (
         pathMatchesPrefix(path, "/assets")
+        || pathMatchesPrefix(path, "/specialty")
         || pathMatchesPrefix(path, "/css")
         || pathMatchesPrefix(path, "/images")
         || path === "/manifest.webmanifest"
