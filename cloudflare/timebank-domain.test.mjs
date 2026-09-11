@@ -22,7 +22,8 @@ test('tenant root and nested routes serve the shared portal without redirecting'
     const response = await worker.fetch(new Request(origin + path, { headers: { accept: 'text/html' } }), env);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('location'), null);
-    assert.equal(response.headers.get('cache-control'), 'no-store');
+    assert.match(response.headers.get('cache-control') || '', /no-store/);
+    assert.equal(response.headers.get('cloudflare-cdn-cache-control'), 'no-store');
     assert.equal(await response.text(), '/__portal_root/index.html');
   }
 });

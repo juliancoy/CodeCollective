@@ -159,7 +159,11 @@ function applyStaticCachePolicy(path, response) {
 
 function withNoStore(response) {
   const headers = new Headers(response.headers);
-  headers.set("cache-control", "no-store");
+  headers.set("cache-control", "no-store, no-cache, must-revalidate, max-age=0");
+  headers.set("cdn-cache-control", "no-store");
+  headers.set("cloudflare-cdn-cache-control", "no-store");
+  headers.set("pragma", "no-cache");
+  headers.set("expires", "0");
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
