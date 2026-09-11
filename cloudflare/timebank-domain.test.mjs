@@ -82,6 +82,47 @@ test('tenant assets use the shared bundle and missing assets remain 404', async 
   assert.equal(response.status, 404);
 });
 
+test('tenant event routes inject event social preview metadata', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (url === 'https://org.example/api/portal/tenant') {
+      assert.equal(options.headers['x-forwarded-host'], 'medtech.social');
+      return Response.json({ id: 'baltimore-medtech' });
+    }
+    if (url === 'https://org.example/api/network/events/public/medtech-in-the-hut') {
+      assert.equal(options.headers['x-forwarded-host'], 'medtech.social');
+      return Response.json({
+        title: 'MedTech in the Hut',
+        social_title: 'MedTech in the Hut',
+        description: 'A formational gathering for Baltimore MedTech.',
+        social_description: 'Meet builders across health, medicine and biotech in Baltimore.',
+        social_image_url: '/images/social/medtech-in-the-hut-preview.jpg',
+        organization_name: 'Baltimore MedTech',
+        public_url: 'https://medtech.social/events/medtech-in-the-hut',
+      });
+    }
+    throw new Error(`Unexpected fetch ${url}`);
+  });
+  const response = await worker.fetch(new Request('https://medtech.social/events/medtech-in-the-hut', {
+    headers: { accept: 'text/html' },
+  }), {
+    ...env,
+    ORGPORTAL_TENANT_HOSTS: 'medtech.social',
+    ASSETS: { fetch: async request => {
+      assert.equal(new URL(request.url).pathname, '/__portal_root/index.html');
+      return new Response('<!doctype html><html><head><title>Portal</title></head><body><div id="root"></div></body></html>', {
+        headers: { 'content-type': 'text/html' },
+      });
+    } },
+  });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /<title>MedTech in the Hut • Baltimore MedTech<\/title>/);
+  assert.match(html, /property="og:title" content="MedTech in the Hut • Baltimore MedTech"/);
+  assert.match(html, /property="og:image" content="https:\/\/medtech.social\/images\/social\/medtech-in-the-hut-preview.jpg"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+});
+
+
 test('unconfigured and unavailable tenants do not serve a different community', async t => {
   for (const status of [404, 500]) {
     community(t, status);
