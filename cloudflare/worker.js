@@ -167,6 +167,93 @@ function withNoStore(response) {
   });
 }
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
+function absolutePublicUrl(value, origin) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    return new URL(raw, origin).toString();
+  } catch {
+    return "";
+  }
+}
+
+function compactText(value, max = 240) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length > max ? `${text.slice(0, max - 1).trim()}…` : text;
+}
+
+async function eventSocialMetadata(url, request, env) {
+  const match = /^\/events\/([^/?#]+)\/?$/.exec(url.pathname);
+  if (!match) return null;
+  const origin = trimTrailingSlash(env?.ORG_API_ORIGIN || env?.GOVERNANCE_API_ORIGIN);
+  if (!origin) return null;
+  const slug = decodeURIComponent(match[1]);
+  let response;
+  try {
+    response = await fetch(`${origin}/api/network/events/public/${encodeURIComponent(slug)}`, {
+      headers: { "x-forwarded-host": url.host, "x-forwarded-proto": url.protocol.replace(":", "") },
+      cf: { cacheEverything: false },
+    });
+  } catch {
+    return null;
+  }
+  if (!response.ok) return null;
+  let event;
+  try { event = await response.json(); } catch { return null; }
+  const title = compactText(event.social_title || event.title, 120);
+  if (!title) return null;
+  const group = compactText(event.organization_name || event.host_org_name || "Org Portal", 80);
+  const description = compactText(event.social_description || event.description || `${title} hosted by ${group}.`, 240);
+  const image = absolutePublicUrl(event.social_image_url || event.image_url, url.origin);
+  const canonical = absolutePublicUrl(event.public_url || url.pathname, url.origin) || url.toString();
+  return { title: `${title} • ${group}`, description, image, canonical, siteName: group };
+}
+
+async function withSocialMetadata(response, url, request, env) {
+  if (!response.ok || request.method === "HEAD") return applyStaticCachePolicy("/__portal_root/index.html", response);
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("text/html")) return applyStaticCachePolicy("/__portal_root/index.html", response);
+  const metadata = await eventSocialMetadata(url, request, env);
+  if (!metadata) return applyStaticCachePolicy("/__portal_root/index.html", response);
+  let html = await response.text();
+  const tags = [
+    `<title>${escapeHtml(metadata.title)}</title>`,
+    `<link rel="canonical" href="${escapeHtml(metadata.canonical)}" />`,
+    `<meta name="description" content="${escapeHtml(metadata.description)}" />`,
+    `<meta property="og:type" content="event" />`,
+    `<meta property="og:site_name" content="${escapeHtml(metadata.siteName)}" />`,
+    `<meta property="og:title" content="${escapeHtml(metadata.title)}" />`,
+    `<meta property="og:description" content="${escapeHtml(metadata.description)}" />`,
+    `<meta property="og:url" content="${escapeHtml(metadata.canonical)}" />`,
+    `<meta name="twitter:card" content="${metadata.image ? "summary_large_image" : "summary"}" />`,
+    `<meta name="twitter:title" content="${escapeHtml(metadata.title)}" />`,
+    `<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`,
+  ];
+  if (metadata.image) {
+    tags.push(`<meta property="og:image" content="${escapeHtml(metadata.image)}" />`);
+    tags.push(`<meta property="og:image:width" content="1200" />`);
+    tags.push(`<meta property="og:image:height" content="630" />`);
+    tags.push(`<meta name="twitter:image" content="${escapeHtml(metadata.image)}" />`);
+  }
+  html = html.replace(/<title>.*?<\/title>/i, "");
+  html = html.replace("</head>", `${tags.join("\n    ")}\n  </head>`);
+  const headers = new Headers(response.headers);
+  headers.set("content-type", "text/html; charset=utf-8");
+  headers.set("cache-control", "public, max-age=0, must-revalidate");
+  headers.delete("content-length");
+  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+}
+
 function jsonResponse(payload, status = 200, headers = {}) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -837,7 +924,7 @@ export default {
           return Response.redirect(url.toString(), 308);
         }
         const response = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/__portal_root/index.html"));
-        return withNoStore(applyStaticCachePolicy("/__portal_root/index.html", response));
+        return withNoStore(await withSocialMetadata(response, url, request, env));
       }
       return new Response("Not found", { status: 404 });
     }
