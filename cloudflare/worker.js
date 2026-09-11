@@ -187,6 +187,25 @@ function absolutePublicUrl(value, origin) {
   }
 }
 
+
+function versionedPublicUrl(value, origin, version) {
+  const absolute = absolutePublicUrl(value, origin);
+  if (!absolute) return "";
+  const cleanVersion = String(version || "").replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  if (!cleanVersion) return absolute;
+  try {
+    const url = new URL(absolute);
+    url.searchParams.set("v", cleanVersion);
+    return url.toString();
+  } catch {
+    return absolute;
+  }
+}
+
+function eventSocialImageVersion(event, env) {
+  return event.social_image_updated_at || event.updated_at || event.created_at || env?.CF_VERSION_METADATA?.id || env?.SITE_BUILD_COMMIT || "";
+}
+
 function compactText(value, max = 240) {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   return text.length > max ? `${text.slice(0, max - 1).trim()}…` : text;
@@ -214,7 +233,7 @@ async function eventSocialMetadata(url, request, env) {
   if (!title) return null;
   const group = compactText(event.organization_name || event.host_org_name || "Org Portal", 80);
   const description = compactText(event.social_description || event.description || `${title} hosted by ${group}.`, 240);
-  const image = absolutePublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin);
+  const image = versionedPublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin, eventSocialImageVersion(event, env));
   const canonical = absolutePublicUrl(event.public_url || url.pathname, url.origin) || url.toString();
   return { title: `${title} • ${group}`, description, image, canonical, siteName: group };
 }

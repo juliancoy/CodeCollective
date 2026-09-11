@@ -98,6 +98,7 @@ test('tenant event routes inject event social preview metadata', async t => {
         social_image_url: '/images/social/medtech-in-the-hut-preview.jpg',
         organization_name: 'Baltimore MedTech',
         public_url: 'https://medtech.social/events/medtech-in-the-hut',
+        updated_at: '2026-09-11T13:45:00.000Z',
       });
     }
     throw new Error(`Unexpected fetch ${url}`);
@@ -118,7 +119,7 @@ test('tenant event routes inject event social preview metadata', async t => {
   const html = await response.text();
   assert.match(html, /<title>MedTech in the Hut • Baltimore MedTech<\/title>/);
   assert.match(html, /property="og:title" content="MedTech in the Hut • Baltimore MedTech"/);
-  assert.match(html, /property="og:image" content="https:\/\/medtech.social\/images\/social\/medtech-in-the-hut-preview.jpg"/);
+  assert.match(html, /property="og:image" content="https:\/\/medtech.social\/images\/social\/medtech-in-the-hut-preview.jpg\?v=2026-09-11T13-45-00.000Z"/);
   assert.match(html, /name="twitter:card" content="summary_large_image"/);
 });
 
