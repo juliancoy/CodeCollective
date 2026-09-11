@@ -78,4 +78,10 @@ sources = [
         "source_kind": "web_events_page",
         "tags": ["Business", "Economic Development", "Professional Networking"],
     },
+    {
+        "name": "Baltimore Science Fiction Society",
+        "url": "https://www.bsfs.org/bsfscldr.htm",
+        "source_kind": "bsfs_events",
+        "tags": ["Culture", "Community", "Literature", "Gaming"],
+    },
 ]

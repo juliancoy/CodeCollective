@@ -26,13 +26,15 @@ DEV_GOVERNANCE_API_ORIGIN="${DEV_GOVERNANCE_API_ORIGIN:-$PROD_GOVERNANCE_API_ORI
 DEV_ORG_API_ORIGIN="${DEV_ORG_API_ORIGIN:-$PROD_ORG_API_ORIGIN}"
 DEV_PIDP_API_ORIGIN="${DEV_PIDP_API_ORIGIN:-$PROD_PIDP_API_ORIGIN}"
 DEV_PIDP_PROXY_ORIGIN="${DEV_PIDP_PROXY_ORIGIN:-$PROD_PIDP_PROXY_ORIGIN}"
+PROD_ORGPORTAL_TENANT_HOSTS="${PROD_ORGPORTAL_TENANT_HOSTS:-medtech.social}"
+DEV_ORGPORTAL_TENANT_HOSTS="${DEV_ORGPORTAL_TENANT_HOSTS:-$PROD_ORGPORTAL_TENANT_HOSTS}"
 
 PIDP_WORKER_NAME="${PIDP_WORKER_NAME:-pidp-codecollective}"
 PIDP_APP_NAME="${PIDP_APP_NAME:-Code Collective ID}"
 PIDP_ENV="${PIDP_ENV:-production}"
 PIDP_ACCESS_TOKEN_EXPIRE_MINUTES="${PIDP_ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
 PIDP_SESSION_COOKIE_DOMAIN="${PIDP_SESSION_COOKIE_DOMAIN:-codecollective.us}"
-PIDP_PORTAL_AUTH_ORIGINS="${PIDP_PORTAL_AUTH_ORIGINS:-https://community.medtech.social}"
+PIDP_PORTAL_AUTH_ORIGINS="${PIDP_PORTAL_AUTH_ORIGINS:-https://medtech.social}"
 PIDP_ALLOWED_ORIGINS="${PIDP_ALLOWED_ORIGINS:-https://codecollective.us,https://www.codecollective.us}"
 PIDP_ADMIN_EMAILS="${PIDP_ADMIN_EMAILS:-}"
 PIDP_ADMIN_USER_IDS="${PIDP_ADMIN_USER_IDS:-}"
@@ -55,6 +57,13 @@ ORG_D1_DATABASE_ID="${ORG_D1_DATABASE_ID:-a71a2306-3d82-44cb-a50c-d7fdffaacdc7}"
 ORG_SCAN_IMAGES_BUCKET_NAME="${ORG_SCAN_IMAGES_BUCKET_NAME:-org-scan-images}"
 ORG_PUSH_QUEUE_NAME="${ORG_PUSH_QUEUE_NAME:-org-web-push}"
 ORG_PUSH_DEAD_LETTER_QUEUE_NAME="${ORG_PUSH_DEAD_LETTER_QUEUE_NAME:-org-web-push-dead-letter}"
+MCP_PUBLIC_URL="${MCP_PUBLIC_URL:-}"
+MCP_OAUTH_ISSUER="${MCP_OAUTH_ISSUER:-}"
+MCP_OAUTH_JWKS_URL="${MCP_OAUTH_JWKS_URL:-}"
+MCP_OAUTH_INTROSPECTION_URL="${MCP_OAUTH_INTROSPECTION_URL:-}"
+MCP_ALLOWED_ORIGINS="${MCP_ALLOWED_ORIGINS:-}"
+MCP_SUBJECT_MAP_JSON="${MCP_SUBJECT_MAP_JSON:-}"
+EVENT_INTEGRATIONS_JSON="${EVENT_INTEGRATIONS_JSON:-}"
 SKIP_ORG_MIGRATIONS=0
 
 PASSTHROUGH_ARGS=()
@@ -264,6 +273,7 @@ const config = {
   "$schema": "node_modules/wrangler/config-schema.json",
   name: env.PIDP_WORKER_NAME,
   main: "src/index.ts",
+  version_metadata: { binding: "CF_VERSION_METADATA" },
   compatibility_date: "2026-06-03",
   workers_dev: true,
   observability: { enabled: true },
@@ -386,6 +396,13 @@ write_org_config() {
   export ORG_SCAN_IMAGES_BUCKET_NAME
   export ORG_PUSH_QUEUE_NAME
   export ORG_PUSH_DEAD_LETTER_QUEUE_NAME
+  export MCP_PUBLIC_URL
+  export MCP_OAUTH_ISSUER
+  export MCP_OAUTH_JWKS_URL
+  export MCP_OAUTH_INTROSPECTION_URL
+  export MCP_ALLOWED_ORIGINS
+  export MCP_SUBJECT_MAP_JSON
+  export EVENT_INTEGRATIONS_JSON
 
   (
     cd "$ORG_WORKER_DIR"
@@ -397,6 +414,7 @@ const config = {
   "$schema": "node_modules/wrangler/config-schema.json",
   name: env.ORG_WORKER_NAME,
   main: "src/index.ts",
+  version_metadata: { binding: "CF_VERSION_METADATA" },
   compatibility_date: "2026-06-07",
   compatibility_flags: ["nodejs_compat"],
   workers_dev: true,
@@ -441,6 +459,18 @@ const config = {
     ],
   },
 };
+
+for (const name of [
+  "MCP_PUBLIC_URL",
+  "MCP_OAUTH_ISSUER",
+  "MCP_OAUTH_JWKS_URL",
+  "MCP_OAUTH_INTROSPECTION_URL",
+  "MCP_ALLOWED_ORIGINS",
+  "MCP_SUBJECT_MAP_JSON",
+  "EVENT_INTEGRATIONS_JSON",
+]) {
+  if (env[name]) config.vars[name] = env[name];
+}
 
 fs.writeFileSync("wrangler.jsonc", `${JSON.stringify(config, null, 2)}\n`);
 NODE
@@ -513,6 +543,7 @@ deploy_target() {
   local org_origin="$4"
   local pidp_origin="$5"
   local pidp_proxy_origin="$6"
+  local tenant_hosts="$7"
 
   echo "[deploy][$label] deploying worker: $worker_name" >&2
   local deploy_log
@@ -531,6 +562,7 @@ deploy_target() {
         --var "ORG_API_ORIGIN:$org_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
+        --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
         "${wrangler_args[@]}"
     ) 2>&1 | tee "$deploy_log" >&2
   else
@@ -542,6 +574,7 @@ deploy_target() {
         --var "ORG_API_ORIGIN:$org_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
+        --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
         "${wrangler_args[@]}"
     ) 2>&1 \
       | tee "$deploy_log" \
@@ -604,12 +637,12 @@ if [[ "$deploy_org" -eq 1 ]]; then
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "dev" || "$TARGET" == "both" ) ]]; then
-  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN")"
+  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN" "$DEV_ORGPORTAL_TENANT_HOSTS")"
   echo "[deploy][dev] updated url: $DEV_URL"
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "prod" || "$TARGET" == "both" ) ]]; then
-  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN")"
+  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN" "$PROD_ORGPORTAL_TENANT_HOSTS")"
   echo "[deploy][prod] updated url: $PROD_URL"
 fi
 
