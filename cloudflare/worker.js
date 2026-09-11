@@ -793,7 +793,7 @@ export default {
     }
 
     if (path === "/favicon.ico") {
-      url.pathname = tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
+      url.pathname = tenantHost && url.hostname.includes("timebank") ? "/images/timebank/favicon-64.png" : tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);
     }
 
