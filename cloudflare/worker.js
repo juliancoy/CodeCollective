@@ -948,6 +948,11 @@ export default {
       });
     }
 
+    if (tenantHost && (path === "/calendar.html" || path === "/calendar_cards.html" || path === "/simplecalendar.html")) {
+      url.pathname = "/calendar";
+      return Response.redirect(url.toString(), 308);
+    }
+
     if (path === "/favicon.ico") {
       url.pathname = tenantHost && url.hostname.includes("timebank") ? "/images/timebank/favicon-64.png" : tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);

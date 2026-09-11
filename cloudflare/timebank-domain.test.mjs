@@ -68,6 +68,12 @@ test('redundant tenant URLs redirect to the canonical route with query strings i
   }
 });
 
+test('tenant legacy calendar files redirect to the portal calendar', async () => {
+  const response = await worker.fetch(new Request(origin + '/calendar.html?source=legacy'), env);
+  assert.equal(response.status, 308);
+  assert.equal(response.headers.get('location'), origin + '/calendar?source=legacy');
+});
+
 test('tenant assets use the shared bundle and missing assets remain 404', async () => {
   const legacyAsset = await worker.fetch(new Request(origin + '/p/assets/index.js'), env);
   assert.equal(legacyAsset.status, 308);
