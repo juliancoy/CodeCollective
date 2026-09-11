@@ -14,6 +14,49 @@ function pathMatchesPrefix(path, prefix) {
   return path === prefix || path.startsWith(`${prefix}/`);
 }
 
+function configuredTenantHosts(env) {
+  const raw = String(env?.ORGPORTAL_TENANT_HOSTS || "").trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.map(String);
+    if (parsed && typeof parsed === "object") return Object.keys(parsed);
+  } catch {
+    return raw.split(",");
+  }
+  return [];
+}
+
+function normalizeHostname(value) {
+  return String(value || "").toLowerCase().split(":")[0].trim();
+}
+
+function isOrgPortalTenantHost(hostname, env) {
+  const host = normalizeHostname(hostname);
+  if (!host) return false;
+  const configured = configuredTenantHosts(env).map(normalizeHostname).filter(Boolean);
+  if (configured.includes(host)) return true;
+  const reserved = new Set([
+    "codecollective.us",
+    "www.codecollective.us",
+    "id.codecollective.us",
+    "api.codecollective.us",
+    "org.codecollective.us",
+    "chat.codecollective.us",
+  ]);
+  return host.endsWith(".codecollective.us") && !reserved.has(host);
+}
+
+async function verifyOrgPortalTenant(hostname, env) {
+  const origin = trimTrailingSlash(env?.ORG_API_ORIGIN || env?.GOVERNANCE_API_ORIGIN);
+  if (!origin) return { ok: false, status: 502 };
+  const response = await fetch(`${origin}/api/portal/tenant`, {
+    headers: { "x-forwarded-host": hostname },
+    cf: { cacheEverything: false },
+  });
+  return { ok: response.ok, status: response.status };
+}
+
 async function proxyRequest(request, targetOrigin, options = {}) {
   const origin = trimTrailingSlash(targetOrigin);
   if (!origin) {
@@ -36,14 +79,19 @@ async function proxyRequest(request, targetOrigin, options = {}) {
   });
 
   const responseHeaders = new Headers(upstream.headers);
-  if (requestUrl.hostname === "community.medtech.social" && options.stripPrefix === "/pidp") {
-    const cookies = upstream.headers.getSetCookie();
+  if (options.hostOnlyCookies) {
+    const cookies = typeof upstream.headers.getSetCookie === "function"
+      ? upstream.headers.getSetCookie()
+      : [];
     responseHeaders.delete("set-cookie");
-    for (const cookie of cookies) {
-      responseHeaders.append("set-cookie", cookie.replace(/;\s*Domain=[^;]+/gi, ""));
+    if (cookies.length) {
+      for (const cookie of cookies) {
+        responseHeaders.append("set-cookie", cookie.replace(/;\s*Domain=[^;]*/gi, ""));
+      }
+    } else {
+      const cookie = upstream.headers.get("set-cookie");
+      if (cookie) responseHeaders.append("set-cookie", cookie.replace(/;\s*Domain=[^;]*/gi, ""));
     }
-    responseHeaders.set("cache-control", "no-store");
-    responseHeaders.set("referrer-policy", "no-referrer");
   }
   return new Response(upstream.body, {
     status: upstream.status,
@@ -86,14 +134,16 @@ function spaEntrypointRequest(url, request, pathname) {
 function applyStaticCachePolicy(path, response) {
   const headers = new Headers(response.headers);
 
-  if (path.startsWith("/p/assets/") || path.startsWith("/r8-rowhome/assets/")) {
+  if (path.startsWith("/assets/") || path.startsWith("/__portal_root/assets/") || path.startsWith("/p/assets/") || path.startsWith("/r8-rowhome/assets/")) {
     headers.set("cache-control", "public, max-age=31536000, immutable");
+  } else if (path === "/__portal_root/index.html") {
+    headers.set("cache-control", "public, max-age=0, must-revalidate");
   } else if (
     /\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf|mp4|webm|mp3|wav)$/i.test(path)
   ) {
     headers.set("cache-control", "public, max-age=2592000");
   } else if (path.endsWith(".html") || path === "/" || path === "/p/" || path === "/p") {
-    headers.set("cache-control", "public, max-age=300");
+    headers.set("cache-control", "public, max-age=0, must-revalidate");
   }
 
   if (isPublicCalendarAsset(path)) {
@@ -637,14 +687,14 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const timebankDomain = url.hostname.endsWith(".codecollective.us") && url.hostname !== "www.codecollective.us";
+    const tenantHost = isOrgPortalTenantHost(url.hostname, env);
 
     if (path === "/health" || path === "/version") {
       return healthResponse(request, env);
     }
 
-    if (request.method === "GET" && (path === "/p/clear-cache" || (timebankDomain && path === "/clear-cache"))) {
-      url.pathname = timebankDomain ? "/users/login" : "/p/users/login";
+    if (request.method === "GET" && (path === "/p/clear-cache" || (tenantHost && path === "/clear-cache"))) {
+      url.pathname = tenantHost ? "/users/login" : "/p/users/login";
       return new Response(null, {
         status: 303,
         headers: {
@@ -655,13 +705,8 @@ export default {
       });
     }
 
-    if (path === "/" && url.hostname === "community.medtech.social") {
-      url.pathname = "/p/";
-      return Response.redirect(url.toString(), 302);
-    }
-
     if (path === "/favicon.ico") {
-      url.pathname = timebankDomain ? "/p/codecollective_logo.png" : "/images/favicons/favicon.png";
+      url.pathname = tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);
     }
 
@@ -676,7 +721,7 @@ export default {
       return new Response(null, { status: 204, headers });
     }
 
-    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data"))) {
+    if (request.method === "OPTIONS" && (path.startsWith("/api/governance") || pathMatchesPrefix(path, "/api/org") || pathMatchesPrefix(path, "/api/chat") || pathMatchesPrefix(path, "/.well-known/oauth-protected-resource") || path.startsWith("/pidp") || path.startsWith("/auth/avatar/upload") || path.startsWith("/api/jobs") || path.startsWith("/api/vacants") || path.startsWith("/api/vacants_parcels") || path.startsWith("/api/map-data"))) {
       return new Response(null, {
         status: 204,
         headers: {
@@ -732,14 +777,17 @@ export default {
     }
 
     if (path.startsWith("/pidp")) {
-      return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN, { stripPrefix: "/pidp" });
+      return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN, {
+        stripPrefix: "/pidp",
+        hostOnlyCookies: Boolean(tenantHost),
+      });
     }
 
     if (path.startsWith("/auth/avatar/upload")) {
       return proxyRequest(request, env.PIDP_PROXY_ORIGIN || env.PIDP_API_ORIGIN);
     }
 
-    if (path === "/auth/callback" && !timebankDomain) {
+    if (path === "/auth/callback" && !tenantHost) {
       url.pathname = "/p/auth/callback";
       return Response.redirect(url.toString(), 308);
     }
@@ -751,19 +799,35 @@ export default {
       }
     }
 
-    // Timebank domains mount the shared portal at their root. The /p/ prefix
-    // remains an asset location, not part of the tenant's navigation URLs.
-    if (timebankDomain) {
+    // Tenant domains mount the shared OrgPortal app at their root. The /p/
+    // prefix is a legacy shared-domain detail and should not appear on tenant URLs.
+    if (tenantHost) {
       const portalPath = pathMatchesPrefix(path, "/p") ? path.slice(2) || "/" : path;
+      if (pathMatchesPrefix(path, "/p")) {
+        url.pathname = ["/timebanking", "/timebanking/", "/index.html"].includes(portalPath) ? "/" : portalPath;
+        return Response.redirect(url.toString(), 308);
+      }
+      if (
+        pathMatchesPrefix(path, "/assets")
+        || pathMatchesPrefix(path, "/css")
+        || pathMatchesPrefix(path, "/images")
+        || path === "/manifest.webmanifest"
+        || path === "/medtech.webmanifest"
+        || path === "/mobile-update.json"
+        || path === "/push-sw.js"
+        || path === "/codecollective_logo.png"
+      ) {
+        url.pathname = `/__portal_root${path}`;
+        const response = await env.ASSETS.fetch(new Request(url, request));
+        return applyStaticCachePolicy(path, response);
+      }
       const navigation = (request.method === "GET" || request.method === "HEAD")
         && (isHtmlNavigation(request) || looksLikeSpaRoute(path) || path.endsWith(".html"));
       if (navigation) {
-        const community = await fetch(`${trimTrailingSlash(env.ORG_API_ORIGIN)}/api/timebank/community`, {
-          headers: { "x-forwarded-host": url.hostname },
-        });
-        if (!community.ok) {
+        const tenant = await verifyOrgPortalTenant(url.hostname, env);
+        if (!tenant.ok) {
           return new Response("This community is not available yet.", {
-            status: community.status === 404 ? 404 : 503,
+            status: tenant.status === 404 ? 404 : 503,
             headers: { "cache-control": "no-store" },
           });
         }
@@ -772,12 +836,10 @@ export default {
           url.pathname = canonicalPath;
           return Response.redirect(url.toString(), 308);
         }
-        const response = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/p/"));
-        return withNoStore(applyStaticCachePolicy("/p/index.html", response));
+        const response = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/__portal_root/index.html"));
+        return withNoStore(applyStaticCachePolicy("/__portal_root/index.html", response));
       }
-      url.pathname = `/p${portalPath}`;
-      const response = await env.ASSETS.fetch(new Request(url, request));
-      return applyStaticCachePolicy(url.pathname, response);
+      return new Response("Not found", { status: 404 });
     }
 
     const assetResponse = await env.ASSETS.fetch(request);

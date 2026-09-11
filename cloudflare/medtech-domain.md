@@ -1,16 +1,17 @@
 # MedTech portal domain
 
-`community.medtech.social` is a Cloudflare Workers Custom Domain bound directly
-to the production `codecollective-site` Worker. The binding is managed through
-the Cloudflare Workers Domains API, alongside the existing community domains.
-It shares the same portal assets and services as `/p/` on the main site.
+MedTech uses `https://medtech.social` as its public site and portal hostname.
+The public `baltimore-medtech` Worker remains bound to `medtech.social` and
+proxies `/p/` portal paths to the production Code Collective portal. The
+separate legacy MedTech community Worker custom domain is retired.
 
-The Worker redirects `/` to `/p/` on the same hostname. The portal selects the
-Baltimore MedTech profile from that hostname, including for direct links and
-fresh browser sessions. Public MedTech member links use the custom domain.
+The MedTech Worker serves the static site at `/` and the portal under `/p/` on
+the same hostname. The portal selects the Baltimore MedTech profile from that
+hostname, including for direct links and fresh browser sessions. Public MedTech
+member links use the base domain.
 
 Authentication uses the existing PIdP Worker. `PORTAL_AUTH_ORIGINS` includes
-`https://community.medtech.social`; `deploy.sh` retains this configuration.
+`https://medtech.social`; `deploy.sh` retains this configuration.
 The Google and GitHub provider callback registrations remain on the identity
 service. Signed OAuth state records the allowed portal origin. The identity
 callback returns the provider's one-use authorization code to the initiating
@@ -21,7 +22,6 @@ responses, preserving Secure, HttpOnly, and SameSite cookie attributes.
 
 Deploy PIdP before the site when changing this flow. Preserve existing PIdP
 variables and secrets; the base serverless config contains development defaults.
-The public `baltimore-medtech` Worker remains bound to `medtech.social`.
 
 Portal builds use `VITE_PIDP_BASE_URL=/pidp` so sign-in stays on the initiating
 hostname. After a verified manual release, `[skip deploy]` in the parent commit
@@ -42,7 +42,7 @@ images while retaining event details.
 On 2026-09-09 UTC, the affected browser returned 403 even for the public `/health`
 endpoint. The user confirmed that the same endpoint returned `{"status":"ok"}`
 in a private window, isolating the difference to the normal browser session.
-The user then completed a real Google sign-in through `community.medtech.social`
+The user then completed a real Google sign-in through the legacy MedTech portal host
 in that private window. Normal-window recovery remains unverified; fully
 restarting the browser is the next check for stale connection state.
 
