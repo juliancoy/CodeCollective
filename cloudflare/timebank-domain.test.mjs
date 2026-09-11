@@ -48,7 +48,7 @@ test('tenant favicon redirects to the portal icon while the main site keeps its 
   const response = await worker.fetch(new Request(origin + '/favicon.ico'), env);
   assert.equal(response.status, 308);
   const icon = await worker.fetch(new Request(response.headers.get('location')), env);
-  assert.equal(await icon.text(), '/__portal_root/codecollective_logo.png');
+  assert.equal(await icon.text(), '/__portal_root/images/timebank/favicon-64.png');
   const mainIcon = await worker.fetch(new Request('https://codecollective.us/favicon.ico'), env);
   assert.equal(mainIcon.headers.get('location'), 'https://codecollective.us/images/favicons/favicon.png');
 });
