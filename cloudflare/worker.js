@@ -214,7 +214,7 @@ async function eventSocialMetadata(url, request, env) {
   if (!title) return null;
   const group = compactText(event.organization_name || event.host_org_name || "Org Portal", 80);
   const description = compactText(event.social_description || event.description || `${title} hosted by ${group}.`, 240);
-  const image = absolutePublicUrl(event.social_image_url || event.image_url, url.origin);
+  const image = absolutePublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin);
   const canonical = absolutePublicUrl(event.public_url || url.pathname, url.origin) || url.toString();
   return { title: `${title} • ${group}`, description, image, canonical, siteName: group };
 }
