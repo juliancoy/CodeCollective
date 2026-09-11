@@ -107,6 +107,16 @@ function applyStaticCachePolicy(path, response) {
   });
 }
 
+function withNoStore(response) {
+  const headers = new Headers(response.headers);
+  headers.set("cache-control", "no-store");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 function jsonResponse(payload, status = 200, headers = {}) {
   return new Response(JSON.stringify(payload), {
     status,
@@ -752,7 +762,10 @@ export default {
           headers: { "x-forwarded-host": url.hostname },
         });
         if (!community.ok) {
-          return new Response("This community is not available yet.", { status: community.status === 404 ? 404 : 503 });
+          return new Response("This community is not available yet.", {
+            status: community.status === 404 ? 404 : 503,
+            headers: { "cache-control": "no-store" },
+          });
         }
         const canonicalPath = ["/timebanking", "/timebanking/", "/index.html"].includes(portalPath) ? "/" : portalPath;
         if (path !== canonicalPath) {
@@ -760,7 +773,7 @@ export default {
           return Response.redirect(url.toString(), 308);
         }
         const response = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/p/"));
-        return applyStaticCachePolicy("/p/index.html", response);
+        return withNoStore(applyStaticCachePolicy("/p/index.html", response));
       }
       url.pathname = `/p${portalPath}`;
       const response = await env.ASSETS.fetch(new Request(url, request));

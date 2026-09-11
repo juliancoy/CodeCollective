@@ -22,6 +22,7 @@ test('tenant root and nested routes serve the shared portal without redirecting'
     const response = await worker.fetch(new Request(origin + path, { headers: { accept: 'text/html' } }), env);
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('location'), null);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal(await response.text(), '/p/');
   }
 });
@@ -83,6 +84,7 @@ test('unconfigured and unavailable tenants do not serve a different community', 
     community(t, status);
     const response = await worker.fetch(new Request(origin + '/'), env);
     assert.equal(response.status, status === 404 ? 404 : 503);
+    assert.equal(response.headers.get('cache-control'), 'no-store');
     t.mock.restoreAll();
   }
 });
