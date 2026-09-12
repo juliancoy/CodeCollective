@@ -29,7 +29,7 @@ function medTechSpecialtyRedirect(path) {
 async function handleMedTechDatasetRequest(request, env, url) {
   const rewritten = new URL(url.toString());
   rewritten.pathname = rewritten.pathname.slice("/specialty/baltimore-medtech".length) || "/";
-  const response = await handleMedTechDatasetApi(new Request(rewritten.toString(), request), env, rewritten, `${url.origin}/specialty/baltimore-medtech`);
+  const response = await handleMedTechDatasetApi(new Request(rewritten.toString(), request), env, rewritten, `${url.origin}/__portal_root/specialty/baltimore-medtech`);
   if (!response) return null;
   const headers = new Headers(response.headers);
   headers.set("access-control-allow-origin", "*");
