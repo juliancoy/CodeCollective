@@ -18,10 +18,10 @@ function pathMatchesPrefix(path, prefix) {
 
 function medTechSpecialtyRedirect(path) {
   const redirects = {
-    "/map.html": "/specialty/baltimore-medtech/map.html",
-    "/datasets.html": "/specialty/baltimore-medtech/datasets.html",
-    "/taxonomy.html": "/specialty/baltimore-medtech/taxonomy.html",
-    "/need-availability-distortions.html": "/specialty/baltimore-medtech/need-availability-distortions.html",
+    "/map.html": "/specialty/baltimore-medtech/map",
+    "/datasets.html": "/specialty/baltimore-medtech/datasets",
+    "/taxonomy.html": "/specialty/baltimore-medtech/taxonomy",
+    "/need-availability-distortions.html": "/specialty/baltimore-medtech/need-availability-distortions",
   };
   return redirects[path] || null;
 }
@@ -1103,9 +1103,13 @@ export default {
         || path === "/push-sw.js"
         || path === "/codecollective_logo.png"
       ) {
-        url.pathname = `/__portal_root${path}`;
+        let assetPath = path;
+        if (pathMatchesPrefix(path, "/specialty") && assetPath.endsWith(".html")) {
+          assetPath = assetPath.slice(0, -5);
+        }
+        url.pathname = `/__portal_root${assetPath}`;
         const response = await env.ASSETS.fetch(new Request(url, request));
-        return applyStaticCachePolicy(path, response);
+        return applyStaticCachePolicy(assetPath, response);
       }
       const navigation = (request.method === "GET" || request.method === "HEAD")
         && (isHtmlNavigation(request) || looksLikeSpaRoute(path) || path.endsWith(".html"));
