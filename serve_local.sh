@@ -425,16 +425,18 @@ server.listen(port, '0.0.0.0', () => {
 })
 NODE
 
+ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
+
 docker rm -f "$CONTAINER_NAME" "$CONTAINER_NAME-portal" "$CONTAINER_NAME-r8-rowhome" >/dev/null 2>&1 || true
 docker network create "$NETWORK_NAME" >/dev/null 2>&1 || true
 
 if [[ "$MODE" == "dev" ]]; then
-  if [[ -f "$ROOT_DIR/portal/web/package.json" ]]; then
+  if [[ -f "$ORGPORTAL_DIR/web/package.json" ]]; then
     echo "[serve-local] starting portal Vite dev server"
     docker run -d --rm \
       --name "$CONTAINER_NAME-portal" \
       --network "$NETWORK_NAME" \
-      -v "$ROOT_DIR/portal/web:/app" \
+      -v "$ORGPORTAL_DIR/web:/app" \
       -w /app \
       -e "VITE_PUBLIC_BASE=/p/" \
       -e "VITE_PIDP_BASE_URL=${VITE_PIDP_BASE_URL:-https://id.codecollective.us}" \
@@ -443,7 +445,7 @@ if [[ "$MODE" == "dev" ]]; then
       "$NODE_IMAGE" \
       sh -lc 'if [ ! -d node_modules ]; then npm ci || npm install; fi; npx vite --host 0.0.0.0 --port 5173' >/dev/null
   else
-    echo "[serve-local] portal/web missing; /p/ will use any existing static files"
+    echo "[serve-local] OrgPortal web missing at $ORGPORTAL_DIR/web; /p/ will use any existing static files"
   fi
 
   if [[ -f "$ROOT_DIR/r8-rowhome/package.json" ]]; then

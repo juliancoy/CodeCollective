@@ -8,8 +8,8 @@ which is exactly what makes the **email/password** (non-social) sign-in path tes
 
 | Service     | Dir                         | Local URL               | Notes |
 |-------------|-----------------------------|-------------------------|-------|
-| PIdP        | `portal/pidp/serverless`    | http://127.0.0.1:8787   | identity provider (auth core) |
-| org-worker  | `portal/org-worker`         | http://127.0.0.1:8788   | org/governance/UBI/finance API; points at local PIdP |
+| PIdP        | `../OrgPortal/pidp/serverless`    | http://127.0.0.1:8787   | identity provider (auth core) |
+| org-worker  | `../OrgPortal/org-worker`         | http://127.0.0.1:8788   | org/governance/UBI/finance API; points at local PIdP |
 
 Social login is **disabled** locally (no `GOOGLE_CLIENT_ID`/`GITHUB_CLIENT_ID`), so
 `/app/login` renders the password form instead of auto-redirecting to OAuth.
@@ -18,14 +18,14 @@ Social login is **disabled** locally (no `GOOGLE_CLIENT_ID`/`GITHUB_CLIENT_ID`),
 
 ```sh
 # --- PIdP ---
-cd portal/pidp/serverless
+cd ../OrgPortal/pidp/serverless
 npm install
 printf 'SECRET_KEY=%s\nENV=dev\n' "$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")" > .dev.vars
 npm run db:migrate:local                       # apply D1 migrations
 npx wrangler dev --port 8787 --ip 127.0.0.1 &  # leave running
 
 # --- org-worker (separate terminal) ---
-cd portal/org-worker
+cd ../OrgPortal/org-worker
 npm install
 printf 'PIDP_BASE_URL=http://127.0.0.1:8787\nADMIN_EMAILS=admin@example.com\n' > .dev.vars
 npx wrangler d1 migrations apply org --local
@@ -58,7 +58,7 @@ the owner endpoints which take **form** `username/password`).
 ## Tests
 
 ```sh
-cd portal/pidp/serverless
+cd ../OrgPortal/pidp/serverless
 npm test                                   # full suite (incl. the sign-in tests)
 node --test test/auth-password.test.mjs    # just the non-social sign-in tests
 ```

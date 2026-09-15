@@ -1,6 +1,6 @@
 // Real website Worker, static assets and portal UI; real org Worker + SQLite.
 // Only identity and storage use the existing timebank acceptance fixture.
-// Setup: build portal/web with VITE_PUBLIC_BASE=/p/ into PORTAL_BUILD_DIR,
+// Setup: build OrgPortal/web with VITE_PUBLIC_BASE=/p/ into PORTAL_BUILD_DIR,
 // then run a Selenium Chrome container on port 4446 and execute this file.
 import assert from 'node:assert/strict';
 import { readFile, mkdir } from 'node:fs/promises';
@@ -10,7 +10,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const require = createRequire(path.join(root, 'portal/web/package.json'));
+const orgPortalRoot = process.env.ORGPORTAL_DIR
+  ? path.resolve(process.env.ORGPORTAL_DIR)
+  : path.resolve(root, '..', 'OrgPortal');
+const require = createRequire(path.join(orgPortalRoot, 'web/package.json'));
 const { chromium, expect } = require('@playwright/test');
 const portalBuild = process.env.PORTAL_BUILD_DIR || '/tmp/codecollective-offers-portal';
 const out = process.env.OFFERS_SHOTS || '/tmp/codecollective-offers-acceptance';
@@ -22,7 +25,7 @@ const site = (await import(pathToFileURL(path.join(root, 'cloudflare/worker.js')
 await mkdir(out, { recursive: true });
 await readFile(path.join(portalBuild, 'index.html'));
 const fixture = spawn(process.execPath, ['--import', 'tsx', 'test/helpers/timebankServer.ts'], {
-  cwd: path.join(root, 'portal/org-worker'), env: { ...process.env, TIMEBANK_TEST_PORT: '0' },
+  cwd: path.join(orgPortalRoot, 'org-worker'), env: { ...process.env, TIMEBANK_TEST_PORT: '0' },
   stdio: ['ignore', 'pipe', 'inherit'],
 });
 let browser, sessionId;

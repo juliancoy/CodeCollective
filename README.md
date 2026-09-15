@@ -20,8 +20,10 @@ every one of them.
 
 The `codecollective-site` Worker is the only frontend deployment. It serves the
 main site and embeds the portal at `https://codecollective.us/p/` from the
-`portal/web` submodule. `portal/web` is application source only; do not deploy it
-as a standalone Worker.
+sibling OrgPortal checkout. Keep OrgPortal at `../OrgPortal`, or set
+`ORGPORTAL_DIR` when building or deploying. OrgPortal is application source only
+from this repository's point of view; do not deploy it as a standalone frontend
+from CodeCollective.
 
 ### OrgPortal tenants
 
@@ -54,7 +56,7 @@ To provision the `timebank` community in an existing database with the timebank
 schema already applied:
 
 ```bash
-npx wrangler d1 execute org --remote --config portal/org-worker/wrangler.jsonc --file cloudflare/timebank-tenant.sql
+npx wrangler d1 execute org --remote --config ../OrgPortal/org-worker/wrangler.jsonc --file cloudflare/timebank-tenant.sql
 ```
 
 This inserts only the tenant configuration and preserves existing settings on
@@ -84,7 +86,7 @@ The homepage reads public, open offers from the shared portal through
 photo and a link to the original listing. Member-only offers and requests are
 excluded. There is no copied listing data or second timebank service.
 
-The existing site Worker proxies this endpoint to `portal/org-worker`; apply the
+The existing site Worker proxies this endpoint to OrgPortal's org Worker; apply the
 timebank migrations through `0024` before deploying the portal API and website.
 A plain static server alone cannot provide this API.
 
@@ -92,10 +94,10 @@ Browser acceptance uses the actual site Worker, portal build and org Worker with
 the local SQLite/identity fixture. With Node 24+:
 
 ```bash
-npm --prefix portal/web ci
-npm --prefix portal/org-worker ci
-npm --prefix portal/chat-worker ci
-VITE_PUBLIC_BASE=/p/ npm --prefix portal/web run build -- --outDir /tmp/codecollective-offers-portal
+npm --prefix ../OrgPortal/web ci
+npm --prefix ../OrgPortal/org-worker ci
+npm --prefix ../OrgPortal/chat-worker ci
+VITE_PUBLIC_BASE=/p/ npm --prefix ../OrgPortal/web run build -- --outDir /tmp/codecollective-offers-portal
 docker run -d --rm --name codecollective-offers-selenium -p 4446:4444 --shm-size=2g selenium/standalone-chromium:latest
 node tests/community-offers-browser.mjs
 docker stop codecollective-offers-selenium

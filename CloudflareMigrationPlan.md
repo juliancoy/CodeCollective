@@ -22,24 +22,24 @@ The first production milestone is intentionally narrow: keep the current website
   - `/api/org/*` proxied to `ORG_API_ORIGIN` with the `/api/org` prefix stripped
   - `/pidp/*` proxied to `PIDP_API_ORIGIN` with the `/pidp` prefix stripped
   - jobs and vacants API data from R2 bindings
-- The portal is a submodule at `portal/`.
+- OrgPortal is a sibling repository checkout, normally at `../OrgPortal`; CodeCollective no longer vendors it as a submodule.
 - The portal codebase is effectively contained under `portal/`, but it is not one deployable service. Current service boundaries are:
-  - `portal/web/`: React/Vite frontend embedded in the root site Worker at `/p/`. The former standalone frontend Worker has been deleted.
-  - `portal/pidp/serverless/`: Cloudflare-native PIdP implemented with Hono, Workers, D1, and R2.
-  - `portal/org-worker/`: Cloudflare-native org/contact/governance/ledger/UBI API implemented with Hono, Workers, and D1. This is the active `/api/org` target for Code Collective and the root `/api/governance` target.
-  - `portal/org-backend/`: Python FastAPI org/network API. This remains as legacy/reference code and is no longer the Code Collective production fallback.
-  - `portal/governance-backend/` and `portal/ubi/`: Python FastAPI services. These remain as legacy/reference code for behavior not yet reimplemented in Workers.
-  - `portal/nginx/`, `portal/certs/`, and Docker orchestration scripts: local/legacy edge and development glue that should become unnecessary once Cloudflare owns routing.
-- The serverless PIdP implementation exists at `portal/pidp/serverless/` and uses:
+  - `../OrgPortal/web/`: React/Vite frontend embedded in the root site Worker at `/p/`. The former standalone frontend Worker has been deleted.
+  - `../OrgPortal/pidp/serverless/`: Cloudflare-native PIdP implemented with Hono, Workers, D1, and R2.
+  - `../OrgPortal/org-worker/`: Cloudflare-native org/contact/governance/ledger/UBI API implemented with Hono, Workers, and D1. This is the active `/api/org` target for Code Collective and the root `/api/governance` target.
+  - `../OrgPortal/org-backend/`: Python FastAPI org/network API. This remains as legacy/reference code and is no longer the Code Collective production fallback.
+  - `../OrgPortal/governance-backend/` and `../OrgPortal/ubi/`: Python FastAPI services. These remain as legacy/reference code for behavior not yet reimplemented in Workers.
+  - `../OrgPortal/nginx/`, `../OrgPortal/certs/`, and Docker orchestration scripts: local/legacy edge and development glue that should become unnecessary once Cloudflare owns routing.
+- The serverless PIdP implementation exists at `../OrgPortal/pidp/serverless/` and uses:
   - Cloudflare Workers
   - TypeScript and Hono
   - D1 for relational identity data
   - R2 for avatar object storage
   - Worker secrets for signing and OAuth credentials
 - Existing portal docs:
-  - `portal/docs/deployment/CLOUDFLARE_PIDP_DEPLOYMENT.md`
-  - `portal/docs/deployment/CLOUDFLARE_FULL_MIGRATION.md`
-  - `portal/pidp/serverless/README.md`
+  - `../OrgPortal/docs/deployment/CLOUDFLARE_PIDP_DEPLOYMENT.md`
+  - `../OrgPortal/docs/deployment/CLOUDFLARE_FULL_MIGRATION.md`
+  - `../OrgPortal/pidp/serverless/README.md`
 
 ## Target Architecture
 
@@ -62,9 +62,9 @@ The current org Worker cutover owns contact/profile, admin-status, public org/ev
 
 ### UBI Payout Runtime Migration
 
-UBI is not considered migrated when only `GET/PATCH /api/ubi/settings` and `GET /api/ubi/eligibility` exist. The production migration boundary must include the old `portal/ubi/` payout loop behavior:
+UBI is not considered migrated when only `GET/PATCH /api/ubi/settings` and `GET /api/ubi/eligibility` exist. The production migration boundary must include the old `../OrgPortal/ubi/` payout loop behavior:
 
-- Cloudflare Scheduled Worker trigger on `portal/org-worker`.
+- Cloudflare Scheduled Worker trigger on `../OrgPortal/org-worker`.
 - D1 `ledger_accounts.dena_balance` for high-precision accrual.
 - D1 `ubi_tick_state` for elapsed-time accounting.
 - D1 `ubi_tick_runs` for idempotent scheduled run records and operations auditability.
@@ -74,7 +74,7 @@ UBI is not considered migrated when only `GET/PATCH /api/ubi/settings` and `GET 
 - `UBI_PAYMENT` rows in `ledger_transactions`.
 - Admin-only `POST /api/ubi/tick` and `GET /api/ubi/tick-status` for smoke testing and incident response.
 
-The legacy Python `portal/ubi/` service remains reference code only after these Worker pieces are deployed and verified.
+The legacy Python `../OrgPortal/ubi/` service remains reference code only after these Worker pieces are deployed and verified.
 
 ## CI/CD Deployment Scheme
 
@@ -112,7 +112,7 @@ ORG_D1_DATABASE_ID=a71a2306-3d82-44cb-a50c-d7fdffaacdc7
 The org Worker also requires the Cloudflare Worker secret `ORG_INGEST_TOKEN` for `POST /api/network/ingest/calendar`. This secret is managed with Wrangler, not committed and not passed as a plain deploy variable:
 
 ```bash
-cd portal/org-worker
+cd ../OrgPortal/org-worker
 env -u CLOUDFLARE_API_TOKEN npx wrangler secret put ORG_INGEST_TOKEN
 ```
 
@@ -124,7 +124,7 @@ Emergency local deploy commands remain available:
 ./deploy.sh --component pidp
 ```
 
-The root deploy script generates a temporary production `portal/pidp/serverless/wrangler.jsonc` for local PIdP deployments, runs the serverless deployment helper, and restores the generic checked-in config afterward.
+The root deploy script generates a temporary production `../OrgPortal/pidp/serverless/wrangler.jsonc` for local PIdP deployments, runs the serverless deployment helper, and restores the generic checked-in config afterward.
 
 ### Full Migration Target
 
@@ -139,9 +139,9 @@ The root deploy script generates a temporary production `portal/pidp/serverless/
 
 The portal should move to Cloudflare by service boundary, not as a single lift-and-shift:
 
-1. Keep `portal/web` on Cloudflare as static Worker assets mounted at `/p/`.
-2. Keep `portal/pidp/serverless` as the canonical Code Collective identity provider at `https://id.codecollective.us`.
-3. Keep `/api/org` on `portal/org-worker` for contact/profile/admin-status, public directories, governance, finance ledger read paths, UBI settings/eligibility, scheduled UBI payout execution, and explicit unavailable responses for unsupported routes.
+1. Keep `../OrgPortal/web` on Cloudflare as static Worker assets mounted at `/p/`.
+2. Keep `../OrgPortal/pidp/serverless` as the canonical Code Collective identity provider at `https://id.codecollective.us`.
+3. Keep `/api/org` on `../OrgPortal/org-worker` for contact/profile/admin-status, public directories, governance, finance ledger read paths, UBI settings/eligibility, scheduled UBI payout execution, and explicit unavailable responses for unsupported routes.
 4. Continue replacing unsupported `501` surfaces with D1/R2-backed Worker implementations as those workflows are needed.
 5. Remove nginx/Docker edge assumptions after Cloudflare is the production router.
 
@@ -152,7 +152,7 @@ Current auth boundary: the Code Collective frontend, root Worker, and Cloudflare
 1. Confirm Cloudflare account, zone, and Wrangler access.
 2. Confirm `codecollective.us` is present as a Cloudflare zone before DNS cutover.
 3. Confirm no one is relying on Git branch creation for this migration; keep all work on the current branch.
-4. Resolve or document the dirty `portal` submodule before deployment so the deployed code can be reproduced.
+4. Confirm the `../OrgPortal` checkout is clean and at the intended commit before deployment so the deployed code can be reproduced.
 5. Inventory current production URLs:
    - `https://codecollective.us/`
    - `https://www.codecollective.us/`
@@ -167,7 +167,7 @@ Current auth boundary: the Code Collective frontend, root Worker, and Cloudflare
 
 ### 1. Configure Cloudflare Resources
 
-From `portal/pidp/serverless/`:
+From `../OrgPortal/pidp/serverless/`:
 
 1. Install dependencies:
 
@@ -187,7 +187,7 @@ From `portal/pidp/serverless/`:
    npx wrangler r2 bucket create pidp-avatars
    ```
 
-4. Update `portal/pidp/serverless/wrangler.jsonc`:
+4. Update `../OrgPortal/pidp/serverless/wrangler.jsonc`:
 
    - `name`: use a production name such as `pidp-codecollective`
    - `ENV`: `production`
@@ -263,7 +263,7 @@ Expected results:
 - unauthenticated `/auth/me` returns `401`
 - profile, registration, login, token, and website CRUD routes match the serverless README expectations
 
-Known parity gaps from `portal/pidp/serverless/README.md` must be handled before replacing the existing Python PIdP for existing users:
+Known parity gaps from `../OrgPortal/pidp/serverless/README.md` must be handled before replacing the existing Python PIdP for existing users:
 
 - RS256/JWKS key publishing may need completion depending on consumers.
 - Existing Python bcrypt password hashes are not directly compatible with the new PBKDF2-SHA256 hashing.

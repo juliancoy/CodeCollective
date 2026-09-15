@@ -29,11 +29,6 @@ on:
       - "deploy.sh"
       - "cloudflare/scripts/build_cloudflare_site.sh"
       - "wrangler.toml"
-      - "portal"
-      - "portal/web/**"
-      - "portal/pidp/serverless/**"
-      - "portal/org-worker/**"
-      - "portal/chat-worker/**"
       - "r8-rowhome/**"
   push:
     branches:
@@ -65,11 +60,6 @@ on:
       - "deploy.sh"
       - "cloudflare/scripts/build_cloudflare_site.sh"
       - "wrangler.toml"
-      - "portal"
-      - "portal/web/**"
-      - "portal/pidp/serverless/**"
-      - "portal/org-worker/**"
-      - "portal/chat-worker/**"
       - "r8-rowhome/**"
   workflow_dispatch:
     inputs:
@@ -100,6 +90,7 @@ env:
   PROD_ORG_API_ORIGIN: "https://org-codecollective.jcloiacon.workers.dev"
   PROD_CHAT_API_ORIGIN: "https://chat-codecollective.jcloiacon.workers.dev"
   PROD_PORTAL_BASE_URL: "https://codecollective.us/p"
+  ORGPORTAL_DIR: "OrgPortal"
 
 jobs:
   site-check:
@@ -112,13 +103,19 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install portal dependencies
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         run: npm ci
 
       - name: Install r8-rowhome dependencies
@@ -136,10 +133,10 @@ jobs:
           python3 -m http.server 8765 &
           server_pid=$!
           trap 'kill "$server_pid"' EXIT
-          npx --prefix portal/web playwright install chromium --with-deps
+          npx --prefix "$ORGPORTAL_DIR/web" playwright install chromium --with-deps
           SMOKE_BASE_URL=http://127.0.0.1:8765 \
             PLAYWRIGHT_CHROME_PATH=/usr/bin/google-chrome \
-            node portal/web/scripts/smoke_nav_login.mjs
+            node "$ORGPORTAL_DIR/web/scripts/smoke_nav_login.mjs"
 
   pidp-check:
     name: PIdP Check
@@ -151,21 +148,27 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install PIdP dependencies
-        working-directory: portal/pidp/serverless
+        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
         run: npm ci
 
       - name: Typecheck PIdP
-        working-directory: portal/pidp/serverless
+        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
         run: npm run typecheck
 
       - name: Test PIdP
-        working-directory: portal/pidp/serverless
+        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
         run: npm test
 
   org-check:
@@ -178,21 +181,27 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install org Worker dependencies
-        working-directory: portal/org-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/org-worker
         run: npm ci
 
       - name: Typecheck org Worker
-        working-directory: portal/org-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/org-worker
         run: npm run typecheck
 
       - name: Test org Worker
-        working-directory: portal/org-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/org-worker
         run: npm test
 
   chat-check:
@@ -205,21 +214,27 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install chat Worker dependencies
-        working-directory: portal/chat-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/chat-worker
         run: npm ci
 
       - name: Typecheck chat Worker
-        working-directory: portal/chat-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/chat-worker
         run: npm run typecheck
 
       - name: Test chat Worker
-        working-directory: portal/chat-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/chat-worker
         run: npm test
 
   site-deploy:
@@ -238,13 +253,19 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install portal dependencies
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         run: npm ci
 
       - name: Install r8-rowhome dependencies
@@ -284,13 +305,19 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install org Worker dependencies
-        working-directory: portal/org-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/org-worker
         run: npm ci
 
       - name: Deploy org Worker
@@ -323,13 +350,19 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install chat Worker dependencies
-        working-directory: portal/chat-worker
+        working-directory: ${{ env.ORGPORTAL_DIR }}/chat-worker
         run: npm ci
 
       - name: Deploy chat Worker
@@ -363,13 +396,19 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install PIdP dependencies
-        working-directory: portal/pidp/serverless
+        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
         run: npm ci
 
       - name: Deploy PIdP Worker
@@ -411,17 +450,23 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install portal dependencies
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         run: npm ci
 
       - name: Install Playwright Chromium
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         run: npx playwright install chromium --with-deps
 
       - name: Verify birthday persistence and insurance flows
@@ -429,4 +474,4 @@ jobs:
           VERIFY_PORTAL_BASE_URL: ${{ env.PROD_PORTAL_BASE_URL }}
           VERIFY_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
           VERIFY_ORG_API_BASE_URL: "https://codecollective.us/api/org"
-        run: node portal/web/scripts/verify-insurance-birthday-contract.mjs
+        run: node "$ORGPORTAL_DIR/web/scripts/verify-insurance-birthday-contract.mjs"

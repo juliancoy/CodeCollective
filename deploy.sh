@@ -13,9 +13,10 @@ DRY_RUN=0
 
 PROD_WORKER_NAME="${PROD_WORKER_NAME:-codecollective-site}"
 DEV_WORKER_NAME="${DEV_WORKER_NAME:-codecollective-site-dev}"
-PIDP_DIR="$ROOT_DIR/portal/pidp/serverless"
-ORG_WORKER_DIR="$ROOT_DIR/portal/org-worker"
-CHAT_WORKER_DIR="$ROOT_DIR/portal/chat-worker"
+ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
+PIDP_DIR="$ORGPORTAL_DIR/pidp/serverless"
+ORG_WORKER_DIR="$ORGPORTAL_DIR/org-worker"
+CHAT_WORKER_DIR="$ORGPORTAL_DIR/chat-worker"
 
 ORG_WORKER_NAME="${ORG_WORKER_NAME:-org-codecollective}"
 ORG_VERIFY_ORIGIN="${ORG_VERIFY_ORIGIN:-https://org-codecollective.jcloiacon.workers.dev}"
@@ -90,6 +91,7 @@ Options:
   --component <value>  all | site | pidp | org | chat (default: all)
   --target <value>    prod | dev | both (default: both)
   --verbose           Print full build/deploy logs
+  ORGPORTAL_DIR=path  Optional env: OrgPortal checkout path (default: ../OrgPortal)
   STRICT_TS=1         Optional env: run strict TypeScript+Vite build during deploy
   --skip-build        Skip build_cloudflare_site.sh
   --skip-pidp-migrations
@@ -406,7 +408,7 @@ write_org_config() {
   done
   if [[ "${#missing[@]}" -gt 0 ]]; then
     echo "[deploy][org] missing required config: ${missing[*]}" >&2
-    echo "[deploy][org] create D1 with: (cd portal/org-worker && npx wrangler d1 create org)" >&2
+    echo "[deploy][org] create D1 with: (cd \"$ORG_WORKER_DIR\" && npx wrangler d1 create org)" >&2
     exit 1
   fi
 

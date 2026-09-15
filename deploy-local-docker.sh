@@ -2,7 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WEB_DIR="$ROOT_DIR/portal/web"
+ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
+WEB_DIR="$ORGPORTAL_DIR/web"
 LOCAL_DOCKER_DIR="$ROOT_DIR/.docker-local"
 WEB_NODE_MODULES_DIR="$LOCAL_DOCKER_DIR/web-node_modules"
 WEB_NPM_CACHE_DIR="$LOCAL_DOCKER_DIR/npm-cache"
@@ -49,7 +50,7 @@ Options:
 
 Environment overrides:
   PORT, HOST, CONTAINER_NAME, NODE_IMAGE, RESTART_POLICY,
-  ORGPORTAL_ORG_API_BASE, VITE_PIDP_BASE_URL, VITE_PIDP_APP_SLUG,
+  ORGPORTAL_DIR, ORGPORTAL_ORG_API_BASE, VITE_PIDP_BASE_URL, VITE_PIDP_APP_SLUG,
   VITE_DATA_SOURCE, VITE_API_BASE_URL, VITE_PUBLIC_BASE
 
 Examples:
@@ -120,7 +121,7 @@ container_running() {
 
 require_web_app() {
   if [[ ! -f "$WEB_DIR/package.json" || ! -f "$WEB_DIR/server.mjs" ]]; then
-    echo "[local-deploy] expected portal web app at $WEB_DIR" >&2
+    echo "[local-deploy] expected OrgPortal web app at $WEB_DIR" >&2
     exit 1
   fi
 }
@@ -132,9 +133,9 @@ deploy_container() {
   echo "[local-deploy] building portal web app with $NODE_IMAGE"
   docker run --rm \
     --user "$USER_ID:$GROUP_ID" \
-    --workdir /workspace/portal/web \
-    --volume "$ROOT_DIR:/workspace" \
-    --volume "$WEB_NODE_MODULES_DIR:/workspace/portal/web/node_modules" \
+    --workdir /workspace/OrgPortal/web \
+    --volume "$ORGPORTAL_DIR:/workspace/OrgPortal" \
+    --volume "$WEB_NODE_MODULES_DIR:/workspace/OrgPortal/web/node_modules" \
     --volume "$WEB_NPM_CACHE_DIR:/tmp/.npm" \
     --env HOME=/tmp \
     --env VITE_PIDP_BASE_URL="$VITE_PIDP_BASE_URL" \
@@ -155,9 +156,9 @@ deploy_container() {
     --name "$CONTAINER_NAME" \
     --restart "$RESTART_POLICY" \
     --user "$USER_ID:$GROUP_ID" \
-    --workdir /workspace/portal/web \
-    --volume "$ROOT_DIR:/workspace" \
-    --volume "$WEB_NODE_MODULES_DIR:/workspace/portal/web/node_modules" \
+    --workdir /workspace/OrgPortal/web \
+    --volume "$ORGPORTAL_DIR:/workspace/OrgPortal" \
+    --volume "$WEB_NODE_MODULES_DIR:/workspace/OrgPortal/web/node_modules" \
     --publish "$HOST:$PORT:$PORT" \
     --env HOME=/tmp \
     --env PORT="$PORT" \

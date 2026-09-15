@@ -3,10 +3,17 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="$ROOT_DIR/.cloudflare/site"
-PORTAL_WEB_DIR="$ROOT_DIR/portal/web"
+ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
+PORTAL_WEB_DIR="$ORGPORTAL_DIR/web"
 MAX_ASSET_MB="${MAX_ASSET_MB:-25}"
 VERBOSE_BUILD="${VERBOSE_BUILD:-0}"
 STRICT_TS="${STRICT_TS:-0}"
+
+if [[ ! -d "$PORTAL_WEB_DIR" ]]; then
+  echo "[cloudflare] error: expected OrgPortal web checkout at $PORTAL_WEB_DIR" >&2
+  echo "[cloudflare] set ORGPORTAL_DIR to the OrgPortal repository path" >&2
+  exit 1
+fi
 
 echo "[cloudflare] preparing output directory: $OUT_DIR"
 rm -rf "$OUT_DIR"
@@ -33,6 +40,7 @@ rsync -a \
   --exclude='.github/' \
   --exclude='.cloudflare/' \
   --exclude='.docker-local/' \
+  --exclude='OrgPortal/' \
   --exclude='portal/' \
   --exclude='portal_src/' \
   --exclude='r8-rowhome/' \
@@ -79,7 +87,7 @@ fi
 popd >/dev/null
 
 if [[ ! -f "$PORTAL_WEB_DIR/dist/index.html" ]]; then
-  echo "[cloudflare] error: expected portal/web/dist/index.html after build" >&2
+  echo "[cloudflare] error: expected OrgPortal web dist/index.html after build" >&2
   exit 1
 fi
 
@@ -99,7 +107,7 @@ fi
 popd >/dev/null
 
 if [[ ! -f "$PORTAL_WEB_DIR/dist/index.html" ]]; then
-  echo "[cloudflare] error: expected portal/web/dist/index.html after tenant root build" >&2
+  echo "[cloudflare] error: expected OrgPortal web dist/index.html after tenant root build" >&2
   exit 1
 fi
 
