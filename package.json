@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "deploy": "./deploy.sh",
+    "deploy:dry-run": "./deploy.sh --dry-run --no-verify",
+    "deploy:site": "./deploy.sh --component site",
+    "deploy:pidp": "./deploy.sh --component pidp",
+    "deploy:org": "./deploy.sh --component org",
+    "deploy:chat": "./deploy.sh --component chat"
+  },
   "devDependencies": {
     "wrangler": "^4.120.1"
   }

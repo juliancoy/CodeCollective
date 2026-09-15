@@ -5,16 +5,23 @@
 The official website of Code Collective, deployed to Cloudflare Workers at
 https://codecollective.us/.
 
-## Cloudflare deployment
+## Deployment
+
+Use the repository root deploy script for Cloudflare releases:
+
+```bash
+./deploy.sh --component all --target prod
+```
+
+`./deploy.sh` is the single deploy entry point. It builds the frontend bundle,
+applies D1 migrations, deploys the Worker components, and runs smoke checks.
+The supported components are `site`, `pidp`, `org`, and `chat`; `all` deploys
+every one of them.
 
 The `codecollective-site` Worker is the only frontend deployment. It serves the
 main site and embeds the portal at `https://codecollective.us/p/` from the
-`portal/web` submodule. Build and deploy it from the repository root:
-
-```bash
-./cloudflare/scripts/build_cloudflare_site.sh
-npx wrangler deploy
-```
+`portal/web` submodule. `portal/web` is application source only; do not deploy it
+as a standalone Worker.
 
 ### OrgPortal tenants
 

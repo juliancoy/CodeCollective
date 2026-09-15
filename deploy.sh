@@ -15,15 +15,18 @@ PROD_WORKER_NAME="${PROD_WORKER_NAME:-codecollective-site}"
 DEV_WORKER_NAME="${DEV_WORKER_NAME:-codecollective-site-dev}"
 PIDP_DIR="$ROOT_DIR/portal/pidp/serverless"
 ORG_WORKER_DIR="$ROOT_DIR/portal/org-worker"
+CHAT_WORKER_DIR="$ROOT_DIR/portal/chat-worker"
 
 ORG_WORKER_NAME="${ORG_WORKER_NAME:-org-codecollective}"
 ORG_VERIFY_ORIGIN="${ORG_VERIFY_ORIGIN:-https://org-codecollective.jcloiacon.workers.dev}"
 PROD_ORG_API_ORIGIN="${PROD_ORG_API_ORIGIN:-$ORG_VERIFY_ORIGIN}"
 PROD_GOVERNANCE_API_ORIGIN="${PROD_GOVERNANCE_API_ORIGIN:-$PROD_ORG_API_ORIGIN}"
+PROD_CHAT_API_ORIGIN="${PROD_CHAT_API_ORIGIN:-https://chat-codecollective.jcloiacon.workers.dev}"
 PROD_PIDP_API_ORIGIN="${PROD_PIDP_API_ORIGIN:-https://id.codecollective.us}"
 PROD_PIDP_PROXY_ORIGIN="${PROD_PIDP_PROXY_ORIGIN:-https://pidp-codecollective.jcloiacon.workers.dev}"
 DEV_GOVERNANCE_API_ORIGIN="${DEV_GOVERNANCE_API_ORIGIN:-$PROD_GOVERNANCE_API_ORIGIN}"
 DEV_ORG_API_ORIGIN="${DEV_ORG_API_ORIGIN:-$PROD_ORG_API_ORIGIN}"
+DEV_CHAT_API_ORIGIN="${DEV_CHAT_API_ORIGIN:-$PROD_CHAT_API_ORIGIN}"
 DEV_PIDP_API_ORIGIN="${DEV_PIDP_API_ORIGIN:-$PROD_PIDP_API_ORIGIN}"
 DEV_PIDP_PROXY_ORIGIN="${DEV_PIDP_PROXY_ORIGIN:-$PROD_PIDP_PROXY_ORIGIN}"
 PROD_ORGPORTAL_TENANT_HOSTS="${PROD_ORGPORTAL_TENANT_HOSTS:-medtech.social}"
@@ -57,6 +60,15 @@ ORG_D1_DATABASE_ID="${ORG_D1_DATABASE_ID:-a71a2306-3d82-44cb-a50c-d7fdffaacdc7}"
 ORG_SCAN_IMAGES_BUCKET_NAME="${ORG_SCAN_IMAGES_BUCKET_NAME:-org-scan-images}"
 ORG_PUSH_QUEUE_NAME="${ORG_PUSH_QUEUE_NAME:-org-web-push}"
 ORG_PUSH_DEAD_LETTER_QUEUE_NAME="${ORG_PUSH_DEAD_LETTER_QUEUE_NAME:-org-web-push-dead-letter}"
+CHAT_WORKER_NAME="${CHAT_WORKER_NAME:-chat-codecollective}"
+CHAT_VERIFY_ORIGIN="${CHAT_VERIFY_ORIGIN:-https://chat-codecollective.jcloiacon.workers.dev}"
+CHAT_PIDP_BASE_URL="${CHAT_PIDP_BASE_URL:-$ORG_PIDP_BASE_URL}"
+CHAT_PUBLIC_PORTAL_BASE_URL="${CHAT_PUBLIC_PORTAL_BASE_URL:-$ORG_PUBLIC_PORTAL_BASE_URL}"
+CHAT_ALLOWED_ORIGINS="${CHAT_ALLOWED_ORIGINS:-https://codecollective.us,https://medtech.social,http://127.0.0.1:8080,http://localhost:8080}"
+CHAT_D1_DATABASE_NAME="${CHAT_D1_DATABASE_NAME:-chat}"
+CHAT_D1_DATABASE_ID="${CHAT_D1_DATABASE_ID:-2f115bab-2f42-4a58-8732-01cd47a43090}"
+CHAT_CONTACTS_D1_DATABASE_NAME="${CHAT_CONTACTS_D1_DATABASE_NAME:-$ORG_D1_DATABASE_NAME}"
+CHAT_CONTACTS_D1_DATABASE_ID="${CHAT_CONTACTS_D1_DATABASE_ID:-$ORG_D1_DATABASE_ID}"
 MCP_PUBLIC_URL="${MCP_PUBLIC_URL:-}"
 MCP_OAUTH_ISSUER="${MCP_OAUTH_ISSUER:-}"
 MCP_OAUTH_JWKS_URL="${MCP_OAUTH_JWKS_URL:-}"
@@ -65,6 +77,7 @@ MCP_ALLOWED_ORIGINS="${MCP_ALLOWED_ORIGINS:-}"
 MCP_SUBJECT_MAP_JSON="${MCP_SUBJECT_MAP_JSON:-}"
 EVENT_INTEGRATIONS_JSON="${EVENT_INTEGRATIONS_JSON:-}"
 SKIP_ORG_MIGRATIONS=0
+SKIP_CHAT_MIGRATIONS=0
 
 PASSTHROUGH_ARGS=()
 
@@ -74,7 +87,7 @@ Usage: ./deploy.sh [options] [-- <wrangler args>]
 
 Options:
   --env-file <path>   Path to env file (default: ./.env.cloudflare)
-  --component <value>  all | site | pidp | org (default: all)
+  --component <value>  all | site | pidp | org | chat (default: all)
   --target <value>    prod | dev | both (default: both)
   --verbose           Print full build/deploy logs
   STRICT_TS=1         Optional env: run strict TypeScript+Vite build during deploy
@@ -83,6 +96,8 @@ Options:
                        Skip PIdP remote D1 migrations
   --skip-org-migrations
                        Skip org Worker remote D1 migrations
+  --skip-chat-migrations
+                       Skip chat Worker remote D1 migrations
   --dry-run            Build and validate deploy commands without publishing
   --no-verify         Skip post-deploy smoke checks
   -h, --help          Show this help
@@ -93,6 +108,7 @@ Examples:
   ./deploy.sh --component site --target dev
   ./deploy.sh --component pidp
   ./deploy.sh --component org
+  ./deploy.sh --component chat
   ./deploy.sh --target both
   ./deploy.sh --target dev
   ./deploy.sh --env-file .env.cloudflare
@@ -131,6 +147,10 @@ while (($#)); do
       SKIP_ORG_MIGRATIONS=1
       shift
       ;;
+    --skip-chat-migrations)
+      SKIP_CHAT_MIGRATIONS=1
+      shift
+      ;;
     --dry-run)
       DRY_RUN=1
       shift
@@ -160,8 +180,8 @@ if [[ "$TARGET" != "prod" && "$TARGET" != "dev" && "$TARGET" != "both" ]]; then
   exit 1
 fi
 
-if [[ "$COMPONENT" != "all" && "$COMPONENT" != "site" && "$COMPONENT" != "pidp" && "$COMPONENT" != "org" ]]; then
-  echo "[deploy] invalid --component: $COMPONENT (expected all|site|pidp|org)" >&2
+if [[ "$COMPONENT" != "all" && "$COMPONENT" != "site" && "$COMPONENT" != "pidp" && "$COMPONENT" != "org" && "$COMPONENT" != "chat" ]]; then
+  echo "[deploy] invalid --component: $COMPONENT (expected all|site|pidp|org|chat)" >&2
   exit 1
 fi
 
@@ -195,6 +215,7 @@ fi
 deploy_site=0
 deploy_pidp=0
 deploy_org=0
+deploy_chat=0
 if [[ "$COMPONENT" == "all" || "$COMPONENT" == "site" ]]; then
   deploy_site=1
 fi
@@ -203,6 +224,9 @@ if [[ "$COMPONENT" == "all" || "$COMPONENT" == "pidp" ]]; then
 fi
 if [[ "$COMPONENT" == "all" || "$COMPONENT" == "org" ]]; then
   deploy_org=1
+fi
+if [[ "$COMPONENT" == "all" || "$COMPONENT" == "chat" ]]; then
+  deploy_chat=1
 fi
 
 if [[ "$deploy_site" -eq 1 && "$SKIP_BUILD" -eq 0 ]]; then
@@ -536,14 +560,156 @@ deploy_org_worker() {
   return "$status"
 }
 
+write_chat_config() {
+  local required=(
+    CHAT_WORKER_NAME
+    CHAT_PIDP_BASE_URL
+    CHAT_PUBLIC_PORTAL_BASE_URL
+    CHAT_D1_DATABASE_NAME
+    CHAT_D1_DATABASE_ID
+    CHAT_CONTACTS_D1_DATABASE_NAME
+    CHAT_CONTACTS_D1_DATABASE_ID
+  )
+  local missing=()
+  for name in "${required[@]}"; do
+    if [[ -z "${!name:-}" ]]; then
+      missing+=("$name")
+    fi
+  done
+  if [[ "${#missing[@]}" -gt 0 ]]; then
+    echo "[deploy][chat] missing required config: ${missing[*]}" >&2
+    exit 1
+  fi
+
+  export CHAT_WORKER_NAME
+  export CHAT_PIDP_BASE_URL
+  export CHAT_PUBLIC_PORTAL_BASE_URL
+  export CHAT_ALLOWED_ORIGINS
+  export CHAT_D1_DATABASE_NAME
+  export CHAT_D1_DATABASE_ID
+  export CHAT_CONTACTS_D1_DATABASE_NAME
+  export CHAT_CONTACTS_D1_DATABASE_ID
+
+  (
+    cd "$CHAT_WORKER_DIR"
+    node <<'NODE'
+const fs = require("node:fs");
+
+const env = process.env;
+const config = {
+  "$schema": "node_modules/wrangler/config-schema.json",
+  name: env.CHAT_WORKER_NAME,
+  main: "src/index.ts",
+  version_metadata: { binding: "CF_VERSION_METADATA" },
+  compatibility_date: "2026-06-07",
+  workers_dev: true,
+  observability: { enabled: true },
+  vars: {
+    PIDP_BASE_URL: env.CHAT_PIDP_BASE_URL,
+    PUBLIC_PORTAL_BASE_URL: env.CHAT_PUBLIC_PORTAL_BASE_URL,
+    CHAT_ALLOWED_ORIGINS: env.CHAT_ALLOWED_ORIGINS || "",
+  },
+  d1_databases: [
+    {
+      binding: "DB",
+      database_name: env.CHAT_D1_DATABASE_NAME,
+      database_id: env.CHAT_D1_DATABASE_ID,
+    },
+    {
+      binding: "CONTACTS_DB",
+      database_name: env.CHAT_CONTACTS_D1_DATABASE_NAME,
+      database_id: env.CHAT_CONTACTS_D1_DATABASE_ID,
+    },
+  ],
+  durable_objects: {
+    bindings: [
+      {
+        name: "CHAT_ROOMS",
+        class_name: "ConversationDurableObject",
+      },
+    ],
+  },
+  migrations: [
+    {
+      tag: "v1",
+      new_sqlite_classes: ["ConversationDurableObject"],
+    },
+  ],
+};
+
+fs.writeFileSync("wrangler.jsonc", `${JSON.stringify(config, null, 2)}\n`);
+NODE
+  )
+}
+
+deploy_chat_worker() {
+  if [[ ! -d "$CHAT_WORKER_DIR" ]]; then
+    echo "[deploy][chat] missing directory: $CHAT_WORKER_DIR" >&2
+    exit 1
+  fi
+
+  echo "[deploy][chat] generating production Wrangler config"
+  local config_path="$CHAT_WORKER_DIR/wrangler.jsonc"
+  local backup_path
+  backup_path="$(mktemp)"
+  cp "$config_path" "$backup_path"
+
+  local status
+  set +e
+  write_chat_config
+  status=$?
+  if [[ "$status" -eq 0 ]]; then
+    (
+      cd "$CHAT_WORKER_DIR"
+      npm run typecheck
+    )
+    status=$?
+  fi
+  if [[ "$status" -eq 0 && "$SKIP_CHAT_MIGRATIONS" -eq 0 && "$DRY_RUN" -eq 0 ]]; then
+    (
+      cd "$CHAT_WORKER_DIR"
+      if [[ "${GITHUB_ACTIONS:-}" == "true" || "${CHAT_USE_API_TOKEN:-0}" == "1" ]]; then
+        npx wrangler d1 migrations apply "$CHAT_D1_DATABASE_NAME" --remote
+      else
+        env -u CLOUDFLARE_API_TOKEN npx wrangler d1 migrations apply "$CHAT_D1_DATABASE_NAME" --remote
+      fi
+    )
+    status=$?
+  fi
+  if [[ "$status" -eq 0 ]]; then
+    local wrangler_args=("${PASSTHROUGH_ARGS[@]}")
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      wrangler_args+=("--dry-run")
+    fi
+    if [[ "${GITHUB_ACTIONS:-}" == "true" || "${CHAT_USE_API_TOKEN:-0}" == "1" ]]; then
+      (
+        cd "$CHAT_WORKER_DIR"
+        npx wrangler deploy "${wrangler_args[@]}"
+      )
+    else
+      echo "[deploy][chat] using local Wrangler login; set CHAT_USE_API_TOKEN=1 to force CLOUDFLARE_API_TOKEN"
+      (
+        cd "$CHAT_WORKER_DIR"
+        env -u CLOUDFLARE_API_TOKEN npx wrangler deploy "${wrangler_args[@]}"
+      )
+    fi
+    status=$?
+  fi
+  set -e
+  cp "$backup_path" "$config_path"
+  rm -f "$backup_path"
+  return "$status"
+}
+
 deploy_target() {
   local label="$1"
   local worker_name="$2"
   local governance_origin="$3"
   local org_origin="$4"
-  local pidp_origin="$5"
-  local pidp_proxy_origin="$6"
-  local tenant_hosts="$7"
+  local chat_origin="$5"
+  local pidp_origin="$6"
+  local pidp_proxy_origin="$7"
+  local tenant_hosts="$8"
 
   echo "[deploy][$label] deploying worker: $worker_name" >&2
   local deploy_log
@@ -560,6 +726,7 @@ deploy_target() {
         --name "$worker_name" \
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
         --var "ORG_API_ORIGIN:$org_origin" \
+        --var "CHAT_API_ORIGIN:$chat_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
         --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
@@ -572,6 +739,7 @@ deploy_target() {
         --name "$worker_name" \
         --var "GOVERNANCE_API_ORIGIN:$governance_origin" \
         --var "ORG_API_ORIGIN:$org_origin" \
+        --var "CHAT_API_ORIGIN:$chat_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
         --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
@@ -636,13 +804,17 @@ if [[ "$deploy_org" -eq 1 ]]; then
   deploy_org_worker
 fi
 
+if [[ "$deploy_chat" -eq 1 ]]; then
+  deploy_chat_worker
+fi
+
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "dev" || "$TARGET" == "both" ) ]]; then
-  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN" "$DEV_ORGPORTAL_TENANT_HOSTS")"
+  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_CHAT_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN" "$DEV_ORGPORTAL_TENANT_HOSTS")"
   echo "[deploy][dev] updated url: $DEV_URL"
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "prod" || "$TARGET" == "both" ) ]]; then
-  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN" "$PROD_ORGPORTAL_TENANT_HOSTS")"
+  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_CHAT_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN" "$PROD_ORGPORTAL_TENANT_HOSTS")"
   echo "[deploy][prod] updated url: $PROD_URL"
 fi
 
@@ -654,6 +826,7 @@ if [[ "$NO_VERIFY" -eq 1 || "$DRY_RUN" -eq 1 ]]; then
   fi
   [[ "$deploy_pidp" -eq 1 ]] && echo "[deploy] pidp url: $PIDP_VERIFY_ORIGIN"
   [[ "$deploy_org" -eq 1 ]] && echo "[deploy] org url:  $ORG_VERIFY_ORIGIN"
+  [[ "$deploy_chat" -eq 1 ]] && echo "[deploy] chat url: $CHAT_VERIFY_ORIGIN"
   [[ -n "$DEV_URL" ]] && echo "[deploy] dev url:  $DEV_URL"
   [[ -n "$PROD_URL" ]] && echo "[deploy] prod url: $PROD_URL"
   exit 0
@@ -685,6 +858,16 @@ if [[ "$deploy_org" -eq 1 ]]; then
   echo "[deploy][org] ok: /api/network/orgs/public?limit=1 -> JSON array"
 fi
 
+if [[ "$deploy_chat" -eq 1 ]]; then
+  echo "[deploy][chat] verifying $CHAT_VERIFY_ORIGIN"
+  chat_code="$(curl -sS -o /dev/null -w '%{http_code}' "$CHAT_VERIFY_ORIGIN/health")"
+  if [[ "$chat_code" != "200" ]]; then
+    echo "[deploy][chat] verify failed: /health returned $chat_code (expected 200)" >&2
+    exit 1
+  fi
+  echo "[deploy][chat] ok: /health -> 200"
+fi
+
 [[ -n "$DEV_URL" ]] && verify_target "dev" "$DEV_URL"
 [[ -n "$PROD_URL" ]] && verify_target "prod" "$PROD_URL"
 
@@ -694,6 +877,9 @@ if [[ "$deploy_pidp" -eq 1 ]]; then
 fi
 if [[ "$deploy_org" -eq 1 ]]; then
   echo "[deploy] org url:  $ORG_VERIFY_ORIGIN"
+fi
+if [[ "$deploy_chat" -eq 1 ]]; then
+  echo "[deploy] chat url: $CHAT_VERIFY_ORIGIN"
 fi
 if [[ -n "$DEV_URL" ]]; then
   echo "[deploy] dev url:  $DEV_URL"
