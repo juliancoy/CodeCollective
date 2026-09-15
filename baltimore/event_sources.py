@@ -445,6 +445,11 @@ sources = [
         "tags": ["Health", "Tech Community", "AI", "Startup"],
     },
     {
+        "name": "Blackbird Forum",
+        "url": "https://luma.com/calendar/cal-FGUY8rWBzx9w0Hi",
+        "tags": ["Health", "Tech Community", "AI", "Startup"],
+    },
+    {
         "name": "Code Collective",
         "url": "https://luma.com/codecollective",
         "group_name": "Code Collective",
