@@ -77,12 +77,13 @@ rsync -a \
 echo "[cloudflare] building portal for /p/"
 pushd "$PORTAL_WEB_DIR" >/dev/null
 PORTAL_PIDP_BASE_URL="${VITE_PIDP_BASE_URL:-/pidp}"
+PORTAL_CHAT_API_BASE_URL="${VITE_CHAT_API_BASE_URL:-/api/chat}"
 if [[ "$STRICT_TS" == "1" ]]; then
   echo "[cloudflare] strict mode: running TypeScript + Vite build"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npm run build
+  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npm run build
 else
   echo "[cloudflare] deploy mode: running Vite build (TypeScript checks run separately in CI)"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npx vite build
+  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npx vite build
 fi
 popd >/dev/null
 
@@ -99,10 +100,10 @@ echo "[cloudflare] building portal for tenant root mounts"
 pushd "$PORTAL_WEB_DIR" >/dev/null
 if [[ "$STRICT_TS" == "1" ]]; then
   echo "[cloudflare] strict mode: running TypeScript + Vite build for tenant root mounts"
-  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/mobile-update.json npm run build
+  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/mobile-update.json npm run build
 else
   echo "[cloudflare] deploy mode: running Vite build for tenant root mounts"
-  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/mobile-update.json npx vite build
+  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/mobile-update.json npx vite build
 fi
 popd >/dev/null
 
