@@ -25,13 +25,13 @@
   <link rel="icon" href="/images/favicons/favicon.png" />
 
   <link rel="preload" href="/css/master.css?v=20260608-avataronly" as="style">
-  <link rel="preload" href="/css/calendar.css" as="style">
+  <link rel="preload" href="/css/calendar.css?v=20260920-windowed" as="style">
   <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/master.css?v=20260608-avataronly" />
-  <link rel="stylesheet" href="/css/calendar.css" />
+  <link rel="stylesheet" href="/css/calendar.css?v=20260920-windowed" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Scripts -->
@@ -85,13 +85,13 @@
         return cityOptions.includes(city) ? city : 'baltimore';
       }
 
-      function updateIcsLink() {
+      function updateCalendarDownloadLinks() {
         const city = getCityFromUrl();
-        const icsLink = document.querySelector('.download-button');
-        if (icsLink) {
-          const template = icsLink.dataset.icsTemplate || 'https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/{city}/cc_events.ics';
-          icsLink.href = template.replace('{city}', city);
-        }
+        document.querySelectorAll('[data-calendar-city-template]').forEach(link => {
+          const template = link.dataset.calendarCityTemplate;
+          if (!template) return;
+          link.href = template.replaceAll('{city}', city);
+        });
       }
 
       function updateCityDetails() {
@@ -130,7 +130,7 @@
       }
 
       function initializeCityControls() {
-        updateIcsLink();
+        updateCalendarDownloadLinks();
         updateCityDetails();
         populateCitySelector();
       }
@@ -192,36 +192,62 @@
 
   <main id="wrapper" class="longform dark-mode" style="padding: 0; margin: 0;">
     <section id="main" class="longform dark-mode" style="padding: 0; margin: 0;">
-      <header class="header-container" style="text-align: center; padding: 20px 0;">
-        <p style="margin-bottom: 8px; font-size: 1.2rem;">Code Collective brings you</p>
-        <h1 style="margin: 10px 0; font-size: 2.5rem;">A <span id="calendar-city-name">Baltimore</span> Techonomics Calendar</h1>
-        <div class="city-selector">
-          <label for="city-select">Show events for:</label>
-          <select id="city-select" aria-label="Select a city for the calendar"></select>
+      <header class="header-container calendar-hero">
+        <div class="calendar-title-block">
+          <p class="calendar-kicker">Code Collective brings you</p>
+          <h1>A <span id="calendar-city-name">Baltimore</span> Techonomics Calendar</h1>
+          <div id="calendar-freshness" class="calendar-freshness" aria-live="polite"></div>
         </div>
-        <div class="calendar-search">
-          <label for="calendar-search-input">Search events:</label>
-          <input
-            id="calendar-search-input"
-            type="search"
-            placeholder="Title, tag, org, description, location..."
-            aria-label="Search events"
-          />
+        <div class="calendar-control-strip" aria-label="Calendar controls">
+          <div class="calendar-date-control calendar-control" aria-label="Visible calendar date range">
+            <span class="calendar-control-label">Range</span>
+            <output id="calendar-date-range" class="calendar-date-range" aria-live="polite"></output>
+          </div>
+          <div class="city-selector calendar-control">
+            <label for="city-select">Events for</label>
+            <select id="city-select" aria-label="Select a city for the calendar"></select>
+          </div>
+          <div class="calendar-search calendar-control calendar-control-wide">
+            <label for="calendar-search-input">Search</label>
+            <input
+              id="calendar-search-input"
+              type="search"
+              placeholder="Title, tag, org, description, location..."
+              aria-label="Search events"
+            />
+          </div>
+          <div class="timezone-controls calendar-control">
+            <label class="timezone-toggle" for="use-local-time-checkbox">
+              <input id="use-local-time-checkbox" type="checkbox" checked />
+              <span>Local time</span>
+            </label>
+            <label class="timezone-select-label" for="timezone-select">Zone</label>
+            <select id="timezone-select" aria-label="Select timezone for calendar display"></select>
+          </div>
+          <details class="calendar-download-menu">
+            <summary class="download-button">
+              <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+              <span>Connect</span>
+            </summary>
+            <div class="calendar-download-options">
+              <a
+                href="https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/baltimore/cc_events.ics"
+                data-calendar-city-template="https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/{city}/cc_events.ics"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Google Calendar</a>
+              <a
+                href="webcal://codecollective.us/baltimore/cc_events.ics"
+                data-calendar-city-template="webcal://codecollective.us/{city}/cc_events.ics"
+              >Apple/Outlook subscribe</a>
+              <a
+                href="/baltimore/cc_events.ics"
+                data-calendar-city-template="/{city}/cc_events.ics"
+                download
+              >Download iCal</a>
+            </div>
+          </details>
         </div>
-        <div class="timezone-controls">
-          <label class="timezone-toggle" for="use-local-time-checkbox">
-            <input id="use-local-time-checkbox" type="checkbox" checked />
-            <span>Use Local Time</span>
-          </label>
-          <label for="timezone-select">Timezone:</label>
-          <select id="timezone-select" aria-label="Select timezone for calendar display"></select>
-        </div>
-          <a href="#"
-          data-ics-template="https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/{city}/cc_events.ics"
-          class="download-button" target="_blank" rel="noopener noreferrer">
-            <i class="fas fa-calendar-alt" aria-hidden="true"></i> Add to Google Calendar
-          </a>
-        <div id="calendar-freshness" class="calendar-freshness" aria-live="polite"></div>
       </header>
 
       <div class="container">
@@ -243,7 +269,7 @@
     </section>
 
     <script src="/js/calendarFilterUtils.js"></script>
-    <script src="/js/calendar.js"></script>
+    <script src="/js/calendar.js?v=20260920-windowed"></script>
     </section>
 
   </main>

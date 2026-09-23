@@ -14,7 +14,13 @@ DRY_RUN=0
 PROD_WORKER_NAME="${PROD_WORKER_NAME:-codecollective-site}"
 DEV_WORKER_NAME="${DEV_WORKER_NAME:-codecollective-site-dev}"
 ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
-PIDP_DIR="$ORGPORTAL_DIR/pidp/serverless"
+if [[ -z "${PIDP_DIR:-}" ]]; then
+  if [[ -d "$ROOT_DIR/../pidp/serverless" ]]; then
+    PIDP_DIR="$ROOT_DIR/../pidp/serverless"
+  else
+    PIDP_DIR="$ORGPORTAL_DIR/pidp/serverless"
+  fi
+fi
 ORG_WORKER_DIR="$ORGPORTAL_DIR/org-worker"
 CHAT_WORKER_DIR="$ORGPORTAL_DIR/chat-worker"
 
@@ -93,6 +99,7 @@ Options:
   --target <value>    prod | dev | both (default: both)
   --verbose           Print full build/deploy logs
   ORGPORTAL_DIR=path  Optional env: OrgPortal checkout path (default: ../OrgPortal)
+  PIDP_DIR=path       Optional env: PIdP serverless checkout (default: ../pidp/serverless)
   STRICT_TS=1         Optional env: run strict TypeScript+Vite build during deploy
   --skip-build        Skip build_cloudflare_site.sh
   --skip-pidp-migrations
