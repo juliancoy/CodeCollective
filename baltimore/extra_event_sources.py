@@ -79,6 +79,12 @@ sources = [
         "tags": ["Business", "Economic Development", "Professional Networking"],
     },
     {
+        "name": "Baltimore Development Corporation Events",
+        "url": "https://baltimoredevelopment.com/events/",
+        "source_kind": "bdc_events",
+        "tags": ["Business", "Economic Development", "Professional Networking"],
+    },
+    {
         "name": "Baltimore Science Fiction Society",
         "url": "https://www.bsfs.org/bsfscldr.htm",
         "source_kind": "bsfs_events",

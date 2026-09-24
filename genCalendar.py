@@ -21,6 +21,7 @@ import scrape_legistar
 import scrape_thread_helpcenter
 import scrape_bniajfi
 import scrape_gbci
+import baltimore.scrape_bdc as scrape_bdc
 import json
 import datetime
 import pytz
@@ -87,6 +88,7 @@ SOURCE_KIND_CONCURRENCY = {
     "biotrac": 1,
     "active_data_calendar_rss": 1,
     "gbci_events": 1,
+    "bdc_events": 1,
     "bsfs_events": 1,
     "unknown": 2,
 }
@@ -544,6 +546,10 @@ def fetch_events_from_source(source, city):
         "gbci_events": (
             "Fetching events from",
             lambda: scrape_gbci.scrape(source_url),
+        ),
+        "bdc_events": (
+            "Fetching events from",
+            lambda: scrape_bdc.scrape_events(source_url),
         ),
         "sjbc_events": (
             "Fetching events from",

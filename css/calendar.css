@@ -17,10 +17,7 @@
 }
 
 .calendar-title-block {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(15rem, auto);
-    align-items: center;
-    gap: 4px 18px;
+    display: block;
 }
 
 .calendar-kicker {
@@ -41,11 +38,15 @@
 }
 
 .calendar-control-strip {
-    display: grid;
-    grid-template-columns: auto auto minmax(16rem, 1fr) minmax(20rem, auto) auto;
+    display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: flex-start;
+    gap: 10px;
     margin-top: 8px;
+}
+
+.calendar-time-strip {
+    max-width: max-content;
 }
 
 .calendar-control {
@@ -206,14 +207,11 @@
 }
 
 .calendar-freshness {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: center;
     margin: 0;
     color: rgba(255, 255, 255, 0.82);
     font-size: 0.78rem;
-    max-width: 22rem;
-    text-align: right;
+    max-width: 100%;
+    text-align: left;
 }
 
 .calendar-date-control {
@@ -236,16 +234,6 @@
 }
 
 @media (max-width: 980px) {
-    .calendar-title-block {
-        grid-template-columns: 1fr;
-    }
-
-    .calendar-freshness {
-        grid-column: 1;
-        grid-row: auto;
-        text-align: left;
-    }
-
     .calendar-hero h1 {
         font-size: 1.75rem;
         white-space: normal;
@@ -263,8 +251,9 @@
     }
 
     .calendar-control-strip {
-        display: grid;
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
     }
 
     .calendar-control,
@@ -308,6 +297,34 @@
     border: 1px solid rgba(255, 255, 255, 0.28);
     background: rgba(0, 0, 0, 0.48);
     border-radius: 8px;
+}
+
+.calendar-legend .calendar-filter-panel {
+    width: 100%;
+    margin: 0;
+    padding: 10px;
+    background: rgba(15, 23, 42, 0.62);
+}
+
+.calendar-legend .calendar-filter-panel summary {
+    cursor: pointer;
+    color: #fff;
+    font-weight: 700;
+}
+
+.calendar-legend .calendar-filter-grid {
+    grid-template-columns: 1fr;
+    margin-top: 10px;
+}
+
+.calendar-legend .calendar-filter-row,
+.calendar-legend .calendar-filter-group-wide .calendar-filter-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.calendar-legend .calendar-filter-grid input[type="date"],
+.calendar-legend .calendar-filter-grid input[type="time"] {
+    min-width: 0;
 }
 
 .calendar-filter-grid {
@@ -2111,22 +2128,35 @@ h1 {
     left: 16px !important;
     bottom: 16px !important;
     z-index: 2000;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 14px;
-    align-items: flex-start;
-    justify-content: flex-start;
+    display: grid;
+    gap: 10px;
+    align-items: stretch;
     margin: 0;
-    padding: 12px 16px;
-    max-width: min(90vw, 520px);
-    background: #000;
-    border-radius: 10px;
+    padding: 12px;
+    width: min(92vw, 720px);
+    max-height: min(84vh, 820px);
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.94);
+    border-radius: 12px;
     border: 2px solid #ffe600;
     backdrop-filter: blur(6px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42);
 }
 
 .legend-hidden .calendar-legend {
     display: none;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 
 .legend-toggle-button {
@@ -2135,17 +2165,45 @@ h1 {
     bottom: 16px;
     z-index: 2000;
     display: none;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
     background: #000;
     color: #ffe600;
     border: 2px solid #ffe600;
-    border-radius: 10px;
-    padding: 6px 12px;
+    border-radius: 999px;
+    padding: 0;
+    font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.36);
 }
 
 .legend-hidden .legend-toggle-button {
     display: inline-flex;
+}
+
+.legend-toggle-button:hover,
+.legend-toggle-button:focus-visible,
+.legend-close-button:hover,
+.legend-close-button:focus-visible {
+    background: #ffe600;
+    color: #000;
+    outline: none;
+}
+
+.legend-panel-header {
+    position: sticky;
+    top: -12px;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0 10px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.98), rgba(0, 0, 0, 0.88));
+    border-bottom: 1px solid rgba(255, 230, 0, 0.28);
 }
 
 .legend-title {
@@ -2154,25 +2212,78 @@ h1 {
     letter-spacing: 0.02em;
 }
 
+.legend-subtitle,
+.legend-section-title {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.78rem;
+}
+
+.legend-section-title {
+    grid-column: 1 / -1;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.legend-close-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 230, 0, 0.82);
+    background: transparent;
+    color: #ffe600;
+    cursor: pointer;
+}
+
+.legend-section {
+    border-radius: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.legend-primary-controls {
+    display: grid;
+    grid-template-columns: minmax(9rem, auto) minmax(16rem, 1fr);
+    gap: 8px;
+    align-items: center;
+}
+
+.legend-primary-controls .calendar-control {
+    min-width: 0;
+}
+
+.legend-primary-controls .calendar-search,
+.legend-primary-controls .timezone-controls,
+.legend-primary-controls .calendar-freshness {
+    grid-column: span 2;
+}
+
+.legend-primary-controls .calendar-download-menu {
+    width: max-content;
+}
+
 .legend-items {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     align-items: stretch;
 }
 
 .legend-controls {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: center;
-    justify-content: space-between;
     gap: 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .legend-map-picker {
-    display: inline-flex;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: 8px;
 }
@@ -2191,16 +2302,61 @@ h1 {
 
 .legend-actions {
     display: inline-flex;
+    justify-content: flex-start;
     gap: 6px;
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+    .calendar-legend {
+        left: 8px !important;
+        right: 8px !important;
+        bottom: 8px !important;
+        width: auto;
+        max-width: none;
+        padding: 10px;
+        max-height: 86vh;
+    }
+
+    .legend-toggle-button {
+        left: 12px;
+        bottom: 12px;
+    }
+
+    .legend-primary-controls,
+    .legend-controls,
+    .legend-list {
+        grid-template-columns: 1fr;
+    }
+
+    .legend-primary-controls .calendar-search,
+    .legend-primary-controls .timezone-controls,
+    .legend-primary-controls .calendar-freshness {
+        grid-column: auto;
+    }
+
+    .legend-map-picker {
+        grid-template-columns: 1fr;
+    }
+
+    .legend-actions {
+        flex-wrap: wrap;
+    }
+
+    .legend-primary-controls .calendar-download-menu,
+    .legend-primary-controls .download-button {
+        width: 100%;
+    }
 }
 
 .legend-action {
     background: transparent;
     color: #ffe600;
     border: 1px solid #ffe600;
-    border-radius: 6px;
-    padding: 2px 8px;
-    font-size: 0.8rem;
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
     cursor: pointer;
 }
 

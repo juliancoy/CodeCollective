@@ -41,19 +41,6 @@ class OurSocials extends HTMLElement {
         this.innerHTML = `
             <aside id="socialButtons" class="social__container">
                 <a
-                    href="https://matrix.to/#/#code-collective:matrix.org"
-                    target="_blank"
-                    class="social__link"
-                >
-                    <button class="social__button">
-                        <img
-                            src="/images/element_logo.svg"
-                            alt="Matrix icon"
-                            class="social__icon"
-                        />
-                    </button>
-                </a>
-                <a
                     href="https://chat.whatsapp.com/JFlI9aRvNaGCTU2lOFXpOt"
                     target="_blank"
                     class="social__link"
@@ -75,19 +62,6 @@ class OurSocials extends HTMLElement {
                         <img
                             src="/images/github_icon.png"
                             alt="GitHub icon"
-                            class="social__icon"
-                        />
-                    </button>
-                </a>
-                <a
-                    href="https://t.me/codecollective"
-                    target="_blank"
-                    class="social__link"
-                >
-                    <button class="social__button">
-                        <img
-                            src="/images/Telegram_logo.svg"
-                            alt="Telegram icon"
                             class="social__icon"
                         />
                     </button>
@@ -139,12 +113,126 @@ class OurSocials extends HTMLElement {
 class CalendarLegend extends HTMLElement {
     connectedCallback() {
         this.innerHTML = `
-            <aside class="calendar-legend" aria-label="Event category filters">
-                <div class="legend-title">Filter by lenses:</div>
-                <div class="legend-items" id="calendar-legend-items"></div>
+            <aside class="calendar-legend" aria-label="Calendar controls and event filters">
+                <div class="legend-panel-header">
+                    <div>
+                        <div class="legend-title">Calendar tools</div>
+                        <div class="legend-subtitle">Search, filter, and tune what appears.</div>
+                    </div>
+                    <button type="button" id="legend-close-button" class="legend-close-button" aria-label="Close calendar tools" title="Close calendar tools">
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="legend-section legend-primary-controls" aria-label="Calendar display controls">
+                    <div class="legend-section-title">Find Events</div>
+                    <div class="city-selector calendar-control">
+                        <label for="city-select">Events for</label>
+                        <select id="city-select" aria-label="Select a city for the calendar"></select>
+                    </div>
+                    <div class="calendar-search calendar-control calendar-control-wide">
+                        <label for="calendar-search-input">Search</label>
+                        <input
+                            id="calendar-search-input"
+                            type="search"
+                            placeholder="Title, tag, org, description, location..."
+                            aria-label="Search events"
+                        />
+                    </div>
+                    <div class="timezone-controls calendar-control">
+                        <label class="timezone-toggle" for="use-local-time-checkbox">
+                            <input id="use-local-time-checkbox" type="checkbox" checked />
+                            <span>Local time</span>
+                        </label>
+                        <label class="timezone-select-label" for="timezone-select">Zone</label>
+                        <select id="timezone-select" aria-label="Select timezone for calendar display"></select>
+                    </div>
+                    <details class="calendar-download-menu">
+                        <summary class="download-button">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                            <span>Connect</span>
+                        </summary>
+                        <div class="calendar-download-options">
+                            <a
+                                href="https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/baltimore/cc_events.ics"
+                                data-calendar-city-template="https://calendar.google.com/calendar/u/0/r?cid=http://codecollective.us/{city}/cc_events.ics"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >Google Calendar</a>
+                            <a
+                                href="webcal://codecollective.us/baltimore/cc_events.ics"
+                                data-calendar-city-template="webcal://codecollective.us/{city}/cc_events.ics"
+                            >Apple/Outlook subscribe</a>
+                            <a
+                                href="/baltimore/cc_events.ics"
+                                data-calendar-city-template="/{city}/cc_events.ics"
+                                download
+                            >Download iCal</a>
+                        </div>
+                    </details>
+                    <div id="calendar-freshness" class="calendar-freshness" aria-live="polite"></div>
+                </div>
+                <details class="calendar-filter-panel legend-filter-panel legend-section">
+                    <summary>Filters</summary>
+                    <div class="calendar-filter-grid">
+                        <fieldset class="calendar-filter-group calendar-filter-group-wide">
+                            <legend>Near</legend>
+                            <div class="calendar-filter-row">
+                                <label>
+                                    Location
+                                    <span class="calendar-clearable-field">
+                                        <input id="proximity-filter-input" type="search" placeholder="ZIP, city, venue" autocomplete="off" />
+                                        <button type="button" class="calendar-field-clear" data-clear-filter="proximity-filter-input" aria-label="Clear location filter">&times;</button>
+                                    </span>
+                                </label>
+                                <label class="calendar-input-with-unit">
+                                    Radius
+                                    <input id="calendar-radius-input" type="number" min="1" max="250" step="1" value="25" />
+                                    <span class="calendar-unit-label">mi</span>
+                                </label>
+                            </div>
+                            <button type="button" id="use-current-location-button" class="calendar-location-button">Use current location</button>
+                            <div id="current-location-readout" class="current-location-readout" hidden></div>
+                        </fieldset>
+                        <fieldset class="calendar-filter-group">
+                            <legend>Date range</legend>
+                            <div class="calendar-filter-row">
+                                <label>
+                                    From
+                                    <input id="calendar-date-from-input" type="date" />
+                                </label>
+                                <label>
+                                    To
+                                    <input id="calendar-date-to-input" type="date" />
+                                </label>
+                            </div>
+                        </fieldset>
+                        <fieldset class="calendar-filter-group">
+                            <legend>Time window</legend>
+                            <div class="calendar-filter-row">
+                                <label>
+                                    Start
+                                    <input id="calendar-time-start-input" type="time" />
+                                </label>
+                                <label>
+                                    End
+                                    <input id="calendar-time-end-input" type="time" />
+                                </label>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="calendar-filter-actions">
+                        <button type="button" id="calendar-filter-apply">Apply filters</button>
+                        <button type="button" id="calendar-filter-clear">Clear filters</button>
+                        <span id="calendar-filter-status" aria-live="polite"></span>
+                    </div>
+                </details>
+                <div class="legend-section legend-category-section">
+                    <div class="legend-items" id="calendar-legend-items"></div>
+                </div>
             </aside>
-            <button type="button" id="legend-visibility-toggle" class="legend-toggle-button" aria-expanded="true">
-                Show legend
+            <button type="button" id="legend-visibility-toggle" class="legend-toggle-button" aria-expanded="true" aria-label="Open calendar tools" title="Open calendar tools">
+                <i class="fas fa-sliders" aria-hidden="true"></i>
+                <span class="sr-only">Open calendar tools</span>
             </button>
         `;
     }

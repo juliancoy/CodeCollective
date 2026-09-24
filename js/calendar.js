@@ -12,6 +12,8 @@ let calendarDisplayEvents = [];
 let hoverPreviewPanel = null;
 let eventInfoModal = null;
 let showExcludedEvents = false;
+let summarizeBusyDays = false;
+let hideWorkingHours = false;
 let textSearchQuery = '';
 let searchUrlSyncTimer = null;
 let filterApplyTimer = null;
@@ -54,6 +56,8 @@ const LEGEND_HIDDEN_QUERY_PARAM = 'lh';
 const LEGEND_TAG_COLORS_QUERY_PARAM = 'lc';
 const LEGEND_DAY_IMAGES_QUERY_PARAM = 'li';
 const LEGEND_CLICK_ACTION_QUERY_PARAM = 'la';
+const LEGEND_SUMMARIZE_DAYS_QUERY_PARAM = 'ls';
+const LEGEND_HIDE_WORK_HOURS_QUERY_PARAM = 'lw';
 const LEGEND_TAGS_SEPARATOR = '.';
 const LEGEND_NO_TAGS_VALUE = '__none__';
 const FEATURED_SOURCE_URLS = new Set([
@@ -105,6 +109,8 @@ function getLegendQueryStateFromUrl() {
     hidden: parseBooleanQueryFlag(params.get(LEGEND_HIDDEN_QUERY_PARAM)),
     useTagColors: parseBooleanQueryFlag(params.get(LEGEND_TAG_COLORS_QUERY_PARAM)),
     showDayBackgrounds: parseBooleanQueryFlag(params.get(LEGEND_DAY_IMAGES_QUERY_PARAM)),
+    summarizeBusyDays: parseBooleanQueryFlag(params.get(LEGEND_SUMMARIZE_DAYS_QUERY_PARAM)),
+    hideWorkingHours: parseBooleanQueryFlag(params.get(LEGEND_HIDE_WORK_HOURS_QUERY_PARAM)),
     eventClickAction: clickAction || null
   };
 }
@@ -143,6 +149,18 @@ function syncLegendStateToUrl(state) {
     url.searchParams.set(LEGEND_DAY_IMAGES_QUERY_PARAM, nextState.showDayBackgrounds ? '1' : '0');
   } else {
     url.searchParams.delete(LEGEND_DAY_IMAGES_QUERY_PARAM);
+  }
+
+  if (typeof nextState.summarizeBusyDays === 'boolean') {
+    url.searchParams.set(LEGEND_SUMMARIZE_DAYS_QUERY_PARAM, nextState.summarizeBusyDays ? '1' : '0');
+  } else {
+    url.searchParams.delete(LEGEND_SUMMARIZE_DAYS_QUERY_PARAM);
+  }
+
+  if (typeof nextState.hideWorkingHours === 'boolean') {
+    url.searchParams.set(LEGEND_HIDE_WORK_HOURS_QUERY_PARAM, nextState.hideWorkingHours ? '1' : '0');
+  } else {
+    url.searchParams.delete(LEGEND_HIDE_WORK_HOURS_QUERY_PARAM);
   }
 
   if (nextState.eventClickAction) url.searchParams.set(LEGEND_CLICK_ACTION_QUERY_PARAM, String(nextState.eventClickAction));
@@ -238,6 +256,28 @@ function getDateKeyInTimeZone(dateInput, timeZone = getActiveTimeZone()) {
   const values = getDatePartsInTimeZone(dateInput, timeZone);
   if (!values) return '';
   return `${values.year}-${values.month}-${values.day}`;
+}
+
+function getDateTimePartsInTimeZone(dateInput, timeZone = getActiveTimeZone()) {
+  if (!dateInput) return null;
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  if (isNaN(date)) return null;
+  const formatter = getCachedDateTimeFormatter('en-US', {
+    timeZone,
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  });
+  const parts = formatter.formatToParts(date);
+  const values = {};
+  parts.forEach(part => {
+    if (part.type !== 'literal') values[part.type] = part.value;
+  });
+  const hour = Number(values.hour);
+  const minute = Number(values.minute);
+  if (!values.weekday || Number.isNaN(hour) || Number.isNaN(minute)) return null;
+  return { weekday: values.weekday, hour, minute };
 }
 
 function formatDateWithTimeZone(dateInput, options) {
@@ -804,6 +844,8 @@ function getLegendPrefs(categoryMap) {
     useTagColors: true,
     showDayBackgrounds: true,
     showExcludedEvents: false,
+    summarizeBusyDays: false,
+    hideWorkingHours: false,
     eventClickAction: 'open_page',
     selectedTags: defaultTags,
     mapId: categoryMap?.id || categoryMapConfig.default_map
@@ -823,6 +865,8 @@ function getLegendPrefs(categoryMap) {
         useTagColors: parsed.useTagColors !== false,
         showDayBackgrounds: parsed.showDayBackgrounds !== false,
         showExcludedEvents: parsed.showExcludedEvents === true,
+        summarizeBusyDays: parsed.summarizeBusyDays === true,
+        hideWorkingHours: parsed.hideWorkingHours === true,
         eventClickAction: parsed.eventClickAction || defaults.eventClickAction,
         selectedTags,
         mapId: storedMapId
@@ -839,6 +883,8 @@ function getLegendPrefs(categoryMap) {
   if (typeof queryState.useTagColors === 'boolean') prefs.useTagColors = queryState.useTagColors;
   if (typeof queryState.showDayBackgrounds === 'boolean') prefs.showDayBackgrounds = queryState.showDayBackgrounds;
   if (typeof queryState.showExcludedEvents === 'boolean') prefs.showExcludedEvents = queryState.showExcludedEvents;
+  if (typeof queryState.summarizeBusyDays === 'boolean') prefs.summarizeBusyDays = queryState.summarizeBusyDays;
+  if (typeof queryState.hideWorkingHours === 'boolean') prefs.hideWorkingHours = queryState.hideWorkingHours;
   if (queryState.eventClickAction) prefs.eventClickAction = queryState.eventClickAction;
 
   return prefs;
@@ -861,6 +907,8 @@ function saveLegendPrefs() {
     useTagColors: !document.body.classList.contains('tags-disabled'),
     showDayBackgrounds: !document.body.classList.contains('day-backgrounds-disabled'),
     showExcludedEvents,
+    summarizeBusyDays,
+    hideWorkingHours,
     eventClickAction: getEventClickAction(),
     selectedTags: Array.from(activeTagSlugs),
     mapId: activeCategoryMap?.id || categoryMapConfig.default_map
@@ -938,6 +986,8 @@ function buildLegend(categoryMap, options = {}) {
   const categories = activeCategoryMap.categories || [];
   activeTagSlugs = new Set(getValidSelectedTags(prefs.selectedTags, activeCategoryMap));
   showExcludedEvents = prefs.showExcludedEvents === true;
+  summarizeBusyDays = prefs.summarizeBusyDays === true;
+  hideWorkingHours = prefs.hideWorkingHours === true;
 
   const legendItems = document.getElementById('calendar-legend-items');
   if (!legendItems || !Array.isArray(categories)) {
@@ -954,6 +1004,7 @@ function buildLegend(categoryMap, options = {}) {
     .map(map => `<option value="${map.id}" ${map.id === activeCategoryMap.id ? 'selected' : ''}>${map.label}</option>`)
     .join('');
   controls.innerHTML = `
+    <div class="legend-section-title">Display</div>
     <label class="legend-map-picker">
       <span class="legend-text">Lenses</span>
       <select id="legend-map-select">${mapOptions}</select>
@@ -975,6 +1026,14 @@ function buildLegend(categoryMap, options = {}) {
       <input type="checkbox" id="toggle-day-backgrounds" ${prefs.showDayBackgrounds ? 'checked' : ''} />
       <span class="legend-text">Show day images</span>
     </label>
+    <label class="legend-item legend-toggle">
+      <input type="checkbox" id="toggle-busy-day-summary" ${summarizeBusyDays ? 'checked' : ''} />
+      <span class="legend-text">Summarize busy days</span>
+    </label>
+    <label class="legend-item legend-toggle">
+      <input type="checkbox" id="toggle-working-hours" ${hideWorkingHours ? 'checked' : ''} />
+      <span class="legend-text">Hide 9-5 Mon-Fri</span>
+    </label>
     <label class="legend-item legend-toggle legend-excluded-toggle">
       <input type="checkbox" id="toggle-excluded-events" ${showExcludedEvents ? 'checked' : ''} />
       <span class="legend-text">Show excluded in grey</span>
@@ -982,7 +1041,6 @@ function buildLegend(categoryMap, options = {}) {
     <div class="legend-actions">
       <button type="button" class="legend-action" data-action="all">Select all</button>
       <button type="button" class="legend-action" data-action="none">Select none</button>
-      <button type="button" class="legend-action" data-action="hide">Hide legend</button>
     </div>
   `;
   legendItems.appendChild(controls);
@@ -1010,6 +1068,10 @@ function buildLegend(categoryMap, options = {}) {
     });
   }
 
+  const categoryHeading = document.createElement('div');
+  categoryHeading.className = 'legend-section-title';
+  categoryHeading.textContent = activeCategoryMap.individualTags ? 'Visible Tags' : 'Visible Categories';
+  legendItems.appendChild(categoryHeading);
   legendItems.appendChild(list);
 
   const tagSearchInput = document.getElementById('legend-tag-search-input');
@@ -1045,6 +1107,17 @@ function buildLegend(categoryMap, options = {}) {
       refreshCalendarForVisualPreferenceChange();
       return;
     }
+    if (event.target.matches('#toggle-busy-day-summary')) {
+      summarizeBusyDays = event.target.checked;
+      saveLegendPrefs();
+      updateCalendarEventsForCurrentRange();
+      return;
+    }
+    if (event.target.matches('#toggle-working-hours')) {
+      hideWorkingHours = event.target.checked;
+      applyTagFilters();
+      return;
+    }
     if (event.target.matches('#toggle-excluded-events')) {
       showExcludedEvents = event.target.checked;
       applyTagFilters();
@@ -1063,8 +1136,6 @@ function buildLegend(categoryMap, options = {}) {
       setLegendCheckboxes(true);
     } else if (action === 'none') {
       setLegendCheckboxes(false);
-    } else if (action === 'hide') {
-      setLegendVisibility(true);
     }
   };
 
@@ -1072,6 +1143,12 @@ function buildLegend(categoryMap, options = {}) {
   if (visibilityToggle) {
     visibilityToggle.onclick = () => {
       setLegendVisibility(false);
+    };
+  }
+  const closeButton = document.getElementById('legend-close-button');
+  if (closeButton) {
+    closeButton.onclick = () => {
+      setLegendVisibility(true);
     };
   }
 
@@ -1099,8 +1176,9 @@ function setLegendVisibility(hidden, options = {}) {
   document.body.classList.toggle('legend-hidden', hidden);
   const toggleButton = document.getElementById('legend-visibility-toggle');
   if (toggleButton) {
-    toggleButton.textContent = hidden ? 'Show legend' : 'Hide legend';
     toggleButton.setAttribute('aria-expanded', hidden ? 'false' : 'true');
+    toggleButton.setAttribute('aria-label', hidden ? 'Open calendar tools' : 'Calendar tools open');
+    toggleButton.setAttribute('title', hidden ? 'Open calendar tools' : 'Calendar tools open');
   }
   if (options.save !== false) {
     saveLegendPrefs();
@@ -1629,14 +1707,34 @@ function eventMatchesCalendarTimeFilter(event) {
   });
 }
 
+function getEventStartDate(event) {
+  const rawStart = event?.start || event?.startDate || event?.date || event?.start_time || event?.startTime;
+  if (!rawStart) return null;
+  const date = rawStart instanceof Date ? rawStart : new Date(rawStart);
+  return isNaN(date) ? null : date;
+}
+
+function eventMatchesWorkingHoursFilter(event) {
+  if (!hideWorkingHours) return true;
+  const parts = getDateTimePartsInTimeZone(getEventStartDate(event), getActiveTimeZone());
+  if (!parts) return true;
+  const weekday = String(parts.weekday || '').toLowerCase();
+  const isWeekday = ['mon', 'tue', 'wed', 'thu', 'fri'].includes(weekday);
+  return !(isWeekday && parts.hour >= 9 && parts.hour < 17);
+}
+
 function filterEventsByAdvancedFilters(events) {
-  if (!hasAdvancedFilterControls()) return events;
-  return events.filter(event => eventMatchesProximityFilter(event) && eventMatchesCalendarTimeFilter(event));
+  return events.filter(event => (
+    eventMatchesWorkingHoursFilter(event)
+    && (!hasAdvancedFilterControls() || (eventMatchesProximityFilter(event) && eventMatchesCalendarTimeFilter(event)))
+  ));
 }
 
 function filterRawEventsByAdvancedFilters(events) {
-  if (!hasAdvancedFilterControls()) return events;
-  return events.filter(event => eventMatchesProximityFilter(event) && eventMatchesCalendarTimeFilter(event));
+  return events.filter(event => (
+    eventMatchesWorkingHoursFilter(event)
+    && (!hasAdvancedFilterControls() || (eventMatchesProximityFilter(event) && eventMatchesCalendarTimeFilter(event)))
+  ));
 }
 
 function updateAdvancedFilterStatus(visibleCount) {
@@ -1661,6 +1759,9 @@ function updateAdvancedFilterStatus(visibleCount) {
   }
   if (timeFilter.timeStart || timeFilter.timeEnd) {
     activeParts.push(`times ${timeFilter.timeStart || 'any'} to ${timeFilter.timeEnd || 'any'}`);
+  }
+  if (hideWorkingHours) {
+    activeParts.push('outside 9-5 Mon-Fri');
   }
 
   status.textContent = activeParts.length
@@ -1809,6 +1910,10 @@ function buildOverflowSummaryEvent(dateKey, dayEvents, hiddenCount) {
 }
 
 function buildCalendarEventsForRange(events, rangeStart, rangeEnd) {
+  if (!summarizeBusyDays) {
+    return sortCalendarEventsByStart(events.filter(event => eventOverlapsRange(event, rangeStart, rangeEnd)));
+  }
+
   const grouped = new Map();
 
   sortCalendarEventsByStart(events)
@@ -2769,7 +2874,7 @@ function initializeCalendar(events) {
       meridiem: 'short'
     },
     height: 'auto',
-    dayMaxEvents: 6, // Allow "more" link when too many events
+    dayMaxEvents: false,
     dayCellDidMount: function (info) {
       if (document.body.classList.contains('day-backgrounds-disabled')) {
         return;
