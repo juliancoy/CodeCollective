@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="$ROOT_DIR/.cloudflare/site"
-PORTAL_WEB_DIR="$ROOT_DIR/portal/web"
+PORTAL_WEB_DIR="${PORTAL_WEB_DIR:-$ROOT_DIR/portal/web}"
 MAX_ASSET_MB="${MAX_ASSET_MB:-25}"
 VERBOSE_BUILD="${VERBOSE_BUILD:-0}"
 STRICT_TS="${STRICT_TS:-0}"
