@@ -197,6 +197,7 @@ def start_portal(prefix: str, network_name: str) -> None:
         raise RuntimeError(f"Could not load {portal_run_path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    module.pidp_dir = (root.parent / "pidp").resolve()
     module.run(prefix, network_name)
 
 

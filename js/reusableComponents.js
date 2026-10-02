@@ -14,7 +14,7 @@ class OurHeader extends HTMLElement {
                             id="portal-login-button"
                             class="nav-login-button"
                             href="/p/"
-                            data-pidp-base="https://id.codecollective.us"
+                            data-pidp-base="/pidp"
                             aria-label="Log in to the portal"
                         >Login</a>
                     </div>
@@ -161,7 +161,7 @@ const STANDARD_NAV_LINKS = [
         id: 'portal-login-button',
         className: 'nav-login-button',
         ariaLabel: 'Log in to the portal',
-        pidpBase: 'https://id.codecollective.us',
+        pidpBase: '/pidp',
     },
 ];
 
@@ -218,10 +218,10 @@ function configurePortalLogin() {
             loginButton.removeAttribute('aria-haspopup');
             return;
         }
-        const pidpBase = loginButton.getAttribute('data-pidp-base') || 'https://id.codecollective.us';
+        const pidpBase = loginButton.getAttribute('data-pidp-base') || '/pidp';
         const nextUrl = `${window.location.origin}/p/auth/callback?next=/id`;
-        const loginUrl = `${pidpBase.replace(/\/+$/, '')}/app/login?next=${encodeURIComponent(nextUrl)}`;
-        loginButton.setAttribute('href', loginUrl);
+        const loginHref = loginUrl(pidpBase, nextUrl);
+        loginButton.setAttribute('href', loginHref);
         loginButton.setAttribute('aria-haspopup', 'dialog');
         if (loginButton.dataset.portalLoginConfigured === 'true') {
             return;
@@ -293,7 +293,7 @@ async function hydratePortalNavUser() {
     const loginButtons = document.querySelectorAll('.nav-login-button[data-pidp-base]');
     if (!loginButtons.length) return;
 
-    const pidpBase = loginButtons[0].getAttribute('data-pidp-base') || 'https://id.codecollective.us';
+    const pidpBase = loginButtons[0].getAttribute('data-pidp-base') || '/pidp';
     const base = pidpBase.replace(/\/+$/, '');
 
     try {
@@ -320,9 +320,11 @@ async function hydratePortalNavUser() {
     }
 }
 
-function loginUrl(pidpBase, path, nextUrl) {
+function loginUrl(pidpBase, nextUrl, provider) {
     const base = pidpBase.replace(/\/+$/, '');
-    return `${base}${path}?next=${encodeURIComponent(nextUrl)}`;
+    const params = new URLSearchParams({ app: 'code-collective', next: nextUrl });
+    if (provider) params.set('provider', provider);
+    return `${base}/auth/sso/start?${params.toString()}`;
 }
 
 function ensureLoginModal() {
@@ -367,9 +369,9 @@ function ensureLoginModal() {
 
 function openLoginModal(pidpBase, nextUrl, trigger) {
     const modal = ensureLoginModal();
-    modal.querySelector('[data-login-provider="google"]').href = loginUrl(pidpBase, '/auth/google/login', nextUrl);
-    modal.querySelector('[data-login-provider="github"]').href = loginUrl(pidpBase, '/auth/github/login', nextUrl);
-    modal.querySelector('[data-login-provider="password"]').href = loginUrl(pidpBase, '/app/login', nextUrl);
+    modal.querySelector('[data-login-provider="google"]').href = loginUrl(pidpBase, nextUrl, 'google');
+    modal.querySelector('[data-login-provider="github"]').href = loginUrl(pidpBase, nextUrl, 'github');
+    modal.querySelector('[data-login-provider="password"]').href = loginUrl(pidpBase, nextUrl);
     modal._loginTrigger = trigger;
     modal.hidden = false;
     document.body.classList.add('login-modal-open');
