@@ -17,8 +17,9 @@ phases:
       - cd ..
       - mkdir -p pipeline-output/source
       - mkdir -p pipeline-output/r8-rowhome
-      - rsync -a --exclude pipeline-output ./ pipeline-output/source/
+      - rsync -a --exclude pipeline-output --exclude .git ./ pipeline-output/source/
       - rsync -a r8-rowhome/dist/ pipeline-output/r8-rowhome/
+      - test -z "$(find pipeline-output -name .git -print -quit)"
 
 artifacts:
   base-directory: pipeline-output
