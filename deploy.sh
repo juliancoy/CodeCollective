@@ -300,6 +300,7 @@ const env = process.env;
 const config = {
   "$schema": "node_modules/wrangler/config-schema.json",
   name: env.PIDP_WORKER_NAME,
+  limits: { cpu_ms: 1000 },
   main: "src/index.ts",
   version_metadata: { binding: "CF_VERSION_METADATA" },
   compatibility_date: "2026-06-03",
