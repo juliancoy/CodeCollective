@@ -19,7 +19,8 @@ from pathlib import Path
 
 
 root = Path(os.path.abspath(os.path.dirname(__file__)))
-sys.path.append(str(root / "portal"))
+portal_dir = Path(os.environ.get("ORGPORTAL_DIR", root.parent / "OrgPortal")).resolve()
+sys.path.append(str(portal_dir))
 
 import docker_utils
 
@@ -191,7 +192,7 @@ def start_datacenter_helpers(args: argparse.Namespace) -> None:
 
 
 def start_portal(prefix: str, network_name: str) -> None:
-    portal_run_path = root / "portal" / "run.py"
+    portal_run_path = portal_dir / "run.py"
     spec = importlib.util.spec_from_file_location("codecollective_portal_run", portal_run_path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Could not load {portal_run_path}")

@@ -4,7 +4,7 @@ This document describes a Cloudflare-native chat architecture for Code Collectiv
 
 ## Current Implementation
 
-The first Cloudflare-native backend boundary is implemented in `portal/chat-worker/`.
+The first Cloudflare-native backend boundary is implemented in `../OrgPortal/chat-worker/`.
 
 - Hono Worker API for authenticated chat routes.
 - D1 migration for conversations, members, messages, attachments, and receipts.
@@ -489,7 +489,7 @@ Long term:
 
 ## Live Smoke Test
 
-The native chat UI has a Selenium smoke test in `portal/web/scripts/selenium-chat-smoke.py` and a Docker wrapper in `portal/web/scripts/run-selenium-chat-smoke.sh`.
+The native chat UI has a Selenium smoke test in `../OrgPortal/web/scripts/selenium-chat-smoke.py` and a Docker wrapper in `../OrgPortal/web/scripts/run-selenium-chat-smoke.sh`.
 
 The smoke test:
 
@@ -510,9 +510,9 @@ Required environment variables:
 - `CHAT_ROBOT_B_EMAIL`
 - `CHAT_ROBOT_B_PASSWORD`
 
-For local development, store these in `portal/web/.env.selenium-chat`. That file is intentionally git-ignored and the Docker wrapper loads it automatically.
+For local development, store these in `../OrgPortal/web/.env.selenium-chat`. That file is intentionally git-ignored and the Docker wrapper loads it automatically.
 
-The live Code Collective smoke robots are pre-provisioned and their local test configuration is stored in `portal/web/.env.selenium-chat`. That file also enables `CHAT_ROBOTS_PREPROVISIONED=1` and points the test at the current live portal, PIdP, and org API origins.
+The live Code Collective smoke robots are pre-provisioned and their local test configuration is stored in `../OrgPortal/web/.env.selenium-chat`. That file also enables `CHAT_ROBOTS_PREPROVISIONED=1` and points the test at the current live portal, PIdP, and org API origins.
 
 For live smoke testing, PIdP exposes a guarded `POST /auth/smoke-token` endpoint. It requires the Cloudflare `SMOKE_TEST_SECRET` and only mints a normal session cookie for an already-active user. This exists to keep browser UI smoke tests reliable when ordinary credential auth is blocked by live edge protections; it is not a public registration or impersonation path.
 
@@ -530,21 +530,21 @@ Useful optional environment variables:
 Run with Docker:
 
 ```sh
-cd portal/web
+cd ../OrgPortal/web
 npm run test:chat:selenium:docker
 ```
 
 Run against an already-running Selenium server:
 
 ```sh
-cd portal/web
+cd ../OrgPortal/web
 npm run test:chat:selenium
 ```
 
 Latest live verification:
 
 - Date: 2026-06-07.
-- Command: `npm run test:chat:selenium:docker` from `portal/web`.
+- Command: `npm run test:chat:selenium:docker` from `../OrgPortal/web`.
 - Target: `https://codecollective.us/p`.
 - Result: passed.
 - Evidence: screenshots written under `/tmp/codecollective-chat-selenium-2def1bd3`.
@@ -559,7 +559,7 @@ Latest live WebSocket verification:
 
 ## Completed Backend Preparation
 
-- Created `portal/chat-worker/` as a separate Cloudflare Worker boundary.
+- Created `../OrgPortal/chat-worker/` as a separate Cloudflare Worker boundary.
 - Created remote D1 database `chat`.
 - Applied D1 migrations for conversations, members, messages, attachments, receipts, idempotency, and sequence sync.
 - Deployed the worker to `https://chat-codecollective.jcloiacon.workers.dev`.

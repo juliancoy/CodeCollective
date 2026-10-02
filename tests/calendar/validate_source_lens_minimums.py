@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Ensure each Baltimore source has at least 1 sector tag and 1 Maslow tag."""
+"""Ensure each Baltimore source has tags represented in both lens maps."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -10,41 +11,26 @@ if str(ROOT) not in sys.path:
 
 from baltimore.event_sources import sources
 
-MASLOW_TAGS = {
-    "Food",
-    "Water",
-    "Shelter",
-    "Clothing",
-    "Health",
-    "Safety",
-    "Belonging",
-    "Esteem",
-    "Growth",
-    "Purpose",
-}
 
-SECTOR_TAGS = {
-    "Technology",
-    "Education",
-    "Entrepreneurship",
-    "Economics",
-    "Finance",
-    "Health",
-    "Politics",
-    "Culture",
-    "Faith",
-    "Environment",
-    "Makerspace",
-    "Other",
-}
+def _load_lens_tags(path: Path) -> set[str]:
+    data = json.loads(path.read_text())
+    tags = set()
+    for category in data.get("categories", []):
+        label = str(category.get("label", "")).strip()
+        if label and label != "Other":
+            tags.add(label)
+        tags.update(category.get("matches", []))
+    return tags
 
 
 def main() -> int:
+    sector_tags = _load_lens_tags(ROOT / "data/category_maps/community_sectors.json")
+    maslow_tags = _load_lens_tags(ROOT / "data/category_maps/maslow_needs.json")
     failures = []
     for source in sources:
         tags = set(source.get("tags", []))
-        has_sector = bool(tags & SECTOR_TAGS)
-        has_maslow = bool(tags & MASLOW_TAGS)
+        has_sector = bool(tags & sector_tags)
+        has_maslow = bool(tags & maslow_tags)
         if not has_sector or not has_maslow:
             failures.append((source.get("name") or source.get("url"), has_sector, has_maslow))
 

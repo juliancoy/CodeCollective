@@ -3,10 +3,17 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="$ROOT_DIR/.cloudflare/site"
-PORTAL_WEB_DIR="${PORTAL_WEB_DIR:-$ROOT_DIR/portal/web}"
+ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
+PORTAL_WEB_DIR="$ORGPORTAL_DIR/web"
 MAX_ASSET_MB="${MAX_ASSET_MB:-25}"
 VERBOSE_BUILD="${VERBOSE_BUILD:-0}"
 STRICT_TS="${STRICT_TS:-0}"
+
+if [[ ! -d "$PORTAL_WEB_DIR" ]]; then
+  echo "[cloudflare] error: expected OrgPortal web checkout at $PORTAL_WEB_DIR" >&2
+  echo "[cloudflare] set ORGPORTAL_DIR to the OrgPortal repository path" >&2
+  exit 1
+fi
 
 echo "[cloudflare] preparing output directory: $OUT_DIR"
 rm -rf "$OUT_DIR"
@@ -33,6 +40,7 @@ rsync -a \
   --exclude='.github/' \
   --exclude='.cloudflare/' \
   --exclude='.docker-local/' \
+  --exclude='OrgPortal/' \
   --exclude='portal/' \
   --exclude='portal_src/' \
   --exclude='r8-rowhome/' \
@@ -69,17 +77,18 @@ rsync -a \
 echo "[cloudflare] building portal for /p/"
 pushd "$PORTAL_WEB_DIR" >/dev/null
 PORTAL_PIDP_BASE_URL="${VITE_PIDP_BASE_URL:-/pidp}"
+PORTAL_CHAT_API_BASE_URL="${VITE_CHAT_API_BASE_URL:-/api/chat}"
 if [[ "$STRICT_TS" == "1" ]]; then
   echo "[cloudflare] strict mode: running TypeScript + Vite build"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npm run build
+  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npm run build
 else
   echo "[cloudflare] deploy mode: running Vite build (TypeScript checks run separately in CI)"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npx vite build
+  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npx vite build
 fi
 popd >/dev/null
 
 if [[ ! -f "$PORTAL_WEB_DIR/dist/index.html" ]]; then
-  echo "[cloudflare] error: expected portal/web/dist/index.html after build" >&2
+  echo "[cloudflare] error: expected OrgPortal web dist/index.html after build" >&2
   exit 1
 fi
 
@@ -91,15 +100,15 @@ echo "[cloudflare] building portal for tenant root mounts"
 pushd "$PORTAL_WEB_DIR" >/dev/null
 if [[ "$STRICT_TS" == "1" ]]; then
   echo "[cloudflare] strict mode: running TypeScript + Vite build for tenant root mounts"
-  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/mobile-update.json npm run build
+  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/mobile-update.json npm run build
 else
   echo "[cloudflare] deploy mode: running Vite build for tenant root mounts"
-  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL=/api/chat VITE_UPDATE_MANIFEST_URL=/mobile-update.json npx vite build
+  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/mobile-update.json npx vite build
 fi
 popd >/dev/null
 
 if [[ ! -f "$PORTAL_WEB_DIR/dist/index.html" ]]; then
-  echo "[cloudflare] error: expected portal/web/dist/index.html after tenant root build" >&2
+  echo "[cloudflare] error: expected OrgPortal web dist/index.html after tenant root build" >&2
   exit 1
 fi
 

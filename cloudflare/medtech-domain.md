@@ -60,8 +60,8 @@ Cloudflare documents early [SNI mismatch 403 responses](https://developers.cloud
 Focused checks, run inside Docker:
 
 - Portal: the `portalFeatures`, `pidp`, and `medtechCommunity` Vitest suites and
-  `npm run build` in `portal/web`.
-- Identity: `npm run typecheck` and `npm test` in `portal/pidp/serverless`.
+  `npm run build` in `../OrgPortal/web`.
+- Identity: `npm run typecheck` and `npm test` in `../OrgPortal/pidp/serverless`.
 - Site routing and cookies: `node --test cloudflare/medtech-domain.test.mjs`.
 - Release: shared site build, Wrangler dry runs, and desktop/mobile browser
   checks on the HTTPS custom domain.

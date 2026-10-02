@@ -4,15 +4,11 @@ on:
   pull_request:
     paths:
       - ".github/workflows/android.yml"
-      - "portal"
-      - "portal/web/**"
   push:
     branches:
       - main
     paths:
       - ".github/workflows/android.yml"
-      - "portal"
-      - "portal/web/**"
   workflow_dispatch:
     inputs:
       release:
@@ -39,6 +35,7 @@ env:
   PROD_PIDP_API_ORIGIN: "https://id.codecollective.us"
   PROD_PIDP_PROXY_ORIGIN: "https://pidp-codecollective.jcloiacon.workers.dev"
   PROD_ORG_API_ORIGIN: "https://org-codecollective.jcloiacon.workers.dev"
+  ORGPORTAL_DIR: "OrgPortal"
 
 jobs:
   debug-build:
@@ -51,12 +48,18 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: portal/web/package-lock.json
+          cache-dependency-path: ${{ env.ORGPORTAL_DIR }}/web/package-lock.json
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -68,11 +71,11 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install portal dependencies
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         run: npm ci
 
       - name: Build debug APK
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         env:
           VITE_PIDP_BASE_URL: ${{ env.PROD_PIDP_API_ORIGIN }}
         run: npm run android:apk:debug
@@ -81,7 +84,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: orgportal-debug-apk
-          path: portal/web/android/app/build/outputs/apk/debug/*.apk
+          path: ${{ env.ORGPORTAL_DIR }}/web/android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
   release-build:
@@ -96,13 +99,19 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Check out OrgPortal
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: ${{ env.ORGPORTAL_DIR }}
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: |
-            portal/web/package-lock.json
+            ${{ env.ORGPORTAL_DIR }}/web/package-lock.json
             r8-rowhome/package-lock.json
 
       - name: Set up Java
@@ -127,11 +136,11 @@ jobs:
           test -n "$ANDROID_KEY_PASSWORD"
 
       - name: Install portal dependencies
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         run: npm ci
 
       - name: Build signed release APK and AAB
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -141,7 +150,7 @@ jobs:
         run: npm run android:ci:release
 
       - name: Stage self-hosted Android update files
-        working-directory: portal/web
+        working-directory: ${{ env.ORGPORTAL_DIR }}/web
         run: npm run android:publish:static
 
       - name: Upload release artifacts
@@ -149,12 +158,12 @@ jobs:
         with:
           name: orgportal-android-release
           path: |
-            portal/web/android/app/build/outputs/apk/release/*.apk
-            portal/web/android/app/build/outputs/bundle/release/*.aab
-            portal/static/orgportal-android-release.apk
-            portal/static/mobile-update.json
-            portal/web/public/orgportal-android-release.apk
-            portal/web/public/mobile-update.json
+            ${{ env.ORGPORTAL_DIR }}/web/android/app/build/outputs/apk/release/*.apk
+            ${{ env.ORGPORTAL_DIR }}/web/android/app/build/outputs/bundle/release/*.aab
+            ${{ env.ORGPORTAL_DIR }}/static/orgportal-android-release.apk
+            ${{ env.ORGPORTAL_DIR }}/static/mobile-update.json
+            ${{ env.ORGPORTAL_DIR }}/web/public/orgportal-android-release.apk
+            ${{ env.ORGPORTAL_DIR }}/web/public/mobile-update.json
           if-no-files-found: error
 
       - name: Install r8-rowhome dependencies

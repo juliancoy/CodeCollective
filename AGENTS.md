@@ -2,25 +2,25 @@
 
 This repository has one canonical Cloudflare frontend deployment:
 
-- `codecollective-site` is the main site. Its build script copies the legacy static site into `.cloudflare/site`, builds `portal/web` with a `/p/` base, embeds that build at `/p/`, and also builds `r8-rowhome` at `/r8-rowhome/`.
+- `codecollective-site` is the main site. Its build script copies the legacy static site into `.cloudflare/site`, builds the sibling OrgPortal checkout with a `/p/` base, embeds that build at `/p/`, and also builds `r8-rowhome` at `/r8-rowhome/`.
 
 The former `codecollective-portal` standalone Worker was deleted on 2026-09-09. Do not recreate it. The only supported portal URL is `https://codecollective.us/p/`.
 
-The root `README.md` summarizes the current frontend deployment. Use the more detailed validation, submodule, and handoff requirements in this file when deploying.
+The root `README.md` summarizes the current frontend deployment. Use the more detailed validation and handoff requirements in this file when deploying.
 
-## Critical submodule check
+## OrgPortal checkout
 
-`portal/` and `r8-rowhome/` are Git submodules. Before building or deploying, always compare each checked-out submodule commit with the commit recorded by the root repository:
+OrgPortal is not vendored in CodeCollective. Keep a sibling checkout at `../OrgPortal`, or set `ORGPORTAL_DIR` to the intended OrgPortal repository path before building or deploying:
 
 ```bash
 git status --short --branch
-git submodule status
-git -C portal status --short --branch
+git -C ../OrgPortal status --short --branch
 git -C r8-rowhome status --short --branch
-git ls-tree HEAD portal r8-rowhome
+git submodule status
+git ls-tree HEAD r8-rowhome
 ```
 
-A leading `+` in `git submodule status`, or `M portal`/`M r8-rowhome` in the root status, means the checked-out commit differs from the root pointer. Do not run `git submodule update`, reset, or switch commits just to make the tree clean: that can silently deploy an older or different product version. Establish which workspace state the user wants and deploy that exact state. Preserve unrelated user changes.
+`r8-rowhome/` remains a Git submodule. A leading `+` in `git submodule status`, or `M r8-rowhome` in the root status, means the checked-out commit differs from the root pointer. Do not run `git submodule update`, reset, or switch commits just to make the tree clean: that can silently deploy an older or different product version. Establish which workspace state the user wants and deploy that exact state. Preserve unrelated user changes.
 
 At the deployment performed on 2026-09-09, the requested workspace state was deliberately deployed as checked out:
 
@@ -29,7 +29,7 @@ At the deployment performed on 2026-09-09, the requested workspace state was del
 - r8-rowhome checkout: `0378b74d928efe8138202c36b6ff38cc05cf6b3f`
 - root-recorded r8-rowhome pointer: `52a73c2314d7ddbbafad698aafa46d6f072c7d12`
 
-Those hashes document that deployment; they are not instructions to force future checkouts back to those versions.
+Those hashes document that deployment; they are not instructions to force future checkouts back to those versions. New OrgPortal changes should be committed and pushed in the OrgPortal repository itself. CodeCollective should not carry a submodule pointer for OrgPortal.
 
 ## Validation and deployment
 
@@ -43,7 +43,7 @@ npx wrangler whoami
 Run the relevant tests:
 
 ```bash
-npm --prefix portal/web test -- --run
+npm --prefix ../OrgPortal/web test -- --run
 node --test cloudflare/*.test.mjs
 npm --prefix r8-rowhome test -- --run
 ```
@@ -56,9 +56,9 @@ npx wrangler deploy --dry-run
 npx wrangler deploy
 ```
 
-Do not deploy `portal/web` as a separate frontend.
+Do not deploy OrgPortal web as a separate frontend from this repository.
 
-If changes touch `portal/org-worker`, `portal/chat-worker`, or `portal/pidp/serverless`, treat their migrations, secrets, tests, and Worker deployments as separate backend work. Do not infer authorization to migrate a production D1 database merely from a request to deploy the site and portal frontend.
+If changes touch `../OrgPortal/org-worker`, `../OrgPortal/chat-worker`, or `../OrgPortal/pidp/serverless`, treat their migrations, secrets, tests, and Worker deployments as separate backend work. Do not infer authorization to migrate a production D1 database merely from a request to deploy the site and portal frontend.
 
 ## Live checks
 
