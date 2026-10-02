@@ -14,13 +14,7 @@ DRY_RUN=0
 PROD_WORKER_NAME="${PROD_WORKER_NAME:-codecollective-site}"
 DEV_WORKER_NAME="${DEV_WORKER_NAME:-codecollective-site-dev}"
 ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
-if [[ -z "${PIDP_DIR:-}" ]]; then
-  if [[ -d "$ROOT_DIR/../pidp/serverless" ]]; then
-    PIDP_DIR="$ROOT_DIR/../pidp/serverless"
-  else
-    PIDP_DIR="$ORGPORTAL_DIR/pidp/serverless"
-  fi
-fi
+PIDP_DIR="${PIDP_DIR:-$ROOT_DIR/../pidp/serverless}"
 ORG_WORKER_DIR="$ORGPORTAL_DIR/org-worker"
 CHAT_WORKER_DIR="$ORGPORTAL_DIR/chat-worker"
 

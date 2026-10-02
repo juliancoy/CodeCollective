@@ -91,6 +91,7 @@ env:
   PROD_CHAT_API_ORIGIN: "https://chat-codecollective.jcloiacon.workers.dev"
   PROD_PORTAL_BASE_URL: "https://codecollective.us/p"
   ORGPORTAL_DIR: "OrgPortal"
+  PIDP_DIR: "${{ github.workspace }}/pidp/serverless"
 
 jobs:
   site-check:
@@ -148,11 +149,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Check out OrgPortal
+      - name: Check out PIdP
         uses: actions/checkout@v4
         with:
-          repository: juliancoy/OrgPortal
-          path: ${{ env.ORGPORTAL_DIR }}
+          repository: juliancoy/pidp
+          path: pidp
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -160,15 +161,15 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install PIdP dependencies
-        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
+        working-directory: ${{ env.PIDP_DIR }}
         run: npm ci
 
       - name: Typecheck PIdP
-        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
+        working-directory: ${{ env.PIDP_DIR }}
         run: npm run typecheck
 
       - name: Test PIdP
-        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
+        working-directory: ${{ env.PIDP_DIR }}
         run: npm test
 
   org-check:
@@ -396,11 +397,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Check out OrgPortal
+      - name: Check out PIdP
         uses: actions/checkout@v4
         with:
-          repository: juliancoy/OrgPortal
-          path: ${{ env.ORGPORTAL_DIR }}
+          repository: juliancoy/pidp
+          path: pidp
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -408,7 +409,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install PIdP dependencies
-        working-directory: ${{ env.ORGPORTAL_DIR }}/pidp/serverless
+        working-directory: ${{ env.PIDP_DIR }}
         run: npm ci
 
       - name: Deploy PIdP Worker
