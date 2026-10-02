@@ -732,6 +732,21 @@ deploy_target() {
     wrangler_args+=("--dry-run")
   fi
 
+  local deploy_config=""
+  if [[ "$label" == "dev" ]]; then
+    deploy_config="$(mktemp "$ROOT_DIR/.wrangler-dev.XXXXXX.toml")"
+    python3 - "$ROOT_DIR/wrangler.toml" "$deploy_config" <<'PYCONFIG'
+import pathlib, re, sys, tomllib
+source = pathlib.Path(sys.argv[1]).read_text()
+content, count = re.subn(r"^routes\s*=\s*\[\s*\n.*?^\]\s*\n", "routes = []\n", source, count=1, flags=re.MULTILINE | re.DOTALL)
+if tomllib.loads(source).get("routes") and count != 1:
+    raise SystemExit("Could not isolate development routes")
+assert not tomllib.loads(content).get("routes")
+pathlib.Path(sys.argv[2]).write_text(content)
+PYCONFIG
+    wrangler_args+=("--config" "$deploy_config")
+  fi
+
   if [[ "$VERBOSE" -eq 1 ]]; then
     (
       cd "$ROOT_DIR"
@@ -775,9 +790,15 @@ deploy_target() {
   local deployed_url
   deployed_url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' "$deploy_log" | tail -n 1 || true)"
   rm -f "$deploy_log"
+  if [[ -n "$deploy_config" ]]; then
+    rm -f "$deploy_config"
+  fi
 
-  if [[ -z "$deployed_url" ]]; then
-    deployed_url="https://${worker_name}.workers.dev"
+  if [[ "$label" == "prod" ]]; then
+    deployed_url="https://codecollective.us"
+  elif [[ -z "$deployed_url" ]]; then
+    echo "[deploy][$label] Wrangler did not report a deployment URL" >&2
+    return 1
   fi
 
   echo "$deployed_url"
