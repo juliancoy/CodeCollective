@@ -15,6 +15,13 @@ import scrape_mtc
 
 ICS_SOURCES = [
     {
+        "url": "https://toollibrary.org/calendar-1",
+        "ics_url": "https://calendar.google.com/calendar/ical/c_34fb0f3ce9af2900c794a17c66706df37d93329303d9aadd1a5f6e2b60294655%40group.calendar.google.com/public/basic.ics",
+        "group_name": "Station North Tool Library",
+        "orgImageUrl": "https://www.google.com/s2/favicons?domain=toollibrary.org&sz=256",
+        "tags": ["Makerspace", "Education", "Community"],
+    },
+    {
         "url": "https://baltimorenode.org/events/",
         "ics_url": "http://www.google.com/calendar/ical/baltimorenode.org_5jbobahkshgj11vut3cndhppoo%40group.calendar.google.com/public/basic.ics",
         "orgImageUrl": "https://www.baltimorenode.org/wp-content/uploads/2013/11/node-logo.png",

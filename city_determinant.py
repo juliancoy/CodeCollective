@@ -233,7 +233,7 @@ def _is_virtual_event(event, full_text):
     if any(keyword in full_text for keyword in _VIRTUAL_KEYWORDS):
         if " in person" not in full_text:
             return True
-    if location_text in {"", "online", "virtual", "remote", "online event", "virtual event"}:
+    if location_text in {"online", "virtual", "remote", "online event", "virtual event"}:
         return True
     return False
 

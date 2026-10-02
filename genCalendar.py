@@ -17,6 +17,7 @@ import scrape_tribe
 import scrape_biotrac
 import scrape_active_data_calendar
 import scrape_web_events
+from dc import scrape_empowerdc
 import scrape_legistar
 import scrape_thread_helpcenter
 import scrape_bniajfi
@@ -528,6 +529,10 @@ def fetch_events_from_source(source, city):
         "web_events_page": (
             "Fetching events from",
             lambda: scrape_web_events.parse_web_events_page(source_url),
+        ),
+        "empowerdc_events": (
+            "Fetching events from",
+            lambda: scrape_empowerdc.scrape(source_url),
         ),
         "legistar": (
             "Fetching events from",

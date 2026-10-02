@@ -1,6 +1,13 @@
 from city_source_taxonomy import apply_city_source_taxonomy
 
 sources = [
+    {"url": "https://luma.com/aibuildclub", "group_name": "AI Build Club DC", "tags": ["Tech Skills", "AI", "Tech Community"]},
+    {"url": "https://www.meetup.com/hac-dc/", "group_name": "HacDC", "tags": ["Makerspace", "Robotics", "Tech Community"]},
+    {"url": "https://www.meetup.com/python-dc/", "group_name": "DC Python", "tags": ["Tech Skills", "Python", "Software Development"]},
+    {"url": "https://dc.ecowomen.org/events", "group_name": "DC EcoWomen", "source_kind": "web_events_page", "tags": ["Environment", "Community Organizing", "Professional Networking"]},
+    {"url": "https://www.eventbrite.com/o/green-drinks-dc-4854453963", "group_name": "Green Drinks DC", "tags": ["Environment", "Climate", "Professional Networking"]},
+    {"url": "https://www.empowerdc.org/events", "group_name": "Empower DC", "source_kind": "empowerdc_events", "tags": ["Shelter", "Community Organizing", "Politics"]},
+    {"url": "https://www.dcmakers.org/events", "group_name": "DC Makers' Guild", "source_kind": "web_events_page", "tags": ["Makerspace", "Culture", "Community"]},
     {"url": "https://www.meetup.com/dc-area-drone-user-group/", "tags": ["Tech Skills", "Robotics"]},
     {"url": "https://www.meetup.com/ai-performance-engineering-washington-dc/", "tags": ["Tech Skills", "AI", "Cloud", "Platform"]},
     {"url": "https://www.meetup.com/lfdt-washington-dc/", "tags": ["Tech Community"]},
@@ -37,6 +44,7 @@ sources = [
     {"url": "https://luma.com/DC2", "tags": ["Tech Community"]},
     {"url": "https://luma.com/girliesintechdinner", "tags": ["Tech Community", "Community Organizing"]},
     {"url": "https://luma.com/ai-discussion-club", "tags": ["Tech Skills", "AI"]},
+    {"url": "https://luma.com/ai-collective-dc", "group_name": "AI Collective DC", "tags": ["Tech Skills", "AI", "Tech Community"]},
     {"url": "https://luma.com/DCTechMeetup", "tags": ["Tech Community"]},
     {"url": "https://luma.com/vcdc", "tags": ["Startup", "Business"]},
     {"url": "https://luma.com/squadra", "tags": ["Tech Skills", "AI"]},
