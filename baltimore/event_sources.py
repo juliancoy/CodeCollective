@@ -3,6 +3,22 @@ from urllib.parse import urlparse
 
 sources = [
     {
+        "name": "CreativeMornings Baltimore",
+        "url": "https://creativemornings.com/cities/bal",
+        "source_kind": "web_events_page",
+        "tags": ["Culture", "Community", "Professional Networking"],
+    },
+    {
+        "name": "CharmBUG",
+        "url": "https://www.meetup.com/charmbug/",
+        "tags": ["Tech Skills", "Software Development", "Tech Community"],
+    },
+    {
+        "name": "Baltimore Tree Trust",
+        "url": "https://www.eventbrite.com/o/baltimore-tree-trust-3252342138",
+        "tags": ["Environment", "Community Organizing", "Education"],
+    },
+    {
         "name": "Baltimore Tech Meetup",
         "url": "https://www.meetup.com/baltimore-tech/events/",
         "tags": ["Economic Development", "Tech Community"],
@@ -423,6 +439,12 @@ sources = [
         "name": "BLK Tech Connect Luma",
         "url": "https://luma.com/blk-tech-connect-baltimore",
         "tags": ["Economic Development", "Tech Community", "Community Organizing"],
+    },
+    {
+        "name": "Palava Hut Events",
+        "group_name": "Palava Hut",
+        "url": "https://luma.com/palavahutevents",
+        "tags": ["Civic Tech", "Tech Community", "Community Organizing"],
     },
     {
         "name": "Charm City JS",
