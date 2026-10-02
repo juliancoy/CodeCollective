@@ -69,3 +69,5 @@ After deploying, verify all three URLs return HTTP 200 and that the asset refere
 - `https://codecollective.us/p/`
 
 Record the main-site Wrangler version ID in the handoff response. The standalone frontend was retired and deleted on 2026-09-09 at portal commit `b01dffaf08059fed0b4232e302c91dc3ac5d4f5d`; do not recreate it unless the user explicitly reverses that decision. The resulting main-site version was `525ee96c-6b11-4539-9657-a89999c3da71`.
+
+The redundant AWS `codecollectiv` pipeline, `BuildRowhome` project, `InvalidateCache` Lambda, and CodeCollective CloudFront distribution were retired on 2026-10-02. Production root, www, and Timebank hostnames are Cloudflare Worker custom domains declared in `wrangler.toml`. Do not restore the AWS buildspec or S3 deployment path.
