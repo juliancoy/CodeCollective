@@ -428,6 +428,7 @@ write_org_config() {
   export ORG_PUSH_QUEUE_NAME
   export ORG_PUSH_DEAD_LETTER_QUEUE_NAME
   export MCP_PUBLIC_URL
+  export MCP_RESOURCE_CONFIG_JSON
   export MCP_OAUTH_ISSUER
   export MCP_OAUTH_JWKS_URL
   export MCP_OAUTH_INTROSPECTION_URL
@@ -491,6 +492,8 @@ const config = {
     ],
   },
 };
+
+config.vars.MCP_RESOURCE_CONFIG_JSON = env.MCP_RESOURCE_CONFIG_JSON || fs.readFileSync("config/mcp-resources.json", "utf8").trim();
 
 for (const name of [
   "MCP_PUBLIC_URL",
