@@ -6,9 +6,11 @@ import hashlib
 import html
 import importlib.util
 import json
+import re
 import sqlite3
 import sys
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from urllib.parse import urljoin
 
@@ -18,7 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 def instant(value):
     if not value:
         return ''
-    return datetime.fromisoformat(value.replace('Z', '+00:00')).timestamp()
+    value = re.sub(r'([+-]\d{2})(\d{2})$', r'\1:\2', value.replace('Z', '+00:00'))
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=ZoneInfo('America/New_York'))
+    return parsed.timestamp()
 
 
 def main():
