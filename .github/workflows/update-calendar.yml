@@ -47,7 +47,7 @@ jobs:
         run: npx wrangler deploy --keep-vars
       - name: Import and verify reviewed LifeTech events
         env:
-          ORG_BACKEND_INGEST_URL: ${{ secrets.ORG_BACKEND_INGEST_URL }}
+          ORG_BACKEND_INGEST_URL: https://codecollective.us/api/org/api/network/ingest/calendar
           ORG_BACKEND_INGEST_TOKEN: ${{ secrets.ORG_BACKEND_INGEST_TOKEN }}
         run: |
           python scripts/import_lifetech_history.py \
