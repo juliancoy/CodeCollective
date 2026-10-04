@@ -1,62 +1,101 @@
-name: Import LifeTech Event History
+name: Update Calendar
 
 on:
+  schedule:
+    - cron: '15 2 * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/update-calendar.yml"
+      - "requirements.txt"
+      - "genCalendar.py"
+      - "run_calendar.py"
+      - "http_client.py"
+      - "genSimpleCalendar.py"
+      - "calendar_*.py"
+      - "city_source_taxonomy.py"
+      - "events_map_generator.py"
+      - "geocode*.py"
+      - "scrape_*.py"
+      - "*/event_sources.py"
+      - "*/extra_event_sources.py"
+      - "*/gen_calendar.py"
+      - "*/scrape_*.py"
+      - "*/manual_events.json"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
 
 concurrency:
-  group: lifetech-history-import
+  group: calendar-data-updates
   cancel-in-progress: false
 
 jobs:
-  import_history:
+  update_calendar:
     runs-on: ubuntu-latest
-    environment: production
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Check out reviewed OrgPortal ingestion changes
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          repository: juliancoy/OrgPortal
-          ref: 796df0f38fb27d47316c19a1af618855db7ab793
-          path: OrgPortal
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Restore conditional HTTP cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/codecollective-http
+          key: calendar-http-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            calendar-http-${{ runner.os }}-
+
       - name: Install dependencies
-        run: |
-          npm ci --prefix OrgPortal/org-worker
-          pip install requests
-      - name: Validate OrgPortal changes
-        working-directory: OrgPortal/org-worker
-        run: |
-          npm run build:metadata
-          node --import tsx --test test/calendar-collections.test.ts test/org-worker.test.ts
-          npm run typecheck
-          npx wrangler deploy --dry-run
-      - name: Release OrgPortal collection ingestion
-        working-directory: OrgPortal/org-worker
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx wrangler deploy --keep-vars
-      - name: Import and verify reviewed LifeTech events
-        env:
-          ORG_BACKEND_INGEST_URL: https://codecollective.us/api/org/api/network/ingest/calendar
-          ORG_BACKEND_INGEST_TOKEN: ${{ secrets.ORG_BACKEND_INGEST_TOKEN }}
-        run: |
-          python scripts/import_lifetech_history.py \
-            --payload baltimore/incubation_history/lifetech-import.json \
-            --portal-dir OrgPortal --receipt lifetech-import-receipt.json
-      - name: Save import receipt
-        if: always()
+        run: pip install -r requirements.txt
+
+      - name: Generate calendar
+        run: python run_calendar.py
+
+      - name: Upload scrape telemetry
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: lifetech-event-history-receipt
-          path: lifetech-import-receipt.json
-          if-no-files-found: ignore
+          name: calendar-scrape-telemetry-${{ github.run_id }}
+          path: .cache/codecollective-scrape-telemetry.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push changes
+        if: ${{ steps.changes.outputs.has_changes == 'true' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Update calendar"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:"${GITHUB_REF_NAME}"
+
+      - name: Deploy updated calendar to production
+        if: ${{ steps.changes.outputs.has_changes == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run cloudflare-deploy.yml \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref "${GITHUB_REF_NAME}" \
+            --field deploy_target=site

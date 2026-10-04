@@ -1,0 +1,62 @@
+name: Import LifeTech Event History
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lifetech-history-import
+  cancel-in-progress: false
+
+jobs:
+  import_history:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out reviewed OrgPortal ingestion changes
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          ref: 796df0f38fb27d47316c19a1af618855db7ab793
+          path: OrgPortal
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          npm ci --prefix OrgPortal/org-worker
+          pip install requests
+      - name: Validate OrgPortal changes
+        working-directory: OrgPortal/org-worker
+        run: |
+          npm run build:metadata
+          node --import tsx --test test/calendar-collections.test.ts test/org-worker.test.ts
+          npm run typecheck
+          npx wrangler deploy --dry-run
+      - name: Release OrgPortal collection ingestion
+        working-directory: OrgPortal/org-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --keep-vars
+      - name: Import and verify reviewed LifeTech events
+        env:
+          ORG_BACKEND_INGEST_URL: https://codecollective.us/api/org/api/network/ingest/calendar
+          ORG_BACKEND_INGEST_TOKEN: ${{ secrets.ORG_BACKEND_INGEST_TOKEN }}
+        run: |
+          python scripts/import_lifetech_history.py \
+            --payload baltimore/incubation_history/lifetech-import.json \
+            --portal-dir OrgPortal --receipt lifetech-import-receipt.json
+      - name: Save import receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifetech-event-history-receipt
+          path: lifetech-import-receipt.json
+          if-no-files-found: ignore
