@@ -156,7 +156,7 @@ function renderTable() {
   $('prev').disabled=state.page===0;$('next').disabled=state.page>=total-1;$('export').disabled=!filtered.length;
 }
 function reset() {
-  $('filters').reset();Object.assign(state,{org:'',day:null,cell:'',page:0});update();
+  HTMLFormElement.prototype.reset.call($('filters'));Object.assign(state,{org:'',day:null,cell:'',page:0});update();
 }
 function exportCSV() {
   const quote=value=>`"${String(value??'').replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')}"`;

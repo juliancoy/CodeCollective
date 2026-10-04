@@ -32,6 +32,14 @@ for event in json.loads(source.read_text()):
             coordinates = [round(lat, 6), round(lon, 6)]
     except (ValueError, TypeError):
         pass
+    # Older scrapers used Baltimore's center when a location was absent.
+    # Those defaults must not manufacture a high-density neighborhood.
+    generic = {'', 'unknown', 'united states', 'usa', 'us', 'baltimore', 'baltimore, md',
+               'baltimore, maryland', 'maryland', 'md', 'online', 'virtual', 'zoom'}
+    venue_name = str(location.get('name') or '').strip().casefold()
+    address = str(location.get('address') or '').strip().casefold()
+    if (venue_name in generic and address in generic) or venue_name in {'online', 'virtual', 'zoom'}:
+        coordinates = None
     tags = event.get("tags") or []
     if not isinstance(tags, list):
         tags = []
