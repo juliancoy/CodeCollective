@@ -60,6 +60,7 @@ jobs:
           subprocess.run(['npx', 'wrangler', 'secret', 'put', 'ORG_INGEST_TOKEN'],
                          input=token, text=True, check=True)
           PYTHON
+      - name: Import and verify reviewed LifeTech events
         env:
           ORG_BACKEND_INGEST_URL: https://codecollective.us/api/org/api/network/ingest/calendar
           ORG_BACKEND_INGEST_TOKEN: ${{ secrets.ORG_BACKEND_INGEST_TOKEN }}
