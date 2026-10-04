@@ -226,6 +226,12 @@ def _extract_simple_dated_events(soup: BeautifulSoup, source_url: str) -> List[D
         "general",
         "meeting",
         "special events",
+        "view details",
+        "read more",
+        "learn more",
+        "more information",
+        "buy tickets",
+        "get tickets",
     }
 
     events: List[Dict[str, Any]] = []
@@ -235,8 +241,17 @@ def _extract_simple_dated_events(soup: BeautifulSoup, source_url: str) -> List[D
         title = ""
         for candidate in lines[index + 1 : index + 5]:
             normalized = candidate.strip().lower()
-            if normalized in skip_titles or date_pattern.match(candidate) or normalized.isdigit():
+            # A second date belongs to another entry, not this event's title.
+            if date_pattern.match(candidate):
+                break
+            if normalized in skip_titles or normalized.isdigit():
                 continue
+            # Separators and time ranges on detail pages are not titles. Do
+            # not scan past them into unrelated page text to invent an event.
+            if not any(char.isalpha() for char in candidate) or re.match(
+                r"^\d{1,2}:\d{2}\s*(?:am|pm)\b", normalized
+            ):
+                break
             title = candidate.strip()
             break
         if not title:
@@ -358,7 +373,9 @@ def _extract_events_from_page(soup: BeautifulSoup, source_url: str) -> List[Dict
             continue
         seen.add(key)
         events.append(evt)
-    for evt in _extract_simple_dated_events(soup, source_url):
+    # Text heuristics are a fallback; structured events already provide the
+    # authoritative titles and dates for this page.
+    for evt in _extract_simple_dated_events(soup, source_url) if not events else []:
         key = _event_key(evt)
         if key in seen:
             continue
