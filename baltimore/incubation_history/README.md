@@ -101,3 +101,80 @@ was performed by these research scripts. The upstream support functionality was
 being added in the shared workspace during this task; its presence locally does
 not establish production availability. Shared release work belongs to OrgPortal
 and the CodeCollective deployment flow, not MedTech.
+
+## Live event import — October 4, 2026
+
+All 99 reviewed event records are now first-class OrgPortal events associated
+with LifeTech, using the same event records and features as MedTech. The import
+created 93 records and reused six existing records. Original tags were preserved,
+with `LifeTech`, `Entrepreneurship`, `life-tech-event-history`, and the applicable
+pitch/showcase/program classification added. Original organizer, source, and
+date information remain available. No organization ownerships or memberships
+were created. LifeTech's collection contains 100 events including MedTech in
+the Hut.
+
+Every imported event was verified in the live collection with its expected tags
+and a successful event-detail API response. The LifeTech event list and an
+imported detail page also returned HTTP 200. An upstream URL lookup fix preserves
+stored slugs ending in hyphens or containing long collision suffixes; 37 relevant
+Worker tests and type checking passed before release.
+
+- Live collection: https://lifetech.fyi/org-events
+- Successful deployment/import run: https://github.com/juliancoy/CodeCollective/actions/runs/37221245937
+- OrgPortal release commit: `ca750df3a7aeabc85af2b696b7cf1a4279fbfa09`
+- Org Worker version: `b84e2932-724d-494f-b47d-bff55ebcd0a6`
+- Public import receipt: `live-receipt/lifetech-import-receipt.json`
+- Reviewed ingest payload: `lifetech-import.json`
+- Original archive provenance: `lifetech-import.manifest.json`
+
+The dedicated `.github/workflows/import-lifetech-history.yml` uses the existing
+authorized calendar ingest interface. Backend release and credential synchronization
+are explicit dispatch options; ordinary reruns reuse the deployed backend and
+preserve existing event metadata. The first import repaired the documented
+GitHub Actions/Worker ingestion credential mismatch. Credentials are not included
+in any repository artifact. The normal recurring calendar workflow is unchanged.
+
+## Web research preparation (2026-10-04)
+
+The `enrichment/` directory audits all 99 live records. `research_tasks.csv`
+contains targeted search queries for remaining fields, participants and supporting
+organizations. `sources.csv` records the 91 original URLs checked;
+`event_field_candidates.csv` contains 214 machine-extracted suggestions. These
+are candidates, not approved replacements: a source may describe a different
+edition, and date conflicts require review. Thirty-three original URLs could not
+be fetched. Empty values remain unknown rather than receiving invented defaults.
+
+Additional primary-source research is recorded in `verified_sources.csv`.
+`entities.csv`, `cohort_relationship_candidates.csv`,
+`verified_event_participants.csv`, `published_awards.csv`, and
+`organization_facts.csv` are flat tables joined by IDs. They contain 56 cohort
+relationships across seven cohorts, 20 published awards, and four program
+sponsors. `event_research_coverage.csv` covers every imported record; ten records
+have primary participant or award evidence, and the others retain their search
+queue. Primary evidence does not resolve every field of those ten records.
+`conflicts.csv` preserves discrepancies and a possible duplicate NEW VENTURE
+event. The local `verified_research.sqlite` is a convenience copy of these CSVs.
+
+Reproduce the source-page audit (network access required):
+
+```sh
+python scripts/research_lifetech_event_gaps.py --help
+```
+
+Regenerate the curated evidence tables and validate their references:
+
+```sh
+python scripts/prepare_lifetech_verified_research.py
+python -m unittest discover -s scripts -p test_lifetech_verified_research.py
+```
+
+The curated generator embeds the reviewed factual source selections so output
+can be reproduced without a network call; it does not revalidate changing pages.
+All names are research identities, not claims of incorporation or portal IDs.
+Before applying, match each identity to an existing organization or review its
+creation, then use OrgPortal's preview/apply receipts and existing support queue.
+The `program_participation` research label requires an explicitly reviewed mapping
+to a supported portal relationship; it is not an OrgPortal enum. Prize awards do
+not prove incubation or settled payments. Program sponsorship does not prove a
+direct financial transfer to each cohort member. Unknown allocations in a shared
+prize pool remain blank. No enrichment writes have been made to production.
