@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Baltimore · Event atlas</title>
+  <meta name="description" content="Explore Baltimore’s event history by area, category, organizer and date.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e2434'/%3E%3Ccircle cx='11' cy='19' r='5' fill='%2327c9b0'/%3E%3Ccircle cx='23' cy='10' r='4' fill='%23ffb454'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="vendor/leaflet.css"><link rel="stylesheet" href="style.css">
+  <script defer src="vendor/leaflet.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+<header><a class="brand" href="/">CC<span> / BALTIMORE</span></a><span class="eyebrow">EVENT ATLAS</span><a href="../event_history.json" download>Master data ↓</a></header>
+<main>
+  <div class="title-row"><h1>Every event. <span>One view.</span></h1><span id="archive" class="muted">Loading archive…</span></div>
+  <form id="filters" class="filters" aria-label="Event filters">
+    <label class="search">Search<input id="search" type="search" placeholder="Event, venue, organizer"></label>
+    <label>From<input id="from" type="date"></label><label>To<input id="to" type="date"></label>
+    <label>Category<select id="category"><option value="">All categories</option></select></label>
+    <label>City<select id="city"><option value="">All cities</option></select></label>
+    <button type="button" id="reset">Reset</button>
+  </form>
+  <div id="status" role="status" aria-live="polite"></div><div id="chips" class="chips"></div>
+  <section class="metrics" aria-label="Summary">
+    <div><span>Events</span><strong id="count">—</strong></div><div><span>Organizers</span><strong id="organizers">—</strong></div>
+    <div><span>Mapped</span><strong id="mapped">—</strong><small id="coverage"></small></div><div><span>Busiest month</span><strong class="small-value" id="peak">—</strong><small id="peak-count"></small></div>
+  </section>
+  <section class="map-layout">
+    <article class="panel map-panel"><div class="panel-head"><h2>Where it happens</h2><div class="map-actions"><label>Grid <select id="grid"><option value="2">2 km</option><option value="5">5 km</option><option value="10">10 km</option></select></label><button id="home">Baltimore</button><button id="fit">Fit all</button></div></div>
+      <div id="map" aria-label="Interactive event density map"></div>
+      <div class="map-footer"><span id="map-count">—</span><span class="scale">Fewer <i></i> More</span></div>
+    </article>
+    <article class="panel hotspots"><div class="panel-head"><h2>Hotspots</h2><span class="muted">Click to filter</span></div><div id="hotspots"></div><p class="note">Counts per grid cell · mapped events only</p></article>
+  </section>
+  <section class="charts" aria-label="Event breakdowns">
+    <article class="panel"><div class="panel-head"><h2>Categories</h2><span class="muted">Primary tag</span></div><div id="category-chart" class="pie-layout"></div></article>
+    <article class="panel"><div class="panel-head"><h2>Organizers</h2><span class="muted">Event share</span></div><div id="org-chart" class="pie-layout"></div></article>
+    <article class="panel"><div class="panel-head"><h2>Days</h2><span class="muted">Eastern time</span></div><div id="day-chart" class="pie-layout"></div></article>
+  </section>
+  <article class="panel timeline"><div class="panel-head"><h2>Through time</h2><span class="muted">Click a month</span></div><div id="timeline"></div></article>
+  <article class="panel event-panel"><div class="panel-head"><h2>Events <span id="list-count"></span></h2><button id="export">Export CSV ↓</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Event</th><th>Organizer</th><th>Area</th></tr></thead><tbody id="events"></tbody></table></div>
+    <div class="pagination"><button id="prev">Previous</button><span id="page"></span><button id="next">Next</button></div>
+  </article>
+  <footer><span>Unique URL + start time · archive counts, not attendance</span><details><summary>Data notes</summary><p>All locally available Git refs; both event-file paths. Latest record per occurrence. Recurring dates count separately. Map uses existing coordinates; missing coordinates are excluded. Coordinates may be approximate. Grid sizes are approximate near Baltimore. Categories use the first tag; “Other” combines smaller slices. Unknown organizers and cities remain visible. Dates use Eastern time. Counts reflect archived listings, not complete city activity.</p><a href="../event_history.report.json">Provenance</a> · <a href="https://leafletjs.com/reference.html">Leaflet</a> · <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></details></footer>
+</main>
+</body></html>

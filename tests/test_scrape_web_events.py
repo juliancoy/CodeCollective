@@ -69,3 +69,43 @@ def test_extracts_wix_events_from_warmup_data():
     assert events[0]["location"]["name"] == "Latrobe Park"
     assert events[0]["location"]["city"] == "Baltimore"
     assert events[0]["imageUrl"] == "https://static.wixstatic.com/media/example.png"
+
+
+def test_dated_text_does_not_turn_separators_or_buttons_into_events():
+    html = """
+    <div>October 31, 2026</div><span>|</span><span>10:00 am</span>
+    <h1>ZooBOO! Presented by Fulton Bank</h1>
+    <h2>LUNG FORCE Walk - New York</h2><div>May 15, 2027</div>
+    <a>View Details</a>
+    <h2>LUNG FORCE Walk - San Diego</h2><div>May 23, 2027</div>
+    <a>View Details</a>
+    """
+    events = scrape_web_events._extract_events_from_page(
+        BeautifulSoup(html, "html.parser"), "https://example.org/events"
+    )
+    assert all(event["name"] not in {"|", "View Details", "10:00 am"} for event in events)
+    assert not any(event["startDate"].startswith("2026-10-31") for event in events)
+
+
+def test_text_fallback_does_not_cross_into_next_dated_entry():
+    soup = BeautifulSoup(
+        "<p>May 15, 2027</p><a>View Details</a>"
+        "<p>May 23, 2027</p><h2>Community Workshop</h2>",
+        "html.parser",
+    )
+    events = scrape_web_events._extract_simple_dated_events(soup, "https://example.org")
+    assert [(event["name"], event["startDate"]) for event in events] == [
+        ("Community Workshop", "2027-05-23T00:00:00")
+    ]
+
+
+def test_structured_events_prevent_spurious_text_fallback_duplicates():
+    payload = {"@type": "Event", "name": "Community Workshop", "startDate": "2027-05-23T10:00:00-04:00"}
+    soup = BeautifulSoup(
+        f'<script type="application/ld+json">{json.dumps(payload)}</script>'
+        '<p>May 23, 2027</p><h2>Community Workshop</h2>',
+        "html.parser",
+    )
+    events = scrape_web_events._extract_events_from_page(soup, "https://example.org")
+    assert len(events) == 1
+    assert events[0]["startDate"] == payload["startDate"]

@@ -244,6 +244,11 @@ def _extract_simple_dated_events(soup: BeautifulSoup, source_url: str) -> List[D
             # A second date belongs to another entry, not this event's title.
             if date_pattern.match(candidate):
                 break
+            if normalized in {
+                "view details", "read more", "learn more", "more information",
+                "buy tickets", "get tickets",
+            }:
+                break
             if normalized in skip_titles or normalized.isdigit():
                 continue
             # Separators and time ranges on detail pages are not titles. Do
