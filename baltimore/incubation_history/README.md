@@ -178,3 +178,53 @@ to a supported portal relationship; it is not an OrgPortal enum. Prize awards do
 not prove incubation or settled payments. Program sponsorship does not prove a
 direct financial transfer to each cohort member. Unknown allocations in a shared
 prize pool remain blank. No enrichment writes have been made to production.
+
+## Authorized live research application (2026-10-04)
+
+The verified account behind MedTech's `.env.pidp` authenticated successfully but
+was initially absent from OrgPortal's administrator allowlist. The verified
+account ID was added to the existing `ADMIN_USER_IDS` configuration, retained in
+CodeCollective's canonical GitHub release variable and local release environment.
+PIdP credentials, identity flags, memberships and organization ownership were not
+modified. `admin-configuration-receipt.json` and `permission-check-receipt.json`
+record the configuration repair and successful management checks without tokens.
+
+The shared portal now supports operator registration of unclaimed public-evidence
+organizations and permission-checked event enrichment using existing expiring,
+actor-bound preview/apply receipts. Changes live upstream in
+[OrgPortal PR 4](https://github.com/juliancoy/OrgPortal/pull/4).
+The historical slug fix is tracked in
+[OrgPortal PR 5](https://github.com/juliancoy/OrgPortal/pull/5).
+The backend was released through CodeCollective's org-only deployment path with
+existing variables retained and without database migrations or frontend releases.
+
+`enrichment/reviewed-registration-plan.jsonl` contains the reviewed registrations;
+`enrichment/applied-portal-identities.csv` maps research IDs to portal IDs.
+`enrichment/live-enrichment-receipt.jsonl` preserves each preview and apply result.
+The final current counts and verification are in
+`enrichment/live-enrichment-summary.json` and
+`enrichment/live-enrichment-verification.json`.
+Earlier preparation summaries and unresolved identity queues are historical
+snapshots, superseded by these application receipts.
+
+The live support records distinguish acceleration from educational/mentoring
+services. Maryland NEW VENTURE participation maps to `services`, with the reason
+in each record's notes. Award facts are added to the applicable events' public
+metadata, with source links and a clear statement that payment is unverified;
+they are not inserted as transfers or incubation relationships. Shared prize
+allocations and unknown amounts remain blank. Unavailable sources and research
+conflicts remain pending.
+
+The resumable application script uses the existing portal interfaces:
+
+```sh
+python scripts/apply_lifetech_research.py --env-file ../bmoremedtech/.env.pidp
+python scripts/apply_lifetech_research.py --env-file ../bmoremedtech/.env.pidp --apply
+```
+
+The first command prepares registrations without production writes. The second
+inspects and applies actor-bound previews, honors portal rate limits, checks for
+already-recorded evidence, and verifies each change. Do not run with a different
+identity or bypass the portal's management checks. Credentials are read in memory
+and excluded from receipts. Original cohort evidence CSVs are immutable research
+inputs; the separate identity mapping and receipts describe production state.
