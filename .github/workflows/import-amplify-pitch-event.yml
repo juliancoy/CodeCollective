@@ -1,0 +1,30 @@
+name: Import Amplify Pitch Event
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: amplify-pitch-event-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import reviewed event and verify canonical page and support links
+        env:
+          ORG_BACKEND_INGEST_TOKEN: ${{ secrets.ORG_BACKEND_INGEST_TOKEN }}
+        run: |
+          python -m pip install requests
+          python scripts/import_amplify_pitch_event.py
+      - name: Save import receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: amplify-pitch-event-receipt
+          path: amplify-pitch-event-receipt.json
+          if-no-files-found: ignore
