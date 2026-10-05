@@ -748,6 +748,7 @@ PYCONFIG
     wrangler_args+=("--config" "$deploy_config")
   fi
 
+  local deploy_status=0
   if [[ "$VERBOSE" -eq 1 ]]; then
     (
       cd "$ROOT_DIR"
@@ -760,7 +761,7 @@ PYCONFIG
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
         --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
         "${wrangler_args[@]}"
-    ) 2>&1 | tee "$deploy_log" >&2
+    ) 2>&1 | tee "$deploy_log" >&2 || deploy_status=$?
   else
     (
       cd "$ROOT_DIR"
@@ -785,7 +786,15 @@ PYCONFIG
           /^Deployed .*triggers/ { print; next }
           /^  https:\/\/[A-Za-z0-9.-]+\.workers\.dev$/ { print; next }
           /^Current Version ID:/ { print; next }
-        ' >&2
+        ' >&2 || deploy_status=$?
+  fi
+
+  if [[ "$deploy_status" -ne 0 ]]; then
+    echo "[deploy][$label] deployment failed" >&2
+    cat "$deploy_log" >&2
+    rm -f "$deploy_log"
+    if [[ -n "$deploy_config" ]]; then rm -f "$deploy_config"; fi
+    return "$deploy_status"
   fi
 
   local deployed_url
