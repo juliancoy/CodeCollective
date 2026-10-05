@@ -220,3 +220,16 @@ test('configured custom domains mount the same tenant portal root', async t => {
   assert.equal(response.status, 200);
   assert.equal(await response.text(), '/__portal_root/index.html');
 });
+
+
+test('main-site organization URLs resolve through the canonical portal while tenants stay local', async t => {
+  for (const path of ['/orgs/tedco', '/orgs', '/orgs/amplify-medtech?view=public']) {
+    const response = await worker.fetch(new Request('https://codecollective.us' + path), env);
+    assert.equal(response.status, 302);
+    assert.equal(response.headers.get('location'), 'https://codecollective.us/p' + path);
+  }
+  community(t);
+  const response = await worker.fetch(new Request(origin + '/orgs/tedco', { headers: { accept: 'text/html' } }), env);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.has('location'), false);
+});

@@ -954,6 +954,11 @@ export default {
     const path = url.pathname;
     const tenantHost = isOrgPortalTenantHost(url.hostname, env);
 
+    if (!tenantHost && pathMatchesPrefix(path, "/orgs") && (request.method === "GET" || request.method === "HEAD")) {
+      url.pathname = `/p${path}`;
+      return Response.redirect(url.toString(), 302);
+    }
+
     if (path === "/health" || path === "/version") {
       return healthResponse(request, env);
     }
