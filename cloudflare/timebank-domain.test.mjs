@@ -10,6 +10,7 @@ const env = {
 
 function community(t, status = 200) {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
+    if (/^https:\/\/org\.example\/api\/network\/(users|orgs)\/public\//.test(url)) return Response.json({ slug: 'existing-profile' });
     assert.equal(url, 'https://org.example/api/portal/tenant');
     assert.equal(options.headers['x-forwarded-host'], 'timebank.codecollective.us');
     return Response.json({ id: 'timebank' }, { status });

@@ -1,6 +1,6 @@
 import { deploymentResponse, deploymentCachePolicy, deploymentPath, isDeploymentAssetRequest } from '../../OrgPortal/web/deployment.mjs';
 import { previewResponse } from "./preview.js";
-import { isPortalPagePath, notFoundResponse } from '../../OrgPortal/web/portalRoutes.mjs';
+import { isPortalPagePath, notFoundResponse, missingPortalResource } from '../../OrgPortal/web/portalRoutes.mjs';
 import { handleDatasetApi as handleMedTechDatasetApi } from './medtech/datasets.js';
 function trimTrailingSlash(value) {
   return (value || "").replace(/\/+$/, "");
@@ -1171,6 +1171,10 @@ export default {
     if (env.WEB_PREVIEW === 'true') return previewResponse(request, env);
     const url = new URL(request.url);
     const tenant = isOrgPortalTenantHost(url.hostname, env);
+    if (tenant || pathMatchesPrefix(url.pathname, '/p')) {
+      const missing = await missingPortalResource(request, pathMatchesPrefix(url.pathname, '/p') ? url.pathname.slice(2) || '/' : url.pathname, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
+      if (missing) return missing;
+    }
     const selected = await deploymentResponse(request, env, {
       enabled: tenant || pathMatchesPrefix(url.pathname, '/p') || url.pathname === deploymentPath,
       mount: tenant ? 'root' : 'portal',
