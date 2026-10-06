@@ -1,5 +1,6 @@
 import { deploymentResponse, deploymentCachePolicy, deploymentPath, isDeploymentAssetRequest } from '../../OrgPortal/web/deployment.mjs';
 import { previewResponse } from "./preview.js";
+import { isPortalPagePath, notFoundResponse } from '../../OrgPortal/web/portalRoutes.mjs';
 import { handleDatasetApi as handleMedTechDatasetApi } from './medtech/datasets.js';
 function trimTrailingSlash(value) {
   return (value || "").replace(/\/+$/, "");
@@ -1124,6 +1125,7 @@ const productionWorker = {
       const navigation = (request.method === "GET" || request.method === "HEAD")
         && (isHtmlNavigation(request) || looksLikeSpaRoute(path) || path.endsWith(".html"));
       if (navigation) {
+        if (!isPortalPagePath(portalPath)) return notFoundResponse(request);
         const tenant = await verifyOrgPortalTenant(url.hostname, env);
         if (!tenant.ok) {
           return new Response("This community is not available yet.", {
@@ -1148,6 +1150,7 @@ const productionWorker = {
     }
 
     if ((path === "/p" || path.startsWith("/p/")) && (isHtmlNavigation(request) || looksLikeSpaRoute(path))) {
+      if (!isPortalPagePath(path.slice(2) || '/')) return notFoundResponse(request);
       // Request the directory entrypoint directly to avoid index.html -> /p/ redirects
       // that can interfere with hash-token deep links after auth callbacks.
       const spaResponse = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/p/"));

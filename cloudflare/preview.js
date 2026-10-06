@@ -1,5 +1,6 @@
 // This Worker has no public routes. Only production frontend service bindings
 // can fetch these assets; no session cookies or bearer tokens are forwarded.
+import { isPortalPagePath, notFoundResponse } from '../../OrgPortal/web/portalRoutes.mjs';
 export async function previewResponse(request, env) {
   const url = new URL(request.url);
   const headers = { 'cache-control': 'private, no-store', 'x-robots-tag': 'noindex, nofollow, noarchive' };
@@ -23,7 +24,11 @@ export async function previewResponse(request, env) {
     if (navigation) response = await asset(`${originalPath.replace(/\/$/, '')}/index.html`);
     if (response.status === 404) response = await asset(`/__portal_root${originalPath}`);
   }
-  if (response.status === 404 && navigation) response = await asset(mount === 'portal' ? '/p/index.html' : '/__portal_root/index.html');
+  if (response.status === 404 && navigation) {
+    const portalPath = mount === 'portal' ? originalPath.replace(/^\/p(?=\/|$)/, '') || '/' : originalPath;
+    if (!isPortalPagePath(portalPath)) return notFoundResponse(request);
+    response = await asset(mount === 'portal' ? '/p/index.html' : '/__portal_root/index.html');
+  }
   const resultHeaders = new Headers(response.headers);
   for (const [key, value] of Object.entries(headers)) resultHeaders.set(key, value);
   resultHeaders.delete('etag');
