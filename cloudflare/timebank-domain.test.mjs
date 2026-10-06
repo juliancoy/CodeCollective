@@ -234,3 +234,22 @@ test('main-site organization URLs resolve through the canonical portal while ten
   assert.equal(response.status, 200);
   assert.equal(response.headers.has('location'), false);
 });
+
+
+test('Deism tenant routes and install assets use the shared portal bundle', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, 'https://org.example/api/portal/tenant');
+    assert.equal(options.headers['x-forwarded-host'], 'portal.deism.church');
+    return Response.json({ id: 'deism' });
+  });
+  const deismEnv = { ...env, ORGPORTAL_TENANT_HOSTS: 'medtech.social,portal.deism.church' };
+  for (const path of ['/', '/users/login', '/org-events', '/chat', '/auth/callback']) {
+    const response = await worker.fetch(new Request('https://portal.deism.church' + path, { headers: { accept: 'text/html' } }), deismEnv);
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), '/__portal_root/index.html');
+  }
+  for (const path of ['/deism.webmanifest', '/images/deism/icon-512.png']) {
+    const response = await worker.fetch(new Request('https://portal.deism.church' + path), deismEnv);
+    assert.equal(await response.text(), '/__portal_root' + path);
+  }
+});

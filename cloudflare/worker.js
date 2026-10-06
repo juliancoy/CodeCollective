@@ -1110,6 +1110,7 @@ const productionWorker = {
         || pathMatchesPrefix(path, "/images")
         || path === "/manifest.webmanifest"
         || path === "/medtech.webmanifest"
+        || path === "/deism.webmanifest"
         || path === "/timebank.webmanifest"
         || path === "/mobile-update.json"
         || path === "/push-sw.js"
