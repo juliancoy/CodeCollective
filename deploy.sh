@@ -422,6 +422,7 @@ write_org_config() {
   export ORG_WORKER_NAME
   export ORG_PIDP_BASE_URL
   export ORG_PUBLIC_PORTAL_BASE_URL
+  export CHAT_WORKER_NAME
   export ORG_CHAT_API_ORIGIN
   export ORG_ADMIN_EMAILS
   export ORG_ADMIN_USER_IDS
@@ -431,6 +432,7 @@ write_org_config() {
   export ORG_PUSH_QUEUE_NAME
   export ORG_PUSH_DEAD_LETTER_QUEUE_NAME
   export MCP_PUBLIC_URL
+  export MCP_PIDP_PORTAL_ACCOUNT_NAMESPACE="${MCP_PIDP_PORTAL_ACCOUNT_NAMESPACE:-website:79e69d87-9bd0-4226-a214-e3007cbe3606}"
   export MCP_RESOURCE_CONFIG_JSON
   export MCP_OAUTH_ISSUER
   export MCP_OAUTH_JWKS_URL
@@ -464,6 +466,10 @@ const config = {
     ADMIN_EMAILS: env.ORG_ADMIN_EMAILS || "",
     ADMIN_USER_IDS: env.ORG_ADMIN_USER_IDS || "",
   },
+  services: [
+    { binding: "CHAT_ORGANIZATION_ROOMS", service: env.CHAT_WORKER_NAME, entrypoint: "OrganizationRooms" },
+    { binding: "CHAT_SERVICE", service: env.CHAT_WORKER_NAME },
+  ],
   d1_databases: [
     {
       binding: "DB",
@@ -500,6 +506,7 @@ config.vars.MCP_RESOURCE_CONFIG_JSON = env.MCP_RESOURCE_CONFIG_JSON || fs.readFi
 
 for (const name of [
   "MCP_PUBLIC_URL",
+  "MCP_PIDP_PORTAL_ACCOUNT_NAMESPACE",
   "MCP_OAUTH_ISSUER",
   "MCP_OAUTH_JWKS_URL",
   "MCP_OAUTH_INTROSPECTION_URL",
@@ -613,7 +620,7 @@ const env = process.env;
 const config = {
   "$schema": "node_modules/wrangler/config-schema.json",
   name: env.CHAT_WORKER_NAME,
-  main: "src/index.ts",
+  main: "src/worker.ts",
   version_metadata: { binding: "CF_VERSION_METADATA" },
   compatibility_date: "2026-06-07",
   workers_dev: true,

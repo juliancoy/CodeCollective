@@ -1,3 +1,5 @@
+import { deploymentResponse, deploymentCachePolicy, deploymentPath, isDeploymentAssetRequest } from '../../OrgPortal/web/deployment.mjs';
+import { previewResponse } from "./preview.js";
 import { handleDatasetApi as handleMedTechDatasetApi } from './medtech/datasets.js';
 function trimTrailingSlash(value) {
   return (value || "").replace(/\/+$/, "");
@@ -158,6 +160,8 @@ function applyStaticCachePolicy(path, response) {
 
   if (path.startsWith("/assets/") || path.startsWith("/__portal_root/assets/") || path.startsWith("/p/assets/") || path.startsWith("/r8-rowhome/assets/")) {
     headers.set("cache-control", "public, max-age=31536000, immutable");
+  } else if (path.endsWith("/mobile-update.json")) {
+    headers.set("cache-control", "no-store");
   } else if (path === "/__portal_root/index.html") {
     headers.set("cache-control", "public, max-age=0, must-revalidate");
   } else if (
@@ -948,7 +952,7 @@ async function handleVacantsParcelsPage(request, env) {
   return new Response(object.body, { status: 200, headers });
 }
 
-export default {
+const productionWorker = {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
@@ -1155,5 +1159,20 @@ export default {
     }
 
     return assetResponse;
+  },
+};
+
+export default {
+  async fetch(request, env) {
+    if (env.WEB_PREVIEW === 'true') return previewResponse(request, env);
+    const url = new URL(request.url);
+    const tenant = isOrgPortalTenantHost(url.hostname, env);
+    const selected = await deploymentResponse(request, env, {
+      enabled: tenant || pathMatchesPrefix(url.pathname, '/p') || url.pathname === deploymentPath,
+      mount: tenant ? 'root' : 'portal',
+    });
+    if (selected) return selected;
+    const response = await productionWorker.fetch(request, env);
+    return isDeploymentAssetRequest(request) ? deploymentCachePolicy(response, env) : response;
   },
 };

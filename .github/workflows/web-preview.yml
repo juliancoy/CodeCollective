@@ -1,0 +1,44 @@
+name: Web development preview
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['cloudflare/**', 'wrangler.preview.toml', '.github/workflows/web-preview.yml']
+permissions:
+  contents: read
+concurrency:
+  group: web-development-preview
+  cancel-in-progress: true
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    environment: preview
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: CodeCollective
+          submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          path: OrgPortal
+      - uses: actions/checkout@v4
+        with:
+          repository: juliancoy/BmoreMedTech
+          path: BmoreMedTech
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: |
+          npm ci --prefix CodeCollective
+          npm ci --prefix OrgPortal/web
+          npm ci --prefix BmoreMedTech
+          npm ci --prefix CodeCollective/r8-rowhome
+      - name: Test and deploy private development assets
+        working-directory: CodeCollective
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          STRICT_TS: '1'
+        run: ./cloudflare/scripts/deploy_web_preview.sh
