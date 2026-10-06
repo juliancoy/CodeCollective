@@ -102,6 +102,7 @@ async function proxyRequest(request, targetOrigin, options = {}) {
     cf: { cacheEverything: false },
   });
 
+  if (upstream.status === 101) return upstream;
   const responseHeaders = new Headers(upstream.headers);
   if (options.hostOnlyCookies) {
     const cookies = typeof upstream.headers.getSetCookie === "function"
