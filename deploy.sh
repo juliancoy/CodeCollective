@@ -503,6 +503,10 @@ const config = {
 };
 
 config.vars.MCP_RESOURCE_CONFIG_JSON = env.MCP_RESOURCE_CONFIG_JSON || fs.readFileSync("config/mcp-resources.json", "utf8").trim();
+// Keep the independent journal binding/versioned migration path with OrgPortal.
+if (fs.existsSync("journal.wrangler.jsonc")) {
+  config.d1_databases.push(...JSON.parse(fs.readFileSync("journal.wrangler.jsonc", "utf8")).d1_databases);
+}
 
 for (const name of [
   "MCP_PUBLIC_URL",
@@ -549,8 +553,10 @@ deploy_org_worker() {
     (
       cd "$ORG_WORKER_DIR"
       if [[ "${GITHUB_ACTIONS:-}" == "true" || "${ORG_USE_API_TOKEN:-0}" == "1" ]]; then
+        npx wrangler d1 migrations apply org-journal --config journal.wrangler.jsonc --remote || exit $?
         npx wrangler d1 migrations apply "$ORG_D1_DATABASE_NAME" --remote
       else
+        env -u CLOUDFLARE_API_TOKEN npx wrangler d1 migrations apply org-journal --config journal.wrangler.jsonc --remote || exit $?
         env -u CLOUDFLARE_API_TOKEN npx wrangler d1 migrations apply "$ORG_D1_DATABASE_NAME" --remote
       fi
     )
