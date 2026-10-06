@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily CodeCollective ecosystem backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 America/New_York
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

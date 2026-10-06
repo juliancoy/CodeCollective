@@ -1104,6 +1104,7 @@ const productionWorker = {
       }
       if (
         pathMatchesPrefix(path, "/assets")
+        || pathMatchesPrefix(path, "/ecosystem-data")
         || pathMatchesPrefix(path, "/specialty")
         || pathMatchesPrefix(path, "/css")
         || pathMatchesPrefix(path, "/images")

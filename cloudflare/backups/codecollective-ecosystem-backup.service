@@ -1,0 +1,10 @@
+[Unit]
+Description=Verified CodeCollective ecosystem and OrgPortal database backup
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/julian/Documents/CodeCollective
+Environment=PATH=/home/julian/.nvm/versions/node/v24.16.0/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/python3 /home/julian/Documents/CodeCollective/scripts/backup-ecosystem.py
+UMask=0077
+TimeoutStartSec=30min
