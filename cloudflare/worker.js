@@ -960,6 +960,12 @@ const productionWorker = {
     const path = url.pathname;
     const tenantHost = isOrgPortalTenantHost(url.hostname, env);
 
+    if (url.hostname === "orgportal.cc" && ["/timebanking", "/timebanking/", "/p/timebanking", "/p/timebanking/"].includes(path)) {
+      url.pathname = "/communities";
+      url.searchParams.set("feature", "timebank");
+      return Response.redirect(url.toString(), 308);
+    }
+
     if (!tenantHost && pathMatchesPrefix(path, "/orgs") && (request.method === "GET" || request.method === "HEAD")) {
       url.pathname = `/p${path}`;
       return Response.redirect(url.toString(), 302);
@@ -1107,6 +1113,7 @@ const productionWorker = {
         || pathMatchesPrefix(path, "/ecosystem-data")
         || pathMatchesPrefix(path, "/specialty")
         || pathMatchesPrefix(path, "/css")
+        || pathMatchesPrefix(path, "/fonts")
         || pathMatchesPrefix(path, "/images")
         || path === "/orgportal.svg"
         || path === "/orgportal.webmanifest"
