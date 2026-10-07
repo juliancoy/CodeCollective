@@ -53,7 +53,8 @@ def run(network_name: str = "BALLOT", prefix: str = "") -> None:
             "SPICEDB_HTTP_URL": "http://spicedb:8443",
             "SPICEDB_PRESHARED_KEY": editme.SPICEDB_PRESHARED_KEY,
             "ORG_ADMIN_USER_IDS": os.getenv("ORG_ADMIN_USER_IDS", ""),
-            "WATCHFILES_FORCE_POLLING": "true",
+            # Native notifications avoid repeatedly scanning Linux bind mounts.
+            "WATCHFILES_FORCE_POLLING": os.getenv("WATCHFILES_FORCE_POLLING", "false"),
             "MODERATOR_EMAILS": os.getenv("MODERATOR_EMAILS", "julian2@julian2.edu"),
         },
     )

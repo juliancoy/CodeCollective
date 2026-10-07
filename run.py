@@ -96,7 +96,7 @@ def shared_python_container(name: str) -> dict:
 
 
 def start_static_site(port: int) -> None:
-    name = PREFIX + "site"
+    name = PREFIX + "website"
     remove_container(name)
     site = shared_python_container(name)
     site["command"] = [
@@ -225,7 +225,7 @@ def start(args: argparse.Namespace) -> None:
 
 def stop(_args: argparse.Namespace) -> None:
     for name in (
-        PREFIX + "site",
+        PREFIX + "website",
         PREFIX + "r8-rowhome",
         PREFIX + "datacenters-research",
         PREFIX + "datacenters-dashboard",
