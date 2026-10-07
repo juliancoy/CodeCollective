@@ -1,6 +1,7 @@
 name = "codecollective-site"
 workers_dev = true
 routes = [
+  { pattern = "orgportal.cc", custom_domain = true },
   { pattern = "codecollective.us", custom_domain = true },
   { pattern = "www.codecollective.us", custom_domain = true },
   { pattern = "timebank.codecollective.us", custom_domain = true },
@@ -21,7 +22,7 @@ ORG_API_ORIGIN = "https://org-codecollective.jcloiacon.workers.dev"
 PIDP_API_ORIGIN = "https://id.codecollective.us"
 PIDP_PROXY_ORIGIN = "https://pidp-codecollective.jcloiacon.workers.dev"
 CHAT_API_ORIGIN = "https://chat-codecollective.jcloiacon.workers.dev"
-ORGPORTAL_TENANT_HOSTS = "medtech.social,portal.deism.church"
+ORGPORTAL_TENANT_HOSTS = "medtech.social,portal.deism.church,orgportal.cc"
 
 [[r2_buckets]]
 binding = "JOBS_BUCKET"

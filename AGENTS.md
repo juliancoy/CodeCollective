@@ -4,7 +4,7 @@ This repository has one canonical Cloudflare frontend deployment:
 
 - `codecollective-site` is the main site. Its build script copies the legacy static site into `.cloudflare/site`, builds the sibling OrgPortal checkout with a `/p/` base, embeds that build at `/p/`, and also builds `r8-rowhome` at `/r8-rowhome/`.
 
-The former `codecollective-portal` standalone Worker was deleted on 2026-09-09. Do not recreate it. The only supported portal URL is `https://codecollective.us/p/`.
+The former `codecollective-portal` standalone Worker was deleted on 2026-09-09. Do not recreate it. OrgPortal is served at `https://orgportal.cc/` on the same `codecollective-site` Worker. `https://codecollective.us/p/` is the Code Collective community portal. OrgPortal uses its own platform tenant and must not be reattached as a Code Collective domain alias. Keep `orgportal.cc` in the Worker custom domains and tenant hosts, and in PIdP and chat allowed origins.
 
 The root `README.md` summarizes the current frontend deployment. Use the more detailed validation and handoff requirements in this file when deploying.
 

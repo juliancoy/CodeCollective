@@ -987,7 +987,7 @@ const productionWorker = {
     }
 
     if (path === "/favicon.ico") {
-      url.pathname = tenantHost && url.hostname.includes("timebank") ? "/images/timebank/favicon-64.png" : tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
+      url.pathname = url.hostname === "orgportal.cc" ? "/orgportal.svg" : tenantHost && url.hostname.includes("timebank") ? "/images/timebank/favicon-64.png" : tenantHost ? "/codecollective_logo.png" : "/images/favicons/favicon.png";
       return Response.redirect(url.toString(), 308);
     }
 
@@ -1108,6 +1108,8 @@ const productionWorker = {
         || pathMatchesPrefix(path, "/specialty")
         || pathMatchesPrefix(path, "/css")
         || pathMatchesPrefix(path, "/images")
+        || path === "/orgportal.svg"
+        || path === "/orgportal.webmanifest"
         || path === "/manifest.webmanifest"
         || path === "/medtech.webmanifest"
         || path === "/deism.webmanifest"
