@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juliancoy/OrgPortal
-          ref: ce04d0f4ad677ac78d6914f2385b57cb062620dd
+          ref: e1e798c58ba1d2133045b7ce1268f821e775c208
           path: .cache/portal-calendar-importer
           persist-credentials: false
       - uses: actions/setup-python@v5
@@ -46,5 +46,5 @@ jobs:
           ORG_BACKEND_INGEST_TOKEN: ${{ secrets.ORG_BACKEND_INGEST_TOKEN }}
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python .cache/portal-calendar-importer/org-worker/scripts/push_org_network_feed.py \
-            --repo-root "$GITHUB_WORKSPACE"
+          python -u .cache/portal-calendar-importer/org-worker/scripts/push_org_network_feed.py \
+            --repo-root "$GITHUB_WORKSPACE" --event-workers 4
