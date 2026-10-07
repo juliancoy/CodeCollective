@@ -57,10 +57,10 @@ test('preview keeps exact URL, strips credentials, varies caches and never diver
 test('private assets resolve both portal mounts and preserve missing asset 404s', async () => {
   const env = { WEB_PREVIEW: 'true', ASSETS: { fetch: async request => {
     const path = new URL(request.url).pathname;
-    if (['/p/index.html', '/__portal_root/index.html', '/__portal_root/assets/root.js', '/ecosystem/index.html', '/about.html'].includes(path)) return Response.json({ path });
+    if (['/__portal_root/index.html', '/__portal_root/assets/root.js', '/ecosystem/index.html', '/about.html'].includes(path)) return Response.json({ path });
     return new Response('missing', { status: 404 });
   } } };
-  for (const [mount, path, expected] of [['portal', '/p/profile', '/p/index.html'], ['root', '/profile', '/__portal_root/index.html'], ['lifetech', '/profile', '/__portal_root/index.html'], ['lifetech', '/about', '/about.html'], ['lifetech', '/ecosystem', '/ecosystem/index.html'], ['lifetech', '/assets/root.js', '/__portal_root/assets/root.js']]) {
+  for (const [mount, path, expected] of [['root', '/profile', '/__portal_root/index.html'], ['lifetech', '/profile', '/__portal_root/index.html'], ['lifetech', '/about', '/about.html'], ['lifetech', '/ecosystem', '/ecosystem/index.html'], ['lifetech', '/assets/root.js', '/__portal_root/assets/root.js']]) {
     const response = await worker.fetch(new Request(base + path, { headers: { 'x-preview-mount': mount } }), env);
     assert.equal((await response.json()).path, expected);
   }

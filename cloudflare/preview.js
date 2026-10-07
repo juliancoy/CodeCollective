@@ -3,12 +3,13 @@
 import { isPortalPagePath, notFoundResponse } from '../../OrgPortal/web/portalRoutes.mjs';
 export async function previewResponse(request, env) {
   const url = new URL(request.url);
+  if (/^\/p(?:\/|$)/.test(url.pathname)) return notFoundResponse(request);
   const headers = { 'cache-control': 'private, no-store', 'x-robots-tag': 'noindex, nofollow, noarchive' };
   if (!['GET', 'HEAD'].includes(request.method) || /^\/(api|pidp|auth|\.well-known)(\/|$)/.test(url.pathname)) {
     return Response.json({ error: 'assets_only' }, { status: 404, headers });
   }
   const mount = request.headers.get('x-preview-mount');
-  if (!['lifetech', 'root', 'portal'].includes(mount)) return new Response('Private development asset service', { status: 403, headers });
+  if (!['lifetech', 'root'].includes(mount)) return new Response('Private development asset service', { status: 403, headers });
   const originalPath = url.pathname;
   const navigation = (request.headers.get('accept') || '').includes('text/html') || !originalPath.split('/').at(-1).includes('.');
   let path = mount === 'root' ? `/__portal_root${originalPath}` : originalPath;
@@ -25,9 +26,9 @@ export async function previewResponse(request, env) {
     if (response.status === 404) response = await asset(`/__portal_root${originalPath}`);
   }
   if (response.status === 404 && navigation) {
-    const portalPath = mount === 'portal' ? originalPath.replace(/^\/p(?=\/|$)/, '') || '/' : originalPath;
+    const portalPath = originalPath;
     if (!isPortalPagePath(portalPath)) return notFoundResponse(request);
-    response = await asset(mount === 'portal' ? '/p/index.html' : '/__portal_root/index.html');
+    response = await asset('/__portal_root/index.html');
   }
   const resultHeaders = new Headers(response.headers);
   for (const [key, value] of Object.entries(headers)) resultHeaders.set(key, value);

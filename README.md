@@ -19,7 +19,7 @@ The supported components are `site`, `pidp`, `org`, and `chat`; `all` deploys
 every one of them.
 
 The `codecollective-site` Worker is the only frontend deployment. It serves the
-main site and embeds the portal at `https://codecollective.us/p/` from the
+main site and serves the portal at `https://orgportal.cc/` from the
 sibling OrgPortal checkout. Keep OrgPortal at `../OrgPortal`, or set
 `ORGPORTAL_DIR` when building or deploying. OrgPortal is application source only
 from this repository's point of view; do not deploy it as a standalone frontend
@@ -30,7 +30,7 @@ from CodeCollective.
 OrgPortal is the independent open-source application. Code Collective, MedTech
 and timebank communities are tenants selected at runtime by hostname, not
 separate frontend deployments. Tenant domains connect to the existing
-`codecollective-site` Worker and serve its shared `/p/` portal bundle:
+`codecollective-site` Worker and serve its shared portal bundle at their domain roots:
 
 | Domain | Community ID | Name |
 | --- | --- | --- |
@@ -64,11 +64,9 @@ repeat runs. Connect tenant hostnames as Cloudflare Custom Domains on
 `codecollective-site`; Custom Domains are managed in Cloudflare, outside
 `wrangler.toml`. The running Worker serves tenants at the domain root and
 forwards the hostname to the org API. Tenant navigation uses `/`, `/users/login`
-and `/chat`; listing links use `/?listing=…`. The shared assets remain under
-`/p/`, and redundant `/p/timebanking` URLs redirect to `/` with their query
-strings preserved. Sign-in uses the shared
-`https://codecollective.us/p/auth/callback?community=<id>` callback and returns
-to the tenant.
+and `/chat`; listing links use `/?listing=…`. Assets use root paths such as `/assets/`. The `/p/` deployment has been removed
+and `/p/` URLs return 404. Sign-in callbacks use `/auth/callback` at the portal
+or tenant origin.
 
 ## Calendar feed to org-backend
 
@@ -97,7 +95,7 @@ the local SQLite/identity fixture. With Node 24+:
 npm --prefix ../OrgPortal/web ci
 npm --prefix ../OrgPortal/org-worker ci
 npm --prefix ../OrgPortal/chat-worker ci
-VITE_PUBLIC_BASE=/p/ npm --prefix ../OrgPortal/web run build -- --outDir /tmp/codecollective-offers-portal
+VITE_PUBLIC_BASE=/ npm --prefix ../OrgPortal/web run build -- --outDir /tmp/codecollective-offers-portal
 docker run -d --rm --name codecollective-offers-selenium -p 4446:4444 --shm-size=2g selenium/standalone-chromium:latest
 node tests/community-offers-browser.mjs
 docker stop codecollective-offers-selenium

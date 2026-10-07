@@ -58,10 +58,7 @@ test('tenant favicon redirects to the portal icon while the main site keeps its 
 test('redundant tenant URLs redirect to the canonical route with query strings intact', async t => {
   community(t);
   for (const [path, destination] of [
-    ['/p/timebanking?listing=abc&tab=home', '/?listing=abc&tab=home'],
     ['/timebanking?listing=abc', '/?listing=abc'],
-    ['/p/', '/'], ['/p', '/'], ['/p/index.html', '/'],
-    ['/p/users/login?next=%2F', '/users/login?next=%2F'],
   ]) {
     const response = await worker.fetch(new Request(origin + path), env);
     assert.equal(response.status, 308);
@@ -76,9 +73,6 @@ test('tenant legacy calendar files redirect to the portal calendar', async () =>
 });
 
 test('tenant assets use the shared bundle and missing assets remain 404', async () => {
-  const legacyAsset = await worker.fetch(new Request(origin + '/p/assets/index.js'), env);
-  assert.equal(legacyAsset.status, 308);
-  assert.equal(legacyAsset.headers.get('location'), `${origin}/assets/index.js`);
   for (const path of ['/ecosystem-data/ecosystem-history.json', '/assets/index.js', '/push-sw.js', '/images/google-g-logo.svg', '/images/timebank/timebank-mark.svg', '/timebank.webmanifest']) {
     const response = await worker.fetch(new Request(origin + path), env);
     assert.equal(await response.text(), `/__portal_root${path}`);
@@ -227,7 +221,7 @@ test('main-site organization URLs resolve through the canonical portal while ten
   for (const path of ['/orgs/tedco', '/orgs', '/orgs/amplify-medtech?view=public']) {
     const response = await worker.fetch(new Request('https://codecollective.us' + path), env);
     assert.equal(response.status, 302);
-    assert.equal(response.headers.get('location'), 'https://codecollective.us/p' + path);
+    assert.equal(response.headers.get('location'), 'https://orgportal.cc' + path);
   }
   community(t);
   const response = await worker.fetch(new Request(origin + '/orgs/tedco', { headers: { accept: 'text/html' } }), env);

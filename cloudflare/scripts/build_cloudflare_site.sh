@@ -51,6 +51,7 @@ rsync -a \
   --exclude='.docker-local/' \
   --exclude='OrgPortal/' \
   --exclude='portal/' \
+  --exclude='p/' \
   --exclude='portal_src/' \
   --exclude='r8-rowhome/' \
   --exclude='cloudflare/' \
@@ -83,29 +84,8 @@ rsync -a \
   --exclude='wrangler.*' \
   "$ROOT_DIR/" "$OUT_DIR/"
 
-echo "[cloudflare] building portal for /p/"
-pushd "$PORTAL_WEB_DIR" >/dev/null
 PORTAL_PIDP_BASE_URL="${VITE_PIDP_BASE_URL:-/pidp}"
 PORTAL_CHAT_API_BASE_URL="${VITE_CHAT_API_BASE_URL:-/api/chat}"
-if [[ "$STRICT_TS" == "1" ]]; then
-  echo "[cloudflare] strict mode: running TypeScript + Vite build"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npm run build
-else
-  echo "[cloudflare] deploy mode: running Vite build (TypeScript checks run separately in CI)"
-  VITE_PUBLIC_BASE=/p/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/p/mobile-update.json npx vite build
-fi
-popd >/dev/null
-
-if [[ ! -f "$PORTAL_WEB_DIR/dist/index.html" ]]; then
-  echo "[cloudflare] error: expected OrgPortal web dist/index.html after build" >&2
-  exit 1
-fi
-
-echo "[cloudflare] syncing portal dist -> /p/"
-mkdir -p "$OUT_DIR/p"
-rsync -a --delete "$PORTAL_WEB_DIR/dist/" "$OUT_DIR/p/"
-write_portal_update_manifest "$OUT_DIR/p"
-
 echo "[cloudflare] building portal for tenant root mounts"
 pushd "$PORTAL_WEB_DIR" >/dev/null
 if [[ "$STRICT_TS" == "1" ]]; then
@@ -232,7 +212,7 @@ cat > "$OUT_DIR/_headers" <<'EOF'
   Access-Control-Allow-Methods: GET,HEAD,OPTIONS
   Access-Control-Max-Age: 86400
 
-/p/assets/*
+/__portal_root/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
 /r8-rowhome/assets/*

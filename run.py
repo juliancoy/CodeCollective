@@ -156,7 +156,7 @@ def start_datacenter_helpers(args: argparse.Namespace) -> None:
             "python3",
             "datacenters/research_inventory_with_kimi.py",
             "--env-file",
-            str(KIMI_ENV_FILE),
+            f"{WORKSPACE}/.env.kimi",
             "--workers",
             str(args.kimi_workers),
             "--max-searches",
@@ -185,7 +185,7 @@ def start_datacenter_helpers(args: argparse.Namespace) -> None:
         "--port",
         str(args.kimi_dashboard_port),
         "--env-file",
-        str(KIMI_ENV_FILE),
+        f"{WORKSPACE}/.env.kimi",
     ]
     docker_utils.run_container(dashboard)
     wait_for_http(f"http://127.0.0.1:{args.kimi_dashboard_port}/", "datacenter dashboard")

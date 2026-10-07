@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import worker from './worker.js';
 
 test('OrgPortal Timebank routes require a community choice and preserve link context', async () => {
-  for (const path of ['/timebanking', '/timebanking/', '/p/timebanking', '/p/timebanking/']) {
+  for (const path of ['/timebanking', '/timebanking/']) {
     const response = await worker.fetch(new Request(`https://orgportal.cc${path}?listing=existing`), {});
     assert.equal(response.status, 308);
     assert.equal(response.headers.get('location'), 'https://orgportal.cc/communities?listing=existing&feature=timebank');

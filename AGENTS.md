@@ -2,9 +2,9 @@
 
 This repository has one canonical Cloudflare frontend deployment:
 
-- `codecollective-site` is the main site. Its build script copies the legacy static site into `.cloudflare/site`, builds the sibling OrgPortal checkout with a `/p/` base, embeds that build at `/p/`, and also builds `r8-rowhome` at `/r8-rowhome/`.
+- `codecollective-site` is the main site. Its build script copies the legacy static site into `.cloudflare/site`, builds the sibling OrgPortal checkout with a `/` base, serves that build at `orgportal.cc` and tenant domain roots, and also builds `r8-rowhome` at `/r8-rowhome/`.
 
-The former `codecollective-portal` standalone Worker was deleted on 2026-09-09. Do not recreate it. OrgPortal is served at `https://orgportal.cc/` on the same `codecollective-site` Worker. `https://codecollective.us/p/` is the Code Collective community portal. OrgPortal uses its own platform tenant and must not be reattached as a Code Collective domain alias. Keep `orgportal.cc` in the Worker custom domains and tenant hosts, and in PIdP and chat allowed origins.
+The former `codecollective-portal` standalone Worker was deleted on 2026-09-09. Do not recreate it. OrgPortal is served at `https://orgportal.cc/` on the same `codecollective-site` Worker. The `/p/` deployment has been removed; `/p/` URLs return 404. OrgPortal uses its own platform tenant and must not be reattached as a Code Collective domain alias. Keep `orgportal.cc` in the Worker custom domains and tenant hosts, and in PIdP and chat allowed origins.
 
 The root `README.md` summarizes the current frontend deployment. Use the more detailed validation and handoff requirements in this file when deploying.
 
@@ -48,7 +48,7 @@ node --test cloudflare/*.test.mjs
 npm --prefix r8-rowhome test -- --run
 ```
 
-Rebuild and deploy the main site so its `/p/` bundle is generated from the checked-out portal commit:
+Rebuild and deploy the main site so its root portal bundle is generated from the checked-out portal commit:
 
 ```bash
 ./cloudflare/scripts/build_cloudflare_site.sh
@@ -62,11 +62,11 @@ If changes touch `../OrgPortal/org-worker`, `../OrgPortal/chat-worker`, or `../O
 
 ## Live checks
 
-After deploying, verify all three URLs return HTTP 200 and that the asset referenced by `/p/` also loads:
+After deploying, verify all three URLs return HTTP 200 and that the asset referenced by `orgportal.cc` also loads:
 
 - `https://codecollective-site.jcloiacon.workers.dev/`
 - `https://codecollective.us/`
-- `https://codecollective.us/p/`
+- `https://orgportal.cc/`
 
 Record the main-site Wrangler version ID in the handoff response. The standalone frontend was retired and deleted on 2026-09-09 at portal commit `b01dffaf08059fed0b4232e302c91dc3ac5d4f5d`; do not recreate it unless the user explicitly reverses that decision. The resulting main-site version was `525ee96c-6b11-4539-9657-a89999c3da71`.
 

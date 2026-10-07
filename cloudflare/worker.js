@@ -160,7 +160,7 @@ function spaEntrypointRequest(url, request, pathname) {
 function applyStaticCachePolicy(path, response) {
   const headers = new Headers(response.headers);
 
-  if (path.startsWith("/assets/") || path.startsWith("/__portal_root/assets/") || path.startsWith("/p/assets/") || path.startsWith("/r8-rowhome/assets/")) {
+  if (path.startsWith("/assets/") || path.startsWith("/__portal_root/assets/") || path.startsWith("/r8-rowhome/assets/")) {
     headers.set("cache-control", "public, max-age=31536000, immutable");
   } else if (path.endsWith("/mobile-update.json")) {
     headers.set("cache-control", "no-store");
@@ -170,7 +170,7 @@ function applyStaticCachePolicy(path, response) {
     /\.(?:png|jpg|jpeg|gif|webp|avif|svg|ico|woff|woff2|ttf|otf|mp4|webm|mp3|wav)$/i.test(path)
   ) {
     headers.set("cache-control", "public, max-age=2592000");
-  } else if (path.endsWith(".html") || path === "/" || path === "/p/" || path === "/p") {
+  } else if (path.endsWith(".html") || path === "/") {
     headers.set("cache-control", "public, max-age=0, must-revalidate");
   }
 
@@ -960,14 +960,14 @@ const productionWorker = {
     const path = url.pathname;
     const tenantHost = isOrgPortalTenantHost(url.hostname, env);
 
-    if (url.hostname === "orgportal.cc" && ["/timebanking", "/timebanking/", "/p/timebanking", "/p/timebanking/"].includes(path)) {
+    if (url.hostname === "orgportal.cc" && ["/timebanking", "/timebanking/"].includes(path)) {
       url.pathname = "/communities";
       url.searchParams.set("feature", "timebank");
       return Response.redirect(url.toString(), 308);
     }
 
     if (!tenantHost && pathMatchesPrefix(path, "/orgs") && (request.method === "GET" || request.method === "HEAD")) {
-      url.pathname = `/p${path}`;
+      url.hostname = "orgportal.cc";
       return Response.redirect(url.toString(), 302);
     }
 
@@ -975,8 +975,8 @@ const productionWorker = {
       return healthResponse(request, env);
     }
 
-    if (request.method === "GET" && (path === "/p/clear-cache" || (tenantHost && path === "/clear-cache"))) {
-      url.pathname = tenantHost ? "/users/login" : "/p/users/login";
+    if (request.method === "GET" && (tenantHost && path === "/clear-cache")) {
+      url.pathname = "/users/login";
       return new Response(null, {
         status: 303,
         headers: {
@@ -1080,7 +1080,7 @@ const productionWorker = {
     }
 
     if (path === "/auth/callback" && !tenantHost) {
-      url.pathname = "/p/auth/callback";
+      url.hostname = "orgportal.cc";
       return Response.redirect(url.toString(), 308);
     }
 
@@ -1091,8 +1091,7 @@ const productionWorker = {
       }
     }
 
-    // Tenant domains mount the shared OrgPortal app at their root. The /p/
-    // prefix is a legacy shared-domain detail and should not appear on tenant URLs.
+    // Tenant domains mount the shared OrgPortal app at their root.
     if (tenantHost) {
       const specialtyTarget = medTechSpecialtyRedirect(path);
       if (specialtyTarget) {
@@ -1103,11 +1102,7 @@ const productionWorker = {
         url.pathname = "/calendar";
         return Response.redirect(url.toString(), 308);
       }
-      const portalPath = pathMatchesPrefix(path, "/p") ? path.slice(2) || "/" : path;
-      if (pathMatchesPrefix(path, "/p")) {
-        url.pathname = ["/timebanking", "/timebanking/", "/index.html"].includes(portalPath) ? "/" : portalPath;
-        return Response.redirect(url.toString(), 308);
-      }
+      const portalPath = path;
       if (
         pathMatchesPrefix(path, "/assets")
         || pathMatchesPrefix(path, "/ecosystem-data")
@@ -1160,14 +1155,6 @@ const productionWorker = {
       return applyStaticCachePolicy(path, assetResponse);
     }
 
-    if ((path === "/p" || path.startsWith("/p/")) && (isHtmlNavigation(request) || looksLikeSpaRoute(path))) {
-      if (!isPortalPagePath(path.slice(2) || '/')) return notFoundResponse(request);
-      // Request the directory entrypoint directly to avoid index.html -> /p/ redirects
-      // that can interfere with hash-token deep links after auth callbacks.
-      const spaResponse = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/p/"));
-      return applyStaticCachePolicy("/p/index.html", spaResponse);
-    }
-
     if ((path === "/r8-rowhome" || path.startsWith("/r8-rowhome/")) && (isHtmlNavigation(request) || looksLikeSpaRoute(path))) {
       const spaResponse = await env.ASSETS.fetch(spaEntrypointRequest(url, request, "/r8-rowhome/"));
       return applyStaticCachePolicy("/r8-rowhome/index.html", spaResponse);
@@ -1182,13 +1169,14 @@ export default {
     if (env.WEB_PREVIEW === 'true') return previewResponse(request, env);
     const url = new URL(request.url);
     const tenant = isOrgPortalTenantHost(url.hostname, env);
-    if (tenant || pathMatchesPrefix(url.pathname, '/p')) {
-      const missing = await missingPortalResource(request, pathMatchesPrefix(url.pathname, '/p') ? url.pathname.slice(2) || '/' : url.pathname, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
+    if (pathMatchesPrefix(url.pathname, '/p')) return notFoundResponse(request);
+    if (tenant) {
+      const missing = await missingPortalResource(request, url.pathname, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
       if (missing) return missing;
     }
     const selected = await deploymentResponse(request, env, {
-      enabled: tenant || pathMatchesPrefix(url.pathname, '/p') || url.pathname === deploymentPath,
-      mount: tenant ? 'root' : 'portal',
+      enabled: tenant || url.pathname === deploymentPath,
+      mount: 'root',
     });
     if (selected) return selected;
     const response = await productionWorker.fetch(request, env);

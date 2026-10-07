@@ -20,7 +20,7 @@ not need Cloudflare Access application administration.
 
 Development responses are private/no-store and noindex. HTML responses vary by
 Cookie so one browser's selection does not affect another. Hashed assets,
-site branding, and matching web update manifests are included for `/p/` and
+site branding, and matching web update manifests are included for
 root-mounted portals. Preview manifests do not advertise Android releases.
 
 ## Refresh development without changing the deployed app
@@ -42,8 +42,8 @@ frontend assets. GitHub Actions uses the equivalent repository secrets.
 
 Production frontend configuration binds `DEV_ASSETS` to the private Worker.
 The shared selection/routing implementation lives in `OrgPortal/web/deployment.mjs`.
-LifeTech keeps its own static frontend routes; portal tenant hosts and
-CodeCollective `/p/` use the shared portal bundles.
+LifeTech keeps its own static frontend routes; OrgPortal and portal tenant hosts
+use the shared root portal bundle.
 
 ## CI and testing
 

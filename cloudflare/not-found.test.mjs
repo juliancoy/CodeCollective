@@ -17,3 +17,19 @@ test('unknown portal pages return 404 in production and private previews', async
     assert.equal(response.headers.get('x-robots-tag'),'noindex');
   }
 });
+
+
+test('removed /p mount returns 404 without accessing assets or APIs', async () => {
+  const unavailable = () => { throw new Error('Removed mount must not fetch'); };
+  for (const host of ['codecollective.us', 'orgportal.cc', 'lifetech.fyi']) {
+    for (const path of ['/p', '/p/', '/p/chat', '/p/assets/index.js', '/p/mobile-update.json', '/p/auth/callback']) {
+      for (const preview of [false, true]) {
+        const response = await worker.fetch(new Request(`https://${host}${path}`, { headers: { 'x-preview-mount': 'root' } }), {
+          WEB_PREVIEW: preview ? 'true' : 'false', ASSETS: { fetch: unavailable }, DEV_ASSETS: { fetch: unavailable },
+        });
+        assert.equal(response.status, 404, `${host}${path}`);
+        assert.equal(response.headers.get('location'), null);
+      }
+    }
+  }
+});
