@@ -99,3 +99,8 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --ref "${GITHUB_REF_NAME}" \
             --field deploy_target=site
+
+  sync_portal_calendar:
+    needs: update_calendar
+    uses: ./.github/workflows/sync-portal-calendar.yml
+    secrets: inherit

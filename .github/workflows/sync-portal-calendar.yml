@@ -1,0 +1,50 @@
+name: Sync Portal Calendar
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      ORG_BACKEND_INGEST_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portal-calendar-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out latest published calendar data
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Check out reviewed portal importer
+        uses: actions/checkout@v4
+        with:
+          repository: juliancoy/OrgPortal
+          ref: 79af7be7eb20ea949e58c0dfe116e770bc3d6946
+          path: .cache/portal-calendar-importer
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install importer dependency
+        run: pip install requests
+      - name: Verify organization matching and event identity
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python -m unittest discover \
+            -s .cache/portal-calendar-importer/org-worker/tests -p test_calendar_feed.py
+      - name: Sync organizations and events to the portal
+        env:
+          ORG_BACKEND_INGEST_URL: https://lifetech.fyi/api/org/api/network/ingest/calendar
+          ORG_BACKEND_INGEST_TOKEN: ${{ secrets.ORG_BACKEND_INGEST_TOKEN }}
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          python .cache/portal-calendar-importer/org-worker/scripts/push_org_network_feed.py \
+            --repo-root "$GITHUB_WORKSPACE"
