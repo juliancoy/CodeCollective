@@ -35,4 +35,4 @@ be removed within seven days under the service retention policy.
 Production verification is read-only and unauthenticated; authenticated fixtures
 belong in the local Docker deployment.
 
-CLI verification: `python3 -m unittest discover -s CodeCollective/tests`.
+CLI verification: `python3 CodeCollective/tests/test_push_all.py`.

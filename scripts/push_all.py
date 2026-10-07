@@ -84,10 +84,11 @@ class Release:
             self.run(repo / 'web', 'route-tests', 'node', '--test', *sorted(map(str, (repo / 'web/tests/unit').glob('*.test.mjs'))))
             self.run(repo, 'web-build', 'npm', '--prefix', 'web', 'run', 'build')
         elif repo.name == 'CodeCollective':
+            self.run(repo, 'release-script-test', 'python3', 'tests/test_push_all.py')
             self.run(repo, 'worker-test', 'node', '--test', *sorted(map(str, (repo / 'cloudflare').glob('*.test.mjs'))))
             self.run(repo, 'agenda-test', 'npm', '--prefix', 'calendar-next-app', 'test')
             self.run(repo, 'agenda-build', 'npm', '--prefix', 'calendar-next-app', 'run', 'build')
-            self.run(repo, 'rowhome-test', 'npm', '--prefix', 'r8-rowhome', 'test', '--', '--run')
+            self.run(repo, 'rowhome-test', 'npm', '--prefix', 'r8-rowhome', 'test', '--', '--maxWorkers=2')
         elif repo.name.lower() == 'pidp':
             self.run(repo, 'python-test', 'python3', '-m', 'pytest', 'tests/test_mcp_authorization.py', 'tests/test_retention.py')
             self.run(repo, 'worker-test', 'npm', '--prefix', 'serverless', 'test')
@@ -210,7 +211,7 @@ def main():
                     release.run(repo, 'generated-commit', 'git', 'commit', '-m', 'Update generated release assets')
                     changed.add(repo)
                 if s['branch']:
-                    release.run(repo, 'push', 'git', 'push', s['remote'], f'HEAD:{s["remote_ref"]}')
+                    release.run(repo, 'push', 'git', 'push', *([] if s['upstream'] else ['--set-upstream']), s['remote'], f'HEAD:{s["remote_ref"]}')
             (folder / 'repositories.json').write_text(json.dumps({str(p): state(p) for p in repos}, indent=2) + '\n')
             if not args.skip_deploy:
                 release.deploy(changed)
