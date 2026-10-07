@@ -28,6 +28,8 @@ echo "[cloudflare] preparing output directory: $OUT_DIR"
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 
+"$ROOT_DIR/scripts/build_calendar_next.sh"
+
 echo "[cloudflare] syncing legacy static site"
 rsync -a \
   --exclude='.git' \
@@ -54,6 +56,7 @@ rsync -a \
   --exclude='p/' \
   --exclude='portal_src/' \
   --exclude='r8-rowhome/' \
+  --exclude='calendar-next-app/' \
   --exclude='cloudflare/' \
   --exclude='scripts/' \
   --exclude='datacenters/research/' \

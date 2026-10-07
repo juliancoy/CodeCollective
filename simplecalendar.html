@@ -364,6 +364,8 @@
         font-weight: 700;
       }
     </style>
+    <link rel="stylesheet" href="/css/calendarViews.css" />
+    <script src="/js/calendarViews.js" defer></script>
   </head>
   <body>
 
@@ -396,10 +398,12 @@
           autocomplete="off"
         />
       </div>
-      <div class="view-switch">
-        <a id="cardsViewLink" href="/calendar_cards.html">Cards</a>
-        <a id="calendarViewLink" href="/calendar.html?view=calendar">Calendar</a>
-      </div>
+      <nav class="calendar-view-switch" aria-label="Calendar views">
+        <a id="calendarViewLink" data-calendar-view href="/calendar.html?view=calendar">Calendar</a>
+        <a id="cardsViewLink" data-calendar-view href="/calendar_cards.html">Cards</a>
+        <a data-calendar-view href="/simplecalendar.html" aria-current="page">Simple</a>
+        <a data-calendar-view href="/calendar-next/">Agenda</a>
+      </nav>
       <main id="events"></main>
     </div>
     <div
@@ -729,6 +733,7 @@
         window.history.replaceState({}, "", url);
       }
       function syncCardsLink(city) {
+        window.syncCalendarViewLinks?.();
         const link = document.getElementById("cardsViewLink");
         if (!link) return;
         const url = new URL(link.href || "/calendar_cards.html", window.location.href);

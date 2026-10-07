@@ -1,0 +1,534 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* ---------- Reset and base ---------- */
+
+/* Layered so Tailwind's utilities win. An unlayered `button { padding: 0 }`
+   silently beats every `px-*` class, which collapsed the padding on every
+   button in the app. */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Anchors and focused elements must never land under the sticky chrome. */
+    scroll-padding-top: var(--chrome-h);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  p,
+  figure {
+    margin: 0;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+  }
+
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* Every date, time and count uses tabular figures so columns never jitter. */
+  time,
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------- Focus ---------- */
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Rows draw their ring inset so it is not clipped by the scroll container. */
+.focus-inset:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ---------- Utilities ---------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--s4);
+  top: -100px;
+  z-index: 100;
+  padding: var(--s2) var(--s4);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: var(--r-cell);
+  box-shadow: var(--shadow-sheet);
+  transition: top 0.16s ease;
+}
+.skip-link:focus-visible {
+  top: var(--s3);
+}
+
+.clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.clamp-6 {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Edge fade for the overflowing rails. */
+.rail-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 24px,
+    #000 calc(100% - 24px),
+    transparent 100%
+  );
+}
+
+/* ---------- Type roles, v2 ----------
+   One weight-600 element per zone. Everything else is 400 or 500, so the
+   single bold thing in each block is the thing that leads. */
+
+.t-h1 {
+  font-size: 30px;
+  line-height: 34px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+@media (min-width: 768px) {
+  .t-h1 {
+    font-size: 44px;
+    line-height: 48px;
+  }
+}
+
+.t-band-meta {
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+/* The loud element in the list column. */
+.t-gutter-num {
+  font-size: 32px;
+  line-height: 32px;
+  font-weight: 600;
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}
+.t-gutter-day {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.t-gutter-rel {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+.t-gutter-count {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.t-row-time {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  font-stretch: 85%;
+  font-variant-numeric: tabular-nums;
+}
+.t-row-time-end {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.t-row-title {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+.t-row-meta {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.t-tide-num {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}
+.t-tide-day {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  font-stretch: 80%;
+}
+
+.t-rail {
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.t-rail-active {
+  font-weight: 600;
+}
+
+.t-section {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+}
+.t-group {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.t-sheet-title {
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 600;
+}
+.t-day {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+.t-body {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+}
+.t-meta {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+.t-caption {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+.t-13 {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes cc-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* The breathing beat, on the small dot inside a live chip rather than on the
+   chip itself: pulsing a filled shape would pulse its text too. */
+.live-dot > span:first-child,
+span.live-dot.h-2 {
+  animation: cc-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes cc-skeleton {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.skeleton {
+  background: var(--bg-soft);
+  animation: cc-skeleton 1.8s ease-in-out infinite;
+}
+
+@keyframes cc-flash {
+  from {
+    background-color: var(--brand-soft);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+.row-flash {
+  animation: cc-flash 600ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot,
+  .skeleton,
+  .row-flash {
+    animation: none;
+  }
+  .skeleton {
+    opacity: 0.7;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto;
+  }
+}
+
+/* ---------- Row hairlines, inset to the content column ---------- */
+
+.row-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.row-list > li + li {
+  position: relative;
+}
+.row-list > li + li::before {
+  content: '';
+  position: absolute;
+  inset: 0 var(--s4) auto;
+  border-top: 1px solid var(--line);
+}
+
+.rail-item .rail-icon {
+  transition:
+    transform 0.16s ease,
+    filter 0.16s ease;
+}
+@media (hover: hover) {
+  .rail-item:hover .rail-icon {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 2px 3px rgb(14 26 36 / 0.18));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-item .rail-icon {
+    transition: none;
+  }
+  .rail-item:hover .rail-icon {
+    transform: none;
+  }
+}
+
+/* Short viewports drop the weekday label so the sticky chrome stays inside
+   its 30% budget. */
+@media (max-height: 700px) {
+  .tide-weekday {
+    display: none;
+  }
+}
+
+/* ---------- Row lift, v2 ---------- */
+
+.row-lift {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+@media (hover: hover) {
+  .row-lift:hover {
+    background: var(--bg);
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-1px);
+  }
+}
+.row-selected {
+  background: var(--brand-soft);
+}
+
+.where-row {
+  transition: background-color 160ms ease;
+}
+@media (hover: hover) {
+  .where-row:hover {
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+  }
+}
+
+/* The interlude's one flourish: the image eases inside a fixed frame. */
+.interlude-frame {
+  overflow: hidden;
+}
+.interlude-img {
+  transition: transform 360ms ease;
+}
+@media (hover: hover) {
+  .interlude-card:hover .interlude-img {
+    transform: scale(1.03);
+  }
+  .interlude-card:hover .interlude-frame > span {
+    filter: brightness(0.96);
+  }
+}
+
+/* The grid is a field of 28 quiet cells, so hover is the only thing telling
+   you they are all reachable. It stays a surface change, not a lift: 28 tiles
+   rising under the pointer would be the noisiest thing on the page. */
+.month-cell {
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease;
+}
+@media (hover: hover) {
+  .month-cell:hover:not([aria-disabled='true']) {
+    background: var(--bg-soft);
+    box-shadow: inset 0 0 0 1px var(--ink-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row-lift,
+  .interlude-img,
+  .where-row,
+  .month-cell {
+    transition: none;
+  }
+  .row-lift:hover {
+    transform: none;
+  }
+  .interlude-card:hover .interlude-img {
+    transform: none;
+  }
+}
+
+/* Day sections carry their own spacing now that the header bands are gone. */
+.day-section + .day-section {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- Progressive rendering ---------- */
+
+.day-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 800px;
+}
+
+/* ---------- Rendered markdown inside the detail sheet ---------- */
+
+.prose {
+  font-size: 16px;
+  line-height: 24px;
+  max-width: 68ch;
+  overflow-wrap: break-word;
+}
+.prose > * + * {
+  margin-top: 0.75em;
+}
+.prose a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose h1,
+.prose h2,
+.prose h3 {
+  font-size: 17px;
+  line-height: 24px;
+  font-weight: 600;
+}
+.prose ul,
+.prose ol {
+  padding-left: 1.25em;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose img {
+  border-radius: var(--r-thumb);
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- MapLibre overrides, kept minimal ---------- */
+
+.maplibregl-ctrl-attrib {
+  font-size: 11px;
+}
+.maplibregl-ctrl-attrib-inner a {
+  color: var(--ink-2);
+}

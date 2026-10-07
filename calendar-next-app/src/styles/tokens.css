@@ -1,0 +1,284 @@
+/**
+ * v2 palette. Three roles, in strict proportion:
+ *
+ *   ~70% calm neutrals      content surfaces and the rail
+ *   ~20% Collective Blue    brand band, primary actions, selected states
+ *    ~8% sector colours     dots, avatars, posters, tide bars
+ *    ~2% Calvert gold       "now", and nothing else
+ *
+ * Collective Blue, Sky Highlight and Warm Emphasis come from Code Collective's
+ * own brand page. The gold is the Calvert gold of the Baltimore city flag: the
+ * energetic sibling of the brand's pale Warm Emphasis, kept for a single job.
+ *
+ * Light is the default. On white the brand band carries the depth and event
+ * photography reads properly.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* surfaces */
+  --bg: #ffffff;
+  --bg-soft: #f5f8fc;
+  --line: #e3e9f1;
+
+  /* ink */
+  --ink: #0c1e36;
+  --ink-2: #51627a;
+
+  /* brand */
+  --brand: #002a61;
+  --brand-ink: #ffffff;
+  --brand-soft: #e6eef8;
+  /* Text on a brand-soft fill. Navy on the light tint; Sky on the dark one,
+     because navy on navy measures about 1.1:1. */
+  --brand-soft-ink: #002a61;
+  /* Brand colour that has to read against the page, not against the band:
+     link text, tide bars, the Where bars. Navy on white, Sky on navy. */
+  --brand-on-bg: #002a61;
+
+  /* Sky is legible on navy only. --sky-deep is its graphics-on-white sibling. */
+  --sky: #87ceeb;
+  --sky-deep: #1c86b8;
+
+  /* Gold is a fill, never a line, a dot, or text on white. */
+  --gold: #f2b233;
+  --gold-ink: #002a61;
+
+  --band-meta: #b9d7f0;
+  --danger: #a94f4f;
+  --live: #f2b233;
+  /* The gutter numeral: brand on white, plain ink on navy. */
+  --gutter-num: var(--brand);
+
+  --scrim: rgb(12 30 54 / 0.34);
+  --shadow-lift: 0 6px 20px -8px rgb(0 42 97 / 0.18), 0 0 0 1px var(--line);
+  --shadow-pill: 0 1px 2px rgb(0 42 97 / 0.08), 0 6px 18px -6px rgb(0 42 97 / 0.16);
+  --shadow-sheet: 0 24px 48px -12px rgb(0 42 97 / 0.28), 0 0 0 1px var(--line);
+
+  /* month heat: bg -> brand-soft -> brand at 35% */
+  --heat-0: #ffffff;
+  --heat-1: #f1f6fc;
+  --heat-2: #e6eef8;
+  --heat-3: #cddff2;
+  --heat-4: #a8c6e6;
+
+  /* Sector palette v2. Light L 0.57 C 0.135, every hue at least 4:1 on white. */
+  --sector-technology: #187dc1;
+  --sector-technology-tint: #ddf3ff;
+  --sector-entrepreneurship: #008c9d;
+  --sector-entrepreneurship-tint: #d6f8fb;
+  --sector-makerspace: #b85734;
+  --sector-makerspace-tint: #ffe9df;
+  --sector-education: #616ec6;
+  --sector-education-tint: #e9efff;
+  --sector-economics: #009082;
+  --sector-economics-tint: #d7f8f3;
+  --sector-finance: #9b6f00;
+  --sector-finance-tint: #fbefd6;
+  --sector-health: #008f5b;
+  --sector-health-tint: #ddf8e8;
+  --sector-environment: #478a38;
+  --sector-environment-tint: #e4f6e0;
+  --sector-culture: #8a60b6;
+  --sector-culture-tint: #f5ebff;
+  --sector-government: #a65597;
+  --sector-government-tint: #ffe8fa;
+  --sector-politics: #b9515d;
+  --sector-politics-tint: #ffe7e9;
+  --sector-faith: #af6000;
+  --sector-faith-tint: #ffebd9;
+  --sector-other: #6b7684;
+  --sector-other-tint: #eef1f5;
+
+  /* type */
+  --font-sans: 'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+
+  /* space, 4px base */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s7: 32px;
+  --s8: 40px;
+  --s9: 56px;
+  --s10: 80px;
+
+  /* radius */
+  --r-pill: 999px;
+  --r-sheet: 20px;
+  --r-image: 16px;
+  --r-card: 14px;
+  --r-cell: 12px;
+  --r-thumb: 10px;
+
+  /* Sticky chrome, published by the layout and read by scroll-padding. */
+  --band-h: 64px;
+  --control-h: 64px;
+  --tide-h: 76px;
+  --chrome-h: 204px;
+}
+
+/* The page sits darker than the band, so the band still reads as the anchor. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #04162e;
+  --bg-soft: #0a2447;
+  --line: #1a3a66;
+
+  --ink: #eaf2fb;
+  --ink-2: #9db3cf;
+
+  --brand: #002a61;
+  --brand-ink: #ffffff;
+  --brand-soft: #0f2d57;
+  --brand-soft-ink: #87ceeb;
+  --brand-on-bg: #87ceeb;
+
+  --sky: #87ceeb;
+  --sky-deep: #87ceeb;
+
+  --gold: #f5c04a;
+  --gold-ink: #04162e;
+
+  --band-meta: #b9d7f0;
+  --danger: #e08a8a;
+  --live: #f5c04a;
+  --gutter-num: var(--ink);
+
+  --scrim: rgb(1 8 18 / 0.6);
+  --shadow-lift: 0 8px 24px -10px rgb(0 0 0 / 0.5), 0 0 0 1px var(--line);
+  --shadow-pill: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px -6px rgb(0 0 0 / 0.45);
+  --shadow-sheet: 0 24px 48px -12px rgb(0 0 0 / 0.55), 0 0 0 1px var(--line);
+
+  --heat-0: #04162e;
+  --heat-1: #08223f;
+  --heat-2: #0f2d57;
+  --heat-3: #163b6f;
+  --heat-4: #1d4a8a;
+
+  /* Dark L 0.78 C 0.12, every hue at least 8.5:1 on #04162E. */
+  --sector-technology: #71bfff;
+  --sector-technology-tint: #15364f;
+  --sector-entrepreneurship: #3bcddc;
+  --sector-entrepreneurship-tint: #003b41;
+  --sector-makerspace: #f99c7c;
+  --sector-makerspace-tint: #4c271a;
+  --sector-education: #a1b1ff;
+  --sector-education-tint: #2a3051;
+  --sector-economics: #44d0c1;
+  --sector-economics-tint: #003c37;
+  --sector-finance: #dbb155;
+  --sector-finance-tint: #413007;
+  --sector-health: #6bcf9d;
+  --sector-health-tint: #103c28;
+  --sector-environment: #8dca80;
+  --sector-environment-tint: #213a1c;
+  --sector-culture: #c9a3f5;
+  --sector-culture-tint: #3a2a4b;
+  --sector-government: #e79ad6;
+  --sector-government-tint: #45263f;
+  --sector-politics: #fa969f;
+  --sector-politics-tint: #4d2529;
+  --sector-faith: #efa464;
+  --sector-faith-tint: #492b0f;
+  --sector-other: #aab4c0;
+  --sector-other-tint: #1f3048;
+}
+
+/* Follow the system only when the visitor has not chosen. */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme='system'] {
+    color-scheme: dark;
+
+    --bg: #04162e;
+    --bg-soft: #0a2447;
+    --line: #1a3a66;
+
+    --ink: #eaf2fb;
+    --ink-2: #9db3cf;
+
+    --brand: #002a61;
+    --brand-ink: #ffffff;
+    --brand-soft: #0f2d57;
+    --brand-soft-ink: #87ceeb;
+    --brand-on-bg: #87ceeb;
+
+    --sky: #87ceeb;
+    --sky-deep: #87ceeb;
+
+    --gold: #f5c04a;
+    --gold-ink: #04162e;
+
+    --band-meta: #b9d7f0;
+    --danger: #e08a8a;
+    --live: #f5c04a;
+    --gutter-num: var(--ink);
+
+    --scrim: rgb(1 8 18 / 0.6);
+    --shadow-lift: 0 8px 24px -10px rgb(0 0 0 / 0.5), 0 0 0 1px var(--line);
+    --shadow-pill: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 18px -6px rgb(0 0 0 / 0.45);
+    --shadow-sheet: 0 24px 48px -12px rgb(0 0 0 / 0.55), 0 0 0 1px var(--line);
+
+    --heat-0: #04162e;
+    --heat-1: #08223f;
+    --heat-2: #0f2d57;
+    --heat-3: #163b6f;
+    --heat-4: #1d4a8a;
+
+    --sector-technology: #71bfff;
+    --sector-technology-tint: #15364f;
+    --sector-entrepreneurship: #3bcddc;
+    --sector-entrepreneurship-tint: #003b41;
+    --sector-makerspace: #f99c7c;
+    --sector-makerspace-tint: #4c271a;
+    --sector-education: #a1b1ff;
+    --sector-education-tint: #2a3051;
+    --sector-economics: #44d0c1;
+    --sector-economics-tint: #003c37;
+    --sector-finance: #dbb155;
+    --sector-finance-tint: #413007;
+    --sector-health: #6bcf9d;
+    --sector-health-tint: #103c28;
+    --sector-environment: #8dca80;
+    --sector-environment-tint: #213a1c;
+    --sector-culture: #c9a3f5;
+    --sector-culture-tint: #3a2a4b;
+    --sector-government: #e79ad6;
+    --sector-government-tint: #45263f;
+    --sector-politics: #fa969f;
+    --sector-politics-tint: #4d2529;
+    --sector-faith: #efa464;
+    --sector-faith-tint: #492b0f;
+    --sector-other: #aab4c0;
+    --sector-other-tint: #1f3048;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-sky: var(--sky);
+  --color-sky-deep: var(--sky-deep);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-band-meta: var(--band-meta);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-sans);
+  --radius-pill: var(--r-pill);
+  --radius-sheet: var(--r-sheet);
+  --radius-image: var(--r-image);
+  --radius-card: var(--r-card);
+  --radius-cell: var(--r-cell);
+  --radius-thumb: var(--r-thumb);
+}

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Baltimore Techonomics Calendar, Code Collective</title>
+    <meta
+      name="description"
+      content="Every upcoming technology, community and civic event in Baltimore, as a time-first agenda you can scan in seconds."
+    />
+    <meta name="theme-color" content="#F5F7F9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0E1A24" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content="Baltimore Techonomics Calendar" />
+    <meta
+      property="og:description"
+      content="Every upcoming technology, community and civic event in Baltimore, as a time-first agenda."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://codecollective.us" crossorigin />
+    <!--
+      Just enough CSS for the first screen, inline. The built stylesheet is a
+      render-blocking request, and at Lighthouse's 150ms RTT that alone pushed
+      first contentful paint past 2s. The full sheet still loads and wins.
+    -->
+    <style>
+      :root {
+        --bg: #ffffff;
+        --ink: #0c1e36;
+        --band-meta: #b9d7f0;
+        --brand: #002a61;
+      }
+      :root[data-theme='dark'] {
+        --bg: #04162e;
+        --ink: #eaf2fb;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root[data-theme='system'] {
+          --bg: #04162e;
+          --ink: #eaf2fb;
+        }
+      }
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Instrument Sans Variable', ui-sans-serif, system-ui, -apple-system,
+          'Segoe UI', Roboto, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* The boot block mirrors the brand band, so first paint is already navy. */
+      #boot {
+        background: var(--brand);
+        color: #fff;
+        padding: 72px 16px 28px;
+      }
+      #boot-inner {
+        max-width: 1440px;
+        margin: 0 auto;
+      }
+      #boot h1 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 34px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      #boot p {
+        margin: 8px 0 0;
+        font-size: 15px;
+        line-height: 22px;
+        color: var(--band-meta);
+      }
+      @media (min-width: 768px) {
+        #boot h1 {
+          font-size: 44px;
+          line-height: 48px;
+        }
+      }
+    </style>
+    <script>
+      // Resolve the theme before first paint so there is no flash of the wrong
+      // surface. v2 defaults to light. Mirrors src/app/theme.ts.
+      (function () {
+        var t = 'light';
+        try {
+          var stored = localStorage.getItem('cc-theme');
+          if (stored === 'light' || stored === 'dark' || stored === 'system') t = stored;
+        } catch (e) {
+          /* storage blocked; the light default stands */
+        }
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+  </head>
+  <body>
+    <!--
+      The heading and the meta line are painted from static markup, before any
+      JavaScript runs. The feed is a 2.6 MB third-party file, so waiting for it
+      to paint the largest element put LCP at 4.4s on throttled mobile. React
+      replaces this the moment it mounts, at the same size and position, so
+      there is no layout shift.
+    -->
+    <div id="root">
+      <div id="boot">
+        <div id="boot-inner">
+          <h1>What&rsquo;s on in <span id="boot-city">Baltimore</span></h1>
+          <p>
+            Loading events from the Code Collective calendar. Times in
+            <span id="boot-zone">Eastern Time</span>.
+          </p>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Correct the city and zone before first paint when the URL asks for a
+      // city other than the default.
+      (function () {
+        var names = {
+          baltimore: ['Baltimore', 'Eastern Time'],
+          dc: ['Washington DC', 'Eastern Time'],
+          philadelphia: ['Philadelphia', 'Eastern Time'],
+          pittsburgh: ['Pittsburgh', 'Eastern Time'],
+          westvirginia: ['West Virginia', 'Eastern Time'],
+          hawaii: ['Hawaii', 'Hawaii Time'],
+          virtual: ['Virtual', 'your time'],
+        };
+        try {
+          var c = new URLSearchParams(location.search).get('city');
+          if (c && names[c]) {
+            document.getElementById('boot-city').textContent = names[c][0];
+            document.getElementById('boot-zone').textContent = names[c][1];
+          }
+        } catch (e) {
+          /* the default markup is already correct */
+        }
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
