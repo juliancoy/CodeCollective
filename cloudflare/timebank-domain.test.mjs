@@ -141,6 +141,25 @@ test('tenant event routes inject event social preview metadata', async t => {
 });
 
 
+test('external listing previews pass through without changing the external image URL', async t => {
+  t.mock.method(globalThis, 'fetch', async url => {
+    if (url.endsWith('/api/portal/tenant')) return Response.json({ id: 'lifetech' });
+    return Response.json({ title: 'Imported title', organization_name: 'LifeTech',
+      source_url: 'https://meetup.com/events/123', image_url: '/fallback.jpg',
+      links: [{ url: 'https://meetup.com/events/123', title: 'Original listing title',
+        description: 'Original listing description', image_url: 'https://images.meetup.com/preview.jpg?token=original' }] });
+  });
+  const response = await worker.fetch(new Request('https://lifetech.fyi/events/imported', { headers: { accept: 'text/html' } }), {
+    ...env, ORGPORTAL_TENANT_HOSTS: 'lifetech.fyi',
+    ASSETS: { fetch: async () => new Response('<html><head><title>Portal</title></head><body></body></html>', { headers: { 'content-type': 'text/html' } }) },
+  });
+  const html = await response.text();
+  assert.match(html, /property="og:title" content="Original listing title"/);
+  assert.match(html, /property="og:description" content="Original listing description"/);
+  assert.match(html, /property="og:image" content="https:\/\/images.meetup.com\/preview.jpg\?token=original"/);
+  assert.match(html, /rel="canonical" href="https:\/\/lifetech.fyi\/events\/imported"/);
+});
+
 test('unconfigured and unavailable tenants do not serve a different community', async t => {
   for (const status of [404, 500]) {
     community(t, status);

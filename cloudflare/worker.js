@@ -366,15 +366,22 @@ async function eventSocialMetadata(url, request, env) {
   if (!response.ok) return null;
   let event;
   try { event = await response.json(); } catch { return null; }
-  const title = compactText(event.social_title || event.title, 120);
+  const externalLinks = (Array.isArray(event.links) ? event.links : []).filter(link => {
+    try { const target = new URL(link.url); return ["http:", "https:"].includes(target.protocol) && target.origin !== url.origin; }
+    catch { return false; }
+  });
+  const listing = externalLinks.find(link => link.url === event.source_url) || externalLinks[0];
+  const title = compactText(event.social_title || listing?.title || event.title, 120);
   if (!title) return null;
   const group = compactText(event.organization_name || event.host_org_name || "Org Portal", 80);
-  const description = compactText(event.social_description || event.description || `${title} hosted by ${group}.`, 240);
-  const image = versionedPublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin, eventSocialImageVersion(event, env));
+  const description = compactText(event.social_description || listing?.description || event.description || `${title} hosted by ${group}.`, 240);
+  const image = !event.social_image_url && listing?.image_url
+    ? absolutePublicUrl(listing.image_url, listing.url)
+    : versionedPublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin, eventSocialImageVersion(event, env));
   const canonical = absolutePublicUrl(event.public_url || url.pathname, url.origin) || url.toString();
   const keywords = eventKeywords(event);
   return {
-    title: `${title} • ${group}`,
+    title: listing?.title && !event.social_title ? title : `${title} • ${group}`,
     description,
     image,
     imageType: socialImageType(image),
