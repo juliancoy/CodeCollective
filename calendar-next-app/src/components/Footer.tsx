@@ -61,7 +61,7 @@ export function Footer({ organizers }: { organizers: number }) {
               className="t-caption flex items-center gap-2 rounded-[var(--r-pill)] border px-3"
               style={{
                 minHeight: 44,
-                borderColor: theme === id ? 'var(--brand)' : 'var(--line)',
+                borderColor: theme === id ? 'var(--brand-on-bg)' : 'var(--line)',
                 background: theme === id ? 'var(--brand-soft)' : 'transparent',
                 color: 'var(--ink)',
               }}

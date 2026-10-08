@@ -15,8 +15,6 @@ export type ControlBarProps = {
   isPhone: boolean;
   /** The context rail only exists at 1280 and up, and so does its switch. */
   isWide: boolean;
-  /** True once the band above has condensed, which frosts this bar. */
-  stuck: boolean;
 };
 
 /**
@@ -35,17 +33,15 @@ export function ControlBar({
   onMap,
   isPhone,
   isWide,
-  stuck,
 }: ControlBarProps) {
   return (
     <div
+      data-calendar-controls
       className="sticky z-30 w-full border-b"
       style={{
         top: 'var(--band-h)',
         borderColor: 'var(--line)',
-        background: stuck ? 'color-mix(in srgb, var(--bg) 85%, transparent)' : 'var(--bg)',
-        backdropFilter: stuck ? 'blur(16px) saturate(140%)' : undefined,
-        WebkitBackdropFilter: stuck ? 'blur(16px) saturate(140%)' : undefined,
+        background: 'var(--bg)',
       }}
     >
       <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center px-4 sm:px-6">
@@ -135,7 +131,7 @@ export function ControlBar({
                       height: 24,
                       padding: 3,
                       background: mapOn ? 'var(--brand)' : 'var(--bg-soft)',
-                      border: `1px solid ${mapOn ? 'var(--brand)' : 'var(--line)'}`,
+                      border: `1px solid ${mapOn ? 'var(--brand-on-bg)' : 'var(--line)'}`,
                     }}
                   >
                     <span

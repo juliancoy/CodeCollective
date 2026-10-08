@@ -19,7 +19,7 @@ export type SearchPillProps = {
   onQuery: (q: string) => void;
   /** Phones collapse the three segments into one button and a sheet. */
   isPhone: boolean;
-  /** The condensed band docks a single summary pill instead of three segments. */
+  /** Use the smaller pill dimensions in the persistent header. */
   compact?: boolean;
   resultCount: number;
   onClearAll: () => void;
@@ -134,58 +134,6 @@ export function SearchPill({
     </>
   );
 
-  // Docked in the 64px bar: one pill summarising all three segments.
-  if (compact && !isPhone) {
-    return (
-      <>
-        <button
-          type="button"
-          onClick={() => setPhoneOpen(true)}
-          className="flex w-full max-w-[520px] items-center gap-2 rounded-[var(--r-pill)] px-4"
-          style={{ background: 'var(--bg)', boxShadow: 'var(--shadow-pill)', minHeight: 44 }}
-        >
-          <span className="t-meta truncate" style={{ color: 'var(--ink)' }}>
-            {cityLabel}
-          </span>
-          <span aria-hidden className="h-4 w-px shrink-0" style={{ background: 'var(--line)' }} />
-          <span className="t-meta truncate" style={{ color: 'var(--ink-2)' }}>
-            {whenLabel(datePreset, from, to)}
-          </span>
-          <span aria-hidden className="h-4 w-px shrink-0" style={{ background: 'var(--line)' }} />
-          <span className="t-meta min-w-0 flex-1 truncate text-left" style={{ color: 'var(--ink-2)' }}>
-            {query.trim() !== '' ? query : 'Search events'}
-          </span>
-          <span
-            aria-hidden
-            className="flex shrink-0 items-center justify-center rounded-full"
-            style={{ width: 30, height: 30, background: 'var(--brand)', color: 'var(--sky)' }}
-          >
-            <Search size={15} strokeWidth={2} />
-          </span>
-        </button>
-        <Suspense fallback={null}>
-          {phoneOpen && (
-            <PhoneSearch
-              open={phoneOpen}
-              onOpenChange={setPhoneOpen}
-              city={city}
-              cityLabel={cityLabel}
-              datePreset={datePreset}
-              from={from}
-              to={to}
-              query={query}
-              resultCount={resultCount}
-              onCity={onCity}
-              onWhen={onWhen}
-              onQuery={onQuery}
-              onClearAll={onClearAll}
-            />
-          )}
-        </Suspense>
-      </>
-    );
-  }
-
   if (isPhone) {
     const active = query.trim() !== '';
     return (
@@ -230,7 +178,7 @@ export function SearchPill({
   return (
     <div
       className="flex w-full max-w-[560px] items-stretch rounded-[var(--r-pill)]"
-      style={{ background: 'var(--bg)', boxShadow: 'var(--shadow-pill)', minHeight: 64 }}
+      style={{ background: 'var(--bg)', boxShadow: 'var(--shadow-pill)', minHeight: compact ? 56 : 64 }}
     >
       {segmentsReady ? (
         <Suspense fallback={plainSegments}>

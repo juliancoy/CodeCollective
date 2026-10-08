@@ -21,7 +21,7 @@ export default function StatusChipPopover({
     <Popover.Root defaultOpen={openOnMount}>
       <Popover.Trigger
         className="t-caption ml-2 inline-flex items-center gap-1.5 rounded-[var(--r-pill)] px-2.5 align-middle"
-        style={{ minHeight: 26, background: 'rgb(135 206 235 / 0.14)', color: 'var(--sky)' }}
+        style={{ minHeight: 26, background: 'var(--brand-soft)', color: 'var(--brand-soft-ink)' }}
       >
         {trigger}
       </Popover.Trigger>

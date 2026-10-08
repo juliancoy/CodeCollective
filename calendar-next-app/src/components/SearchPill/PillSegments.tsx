@@ -18,7 +18,10 @@ const popupStyle: React.CSSProperties = {
   boxShadow: 'var(--shadow-sheet)',
   padding: 8,
   minWidth: 220,
-  zIndex: 60,
+  maxWidth: 'calc(100vw - 24px)',
+  maxHeight: 'var(--available-height, calc(100dvh - 24px))',
+  overflowY: 'auto',
+  color: 'var(--ink)',
 };
 
 function OptionList({
@@ -75,18 +78,16 @@ export default function PillSegments({
   onCity,
   onWhen,
 }: PillSegmentsProps) {
-  const [whereOpen, setWhereOpen] = useState(false);
-  const [whenOpen, setWhenOpen] = useState(false);
+  const [openSegment, setOpenSegment] = useState<'where' | 'when' | null>(null);
 
   // Honour a click that landed before this chunk arrived.
   useEffect(() => {
-    if (openOnMount === 'where') setWhereOpen(true);
-    if (openOnMount === 'when') setWhenOpen(true);
+    if (openOnMount) setOpenSegment(openOnMount);
   }, [openOnMount]);
 
   return (
     <>
-      <Popover.Root open={whereOpen} onOpenChange={setWhereOpen}>
+      <Popover.Root open={openSegment === 'where'} onOpenChange={(open) => setOpenSegment(current => open ? 'where' : current === 'where' ? null : current)}>
         <Popover.Trigger
           className={`${segmentClass} shrink-0 rounded-l-[var(--r-pill)]`}
           style={{ minHeight: 56 }}
@@ -99,7 +100,7 @@ export default function PillSegments({
           </span>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Positioner sideOffset={8} align="start">
+          <Popover.Positioner sideOffset={8} align="start" collisionPadding={12} style={{ zIndex: 60 }}>
             <Popover.Popup style={popupStyle}>
               <Popover.Title className="sr-only">Choose a city</Popover.Title>
               <OptionList
@@ -107,7 +108,7 @@ export default function PillSegments({
                 selected={city}
                 onPick={(id) => {
                   onCity(id as CityId);
-                  setWhereOpen(false);
+                  setOpenSegment(null);
                 }}
               />
             </Popover.Popup>
@@ -117,7 +118,7 @@ export default function PillSegments({
 
       <span aria-hidden className="my-3 w-px shrink-0" style={{ background: 'var(--line)' }} />
 
-      <Popover.Root open={whenOpen} onOpenChange={setWhenOpen}>
+      <Popover.Root open={openSegment === 'when'} onOpenChange={(open) => setOpenSegment(current => open ? 'when' : current === 'when' ? null : current)}>
         <Popover.Trigger className={`${segmentClass} shrink-0`} style={{ minHeight: 56 }}>
           <span className="t-caption" style={{ color: 'var(--ink-2)' }}>
             When
@@ -127,7 +128,7 @@ export default function PillSegments({
           </span>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Positioner sideOffset={8} align="start">
+          <Popover.Positioner sideOffset={8} align="start" collisionPadding={12} style={{ zIndex: 60 }}>
             <Popover.Popup style={popupStyle}>
               <Popover.Title className="sr-only">Choose when</Popover.Title>
               <OptionList
@@ -135,7 +136,7 @@ export default function PillSegments({
                 selected={datePreset}
                 onPick={(id) => {
                   onWhen(id as DatePreset);
-                  if (id !== 'custom') setWhenOpen(false);
+                  if (id !== 'custom') setOpenSegment(null);
                 }}
               />
               {datePreset === 'custom' && (

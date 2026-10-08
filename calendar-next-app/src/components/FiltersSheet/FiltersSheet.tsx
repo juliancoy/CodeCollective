@@ -46,7 +46,7 @@ function Chip({
       className="t-meta flex items-center gap-2 rounded-[var(--r-pill)] border px-3 py-2"
       style={{
         minHeight: 44,
-        borderColor: active ? 'var(--brand)' : 'var(--line)',
+        borderColor: active ? 'var(--brand-on-bg)' : 'var(--line)',
         background: active ? 'var(--brand-soft)' : 'var(--bg)',
         color: 'var(--ink)',
       }}
@@ -440,7 +440,7 @@ export function FiltersSheet({
                         width: 20,
                         height: 20,
                         background: 'var(--bg)',
-                        border: '2px solid var(--brand)',
+                        border: '2px solid var(--brand-on-bg)',
                       }}
                     />
                   </Slider.Track>
@@ -487,7 +487,7 @@ export function FiltersSheet({
                   name="lens"
                   checked={draft.lens === id}
                   onChange={() => patch({ lens: id, sectors: [], lensCategories: [] })}
-                  style={{ accentColor: 'var(--brand)', width: 18, height: 18 }}
+                  style={{ accentColor: 'var(--brand-on-bg)', width: 18, height: 18 }}
                 />
                 <span className="t-body" style={{ color: 'var(--ink)' }}>
                   {LENS_LABEL[id]}

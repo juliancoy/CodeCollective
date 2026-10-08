@@ -349,6 +349,57 @@ class WTCIEventsScraper:
             print(f"   URL: {event.get('url', 'No URL')}")
             print("-" * 50)
 
+def scrape_events():
+    """Collect dated WTCI listings without the legacy sample-event fallback."""
+    import subprocess
+    from zoneinfo import ZoneInfo
+
+    def fetch(url):
+        # WTCI rejects requests' TLS client here but accepts curl.
+        result = subprocess.run(
+            ["curl", "--fail", "--location", "--silent", "--show-error",
+             "--max-time", "30", url],
+            capture_output=True, text=True, timeout=35, check=True,
+        )
+        return BeautifulSoup(result.stdout, "html.parser")
+
+    scraper = WTCIEventsScraper()
+    events = []
+    seen = set()
+    for item in fetch(scraper.events_url).select("div.vc_grid-item"):
+        title = item.find("h3")
+        date = item.select_one(".insights-date")
+        link = item.select_one("a.vc_gitem-link[href]")
+        if not (title and date and link):
+            continue
+        date_text = re.sub(r"(\d+)(st|nd|rd|th)", r"\1", date.get_text(strip=True))
+        try:
+            day = datetime.strptime(date_text, "%B %d, %Y")
+        except ValueError:
+            continue
+        url = urljoin(scraper.base_url, link["href"])
+        if url in seen:
+            continue
+        seen.add(url)
+        event = scraper.extract_events_from_grid(BeautifulSoup(str(item), "html.parser"))[0]
+        event.update(url=url, source=scraper.events_url, endTime="",
+                     startDate=day.strftime("%Y-%m-%d"), location={"name": "", "address": ""})
+        detail = fetch(url).get_text(" ", strip=True)
+        location = re.search(r"Location:\s*(.*?)\s*Date/Time:", detail)
+        if location:
+            name, _, address = location.group(1).partition("|")
+            event["location"] = {"name": name.strip(), "address": address.strip()}
+        hours = re.search(r"Date/Time:.*?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\s*[–—-]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)", detail, re.I)
+        if hours:
+            for field, offset in (("startDate", 0), ("endTime", 3)):
+                hour, minute, meridiem = hours.groups()[offset:offset + 3]
+                dt = day.replace(hour=int(hour) % 12 + (12 if meridiem.lower() == "pm" else 0),
+                                 minute=int(minute or 0), tzinfo=ZoneInfo("America/New_York"))
+                event[field] = dt.isoformat()
+        events.append(event)
+    return events
+
+
 def main():
     """Main function to run the scraper"""
     import sys

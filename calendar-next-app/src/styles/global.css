@@ -75,7 +75,7 @@
 /* ---------- Focus ---------- */
 
 :focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid var(--brand-on-bg);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -495,7 +495,7 @@ span.live-dot.h-2 {
   margin-top: 0.75em;
 }
 .prose a {
-  color: var(--brand);
+  color: var(--brand-on-bg);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -531,4 +531,26 @@ span.live-dot.h-2 {
 }
 .maplibregl-ctrl-attrib-inner a {
   color: var(--ink-2);
+}
+
+/* Code Collective identity: navy navigation, sky introduction, warm selection. */
+.calendar-brand-band {
+  isolation: isolate;
+  box-shadow: 0 1px 0 rgb(135 206 235 / 0.35);
+}
+.calendar-intro {
+  background: var(--intro-bg);
+  color: var(--brand-soft-ink);
+  border-bottom: 1px solid var(--line);
+}
+.calendar-brand-band > nav a:focus-visible,
+.calendar-wordmark:focus-visible,
+.calendar-brand-band button[aria-label='Subscribe']:focus-visible,
+.calendar-brand-band button[aria-label='Menu']:focus-visible,
+.calendar-brand-band a[href='https://orgportal.cc/']:focus-visible {
+  outline-color: var(--warm);
+}
+.calendar-view-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }

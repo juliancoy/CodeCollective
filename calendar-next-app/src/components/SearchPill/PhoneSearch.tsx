@@ -143,7 +143,7 @@ export default function PhoneSearch({
                     className="t-meta rounded-[var(--r-pill)] border px-3"
                     style={{
                       minHeight: 44,
-                      borderColor: c.id === city ? 'var(--brand)' : 'var(--line)',
+                      borderColor: c.id === city ? 'var(--brand-on-bg)' : 'var(--line)',
                       background: c.id === city ? 'var(--brand-soft)' : 'transparent',
                       color: 'var(--ink)',
                     }}
@@ -168,7 +168,7 @@ export default function PhoneSearch({
                     className="t-meta rounded-[var(--r-pill)] border px-3"
                     style={{
                       minHeight: 44,
-                      borderColor: o.id === datePreset ? 'var(--brand)' : 'var(--line)',
+                      borderColor: o.id === datePreset ? 'var(--brand-on-bg)' : 'var(--line)',
                       background: o.id === datePreset ? 'var(--brand-soft)' : 'transparent',
                       color: 'var(--ink)',
                     }}

@@ -30,7 +30,7 @@ import { buildPredicates, type FilterState } from '../data/filters';
 import { isSectorId } from '../data/sectors';
 import { relativeTime } from '../data/time';
 import type { DatePreset, SectorId } from '../data/types';
-import { useChromeHeight, useCondensed, useDarkTheme, useMediaQuery } from './layoutHooks';
+import { useChromeHeight, useDarkTheme, useMediaQuery } from './layoutHooks';
 import { useCalendar } from './useCalendar';
 
 /* Heavy, interaction-only surfaces stay out of the initial payload. */
@@ -102,7 +102,6 @@ function Calendar() {
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const condensed = useCondensed();
   const chromeRef = useChromeHeight<HTMLDivElement>();
   const dark = useDarkTheme();
   const isPhone = useMediaQuery('(max-width: 767px)');
@@ -252,7 +251,7 @@ function Calendar() {
       onWhen={onWhen}
       onQuery={actions.setQuery}
       isPhone={isPhone}
-      compact={condensed}
+      compact
       resultCount={total}
       onClearAll={actions.clearAll}
     />
@@ -307,7 +306,6 @@ function Calendar() {
     <>
       <BrandBand
         city={url.city}
-        condensed={condensed}
         onSubscribe={() => setSubscribeOpen(true)}
         pill={pill}
         title={<>What&rsquo;s on in {cal.cityLabel}</>}
@@ -333,7 +331,6 @@ function Calendar() {
         onMap={actions.setMap}
         isPhone={isPhone}
         isWide={isWide}
-        stuck={condensed}
       />
 
       <main

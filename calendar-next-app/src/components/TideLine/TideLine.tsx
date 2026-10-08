@@ -172,7 +172,7 @@ export function TideLine({
         aria-label="Choose a day"
         aria-orientation="horizontal"
         onKeyDown={onKeyDown}
-        className="no-scrollbar flex flex-1 gap-0.5 overflow-x-auto scroll-smooth px-1 pt-2 pb-2"
+        className="relative no-scrollbar flex flex-1 gap-0.5 overflow-x-auto scroll-smooth px-1 pt-2 pb-2"
         style={SCROLLER_STYLE}
       >
         {days.map((dayKey, i) => {

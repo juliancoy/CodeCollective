@@ -29,9 +29,9 @@ function itemsFor(lens: LensId): Item[] {
 
 /** The colour that identifies a rail item once it is active. */
 function accentFor(item: Item | null): string {
-  if (item === null) return 'var(--brand)';
+  if (item === null) return 'var(--brand-on-bg)';
   if (item.color) return item.color;
-  return isSectorId(item.id) ? `var(--sector-${item.id})` : 'var(--brand)';
+  return isSectorId(item.id) ? `var(--sector-${item.id})` : 'var(--brand-on-bg)';
 }
 
 export function SectorRail({ lens, selected, onSelect }: SectorRailProps) {
@@ -93,7 +93,7 @@ export function SectorRail({ lens, selected, onSelect }: SectorRailProps) {
             {isAll || item.color === undefined ? (
               <SectorIcon sector={(isAll ? 'all' : item.id) as SectorId | 'all'} size={22} />
             ) : (
-              <span aria-hidden className="h-3 w-3 rounded-full" style={{ background: item.color }} />
+              <span aria-hidden className="h-3 w-3 rounded-full" style={{ background: item.color, border: '1px solid var(--ink)' }} />
             )}
           </span>
           <span className={`t-rail whitespace-nowrap ${active ? 't-rail-active' : ''}`}>
@@ -106,7 +106,7 @@ export function SectorRail({ lens, selected, onSelect }: SectorRailProps) {
             transition={spring.snappy}
             aria-hidden
             className="absolute right-2 bottom-0 left-2 block h-[2px] rounded-full"
-            style={{ background: accent }}
+            style={{ background: item?.color ? 'var(--brand-on-bg)' : accent }}
           />
         )}
       </li>

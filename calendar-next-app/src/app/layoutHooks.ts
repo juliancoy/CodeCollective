@@ -1,8 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { isDarkNow } from './theme';
-
-/** How far the page scrolls before the brand band collapses to its bar. */
-const CONDENSE_AT = 120;
 
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() =>
@@ -18,42 +15,33 @@ export function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-export function useCondensed(): boolean {
-  const [condensed, setCondensed] = useState(false);
-  useEffect(() => {
-    const onScroll = () => setCondensed(window.scrollY > CONDENSE_AT);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  return condensed;
-}
-
 /**
  * Publishes the measured tide-line height, and the total sticky chrome, so day
  * gutters stick directly beneath it and `scroll-padding-top` keeps focused
  * elements clear. Measured rather than guessed: the chrome changes height
- * between breakpoints and when the band condenses.
+ * between breakpoints and when the mobile menu opens.
  */
 export function useChromeHeight<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null);
+  const [el, setElement] = useState<T | null>(null);
+  const ref = useCallback((node: T | null) => setElement(node), []);
   useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
     const root = document.documentElement;
+    const band = document.querySelector<HTMLElement>('[data-calendar-band]');
+    const controls = document.querySelector<HTMLElement>('[data-calendar-controls]');
     const publish = () => {
-      const tide = Math.round(el.getBoundingClientRect().height);
-      const band = Number.parseInt(getComputedStyle(root).getPropertyValue('--band-h'), 10) || 64;
-      const control =
-        Number.parseInt(getComputedStyle(root).getPropertyValue('--control-h'), 10) || 64;
+      const tide = Math.ceil(el?.getBoundingClientRect().height ?? 0);
+      const bandHeight = Math.ceil(band?.getBoundingClientRect().height ?? 64);
+      const control = Math.ceil(controls?.getBoundingClientRect().height ?? 64);
+      root.style.setProperty('--band-h', `${bandHeight}px`);
+      root.style.setProperty('--control-h', `${control}px`);
       root.style.setProperty('--tide-h', `${tide}px`);
-      root.style.setProperty('--chrome-h', `${band + control + tide}px`);
+      root.style.setProperty('--chrome-h', `${bandHeight + control + tide}px`);
     };
     publish();
     const ro = new ResizeObserver(publish);
-    ro.observe(el);
+    for (const node of [el, band, controls]) if (node) ro.observe(node);
     return () => ro.disconnect();
-  }, []);
+  }, [el]);
   return ref;
 }
 
