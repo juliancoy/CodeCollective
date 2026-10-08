@@ -502,6 +502,8 @@ const config = {
   },
 };
 
+// Preserve existing logging safeguards when generating the release config.
+config.observability = { ...JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8")).observability, ...config.observability };
 config.vars.MCP_RESOURCE_CONFIG_JSON = env.MCP_RESOURCE_CONFIG_JSON || fs.readFileSync("config/mcp-resources.json", "utf8").trim();
 // Keep the independent journal binding/versioned migration path with OrgPortal.
 if (fs.existsSync("journal.wrangler.jsonc")) {
