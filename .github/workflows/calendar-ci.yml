@@ -3,6 +3,7 @@ name: Calendar CI
 on:
   pull_request:
     paths:
+      - ".github/workflows/calendar-ci.yml"
       - "requirements.txt"
       - "genCalendar.py"
       - "run_calendar.py"
@@ -14,11 +15,15 @@ on:
       - "geocode*.py"
       - "scrape_*.py"
       - "*/event_sources.py"
+      - "*/extra_event_sources.py"
       - "*/gen_calendar.py"
       - "*/scrape_*.py"
       - "*/manual_events.json"
       - "tests/calendar/**"
-      - "tests/calendar_filtering.test.cjs"
+      - "tests/calendar*.test.cjs"
+      - "js/calendar*.js"
+      - "css/calendar*.css"
+      - "calendar.html"
       - "tests/test_calendar_*.py"
       - "tests/test_city_source_taxonomy.py"
       - "tests/test_scrape_*.py"
@@ -38,15 +43,22 @@ on:
       - "geocode*.py"
       - "scrape_*.py"
       - "*/event_sources.py"
+      - "*/extra_event_sources.py"
       - "*/gen_calendar.py"
       - "*/scrape_*.py"
       - "*/manual_events.json"
       - "tests/calendar/**"
-      - "tests/calendar_filtering.test.cjs"
+      - "tests/calendar*.test.cjs"
+      - "js/calendar*.js"
+      - "css/calendar*.css"
+      - "calendar.html"
       - "tests/test_calendar_*.py"
       - "tests/test_city_source_taxonomy.py"
       - "tests/test_scrape_*.py"
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -77,7 +89,7 @@ jobs:
             tests/test_scrape_*.py
 
       - name: Run calendar filtering tests
-        run: node --test tests/calendar_filtering.test.cjs
+        run: node --test tests/calendar*.test.cjs
 
       - name: Check source lens minimums
         continue-on-error: true

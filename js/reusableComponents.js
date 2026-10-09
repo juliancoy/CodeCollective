@@ -13,7 +13,7 @@ class OurHeader extends HTMLElement {
                         <a
                             id="portal-login-button"
                             class="nav-login-button"
-                            href="/p/"
+                            href="/users/login"
                             data-pidp-base="/pidp"
                             aria-label="Log in to the portal"
                         >Login</a>
@@ -244,7 +244,7 @@ const STANDARD_NAV_LINKS = [
     { href: '/calendar.html?city=baltimore', label: 'Calendar' },
     { href: '/projects.html', label: 'Projects' },
     {
-        href: '/p/',
+        href: '/users/login',
         label: 'Login',
         id: 'portal-login-button',
         className: 'nav-login-button',
@@ -302,12 +302,12 @@ function configurePortalLogin() {
 
     loginButtons.forEach((loginButton) => {
         if (loginButton.dataset.portalAuthenticated === 'true' || loginButton.classList.contains('nav-account-link')) {
-            loginButton.href = '/p/id';
+            loginButton.href = '/id';
             loginButton.removeAttribute('aria-haspopup');
             return;
         }
         const pidpBase = loginButton.getAttribute('data-pidp-base') || '/pidp';
-        const nextUrl = `${window.location.origin}/p/auth/callback?next=/id`;
+        const nextUrl = `${window.location.origin}/auth/callback?next=/id`;
         const loginHref = loginUrl(pidpBase, nextUrl);
         loginButton.setAttribute('href', loginHref);
         loginButton.setAttribute('aria-haspopup', 'dialog');
@@ -348,7 +348,7 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
     loginButton.dataset.portalAuthenticated = 'true';
     loginButton.classList.remove('nav-login-button');
     loginButton.classList.add('nav-account-link');
-    loginButton.href = '/p/id';
+    loginButton.href = '/id';
     loginButton.removeAttribute('aria-haspopup');
     loginButton.setAttribute('aria-label', `${displayName} ID page`);
     loginButton.title = displayName;
@@ -357,7 +357,7 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
         loginButton.addEventListener('click', (event) => {
             if (loginButton.dataset.portalAuthenticated !== 'true') return;
             event.preventDefault();
-            window.location.assign('/p/id');
+            window.location.assign('/id');
         });
     }
 
@@ -437,7 +437,7 @@ function ensureLoginModal() {
                 <a class="login-modal__option" data-login-provider="google" href="#">Continue with Google</a>
                 <a class="login-modal__option" data-login-provider="github" href="#">Continue with GitHub</a>
                 <a class="login-modal__option login-modal__option--secondary" data-login-provider="password" href="#">Use email and password</a>
-                <a class="login-modal__option login-modal__option--secondary" href="/p/users/register">Register</a>
+                <a class="login-modal__option login-modal__option--secondary" href="/users/register">Register</a>
             </div>
         </section>
     `;

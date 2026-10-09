@@ -3,6 +3,18 @@ from urllib.parse import urlparse
 
 sources = [
     {
+        "name": "Cognitive Security Institute",
+        "url": "https://www.cognitivesecurityinstitute.org/events",
+        "source_kind": "web_events_page",
+        "tags": ["Cybersecurity", "AI", "Education"],
+    },
+    {
+        "name": "BIO-ISAC",
+        "url": "https://www.isac.bio/events",
+        "source_kind": "web_events_page",
+        "tags": ["Cybersecurity", "Science", "Food", "Education"],
+    },
+    {
         "name": "CreativeMornings Baltimore",
         "url": "https://creativemornings.com/cities/bal",
         "source_kind": "web_events_page",
