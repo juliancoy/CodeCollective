@@ -528,6 +528,12 @@ def fetch_events_from_source(source, city):
             "Fetching events from",
             lambda: scrape_active_data_calendar.scrape(source_url),
         ),
+        "baltimore_poetry": (
+            "Fetching events from",
+            lambda: importlib.import_module("baltimore.scrape_poetry").scrape_events(
+                source_url, source.get("ticket_url")
+            ),
+        ),
         "web_events_page": (
             "Fetching events from",
             lambda: scrape_web_events.parse_web_events_page(source_url),
