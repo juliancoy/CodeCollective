@@ -21,12 +21,12 @@ test('listing failures and oversized HTML preserve event availability', async ()
 test('public event API and page metadata use the same source preview', async t => {
   const { default: worker } = await import('./worker.js')
   t.mock.method(globalThis, 'fetch', async url => {
-    if (url === 'https://org.example/api/portal/tenant') return Response.json({ id: 'lifetech' })
+    if (url === 'https://org.example/api/portal/site') return Response.json({ id: 'lifetech' })
     if (url === 'https://org.example/api/network/events/public/pitch') return Response.json({ ...event, title: 'Pitch', slug: 'pitch', organization_name: 'Amplify MedTech' })
     if (url === event.source_url) return new Response('<meta property="og:image" content="https://img.evbuc.com/pitch.jpg">', { headers: { 'content-type': 'text/html' } })
     throw new Error(`Unexpected fetch ${url}`)
   })
-  const env = { ORG_API_ORIGIN: 'https://org.example', ORGPORTAL_TENANT_HOSTS: 'lifetech.fyi', ASSETS: { fetch: async () => new Response('<html><head></head><body></body></html>', { headers: { 'content-type': 'text/html' } }) } }
+  const env = { ORG_API_ORIGIN: 'https://org.example', ORGPORTAL_SITE_HOSTS: 'lifetech.fyi', ASSETS: { fetch: async () => new Response('<html><head></head><body></body></html>', { headers: { 'content-type': 'text/html' } }) } }
   const response = await worker.fetch(new Request('https://lifetech.fyi/api/org/api/network/events/public/pitch'), env)
   assert.equal((await response.json()).social_image_url, 'https://img.evbuc.com/pitch.jpg')
   const page = await worker.fetch(new Request('https://lifetech.fyi/events/pitch', { headers: { accept: 'text/html' } }), env)
