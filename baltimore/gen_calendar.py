@@ -119,6 +119,14 @@ PROCESS_ICS_SOURCES = [
 
 CUSTOM_SCRAPER_SOURCES = [
     {
+        "module": "baltimore.scrape_wtci",
+        "function": "scrape_events",
+        "url": "https://wtci.org/events/",
+        "group_name": "World Trade Center Institute (WTCI)",
+        "orgImageUrl": "https://www.google.com/s2/favicons?domain=wtci.org&sz=256",
+        "tags": ["Business", "Economic Development", "Professional Networking"],
+    },
+    {
         "module": "baltimore.scrape_ottobar",
         "function": "scrape_events",
         "url": "https://theottobar.com/events/",

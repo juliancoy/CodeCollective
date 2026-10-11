@@ -2432,8 +2432,9 @@ h1 {
 }
 
 .legend-item.legend-tag-chip:has(input:not(:checked)) {
-    opacity: 0.42;
-    filter: grayscale(0.7);
+    /* Unselected filters remain interactive and must retain text contrast. */
+    outline: 1px dashed currentColor;
+    outline-offset: -3px;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 

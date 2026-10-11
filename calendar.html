@@ -25,13 +25,13 @@
   <link rel="icon" href="/images/favicons/favicon.png" />
 
   <link rel="preload" href="/css/master.css?v=20260608-avataronly" as="style">
-  <link rel="preload" href="/css/calendar.css?v=20260924-legendtools" as="style">
+  <link rel="preload" href="/css/calendar.css?v=20261008-contrast" as="style">
   <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/master.css?v=20260608-avataronly" />
-  <link rel="stylesheet" href="/css/calendar.css?v=20260924-legendtools" />
+  <link rel="stylesheet" href="/css/calendar.css?v=20261008-contrast" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Scripts -->
@@ -164,6 +164,8 @@
     }
   }
   </script>
+  <link rel="stylesheet" href="/css/calendarViews.css" />
+  <script src="/js/calendarViews.js" defer></script>
 </head>
 
 <body id="body">
@@ -204,6 +206,12 @@
           </div>
         </div>
       </header>
+      <nav class="calendar-view-switch" aria-label="Calendar views">
+        <a data-calendar-view href="/calendar.html?view=calendar" aria-current="page">Calendar</a>
+        <a data-calendar-view href="/calendar_cards.html">Cards</a>
+        <a data-calendar-view href="/simplecalendar.html">Simple</a>
+        <a data-calendar-view href="/calendar-next/">Agenda</a>
+      </nav>
 
       <div class="container">
         <section id="calendar-section" class="calendar-container" aria-label="Baltimore Tech Events Calendar">

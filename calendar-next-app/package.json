@@ -1,0 +1,46 @@
+{
+  "name": "calendar-next",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Code Collective events calendar, redesigned as a time-first agenda with a tide line, sector rail and map.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:only": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "build:preview": "node scripts/prepare-preview.mjs"
+  },
+  "dependencies": {
+    "@base-ui/react": "1.8.0",
+    "@date-fns/tz": "1.5.0",
+    "@fontsource-variable/instrument-sans": "5.3.0",
+    "date-fns": "4.4.0",
+    "dompurify": "3.4.16",
+    "fuse.js": "7.5.0",
+    "lucide-react": "1.48.0",
+    "maplibre-gl": "6.11.2",
+    "marked": "18.0.14",
+    "motion": "13.4.4",
+    "nuqs": "2.10.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "^24.19.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2",
+    "vite": "8.3.1",
+    "vitest": "5.0.2"
+  }
+}

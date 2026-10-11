@@ -1,3 +1,5 @@
+import { withEventSourcePreview } from '../../OrgPortal/web/eventSourcePreview.mjs';
+import { eventListingPreview } from '../../OrgPortal/web/eventListingPreview.mjs';
 import { deploymentResponse, deploymentCachePolicy, deploymentPath, isDeploymentAssetRequest } from '../../OrgPortal/web/deployment.mjs';
 import { previewResponse } from "./preview.js";
 import { isPortalPagePath, notFoundResponse, missingPortalResource } from '../../OrgPortal/web/portalRoutes.mjs';
@@ -366,15 +368,18 @@ async function eventSocialMetadata(url, request, env) {
   if (!response.ok) return null;
   let event;
   try { event = await response.json(); } catch { return null; }
-  const title = compactText(event.social_title || event.title, 120);
+  event = await withEventSourcePreview(event);
+  const preview = eventListingPreview(event, url.origin);
+  const title = compactText(preview.title, 120);
   if (!title) return null;
   const group = compactText(event.organization_name || event.host_org_name || "Org Portal", 80);
-  const description = compactText(event.social_description || event.description || `${title} hosted by ${group}.`, 240);
-  const image = versionedPublicUrl(event.social_image_url || event.flyer_urls?.social || event.image_url, url.origin, eventSocialImageVersion(event, env));
+  const description = compactText(preview.description || `${title} hosted by ${group}.`, 240);
+  const image = preview.externalImage ? absolutePublicUrl(preview.image, url.origin)
+    : versionedPublicUrl(preview.image, url.origin, eventSocialImageVersion(event, env));
   const canonical = absolutePublicUrl(event.public_url || url.pathname, url.origin) || url.toString();
   const keywords = eventKeywords(event);
   return {
-    title: `${title} • ${group}`,
+    title: preview.externalTitle ? title : `${title} • ${group}`,
     description,
     image,
     imageType: socialImageType(image),
@@ -1028,7 +1033,22 @@ const productionWorker = {
     }
 
     if (pathMatchesPrefix(path, "/api/org")) {
-      return proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN, { stripPrefix: "/api/org" });
+      const response = await proxyRequest(request, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN, { stripPrefix: "/api/org" });
+      if (request.method === "GET" && /^\/api\/org\/api\/network\/events\/public\/[^/]+$/.test(path) && response.ok) {
+        try {
+          const event = await response.clone().json();
+          const enriched = await withEventSourcePreview(event);
+          if (enriched !== event) {
+            const headers = new Headers(response.headers);
+            headers.delete("content-length");
+            headers.delete("content-encoding");
+            headers.delete("etag");
+            headers.set("cache-control", "no-store");
+            return Response.json(enriched, { status: response.status, headers });
+          }
+        } catch { /* Preserve the original API response if preview lookup fails. */ }
+      }
+      return response;
     }
 
     if (pathMatchesPrefix(path, "/api/chat")) {

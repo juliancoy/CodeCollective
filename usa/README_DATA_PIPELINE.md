@@ -48,6 +48,11 @@ python usa/publish_to_r2.py \
 
 Workflow: `.github/workflows/update-usajobs.yml`
 
+Collection is paused. The scheduled trigger has been removed and the workflow
+is disabled in GitHub Actions. The tracker remains at `/usa/` with its existing
+data, but is no longer linked from Projects. To collect again, explicitly
+re-enable the workflow and run it manually.
+
 Set these repository secrets:
 
 - `USAJOBS_API_KEY`
