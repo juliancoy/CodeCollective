@@ -1,11 +1,8 @@
 name = "codecollective-site"
 workers_dev = true
 routes = [
-  { pattern = "orgportal.cc", custom_domain = true },
   { pattern = "codecollective.us", custom_domain = true },
   { pattern = "www.codecollective.us", custom_domain = true },
-  { pattern = "timebank.codecollective.us", custom_domain = true },
-  { pattern = "bmoretimebank.codecollective.us", custom_domain = true },
 ]
 main = "cloudflare/worker.js"
 compatibility_date = "2026-04-24"
@@ -39,3 +36,8 @@ bucket_name = "codecollective-media"
 [[services]]
 binding = "DEV_ASSETS"
 service = "codecollective-site-preview"
+
+# OrgPortal owns portal frontend releases and domain assignments.
+[[services]]
+binding = "ORGPORTAL_WEB"
+service = "orgportal-web"

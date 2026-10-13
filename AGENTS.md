@@ -1,3 +1,17 @@
+## Independent OrgPortal release (2026-10-13)
+
+OrgPortal now owns its `orgportal-web` frontend and API release workflow.
+Do not build or release the portal through this repository. The main static site
+stays on `codecollective-site`; tenant requests use the `ORGPORTAL_WEB` service
+binding. `orgportal.cc` and Timebank domains belong to `orgportal-web` and must
+not be re-added to this repository's Wrangler routes. The local `portal-compat`
+helpers support the existing private preview/rollback behavior only.
+PIdP and chat releases are explicit operations, never a side effect of a site push.
+See OrgPortal `docs/deployment/RELEASE.md` for the current release contract.
+
+The historical deployment notes below describe the pre-split setup; the independent
+release instructions above supersede their shared-frontend build steps.
+
 # Agent deployment notes
 
 This repository has one canonical Cloudflare frontend deployment:

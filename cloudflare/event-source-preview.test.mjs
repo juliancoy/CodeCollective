@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { withEventSourcePreview } from '../../OrgPortal/web/eventSourcePreview.mjs'
+import { withEventSourcePreview } from './portal-compat/eventSourcePreview.mjs'
 const event = { source_url: 'https://www.eventbrite.com/e/example-123', social_image_url: null }
 test('imports Eventbrite social image and decodes query entities', async () => {
   const result = await withEventSourcePreview(event, async () => new Response('<head><meta content="https://img.evbuc.com/pitch.jpg?w=940&amp;q=75" property="og:image"></head>', { headers: { 'content-type': 'text/html' } }))

@@ -227,8 +227,9 @@ fi
 if [[ "$COMPONENT" == "all" || "$COMPONENT" == "pidp" ]]; then
   deploy_pidp=1
 fi
-if [[ "$COMPONENT" == "all" || "$COMPONENT" == "org" ]]; then
-  deploy_org=1
+if [[ "$COMPONENT" == "org" ]]; then
+  echo "OrgPortal releases moved to its repository: node scripts/release.mjs deploy api" >&2
+  exit 1
 fi
 if [[ "$COMPONENT" == "all" || "$COMPONENT" == "chat" ]]; then
   deploy_chat=1

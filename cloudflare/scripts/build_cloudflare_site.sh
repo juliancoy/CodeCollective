@@ -3,26 +3,9 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 OUT_DIR="$ROOT_DIR/.cloudflare/site"
-ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
-PORTAL_WEB_DIR="$ORGPORTAL_DIR/web"
 MAX_ASSET_MB="${MAX_ASSET_MB:-25}"
 VERBOSE_BUILD="${VERBOSE_BUILD:-0}"
 STRICT_TS="${STRICT_TS:-0}"
-# All portal mounts in one release must advertise the exact build embedded in JS.
-VITE_APP_BUILD_NUMBER="${VITE_APP_BUILD_NUMBER:-$(date +%s)}"
-export VITE_APP_BUILD_NUMBER
-PORTAL_VERSION="$(node -p "JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8')).version" "$PORTAL_WEB_DIR/package.json")"
-write_portal_update_manifest() {
-  node "$PORTAL_WEB_DIR/scripts/write-web-update-manifest.mjs" \
-    "$PORTAL_WEB_DIR/public/mobile-update.json" "$1/mobile-update.json" \
-    "$VITE_APP_BUILD_NUMBER" "$PORTAL_VERSION" "${PORTAL_RELEASE_NOTES:-}"
-}
-
-if [[ ! -d "$PORTAL_WEB_DIR" ]]; then
-  echo "[cloudflare] error: expected OrgPortal web checkout at $PORTAL_WEB_DIR" >&2
-  echo "[cloudflare] set ORGPORTAL_DIR to the OrgPortal repository path" >&2
-  exit 1
-fi
 
 echo "[cloudflare] preparing output directory: $OUT_DIR"
 rm -rf "$OUT_DIR"
@@ -86,29 +69,6 @@ rsync -a \
   --exclude='package-lock.json' \
   --exclude='wrangler.*' \
   "$ROOT_DIR/" "$OUT_DIR/"
-
-PORTAL_PIDP_BASE_URL="${VITE_PIDP_BASE_URL:-/pidp}"
-PORTAL_CHAT_API_BASE_URL="${VITE_CHAT_API_BASE_URL:-/api/chat}"
-echo "[cloudflare] building portal for tenant root mounts"
-pushd "$PORTAL_WEB_DIR" >/dev/null
-if [[ "$STRICT_TS" == "1" ]]; then
-  echo "[cloudflare] strict mode: running TypeScript + Vite build for tenant root mounts"
-  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/mobile-update.json npm run build
-else
-  echo "[cloudflare] deploy mode: running Vite build for tenant root mounts"
-  VITE_PUBLIC_BASE=/ VITE_PIDP_BASE_URL="$PORTAL_PIDP_BASE_URL" VITE_CHAT_API_BASE_URL="$PORTAL_CHAT_API_BASE_URL" VITE_UPDATE_MANIFEST_URL=/mobile-update.json npx vite build
-fi
-popd >/dev/null
-
-if [[ ! -f "$PORTAL_WEB_DIR/dist/index.html" ]]; then
-  echo "[cloudflare] error: expected OrgPortal web dist/index.html after tenant root build" >&2
-  exit 1
-fi
-
-echo "[cloudflare] syncing portal dist -> /__portal_root/"
-mkdir -p "$OUT_DIR/__portal_root"
-rsync -a --delete "$PORTAL_WEB_DIR/dist/" "$OUT_DIR/__portal_root/"
-write_portal_update_manifest "$OUT_DIR/__portal_root"
 
 echo "[cloudflare] building r8-rowhome for /r8-rowhome/"
 R8_ROWHOME_DIR="$ROOT_DIR/r8-rowhome"

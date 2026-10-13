@@ -1,8 +1,8 @@
-import { withEventSourcePreview } from '../../OrgPortal/web/eventSourcePreview.mjs';
-import { eventListingPreview } from '../../OrgPortal/web/eventListingPreview.mjs';
-import { deploymentResponse, deploymentCachePolicy, deploymentPath, isDeploymentAssetRequest } from '../../OrgPortal/web/deployment.mjs';
+import { withEventSourcePreview } from './portal-compat/eventSourcePreview.mjs';
+import { eventListingPreview } from './portal-compat/eventListingPreview.mjs';
+import { deploymentResponse, deploymentCachePolicy, deploymentPath, isDeploymentAssetRequest } from './portal-compat/deployment.mjs';
 import { previewResponse } from "./preview.js";
-import { isPortalPagePath, notFoundResponse, missingPortalResource } from '../../OrgPortal/web/portalRoutes.mjs';
+import { isPortalPagePath, notFoundResponse, missingPortalResource } from './portal-compat/portalRoutes.mjs';
 import { handleDatasetApi as handleMedTechDatasetApi } from './medtech/datasets.js';
 function trimTrailingSlash(value) {
   return (value || "").replace(/\/+$/, "");
@@ -1189,6 +1189,10 @@ export default {
     if (env.WEB_PREVIEW === 'true') return previewResponse(request, env);
     const url = new URL(request.url);
     const tenant = isOrgGroupSiteHost(url.hostname, env);
+    // Tenant frontend releases belong to OrgPortal. A service binding preserves
+    // the original URL and streamed request, including WebSocket upgrades.
+    if (tenant && env.ORGPORTAL_WEB) return env.ORGPORTAL_WEB.fetch(request);
+
     if (pathMatchesPrefix(url.pathname, '/p')) return notFoundResponse(request);
     if (tenant) {
       const missing = await missingPortalResource(request, url.pathname, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);
