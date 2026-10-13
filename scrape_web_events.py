@@ -3,6 +3,7 @@ import re
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Set, Tuple
 from urllib.parse import urljoin, urlparse
+from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup
 from dateutil.parser import parse as parse_date
@@ -314,7 +315,7 @@ def _parse_ics_events(ics_bytes: bytes, source_url: str) -> List[Dict[str, Any]]
     except Exception:
         return events
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     past_cutoff = now - timedelta(days=30)
     for component in calendar.walk():
         if component.name != "VEVENT":
@@ -329,6 +330,8 @@ def _parse_ics_events(ics_bytes: bytes, source_url: str) -> List[Dict[str, Any]]
             dtend_prop = component.get("dtend")
             dtend = getattr(dtend_prop, "dt", dtend_prop) if dtend_prop else None
             start_dt = parse_date(str(dtstart))
+            if start_dt.tzinfo is None:
+                start_dt = start_dt.replace(tzinfo=timezone.utc)
             if start_dt < past_cutoff:
                 continue
 
@@ -357,6 +360,29 @@ def _parse_ics_events(ics_bytes: bytes, source_url: str) -> List[Dict[str, Any]]
 def _extract_events_from_page(soup: BeautifulSoup, source_url: str) -> List[Dict[str, Any]]:
     events: List[Dict[str, Any]] = []
     seen: Set[Tuple[str, str]] = set()
+    title = soup.select_one('.SystemPageTitle')
+    date_node = soup.select_one('.eventInfoStartDate .eventInfoBoxValue')
+    time_node = soup.select_one('.eventInfoStartTime [client-tz-item]')
+    if title and date_node and time_node:
+        date_text = date_node.get_text(' ', strip=True)
+        times = time_node.get_text(' ', strip=True).split(' - ')
+        try:
+            tz = ZoneInfo(time_node['client-tz-item'])
+            start = parse_date(f'{date_text} {times[0]}').replace(tzinfo=tz)
+            end = parse_date(f'{date_text} {times[-1]}').replace(tzinfo=tz)
+            location = soup.select_one('.eventInfoLocation .eventInfoBoxValue')
+            location_text = location.get_text(' ', strip=True) if location else ''
+            events.append({
+                'name': title.get_text(' ', strip=True),
+                'startDate': start.isoformat(),
+                'endTime': end.isoformat(),
+                'url': source_url,
+                'status': 'ACTIVE',
+                'location': {'name': location_text, 'address': location_text},
+                'source': source_url,
+            })
+        except (ValueError, KeyError):
+            pass
     for script in soup.find_all("script", attrs={"type": "application/ld+json"}):
         raw = script.string or script.get_text() or ""
         raw = raw.strip()
@@ -408,6 +434,14 @@ def _extract_candidate_links(soup: BeautifulSoup, source_url: str) -> Tuple[List
     feed_links: List[str] = []
     seen_events: Set[str] = set()
     seen_feeds: Set[str] = set()
+
+    for embed in soup.select('[data-tockify-calendar]'):
+        calendar_name = (embed.get('data-tockify-calendar') or '').strip()
+        if re.fullmatch(r'[A-Za-z0-9_-]+', calendar_name):
+            feed_url = f'https://tockify.com/api/feeds/ics/{calendar_name}'
+            if feed_url not in seen_feeds:
+                seen_feeds.add(feed_url)
+                feed_links.append(feed_url)
 
     for anchor in soup.select("a[href]"):
         href = (anchor.get("href") or "").strip()
@@ -479,6 +513,8 @@ def parse_web_events_page(source_url: str) -> List[Dict[str, Any]]:
                     continue
                 seen.add(key)
                 events.append(evt)
+        except PermissionError:
+            raise
         except Exception:
             continue
 

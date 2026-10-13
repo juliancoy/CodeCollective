@@ -742,6 +742,25 @@ sources = [
         "tags": ["Environment", "Safety", "Belonging", "Growth"],
     },
     {
+        "name": "Friends of Patterson Park",
+        "url": "https://pattersonpark.com/parkcalendar",
+        "source_kind": "web_events_page",
+        "tags": ["Environment", "Community", "Belonging", "Growth"],
+    },
+    {
+        "name": "Cylburn Arboretum Friends",
+        "url": "https://cylburn.org/events/",
+        "source_kind": "tribe_events",
+        "feed_url": "https://cylburn.org/wp-json/tribe/events/v1/events",
+        "tags": ["Environment", "Education", "Community", "Growth"],
+    },
+    {
+        "name": "Friends of Gwynns Falls Leakin Park",
+        "url": "https://friendsofgwynnsfallsleakinpark.org/Calendar",
+        "source_kind": "web_events_page",
+        "tags": ["Environment", "Community", "Belonging", "Growth"],
+    },
+    {
         "name": "Blyss Baltimore Upcoming Events",
         "url": "https://www.blyssbaltimore.com/upcoming",
         "tags": ["Culture", "Community", "Belonging"],

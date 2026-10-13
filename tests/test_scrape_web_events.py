@@ -9,6 +9,40 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import scrape_web_events
 
 
+def test_parses_timezone_aware_ics_event():
+    payload = b'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nSUMMARY:Park walk\r\nDTSTART:20991010T140000Z\r\nDTEND:20991010T150000Z\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n'
+    events = scrape_web_events._parse_ics_events(payload, 'https://example.org/calendar')
+    assert len(events) == 1
+    assert events[0]['startDate'] == '2099-10-10T14:00:00+00:00'
+
+
+def test_parses_wild_apricot_event_in_park_timezone():
+    soup = BeautifulSoup('''
+        <h1 class="SystemPageTitle">Park walk</h1>
+        <li class="eventInfoStartDate"><div class="eventInfoBoxValue">11 Oct 2026</div></li>
+        <li class="eventInfoStartTime"><div client-tz-item="America/New_York">11:00 AM - 3:00 PM</div></li>
+        <li class="eventInfoLocation"><div class="eventInfoBoxValue">1920 Eagle Dr</div></li>
+    ''', 'html.parser')
+    events = scrape_web_events._extract_events_from_page(soup, 'https://example.org/event-1')
+    assert len(events) == 1
+    assert events[0]['startDate'] == '2026-10-11T11:00:00-04:00'
+    assert events[0]['endTime'] == '2026-10-11T15:00:00-04:00'
+    assert events[0]['location']['address'] == '1920 Eagle Dr'
+
+
+def test_discovers_tockify_feed_from_embedded_calendar():
+    soup = BeautifulSoup(
+        '<div data-tockify-calendar="pattersonpark"></div>'
+        '<div data-tockify-calendar="pattersonpark"></div>'
+        '<div data-tockify-calendar="../invalid"></div>',
+        'html.parser',
+    )
+    _, feeds = scrape_web_events._extract_candidate_links(
+        soup, 'https://pattersonpark.com/parkcalendar'
+    )
+    assert feeds == ['https://tockify.com/api/feeds/ics/pattersonpark']
+
+
 def test_extracts_wix_events_from_warmup_data():
     source_url = "https://www.blyssbaltimore.com/upcoming"
     payload = {

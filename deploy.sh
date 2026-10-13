@@ -30,8 +30,8 @@ DEV_ORG_API_ORIGIN="${DEV_ORG_API_ORIGIN:-$PROD_ORG_API_ORIGIN}"
 DEV_CHAT_API_ORIGIN="${DEV_CHAT_API_ORIGIN:-$PROD_CHAT_API_ORIGIN}"
 DEV_PIDP_API_ORIGIN="${DEV_PIDP_API_ORIGIN:-$PROD_PIDP_API_ORIGIN}"
 DEV_PIDP_PROXY_ORIGIN="${DEV_PIDP_PROXY_ORIGIN:-$PROD_PIDP_PROXY_ORIGIN}"
-PROD_ORGPORTAL_TENANT_HOSTS="${PROD_ORGPORTAL_TENANT_HOSTS:-medtech.social,portal.deism.church,orgportal.cc}"
-DEV_ORGPORTAL_TENANT_HOSTS="${DEV_ORGPORTAL_TENANT_HOSTS:-$PROD_ORGPORTAL_TENANT_HOSTS}"
+PROD_ORGPORTAL_SITE_HOSTS="${PROD_ORGPORTAL_SITE_HOSTS:-medtech.social,portal.deism.church,orgportal.cc}"
+DEV_ORGPORTAL_SITE_HOSTS="${DEV_ORGPORTAL_SITE_HOSTS:-$PROD_ORGPORTAL_SITE_HOSTS}"
 
 PIDP_WORKER_NAME="${PIDP_WORKER_NAME:-pidp-codecollective}"
 PIDP_APP_NAME="${PIDP_APP_NAME:-OrgPortal ID}"
@@ -39,7 +39,7 @@ PIDP_ENV="${PIDP_ENV:-production}"
 PIDP_ACCESS_TOKEN_EXPIRE_MINUTES="${PIDP_ACCESS_TOKEN_EXPIRE_MINUTES:-60}"
 PIDP_SESSION_COOKIE_DOMAIN="${PIDP_SESSION_COOKIE_DOMAIN:-codecollective.us}"
 PIDP_PORTAL_AUTH_ORIGINS="${PIDP_PORTAL_AUTH_ORIGINS:-https://portal.deism.church,https://medtech.social,https://lifetech.fyi,https://codecollective.us,https://www.codecollective.us,https://timebank.codecollective.us,https://bmoretimebank.codecollective.us,https://orgportal.cc}"
-PIDP_PORTAL_SSO_APP_SLUG="${PIDP_PORTAL_SSO_APP_SLUG:-code-collective}"
+PIDP_PORTAL_SSO_APP_SLUG="${PIDP_PORTAL_SSO_APP_SLUG:-orgportal}"
 PIDP_ALLOWED_ORIGINS="${PIDP_ALLOWED_ORIGINS:-https://codecollective.us,https://www.codecollective.us}"
 PIDP_ADMIN_EMAILS="${PIDP_ADMIN_EMAILS:-}"
 PIDP_ADMIN_USER_IDS="${PIDP_ADMIN_USER_IDS:-}"
@@ -774,7 +774,7 @@ PYCONFIG
         --var "CHAT_API_ORIGIN:$chat_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
-        --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
+        --var "ORGPORTAL_SITE_HOSTS:$tenant_hosts" \
         "${wrangler_args[@]}"
     ) 2>&1 | tee "$deploy_log" >&2 || deploy_status=$?
   else
@@ -787,7 +787,7 @@ PYCONFIG
         --var "CHAT_API_ORIGIN:$chat_origin" \
         --var "PIDP_API_ORIGIN:$pidp_origin" \
         --var "PIDP_PROXY_ORIGIN:$pidp_proxy_origin" \
-        --var "ORGPORTAL_TENANT_HOSTS:$tenant_hosts" \
+        --var "ORGPORTAL_SITE_HOSTS:$tenant_hosts" \
         "${wrangler_args[@]}"
     ) 2>&1 \
       | tee "$deploy_log" \
@@ -873,12 +873,12 @@ if [[ "$deploy_chat" -eq 1 ]]; then
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "dev" || "$TARGET" == "both" ) ]]; then
-  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_CHAT_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN" "$DEV_ORGPORTAL_TENANT_HOSTS")"
+  DEV_URL="$(deploy_target "dev" "$DEV_WORKER_NAME" "$DEV_GOVERNANCE_API_ORIGIN" "$DEV_ORG_API_ORIGIN" "$DEV_CHAT_API_ORIGIN" "$DEV_PIDP_API_ORIGIN" "$DEV_PIDP_PROXY_ORIGIN" "$DEV_ORGPORTAL_SITE_HOSTS")"
   echo "[deploy][dev] updated url: $DEV_URL"
 fi
 
 if [[ "$deploy_site" -eq 1 && ( "$TARGET" == "prod" || "$TARGET" == "both" ) ]]; then
-  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_CHAT_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN" "$PROD_ORGPORTAL_TENANT_HOSTS")"
+  PROD_URL="$(deploy_target "prod" "$PROD_WORKER_NAME" "$PROD_GOVERNANCE_API_ORIGIN" "$PROD_ORG_API_ORIGIN" "$PROD_CHAT_API_ORIGIN" "$PROD_PIDP_API_ORIGIN" "$PROD_PIDP_PROXY_ORIGIN" "$PROD_ORGPORTAL_SITE_HOSTS")"
   echo "[deploy][prod] updated url: $PROD_URL"
 fi
 

@@ -11,7 +11,7 @@ const env = {
 function community(t, status = 200) {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
     if (/^https:\/\/org\.example\/api\/network\/(users|orgs)\/public\//.test(url)) return Response.json({ slug: 'existing-profile' });
-    assert.equal(url, 'https://org.example/api/portal/tenant');
+    assert.equal(url, 'https://org.example/api/portal/site');
     assert.equal(options.headers['x-forwarded-host'], 'timebank.codecollective.us');
     return Response.json({ id: 'timebank' }, { status });
   });
@@ -86,7 +86,7 @@ test('tenant assets use the shared bundle and missing assets remain 404', async 
 
 test('tenant event routes inject event social preview metadata', async t => {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
-    if (url === 'https://org.example/api/portal/tenant') {
+    if (url === 'https://org.example/api/portal/site') {
       assert.equal(options.headers['x-forwarded-host'], 'medtech.social');
       return Response.json({ id: 'baltimore-medtech' });
     }
@@ -116,7 +116,7 @@ test('tenant event routes inject event social preview metadata', async t => {
     headers: { accept: 'text/html' },
   }), {
     ...env,
-    ORGPORTAL_TENANT_HOSTS: 'medtech.social',
+    ORGPORTAL_SITE_HOSTS: 'medtech.social',
     ASSETS: { fetch: async request => {
       assert.equal(new URL(request.url).pathname, '/__portal_root/index.html');
       return new Response('<!doctype html><html><head><title>Portal</title></head><body><div id="root"></div></body></html>', {
@@ -143,14 +143,14 @@ test('tenant event routes inject event social preview metadata', async t => {
 
 test('external listing previews pass through without changing the external image URL', async t => {
   t.mock.method(globalThis, 'fetch', async url => {
-    if (url.endsWith('/api/portal/tenant')) return Response.json({ id: 'lifetech' });
+    if (url.endsWith('/api/portal/site')) return Response.json({ id: 'lifetech' });
     return Response.json({ title: 'Imported title', organization_name: 'LifeTech',
       source_url: 'https://meetup.com/events/123', image_url: '/fallback.jpg',
       links: [{ url: 'https://meetup.com/events/123', title: 'Original listing title',
         description: 'Original listing description', image_url: 'https://images.meetup.com/preview.jpg?token=original' }] });
   });
   const response = await worker.fetch(new Request('https://lifetech.fyi/events/imported', { headers: { accept: 'text/html' } }), {
-    ...env, ORGPORTAL_TENANT_HOSTS: 'lifetech.fyi',
+    ...env, ORGPORTAL_SITE_HOSTS: 'lifetech.fyi',
     ASSETS: { fetch: async () => new Response('<html><head><title>Portal</title></head><body></body></html>', { headers: { 'content-type': 'text/html' } }) },
   });
   const html = await response.text();
@@ -196,7 +196,7 @@ test('tenant pidp proxy emits host-only session cookies for custom domains', asy
   const response = await worker.fetch(new Request('https://medtech.social/pidp/auth/session/login', { method: 'POST' }), {
     ...env,
     PIDP_PROXY_ORIGIN: 'https://pidp.example',
-    ORGPORTAL_TENANT_HOSTS: 'medtech.social',
+    ORGPORTAL_SITE_HOSTS: 'medtech.social',
   });
   const cookie = response.headers.get('set-cookie');
   assert.match(cookie, /^pidp_session=abc;/);
@@ -224,13 +224,13 @@ test('main pidp proxy keeps configured parent-domain session cookies', async t =
 
 test('configured custom domains mount the same tenant portal root', async t => {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
-    assert.equal(url, 'https://org.example/api/portal/tenant');
+    assert.equal(url, 'https://org.example/api/portal/site');
     assert.equal(options.headers['x-forwarded-host'], 'medtech.social');
     return Response.json({ id: 'baltimore-medtech' });
   });
   const response = await worker.fetch(new Request('https://medtech.social/community', {
     headers: { accept: 'text/html' },
-  }), { ...env, ORGPORTAL_TENANT_HOSTS: 'medtech.social' });
+  }), { ...env, ORGPORTAL_SITE_HOSTS: 'medtech.social' });
   assert.equal(response.status, 200);
   assert.equal(await response.text(), '/__portal_root/index.html');
 });
@@ -251,11 +251,11 @@ test('main-site organization URLs resolve through the canonical portal while ten
 
 test('Deism tenant routes and install assets use the shared portal bundle', async t => {
   t.mock.method(globalThis, 'fetch', async (url, options) => {
-    assert.equal(url, 'https://org.example/api/portal/tenant');
+    assert.equal(url, 'https://org.example/api/portal/site');
     assert.equal(options.headers['x-forwarded-host'], 'portal.deism.church');
     return Response.json({ id: 'deism' });
   });
-  const deismEnv = { ...env, ORGPORTAL_TENANT_HOSTS: 'medtech.social,portal.deism.church' };
+  const deismEnv = { ...env, ORGPORTAL_SITE_HOSTS: 'medtech.social,portal.deism.church' };
   for (const path of ['/', '/users/login', '/org-events', '/chat', '/auth/callback']) {
     const response = await worker.fetch(new Request('https://portal.deism.church' + path, { headers: { accept: 'text/html' } }), deismEnv);
     assert.equal(response.status, 200);

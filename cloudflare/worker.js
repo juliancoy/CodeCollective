@@ -42,7 +42,7 @@ async function handleMedTechDatasetRequest(request, env, url) {
 }
 
 function configuredTenantHosts(env) {
-  const raw = String(env?.ORGPORTAL_TENANT_HOSTS || "").trim();
+  const raw = String(env?.ORGPORTAL_SITE_HOSTS || "").trim();
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -58,7 +58,7 @@ function normalizeHostname(value) {
   return String(value || "").toLowerCase().split(":")[0].trim();
 }
 
-function isOrgPortalTenantHost(hostname, env) {
+function isOrgGroupSiteHost(hostname, env) {
   const host = normalizeHostname(hostname);
   if (!host) return false;
   const configured = configuredTenantHosts(env).map(normalizeHostname).filter(Boolean);
@@ -74,10 +74,10 @@ function isOrgPortalTenantHost(hostname, env) {
   return host.endsWith(".codecollective.us") && !reserved.has(host);
 }
 
-async function verifyOrgPortalTenant(hostname, env) {
+async function verifyOrgGroupSite(hostname, env) {
   const origin = trimTrailingSlash(env?.ORG_API_ORIGIN || env?.GOVERNANCE_API_ORIGIN);
   if (!origin) return { ok: false, status: 502 };
-  const response = await fetch(`${origin}/api/portal/tenant`, {
+  const response = await fetch(`${origin}/api/portal/site`, {
     headers: { "x-forwarded-host": hostname },
     cf: { cacheEverything: false },
   });
@@ -963,7 +963,7 @@ const productionWorker = {
   async fetch(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const tenantHost = isOrgPortalTenantHost(url.hostname, env);
+    const tenantHost = isOrgGroupSiteHost(url.hostname, env);
 
     if (url.hostname === "orgportal.cc" && ["/timebanking", "/timebanking/"].includes(path)) {
       url.pathname = "/communities";
@@ -1152,7 +1152,7 @@ const productionWorker = {
         && (isHtmlNavigation(request) || looksLikeSpaRoute(path) || path.endsWith(".html"));
       if (navigation) {
         if (!isPortalPagePath(portalPath)) return notFoundResponse(request);
-        const tenant = await verifyOrgPortalTenant(url.hostname, env);
+        const tenant = await verifyOrgGroupSite(url.hostname, env);
         if (!tenant.ok) {
           return new Response("This community is not available yet.", {
             status: tenant.status === 404 ? 404 : 503,
@@ -1188,7 +1188,7 @@ export default {
   async fetch(request, env) {
     if (env.WEB_PREVIEW === 'true') return previewResponse(request, env);
     const url = new URL(request.url);
-    const tenant = isOrgPortalTenantHost(url.hostname, env);
+    const tenant = isOrgGroupSiteHost(url.hostname, env);
     if (pathMatchesPrefix(url.pathname, '/p')) return notFoundResponse(request);
     if (tenant) {
       const missing = await missingPortalResource(request, url.pathname, env.ORG_API_ORIGIN || env.GOVERNANCE_API_ORIGIN);

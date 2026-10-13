@@ -11,7 +11,7 @@ test('OrgPortal Timebank routes require a community choice and preserve link con
 });
 
 test('OrgPortal install assets use the neutral bundle', async () => {
-  const env = { ORGPORTAL_TENANT_HOSTS: 'orgportal.cc', ASSETS: { fetch: async request => new Response(new URL(request.url).pathname) } };
+  const env = { ORGPORTAL_SITE_HOSTS: 'orgportal.cc', ASSETS: { fetch: async request => new Response(new URL(request.url).pathname) } };
   for (const path of ['/orgportal.svg', '/orgportal.webmanifest', '/fonts/CLT-Mattone/web/Mattone-Black.woff2']) {
     const response = await worker.fetch(new Request('https://orgportal.cc' + path), env);
     assert.equal(await response.text(), '/__portal_root' + path);
