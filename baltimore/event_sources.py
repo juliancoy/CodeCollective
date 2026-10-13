@@ -3,6 +3,12 @@ from urllib.parse import urlparse
 
 sources = [
     {
+        "name": "B'More Small Business Coalition",
+        "url": "https://bmoresmallbusinessrights.com/",
+        "source_kind": "web_events_page",
+        "tags": ["Business", "Economic Development", "Community Organizing", "Politics"],
+    },
+    {
         "name": "Cognitive Security Institute",
         "url": "https://www.cognitivesecurityinstitute.org/events",
         "source_kind": "web_events_page",

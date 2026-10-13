@@ -2928,3 +2928,24 @@ h1 {
         display: none;
     }
 }
+
+/* Keep event discovery and date navigation visible outside the tools panel. */
+.calendar-main-search { margin-top: 14px; width: 100%; box-sizing: border-box; }
+.calendar-main-search input[type="search"] { min-height: 44px; }
+.calendar-time-strip { max-width: none; }
+.calendar-date-control { flex-wrap: wrap; width: 100%; box-sizing: border-box; }
+.calendar-range-navigation { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.calendar-range-navigation button {
+    min-height: 44px; padding: 8px 12px; border-radius: 6px;
+    border: 1px solid #6ee7f7; background: #071c36; color: #fff;
+    font: inherit; cursor: pointer;
+}
+.calendar-range-navigation button:hover:enabled { background: #164466; }
+.calendar-range-navigation button:focus-visible { outline: 2px solid #6ee7f7; outline-offset: 3px; }
+.calendar-range-navigation button:disabled { opacity: 0.5; cursor: default; }
+@media (max-width: 640px) {
+    .calendar-main-search { flex-direction: column; align-items: stretch; }
+    .calendar-range-navigation { margin-left: 0; width: 100%; }
+    .calendar-range-navigation button { flex: 1 1 auto; }
+    .calendar-date-range { box-sizing: border-box; white-space: normal; line-height: 1.4; }
+}

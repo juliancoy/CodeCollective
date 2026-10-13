@@ -117,7 +117,7 @@ class CalendarLegend extends HTMLElement {
                 <div class="legend-panel-header">
                     <div>
                         <div class="legend-title">Calendar tools</div>
-                        <div class="legend-subtitle">Search, filter, and tune what appears.</div>
+                        <div class="legend-subtitle">Filter and tune what appears.</div>
                     </div>
                     <button type="button" id="legend-close-button" class="legend-close-button" aria-label="Close calendar tools" title="Close calendar tools">
                         <i class="fas fa-xmark" aria-hidden="true"></i>
@@ -129,6 +129,7 @@ class CalendarLegend extends HTMLElement {
                         <label for="city-select">Events for</label>
                         <select id="city-select" aria-label="Select a city for the calendar"></select>
                     </div>
+                    ${document.getElementById("calendar-search-input") ? "" : `
                     <div class="calendar-search calendar-control calendar-control-wide">
                         <label for="calendar-search-input">Search</label>
                         <input
@@ -138,6 +139,7 @@ class CalendarLegend extends HTMLElement {
                             aria-label="Search events"
                         />
                     </div>
+`}
                     <div class="timezone-controls calendar-control">
                         <label class="timezone-toggle" for="use-local-time-checkbox">
                             <input id="use-local-time-checkbox" type="checkbox" checked />
@@ -410,7 +412,7 @@ async function hydratePortalNavUser() {
 
 function loginUrl(pidpBase, nextUrl, provider) {
     const base = pidpBase.replace(/\/+$/, '');
-    const params = new URLSearchParams({ app: 'code-collective', next: nextUrl });
+    const params = new URLSearchParams({ app: 'orgportal', next: nextUrl });
     if (provider) params.set('provider', provider);
     return `${base}/auth/sso/start?${params.toString()}`;
 }

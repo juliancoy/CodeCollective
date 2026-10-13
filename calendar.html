@@ -25,13 +25,13 @@
   <link rel="icon" href="/images/favicons/favicon.png" />
 
   <link rel="preload" href="/css/master.css?v=20260608-avataronly" as="style">
-  <link rel="preload" href="/css/calendar.css?v=20261008-contrast" as="style">
+  <link rel="preload" href="/css/calendar.css?v=20261012-navigation" as="style">
   <link rel="preconnect" href="https://cdnjs.cloudflare.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="/css/master.css?v=20260608-avataronly" />
-  <link rel="stylesheet" href="/css/calendar.css?v=20261008-contrast" />
+  <link rel="stylesheet" href="/css/calendar.css?v=20261012-navigation" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <!-- Scripts -->
@@ -199,10 +199,19 @@
           <p class="calendar-kicker">Code Collective brings you</p>
           <h1>A <span id="calendar-city-name">Baltimore</span> Techonomics Calendar</h1>
         </div>
+        <div class="calendar-search calendar-control calendar-main-search">
+          <label for="calendar-search-input">Search events</label>
+          <input id="calendar-search-input" type="search" placeholder="Title, tag, org, description, location…" />
+        </div>
         <div class="calendar-control-strip calendar-time-strip" aria-label="Calendar time controls">
           <div class="calendar-date-control calendar-control" aria-label="Visible calendar date range">
-            <span class="calendar-control-label">Range</span>
+            <span class="calendar-control-label">Showing six weeks</span>
             <output id="calendar-date-range" class="calendar-date-range" aria-live="polite"></output>
+            <nav class="calendar-range-navigation" aria-label="Calendar date navigation">
+              <button type="button" id="calendar-range-prev" disabled>Previous six weeks</button>
+              <button type="button" id="calendar-range-today" disabled>Today</button>
+              <button type="button" id="calendar-range-next" disabled>Next six weeks</button>
+            </nav>
           </div>
         </div>
       </header>
@@ -232,7 +241,7 @@
     </section>
 
     <script src="/js/calendarFilterUtils.js"></script>
-    <script src="/js/calendar.js?v=20260924-legendtools"></script>
+    <script src="/js/calendar.js?v=20261012-navigation"></script>
     </section>
 
   </main>
@@ -243,7 +252,7 @@
 
 </body>
 
-<script type="module" src="/js/reusableComponents.js?v=20260924-legendtools"></script>
+<script type="module" src="/js/reusableComponents.js?v=20261012-navigation"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.8/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 

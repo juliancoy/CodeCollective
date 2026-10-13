@@ -2280,10 +2280,21 @@ function updateCalendarFreshness(events) {
   el.textContent = formatCalendarFreshness(getCalendarDataFreshness(events));
 }
 
-function updateCompactCalendarDateRange(title) {
+function updateCompactCalendarDateRange() {
   const el = document.getElementById('calendar-date-range');
-  if (!el) return;
-  el.textContent = title || '';
+  if (!el || !calendar?.view) return;
+  const { activeStart, activeEnd } = calendar.view;
+  const lastDay = new Date(activeEnd);
+  lastDay.setDate(lastDay.getDate() - 1);
+  el.textContent = calendar.formatRange(activeStart, lastDay, {
+    month: 'short', day: 'numeric', year: 'numeric', separator: ' – '
+  });
+  const prev = document.getElementById('calendar-range-prev');
+  const today = document.getElementById('calendar-range-today');
+  const next = document.getElementById('calendar-range-next');
+  if (prev) prev.disabled = activeStart <= getTodayStart();
+  if (today) today.disabled = activeStart <= getTodayStart() && activeEnd > getTodayStart();
+  if (next) next.disabled = false;
 }
 
 function shouldStayOnCalendarView() {
@@ -2832,21 +2843,20 @@ function initializeCalendar(events) {
   const calendarEl = document.getElementById('calendar');
   calendar = new FullCalendar.Calendar(calendarEl, {
     timeZone: useLocalTime ? 'local' : selectedTimeZone,
-    initialView: 'dayGridFourWeek',
+    initialView: 'dayGridSixWeek',
     views: {
-      dayGridFourWeek: {
+      dayGridSixWeek: {
         type: 'dayGrid',
-        duration: { weeks: 4 },
-        buttonText: '4 Weeks',
-        fixedWeekCount: true,     // Always show the same number of weeks (usually 6)
+        duration: { weeks: 6 },
+        dateIncrement: { weeks: 6 },
+        buttonText: '6 Weeks',
+        fixedWeekCount: false,
         height: 'auto',           // Let calendar resize to fit, or use a fixed value (e.g., 600)
 
       },
     },
-    headerToolbar: {
-      left: 'prev',
-      center: 'title',
-      right: 'next'
+    headerToolbar: document.getElementById('calendar-range-next') ? false : {
+      left: 'prev today', center: 'title', right: 'next'
     },
     validRange: {
       start: today             // today's date (inclusive)
@@ -2996,17 +3006,23 @@ function initializeCalendar(events) {
       info.el.addEventListener('blur', hideHoverPreview);
     },
     datesSet: function (info) {
-      updateCompactCalendarDateRange(info.view?.title);
+      updateCompactCalendarDateRange();
       scheduleCalendarEventsForRange(info.start, info.end);
     },
     // Add this: Callback for when view is rendered
     viewDidMount: function () {
       // Apply today highlighting after view changes
       highlightToday();
-      updateCompactCalendarDateRange(calendar?.view?.title);
+      updateCompactCalendarDateRange();
     }
   });
   calendar.render();
+  const navigation = { 'calendar-range-prev': 'prev', 'calendar-range-today': 'today', 'calendar-range-next': 'next' };
+  for (const [id, action] of Object.entries(navigation)) {
+    const button = document.getElementById(id);
+    if (button) button.onclick = () => calendar[action]();
+  }
+  updateCompactCalendarDateRange();
 }
 
 // Set up view selector buttons
