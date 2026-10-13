@@ -4,11 +4,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 LIFETECH_DIR="${LIFETECH_DIR:-$ROOT_DIR/../BmoreMedTech}"
 ORGPORTAL_DIR="${ORGPORTAL_DIR:-$ROOT_DIR/../OrgPortal}"
 # Reuse the supported shared frontend build. Keep preview assets in a separate output directory.
-"$ROOT_DIR/cloudflare/scripts/build_cloudflare_site.sh"
+(cd "$ORGPORTAL_DIR" && node scripts/release.mjs build web)
 npm --prefix "$LIFETECH_DIR" run build:lifetech
 mkdir -p "$ROOT_DIR/.cloudflare/preview"
 rsync -a --delete "$LIFETECH_DIR/dist-lifetech/" "$ROOT_DIR/.cloudflare/preview/"
-rsync -a "$ROOT_DIR/.cloudflare/site/__portal_root/" "$ROOT_DIR/.cloudflare/preview/__portal_root/"
+rsync -a "$ORGPORTAL_DIR/.release/site/__portal_root/" "$ROOT_DIR/.cloudflare/preview/__portal_root/"
 node - "$ROOT_DIR/.cloudflare/preview" <<'JS'
 const fs = require('node:fs');
 const output = process.argv[2];

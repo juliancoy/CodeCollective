@@ -1,6 +1,6 @@
 // This Worker has no public routes. Only production frontend service bindings
 // can fetch these assets; no session cookies or bearer tokens are forwarded.
-import { isPortalPagePath, notFoundResponse } from '../../OrgPortal/web/portalRoutes.mjs';
+import { isPortalPagePath, notFoundResponse } from './portal-compat/portalRoutes.mjs';
 export async function previewResponse(request, env) {
   const url = new URL(request.url);
   if (/^\/p(?:\/|$)/.test(url.pathname)) return notFoundResponse(request);

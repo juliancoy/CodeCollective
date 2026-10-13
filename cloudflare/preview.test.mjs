@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import worker from './worker.js';
-import { deploymentResponse, deploymentCookie, deploymentCachePolicy, isDeploymentAssetRequest } from '../../OrgPortal/web/deployment.mjs';
+import { deploymentResponse, deploymentCookie, deploymentCachePolicy, isDeploymentAssetRequest } from './portal-compat/deployment.mjs';
 const base = 'https://lifetech.fyi';
 const development = { cookie: `${deploymentCookie}=development` };
 
