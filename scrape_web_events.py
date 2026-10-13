@@ -357,6 +357,49 @@ def _parse_ics_events(ics_bytes: bytes, source_url: str) -> List[Dict[str, Any]]
     return events
 
 
+def _extract_nava_event(soup: BeautifulSoup, source_url: str) -> List[Dict[str, Any]]:
+    """Nava detail pages publish labeled UTC dates, but no Event JSON-LD."""
+    if urlparse(source_url).hostname not in {"navapbc.com", "www.navapbc.com"}:
+        return []
+    label = soup.find("p", string="Event Date")
+    date_node = label.find_next_sibling() if label else None
+    title = soup.find("meta", property="og:title")
+    if not date_node or not title:
+        return []
+    match = re.fullmatch(
+        r"(.+?\d{4}) at (\d{1,2}:\d{2})(?:\s*(AM|PM))?"
+        r"(?:[–—-](\d{1,2}:\d{2}))?\s*(AM|PM) UTC",
+        date_node.get_text(" ", strip=True),
+    )
+    if not match:
+        return []
+    day, start_clock, start_period, end_clock, period = match.groups()
+    try:
+        start = parse_date(f"{day} {start_clock} {start_period or period}").replace(tzinfo=timezone.utc)
+        end = parse_date(f"{day} {end_clock} {period}").replace(tzinfo=timezone.utc) if end_clock else None
+        if end and end < start:
+            end += timedelta(days=1)
+    except ValueError:
+        return []
+    location_label = soup.find("p", string="Location")
+    location_node = location_label.find_next_sibling() if location_label else None
+    location = location_node.get_text(" ", strip=True) if location_node else ""
+    # This source belongs to the Baltimore calendar; Nava also holds events
+    # in other cities. Do not import its nationwide program indiscriminately.
+    if "baltimore" not in location.lower():
+        return []
+    description = soup.find("meta", property="og:description")
+    image = soup.find("meta", property="og:image")
+    return [{
+        "name": title.get("content", "").removesuffix(" | Nava"),
+        "startDate": start.isoformat(), "endTime": end.isoformat() if end else "",
+        "url": source_url, "source": source_url, "status": "ACTIVE",
+        "description": description.get("content", "") if description else "",
+        "imageUrl": image.get("content", "") if image else "",
+        "location": {"name": location, "address": location},
+    }]
+
+
 def _extract_events_from_page(soup: BeautifulSoup, source_url: str) -> List[Dict[str, Any]]:
     events: List[Dict[str, Any]] = []
     seen: Set[Tuple[str, str]] = set()
@@ -404,6 +447,22 @@ def _extract_events_from_page(soup: BeautifulSoup, source_url: str) -> List[Dict
             continue
         seen.add(key)
         events.append(evt)
+    if not events:
+        # University calendars such as Hopkins Hub use schema.org microdata.
+        for node in soup.select('[itemscope][itemtype$="/Event"]'):
+            def prop(name):
+                element = node.select_one(f'[itemprop="{name}"]')
+                return (element.get('content') or element.get('datetime') or element.get_text(' ', strip=True)) if element else ''
+            event = _normalize_event_schema({
+                '@type': 'Event', 'name': prop('name'),
+                'startDate': prop('startDate'), 'endDate': prop('endDate'),
+                'description': prop('description'), 'location': prop('location'),
+                'url': source_url,
+            }, source_url)
+            if event:
+                events.append(event)
+    if not events:
+        events.extend(_extract_nava_event(soup, source_url))
     # Text heuristics are a fallback; structured events already provide the
     # authoritative titles and dates for this page.
     for evt in _extract_simple_dated_events(soup, source_url) if not events else []:
@@ -482,7 +541,8 @@ def _extract_candidate_links(soup: BeautifulSoup, source_url: str) -> Tuple[List
     return event_links, feed_links
 
 
-def parse_web_events_page(source_url: str) -> List[Dict[str, Any]]:
+def parse_web_events_page(source_url: str, location_pattern: str | None = None,
+                          title_pattern: str | None = None) -> List[Dict[str, Any]]:
     session = build_session()
     response = polite_get(session, source_url, timeout=30, allow_redirects=True)
     response.raise_for_status()
@@ -534,4 +594,12 @@ def parse_web_events_page(source_url: str) -> List[Dict[str, Any]]:
         except Exception:
             continue
 
+    if location_pattern:
+        events = [event for event in events if re.search(
+            location_pattern, json.dumps(event.get("location") or {}), re.IGNORECASE
+        )]
+    if title_pattern:
+        events = [event for event in events if re.search(
+            title_pattern, event.get("name", ""), re.IGNORECASE
+        )]
     return events

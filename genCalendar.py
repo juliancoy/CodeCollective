@@ -530,7 +530,10 @@ def fetch_events_from_source(source, city):
         ),
         "web_events_page": (
             "Fetching events from",
-            lambda: scrape_web_events.parse_web_events_page(source_url),
+            lambda: scrape_web_events.parse_web_events_page(
+                source_url, location_pattern=source.get("location_pattern"),
+                title_pattern=source.get("title_pattern")
+            ),
         ),
         "empowerdc_events": (
             "Fetching events from",

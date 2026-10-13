@@ -143,3 +143,49 @@ def test_structured_events_prevent_spurious_text_fallback_duplicates():
     events = scrape_web_events._extract_events_from_page(soup, "https://example.org")
     assert len(events) == 1
     assert events[0]["startDate"] == payload["startDate"]
+
+
+def test_nava_utc_range_and_baltimore_scope():
+    html = '''<meta property="og:title" content="Open Source Summit: AI Futures | Nava">
+    <p>Event Date</p><p>October 14, 2026 at 3:30–11:30 PM UTC</p>
+    <p>Location</p><div>Baltimore Museum of Art</div>'''
+    events = scrape_web_events._extract_events_from_page(
+        BeautifulSoup(html, 'html.parser'), 'https://www.navapbc.com/events/summit')
+    assert len(events) == 1
+    assert events[0]['startDate'] == '2026-10-14T15:30:00+00:00'
+    assert events[0]['endTime'] == '2026-10-14T23:30:00+00:00'
+    assert events[0]['name'] == 'Open Source Summit: AI Futures'
+    assert scrape_web_events._extract_nava_event(
+        BeautifulSoup(html.replace('Baltimore Museum of Art', 'New York'), 'html.parser'),
+        'https://www.navapbc.com/events/summit') == []
+    assert scrape_web_events._extract_nava_event(
+        BeautifulSoup(html.replace('October 14, 2026', 'TBD'), 'html.parser'),
+        'https://www.navapbc.com/events/summit') == []
+
+
+def test_hub_microdata_preserves_explicit_timezone():
+    soup = BeautifulSoup('''<article itemscope itemtype="https://schema.org/Event">
+    <h1 itemprop="name">AI symposium</h1>
+    <meta itemprop="startDate" content="2026-10-27T09:00:00-04:00">
+    <meta itemprop="endDate" content="2026-10-27T20:00:00-04:00">
+    <div itemprop="location">Bloomberg Student Center</div></article>''', 'html.parser')
+    events = scrape_web_events._extract_events_from_page(soup, 'https://hub.jhu.edu/events/example/')
+    assert len(events) == 1
+    assert events[0]['startDate'] == '2026-10-27T09:00:00-04:00'
+    assert events[0]['endTime'] == '2026-10-27T20:00:00-04:00'
+
+
+def test_location_filter_excludes_other_cities(monkeypatch):
+    class Response:
+        text = '<script type="application/ld+json">'+json.dumps([
+            {'@type':'Event','name':'Local','startDate':'2026-11-12T08:00:00-05:00','location':'Baltimore'},
+            {'@type':'Event','name':'Elsewhere','startDate':'2026-11-12T08:00:00-05:00','location':'Washington, DC'},
+        ])+'</script>'
+        def raise_for_status(self):
+            pass
+    monkeypatch.setattr(scrape_web_events, 'polite_get', lambda *a, **k: Response())
+    events = scrape_web_events.parse_web_events_page('https://example.org', location_pattern='Baltimore')
+    assert [e['name'] for e in events] == ['Local']
+    assert scrape_web_events.parse_web_events_page(
+        'https://example.org', location_pattern='Baltimore', title_pattern='Cybersecurity'
+    ) == []
