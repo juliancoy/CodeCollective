@@ -15,3 +15,12 @@ test('portal tenants use the independent Worker with the original request intact
     }
   }
 });
+
+test('legacy tenant wrappers fetch portal artifacts from the independent service', async () => {
+  const request = new Request('https://codecollective.us/__portal_root/');
+  const response = await worker.fetch(request, { ORGPORTAL_WEB: { fetch: async received => {
+    assert.equal(received, request);
+    return new Response('portal entry');
+  } }, ASSETS: { fetch: async () => { throw new Error('legacy assets must not be used'); } } });
+  assert.equal(await response.text(), 'portal entry');
+});

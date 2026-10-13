@@ -1191,7 +1191,7 @@ export default {
     const tenant = isOrgGroupSiteHost(url.hostname, env);
     // Tenant frontend releases belong to OrgPortal. A service binding preserves
     // the original URL and streamed request, including WebSocket upgrades.
-    if (tenant && env.ORGPORTAL_WEB) return env.ORGPORTAL_WEB.fetch(request);
+    if (env.ORGPORTAL_WEB && (tenant || pathMatchesPrefix(url.pathname, "/__portal_root"))) return env.ORGPORTAL_WEB.fetch(request);
 
     if (pathMatchesPrefix(url.pathname, '/p')) return notFoundResponse(request);
     if (tenant) {
