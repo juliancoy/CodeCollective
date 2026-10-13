@@ -244,8 +244,8 @@ if [[ "$deploy_site" -eq 1 && "$SKIP_BUILD" -eq 0 ]]; then
   fi
 fi
 
-if [[ "$deploy_site" -eq 1 && ! -f "$ROOT_DIR/.cloudflare/site/__portal_root/index.html" ]]; then
-  echo "[deploy] portal entrypoint missing: .cloudflare/site/__portal_root/index.html" >&2
+if [[ "$deploy_site" -eq 1 && ! -f "$ROOT_DIR/.cloudflare/site/index.html" ]]; then
+  echo "[deploy] site entrypoint missing: .cloudflare/site/index.html" >&2
   echo "[deploy] deploy aborted" >&2
   exit 1
 fi
@@ -849,12 +849,6 @@ verify_target() {
 
   check "/" "200"
   check "/p/" "404"
-  if [[ "$label" == "prod" ]]; then
-    local base_url="https://orgportal.cc"
-    check "/" "200"
-    check "/users/login" "200"
-    base_url="$2"
-  fi
   check "/r8-rowhome/" "200"
 }
 
