@@ -52,9 +52,8 @@ def parse_events(html: str) -> list[dict]:
         instructor = text(".trainer")
         if instructor:
             description.append(f"Instructor: {instructor}.")
-        # Missing signup buttons indicate full courses, not cancellations.
-        if not row.select_one(".signup_now"):
-            description.append("No signup button is currently available; the course may be full or already underway.")
+        # Print views omit booking controls even for available classes, so they
+        # cannot establish whether an offering is full or open for registration.
         description.append("Confirm the venue and registration details on the class page.")
         class_link = row.select_one(".mbo_class a[data-url]")
         events.append({

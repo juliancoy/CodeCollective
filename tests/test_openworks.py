@@ -31,8 +31,13 @@ class OpenWorksTests(unittest.TestCase):
         self.assertEqual(events[0]["endTime"], "2026-10-15T21:00:00-04:00")
         self.assertIn("Nov 12 2026", events[0]["description"])
         self.assertIn("first session", events[0]["description"])
-        self.assertIn("may be full", events[0]["description"])
         self.assertEqual(events[0]["status"], "ACTIVE")
+
+    def test_print_view_without_signup_controls_does_not_imply_full(self):
+        event = parse_events(enrollment(signup=False))[0]
+        self.assertNotIn("full", event["description"])
+        self.assertNotIn("underway", event["description"])
+        self.assertEqual(event["status"], "ACTIVE")
 
     def test_offsite_venue_and_duplicate_rows(self):
         html = enrollment(name="3D Printing @ Village Learning Place")
