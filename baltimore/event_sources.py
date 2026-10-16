@@ -794,7 +794,19 @@ sources = [
     {
         "name": "Open Works Class and Workshop Schedule",
         "url": "https://www.openworksbmore.org/schedule/",
+        # Public print view of the Mindbody widget embedded on this schedule.
+        "feed_url": "https://widgets.mindbodyonline.com/widgets/enrollments/d678669584b/print",
+        "source_kind": "openworks_enrollments",
+        "orgImageUrl": "https://www.openworksbmore.org/wp-content/uploads/2021/04/openworks-logo.svg",
         "tags": ["Makerspace", "Education", "Growth", "Belonging"],
+    },
+    {
+        "name": "4MLK Events",
+        "url": "https://www.4mlk.com/events",
+        # Official calendar embedded on the events page, without duplicate ingestion.
+        "feed_url": "https://luma.com/4mlk",
+        "source_kind": "luma_org",
+        "tags": ["Science", "Business", "Community", "Professional Networking"],
     },
     {
         "name": "League of Women Voters Baltimore City Events",

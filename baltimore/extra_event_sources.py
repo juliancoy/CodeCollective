@@ -1,11 +1,36 @@
 """Supplemental Baltimore event sources discovered outside the core source list.
 
 Keep these broad institutional/venue calendars separate from hand-curated
-community sources in event_sources.py. They are parsed through the generic
-web-events scraper and deduplicated against all other sources downstream.
+community sources in event_sources.py. Use structured feeds or dedicated parsers
+where available; events are deduplicated against all other sources downstream.
 """
 
 sources = [
+    {
+        "name": "Impact Maryland — The Banner",
+        "url": "https://impactmaryland.thebaltimorebanner.com/",
+        "source_kind": "banner_events",
+        "tags": ["Business", "Politics", "Community", "Economic Development", "Professional Networking"],
+    },
+    {
+        "name": "The Banner Events",
+        "url": "https://www.thebanner.com/events/",
+        "source_kind": "banner_events",
+        "tags": ["Business", "Politics", "Community", "Professional Networking"],
+    },
+    {
+        "name": "Greater Baltimore Committee Events",
+        "url": "https://gbc.org/events/",
+        "source_kind": "web_events_page",
+        "tags": ["Business", "Economic Development", "Politics", "Professional Networking"],
+    },
+    {
+        "name": "Park Heights Renaissance Events",
+        "url": "https://boldnewheights.org/events/",
+        "feed_url": "https://boldnewheights.org/wp-json/tribe/events/v1/events?per_page=50",
+        "source_kind": "tribe_events",
+        "tags": ["Community", "Community Organizing", "Economic Development", "Politics"],
+    },
     {
         "name": "Visit Baltimore Events",
         "url": "https://baltimore.org/events/",

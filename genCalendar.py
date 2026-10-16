@@ -502,7 +502,7 @@ def fetch_events_from_source(source, city):
         ),
         "luma_org": (
             "Fetching events from",
-            lambda: scrape_luma_orgpage.fetch_and_parse_luma_events(source_url),
+            lambda: scrape_luma_orgpage.fetch_and_parse_luma_events(source.get("feed_url") or source_url),
         ),
         "luma_calendar": (
             "Fetching events from",
@@ -566,6 +566,14 @@ def fetch_events_from_source(source, city):
         "bsfs_events": (
             "Fetching events from",
             lambda: importlib.import_module("baltimore.scrape_bsfs").scrape_events(source_url),
+        ),
+        "openworks_enrollments": (
+            "Fetching events from",
+            lambda: importlib.import_module("baltimore.scrape_openworks").scrape_events(source["feed_url"]),
+        ),
+        "banner_events": (
+            "Fetching events from",
+            lambda: importlib.import_module("baltimore.scrape_banner_events").scrape_events(source_url),
         ),
     }
 
