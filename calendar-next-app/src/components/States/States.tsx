@@ -10,7 +10,12 @@ import { relativeTime } from '../../data/time';
  */
 export function AgendaSkeleton() {
   return (
-    <div aria-hidden>
+    <div aria-busy="true">
+      <p role="status" aria-live="polite" className="t-body mx-4 my-4 rounded-[var(--r-cell)] px-4 py-3"
+        style={{ background: 'var(--bg-soft)', color: 'var(--ink)' }}>
+        <strong>Loading events…</strong> We’re fetching a large calendar. This may take a moment.
+      </p>
+      <div aria-hidden="true">
       <div className="flex items-baseline justify-between px-4 py-2">
         <div className="skeleton h-6 w-48 rounded-[var(--r-cell)]" />
         <div className="skeleton h-4 w-20 rounded-[var(--r-cell)]" />
@@ -31,9 +36,7 @@ export function AgendaSkeleton() {
           </li>
         ))}
       </ul>
-      <p className="sr-only" role="status">
-        Loading events.
-      </p>
+      </div>
     </div>
   );
 }
