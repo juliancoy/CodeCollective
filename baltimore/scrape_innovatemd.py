@@ -1,10 +1,15 @@
+import re
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-import time
 import json
 import hashlib
 from datetime import datetime
+from zoneinfo import ZoneInfo
+from http_client import build_session, polite_get
+
+EVENTS_URL = "https://innovationmaryland.org/events/"
+SESSION = build_session()
 
 def generate_event_id(name, url):
     """Generate a unique ID for an event based on name and URL"""
@@ -15,30 +20,14 @@ def parse_event_date(date_str):
     Parse event date string like 'October 30, 2025, 6 PM'
     Returns ISO format datetime string
     """
-    try:
-        # Parse the date string
-        # Example: "October 30, 2025, 6 PM"
-        date_parts = date_str.split(',')
-        month_day = date_parts[0].strip()  # "October 30"
-        year = date_parts[1].strip()  # "2025"
-        time_part = date_parts[2].strip()  # "6 PM"
-        
-        # Convert time to 24-hour format
-        hour = int(time_part.split()[0])
-        if 'PM' in time_part and hour != 12:
-            hour += 12
-        elif 'AM' in time_part and hour == 12:
-            hour = 0
-            
-        # Create datetime string
-        date_str_formatted = f"{month_day}, {year} {hour}:00"
-        dt = datetime.strptime(date_str_formatted, "%B %d, %Y %H:%M")
-        
-        # Return ISO format with timezone (EST/EDT)
-        return dt.strftime("%Y-%m-%dT%H:%M:%S-04:00")
-    except Exception as e:
-        print(f"Error parsing date '{date_str}': {e}")
-        return None
+    for pattern in ("%B %d, %Y, %I %p", "%B %d, %Y, %I:%M %p"):
+        try:
+            dt = datetime.strptime(" ".join(date_str.split()), pattern)
+            return dt.replace(tzinfo=ZoneInfo("America/New_York")).isoformat()
+        except ValueError:
+            continue
+    return None
+
 
 def get_event_urls(main_url):
     """
@@ -47,7 +36,7 @@ def get_event_urls(main_url):
     print(f"Requesting main page: {main_url}")
     
     try:
-        response = requests.get(main_url, timeout=10)
+        response = polite_get(SESSION, main_url, timeout=30)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -66,7 +55,7 @@ def get_event_urls(main_url):
                     # Remove the date icon/image
                     for img in heading.find_all('img'):
                         img.decompose()
-                    title = heading.get_text(strip=True)
+                    title = heading.get_text(" ", strip=True)
                 else:
                     title = "Unknown Event"
                 
@@ -91,7 +80,7 @@ def scrape_event_page(event_url, event_title):
     print('='*60)
     
     try:
-        response = requests.get(event_url, timeout=10)
+        response = polite_get(SESSION, event_url, timeout=30)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -125,7 +114,7 @@ def scrape_event_page(event_url, event_title):
             
             paragraphs = column.find_all('p')
             for p in paragraphs:
-                text = p.get_text(strip=True)
+                text = p.get_text(" ", strip=True)
                 # Skip empty paragraphs and single-word headers
                 if text and len(text.split()) > 3:
                     description_parts.append(text)
@@ -149,20 +138,30 @@ def scrape_event_page(event_url, event_title):
                     'address': location_address
                 }
             
+            if 'location' not in event_data:
+                location_match = re.search(
+                    r"Location\s*:\s*(.*?)\s*Date & Time",
+                    event_details_box.get_text(" ", strip=True),
+                )
+                if location_match:
+                    location_text = location_match.group(1).strip()
+                    event_data['location'] = {'name': location_text, 'address': location_text}
+
             # Extract date and time
             # Look for "Date & Time: " pattern
             if 'Date & Time' in detail_text:
                 date_section = detail_text.split('Date & Time')[1].split('Tickets')[0]
                 # Clean up the date string
-                date_str = date_section.replace(':', '').strip()
+                date_str = date_section.lstrip(' :\n\t').strip()
                 parsed_date = parse_event_date(date_str)
                 if parsed_date:
                     event_data['startDate'] = parsed_date
-                    # Assume 3 hour event duration
-                    end_time = datetime.fromisoformat(parsed_date.replace('-04:00', ''))
-                    end_time = end_time.replace(hour=end_time.hour + 3)
-                    event_data['endTime'] = end_time.strftime("%Y-%m-%dT%H:%M:%S-04:00")
-        
+                    # The source does not publish an end time; do not invent one.
+                    event_data['endTime'] = ''
+        if not event_data.get('startDate'):
+            return None
+        event_data['source'] = EVENTS_URL
+
         # Extract image URL from the background image
         img_section = soup.find('div', class_='img-with-aniamtion-wrap')
         if img_section:
@@ -179,7 +178,7 @@ def scrape_event_page(event_url, event_title):
 
 def scrape_all():
     # Main page URL
-    main_url = "https://innovationmaryland.org/"
+    main_url = EVENTS_URL
     
     print("="*60)
     print("Innovation Maryland Event Scraper")
@@ -200,11 +199,10 @@ def scrape_all():
     all_event_data = []
     for event in events:
         event_data = scrape_event_page(event['url'], event['title'])
-        if event_data:
+        if event_data and event_data['url'] not in {item['url'] for item in all_event_data}:
             all_event_data.append(event_data)
         
-        # Be polite - wait between requests
-        #time.sleep(1)
+        # Shared HTTP client enforces per-host pacing and robots checks.
     
     # Summary
     print("\n" + "="*60)
