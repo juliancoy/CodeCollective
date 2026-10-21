@@ -3,6 +3,19 @@ from urllib.parse import urlparse
 
 sources = [
     {
+        "name": "Words, Wings & Wine",
+        "url": "https://wordswingsandwine.com/",
+        "ticket_url": "https://www.ticketmaster.com/words-wings-wine-tickets/artist/3934524",
+        "source_kind": "baltimore_poetry",
+        "tags": ["Culture", "Community", "Food"],
+    },
+    {
+        "name": "Charm City Slam",
+        "url": "https://charmcityslam.com/",
+        "source_kind": "baltimore_poetry",
+        "tags": ["Culture", "Community"],
+    },
+    {
         "name": "B'More Small Business Coalition",
         "url": "https://bmoresmallbusinessrights.com/",
         "source_kind": "web_events_page",
