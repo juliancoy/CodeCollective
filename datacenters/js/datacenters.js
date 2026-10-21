@@ -4737,7 +4737,6 @@
   async function initialize(data) {
     const sourceById = new Map(data.sources.map((source) => [source.id, source]));
     datacenterNewsItems = Array.isArray(data.datacenterNews?.items) ? data.datacenterNews.items : [];
-    setupNewsHoverTargets();
     renderIdleInspectorNews(true);
     const themeSelect = document.getElementById('map-theme');
     const restoredUiState = await readUiState();
@@ -7582,7 +7581,7 @@
       <p class="dc-type">Idle inspector · Maryland-first policy, permitting, grid, and development coverage</p>
       <div class="dc-news-list">
         ${news.map((item) => `
-          <article class="dc-news-card" data-news-id="${escapeHtml(item.id)}" data-target-record-id="${escapeHtml(item.target_record_id || '')}" data-target-longitude="${escapeHtml(item.target?.longitude ?? '')}" data-target-latitude="${escapeHtml(item.target?.latitude ?? '')}" data-target-zoom="${escapeHtml(item.target?.zoom ?? '')}">
+          <article class="dc-news-card" data-news-id="${escapeHtml(item.id)}">
             <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">
               <span>${escapeHtml(formatNewsDate(item.published_date))} · ${escapeHtml(item.publisher || 'Source')}</span>
               <strong>${escapeHtml(item.title)}</strong>
@@ -7595,49 +7594,6 @@
       <p class="dc-record-note">This is a dated public-news snapshot for orientation. Facility facts on the map remain tied to the source register and record-specific evidence.</p>
     `;
     return true;
-  }
-
-  function newsTargetForElement(element) {
-    const recordId = element?.dataset?.targetRecordId;
-    if (recordId && activeLayerContext?.records) {
-      const record = activeLayerContext.records.find((candidate) => candidate.id === recordId);
-      if (record && Number.isFinite(record.longitude) && Number.isFinite(record.latitude)) {
-        return {
-          center: [record.longitude, record.latitude],
-          zoom: record.record_type === 'data_center' ? 11.6 : 9.2,
-        };
-      }
-    }
-    const longitude = Number(element?.dataset?.targetLongitude);
-    const latitude = Number(element?.dataset?.targetLatitude);
-    if (Number.isFinite(longitude) && Number.isFinite(latitude)) {
-      const zoom = Number(element.dataset.targetZoom);
-      return { center: [longitude, latitude], zoom: Number.isFinite(zoom) ? zoom : 8.5 };
-    }
-    return null;
-  }
-
-  function shiftMapToNewsTarget(element) {
-    const map = activeLayerContext?.map;
-    if (!map || inspectorPinnedKey) return;
-    const target = newsTargetForElement(element);
-    if (!target) return;
-    map.easeTo({
-      center: target.center,
-      zoom: Math.max(map.getZoom(), target.zoom),
-      duration: 650,
-      essential: true,
-    });
-  }
-
-  function setupNewsHoverTargets() {
-    const detail = document.getElementById('record-detail');
-    const hover = (event) => {
-      const card = event.target.closest?.('.dc-news-card');
-      if (card && detail.contains(card)) shiftMapToNewsTarget(card);
-    };
-    detail.addEventListener('pointerover', hover);
-    detail.addEventListener('focusin', hover);
   }
 
   function renderHoveredInspector(key, render, layerId = null) {

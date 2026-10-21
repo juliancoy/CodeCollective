@@ -1570,10 +1570,9 @@ def test_idle_inspector_shows_latest_datacenter_news():
     assert "let datacenterNewsItems = []" in script
     assert "function renderIdleInspectorNews(force = false)" in script
     assert "Latest data-center news" in script
-    assert "function shiftMapToNewsTarget(element)" in script
-    assert "function setupNewsHoverTargets()" in script
-    assert "data-target-record-id" in script
-    assert "map.easeTo({" in script
+    assert "shiftMapToNewsTarget" not in script
+    assert "setupNewsHoverTargets" not in script
+    assert "data-target-record-id" not in script
     assert "renderIdleInspectorNews(true)" in script
     assert "renderIdleInspectorNews();" in script
     assert "document.getElementById('record-detail').dataset.inspectorMode = 'detail'" in script
