@@ -2297,32 +2297,11 @@ function updateCompactCalendarDateRange() {
   if (next) next.disabled = false;
 }
 
-function shouldStayOnCalendarView() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const viewPreference = (urlParams.get('view') || '').toLowerCase();
-
-  if (viewPreference === 'calendar' || viewPreference === 'desktop') {
-    sessionStorage.setItem('preferCalendarView', '1');
-    return true;
-  }
-
-  return sessionStorage.getItem('preferCalendarView') === '1';
-}
-
 // Fetch and parse event data
 document.addEventListener('DOMContentLoaded', function () {
   forceCardView = Boolean(window.FORCE_CALENDAR_CARDS);
   setupTimezoneControls();
-  const stayOnCalendar = shouldStayOnCalendarView();
-  const mobileViewport = isMobileDevice();
-  isMobile = forceCardView ? true : (mobileViewport && !stayOnCalendar);
-
-  if (!forceCardView && isMobile) {
-    const query = window.location.search || '';
-    const target = `/simplecalendar.html${query}`;
-    window.location.replace(target);
-    return;
-  }
+  isMobile = forceCardView;
 
   const city = getCityFromUrl();
   const endpoint = `/${city}/upcoming_events.json`;

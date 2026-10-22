@@ -3,6 +3,13 @@
 
 <head>
   <meta charset="utf-8" />
+  <script>
+    const calendarUrl = new URL(window.location.href);
+    if (calendarUrl.searchParams.get('view') !== 'calendar') {
+      calendarUrl.pathname = '/calendar-next/';
+      window.location.replace(calendarUrl.href);
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
   <title>Code Collective | Tech Events Calendar & Tech Labor Organization</title>
 
@@ -241,7 +248,7 @@
     </section>
 
     <script src="/js/calendarFilterUtils.js"></script>
-    <script src="/js/calendar.js?v=20261012-navigation"></script>
+    <script src="/js/calendar.js?v=20261018-agenda-default"></script>
     </section>
 
   </main>
