@@ -105,7 +105,8 @@ class Release:
             scripts = json.loads((repo / 'package.json').read_text()).get('scripts', {})
             for command in ['test', 'build']:
                 if command in scripts:
-                    self.run(repo, command, 'npm', 'run', command)
+                    extra = ['--', '--maxWorkers=2'] if repo.name == 'r8-rowhome' and command == 'test' else []
+                    self.run(repo, command, 'npm', 'run', command, *extra)
         else:
             print(f'[{repo.name}] No configured application check; Git checks completed.', flush=True)
 
