@@ -96,7 +96,11 @@ class Release:
         elif repo.name == 'bmoremedtech':
             self.run(repo, 'build', 'npm', 'run', 'build')
         elif repo.name == 'Deism':
-            self.run(repo, 'build', 'python3', 'export.py')
+            self.run(repo, 'build-runtime', 'docker', 'build', '-t', 'deism-local-builder',
+                     '-f', 'scripts/Dockerfile.build', 'scripts')
+            self.run(repo, 'build', 'docker', 'run', '--rm',
+                     '--user', f'{os.getuid()}:{os.getgid()}',
+                     '-v', f'{repo}:/workspace', 'deism-local-builder')
         elif (repo / 'package.json').exists():
             scripts = json.loads((repo / 'package.json').read_text()).get('scripts', {})
             for command in ['test', 'build']:
