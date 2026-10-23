@@ -1097,6 +1097,11 @@ def merge_event_records(preferred_event, other_event):
         other_value = other_event.get(field)
         if (not preferred_value) and other_value:
             merged_event[field] = other_value
+            if field == "imageUrl":
+                # The origin belongs to the selected image, not the other record.
+                merged_event.pop("imageSourceUrl", None)
+                if other_event.get("imageSourceUrl"):
+                    merged_event["imageSourceUrl"] = other_event["imageSourceUrl"]
 
     preferred_location = merged_event.get("location") or {}
     other_location = other_event.get("location") or {}
@@ -1435,12 +1440,6 @@ def main(city = "baltimore"):
             return None
 
     normalize_event_start_dates(newEvents, get_start_dt=get_start_dt, error_logger=error_logger)
-    download_event_images(
-        newEvents,
-        sanitize_event_name=sanitize_event_name,
-        headers=headers,
-        error_logger=error_logger,
-    )
     nonerror_newevents, invalid_events, today_date = split_upcoming_events(
         newEvents,
         get_start_dt=get_start_dt,
@@ -1460,6 +1459,13 @@ def main(city = "baltimore"):
         geocode_cache=geocode_cache,
     )
     cache_updated = cache_updated or dedupe_cache_updated
+
+    download_event_images(
+        sorted_events,
+        sanitize_event_name=sanitize_event_name,
+        headers=headers,
+        error_logger=error_logger,
+    )
 
     GEOCODE = True
     if GEOCODE:

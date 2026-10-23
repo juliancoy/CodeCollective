@@ -991,6 +991,12 @@ sources = [
         "tags": ["Culture", "Community", "Belonging", "Growth"],
     },
     {
+        "name": "Downtown Columbia Maker Faire",
+        "url": "https://downtowncolumbia.makerfaire.com/",
+        "source_kind": "web_events_page",
+        "tags": ["Technology", "Science", "Education", "Culture", "Community"],
+    },
+    {
         "name": "Prince George's Parks Events",
         "url": "https://www.pgparks.com/events",
         "tags": ["Government", "MarylandGov", "Politics", "Community", "Economic Development", "Purpose"],

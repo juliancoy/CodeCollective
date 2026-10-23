@@ -1,3 +1,4 @@
+from urllib.parse import urljoin
 import json
 import re
 from bs4 import BeautifulSoup
@@ -151,7 +152,7 @@ def parse_single_event(event: Dict[str, Any], source_url: str = '', org_image_ur
     
     # Extract image URL
     images = event.get('image', [])
-    image_url = images[0] if images and isinstance(images, list) else ''
+    image_url = images[0] if images and isinstance(images, list) else images if isinstance(images, str) else ''
     image_url = _normalize_image_url(image_url) or org_image_url
     
     # Build the parsed event
@@ -182,7 +183,7 @@ def parse_next_data_event(event: Dict[str, Any], source_url: str = '', org_image
     }
 
     url_slug = event.get('url', '')
-    event_url = f"https://luma.com/{url_slug}" if url_slug else source_url
+    event_url = urljoin("https://luma.com/", url_slug) if url_slug else source_url
 
     event_image_url = _normalize_image_url(event.get('cover_url', '')) or org_image_url
     return {

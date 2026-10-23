@@ -1,3 +1,4 @@
+from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 import json
 from datetime import datetime
@@ -127,7 +128,7 @@ class LumaCalendarScraper:
         cover_url = event_data.get('cover_url', '')
         
         # Build full URL
-        full_url = f"https://lu.ma/{url_slug}" if url_slug else ''
+        full_url = urljoin("https://lu.ma/", url_slug) if url_slug else ''
         
         return {
             'id': event_id,
@@ -147,7 +148,7 @@ class LumaCalendarScraper:
         cover_url = event_data.get('cover_url', '')
         
         # Build full URL
-        full_url = f"https://lu.ma/{url_slug}" if url_slug else ''
+        full_url = urljoin("https://lu.ma/", url_slug) if url_slug else ''
         
         return {
             'id': event_id,
@@ -185,7 +186,7 @@ class LumaCalendarScraper:
         cover_url = event_data.get('cover_url', '')
         
         # Build full URL
-        full_url = f"https://lu.ma/{url_slug}" if url_slug else ''
+        full_url = urljoin("https://lu.ma/", url_slug) if url_slug else ''
         
         # Check if it's a recurring event
         recurring = event_data.get('recurrence_id') is not None

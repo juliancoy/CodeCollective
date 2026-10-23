@@ -13,7 +13,7 @@ class OurHeader extends HTMLElement {
                         <a
                             id="portal-login-button"
                             class="nav-login-button"
-                            href="/users/login"
+                            href="https://orgportal.cc/users/login?next=%2Forgs%2Fcode-collective"
                             data-pidp-base="/pidp"
                             aria-label="Log in to the portal"
                         >Login</a>
@@ -246,7 +246,7 @@ const STANDARD_NAV_LINKS = [
     { href: '/calendar.html?city=baltimore', label: 'Calendar' },
     { href: '/projects.html', label: 'Projects' },
     {
-        href: '/users/login',
+        href: 'https://orgportal.cc/users/login?next=%2Forgs%2Fcode-collective',
         label: 'Login',
         id: 'portal-login-button',
         className: 'nav-login-button',
@@ -304,26 +304,14 @@ function configurePortalLogin() {
 
     loginButtons.forEach((loginButton) => {
         if (loginButton.dataset.portalAuthenticated === 'true' || loginButton.classList.contains('nav-account-link')) {
-            loginButton.href = '/id';
+            loginButton.href = 'https://orgportal.cc/orgs/code-collective';
             loginButton.removeAttribute('aria-haspopup');
             return;
         }
-        const pidpBase = loginButton.getAttribute('data-pidp-base') || '/pidp';
-        const nextUrl = `${window.location.origin}/auth/callback?next=/id`;
-        const loginHref = loginUrl(pidpBase, nextUrl);
-        loginButton.setAttribute('href', loginHref);
-        loginButton.setAttribute('aria-haspopup', 'dialog');
-        if (loginButton.dataset.portalLoginConfigured === 'true') {
-            return;
-        }
-        loginButton.dataset.portalLoginConfigured = 'true';
-        loginButton.addEventListener('click', (event) => {
-            if (loginButton.dataset.portalAuthenticated === 'true') {
-                return;
-            }
-            event.preventDefault();
-            openLoginModal(pidpBase, nextUrl, loginButton);
-        });
+        // Start authentication on the portal origin so its callback establishes
+        // the portal session before returning to Code Collective's org page.
+        loginButton.href = 'https://orgportal.cc/users/login?next=%2Forgs%2Fcode-collective';
+        loginButton.removeAttribute('aria-haspopup');
     });
 }
 
@@ -350,16 +338,16 @@ function renderAuthenticatedNav(loginButton, user, pidpBase) {
     loginButton.dataset.portalAuthenticated = 'true';
     loginButton.classList.remove('nav-login-button');
     loginButton.classList.add('nav-account-link');
-    loginButton.href = '/id';
+    loginButton.href = 'https://orgportal.cc/orgs/code-collective';
     loginButton.removeAttribute('aria-haspopup');
-    loginButton.setAttribute('aria-label', `${displayName} ID page`);
+    loginButton.setAttribute('aria-label', `${displayName} · Code Collective portal`);
     loginButton.title = displayName;
     if (loginButton.dataset.portalAccountClickConfigured !== 'true') {
         loginButton.dataset.portalAccountClickConfigured = 'true';
         loginButton.addEventListener('click', (event) => {
             if (loginButton.dataset.portalAuthenticated !== 'true') return;
             event.preventDefault();
-            window.location.assign('/id');
+            window.location.assign('https://orgportal.cc/orgs/code-collective');
         });
     }
 
