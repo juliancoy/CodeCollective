@@ -197,6 +197,9 @@ cat > "$OUT_DIR/_headers" <<'EOF'
   Cache-Control: public, max-age=2592000
 EOF
 
+# HTML always references the current shared header; unchanged bytes retain cache hits.
+python3 "$ROOT_DIR/scripts/version_shared_header.py" "$OUT_DIR"
+
 echo "[cloudflare] writing deployment metadata"
 python3 - "$ROOT_DIR" "$OUT_DIR/__deployment.json" <<'PY'
 import json
