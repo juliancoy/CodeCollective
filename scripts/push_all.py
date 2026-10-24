@@ -82,7 +82,8 @@ class Release:
             with urllib.request.urlopen(req, timeout=30) as response:
                 return json.load(response)
         expected = {name: git(self.root / name, 'rev-parse', 'HEAD') for name in ('.', 'OrgPortal', 'PIdP', 'CodeCollective')}
-        suites = sorted(s['id'] for s in request('/suites')['suites'])
+        # The catalog includes granular jobs; requests select their parent suites.
+        suites = sorted({s['id'].split('--', 1)[0] for s in request('/suites')['suites']})
         if not suites:
             raise RuntimeError('Distributed test catalog is empty')
         # Explicit suite selection skips the master's unrelated deployment/email actions.

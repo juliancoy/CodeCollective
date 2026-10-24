@@ -12,14 +12,14 @@ spec=importlib.util.spec_from_file_location('workspace_release',SCRIPT.with_name
 release_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(release_module)
 
 class ReleaseTests(unittest.TestCase):
-    def global_gate(self, root, run, statuses=None):
+    def global_gate(self, root, run, statuses=None, catalog=None):
         class Response:
             def __init__(self,value):self.value=value
             def __enter__(self):return self
             def __exit__(self,*args):pass
             def read(self,*args):return json.dumps(self.value).encode()
         token=root/'token';token.write_text('synthetic-token')
-        replies=[{'suites':[{'id':'api'},{'id':'web'}]}, {'id':'request'}]
+        replies=[{'suites':catalog or [{'id':'api'},{'id':'web'}]}, {'id':'request'}]
         for status in statuses or ['passed']:
             replies.append({'id':'request','status':status,'run_id':None if status=='queued' else 'synthetic-run'})
             if status!='queued':replies.append({'run':run})
@@ -43,6 +43,14 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(json.loads(request.data),{'suites':['api','web'],'force':False})
             self.assertEqual(request.get_header('Authorization'),'Bearer synthetic-token')
             self.assertTrue(json.loads((root/'global-tests.json').read_text())['passed'])
+
+    def test_global_gate_collapses_large_granular_catalog_to_parent_suites(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=pathlib.Path(folder);(root/'lan-monitor').mkdir()
+            catalog=[{'id':'api'},{'id':'web'}]+[{'id':'api--'+str(i)} for i in range(307)]
+            calls=self.global_gate(root,self.fixture_run(),catalog=catalog)
+            self.assertEqual(json.loads(calls[1].args[0].data)['suites'],['api','web'])
+            self.assertTrue(json.loads((root/'global-tests.json').read_text())['completeSuiteSelection'])
 
     def test_global_test_gate_refuses_partial_runs_wrong_revisions_and_focused_scope(self):
         for error in ['partial','revision','scope']:
