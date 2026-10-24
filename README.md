@@ -7,30 +7,33 @@ https://codecollective.us/.
 
 ## Deployment
 
-Use the repository root deploy script for Cloudflare releases:
+For a reviewed workspace release, use the existing release coordinator:
 
 ```bash
-./deploy.sh --component all --target prod
+./scripts/push-all.sh --deploy-all
 ```
 
-`./deploy.sh` is the single deploy entry point. It builds the frontend bundle,
-applies D1 migrations, deploys the Worker components, and runs smoke checks.
-The supported components are `site`, `pidp`, `org`, and `chat`; `all` deploys
-every one of them.
+It validates and publishes the independent repositories, runs distributed checks,
+and deploys each application through its owning release flow. Pending database
+migrations require an explicit review and backup before apply.
 
-The `codecollective-site` Worker is the only frontend deployment. It serves the
-main site and serves the portal at `https://orgportal.cc/` from the
-sibling OrgPortal checkout. Keep OrgPortal at `../OrgPortal`, or set
-`ORGPORTAL_DIR` when building or deploying. OrgPortal is application source only
-from this repository's point of view; do not deploy it as a standalone frontend
-from CodeCollective.
+For only the Code Collective website:
+
+```bash
+./deploy.sh --component site --target prod
+```
+
+`codecollective-site` owns this website. OrgPortal independently owns
+`orgportal-web` and its organization API; see
+[OrgPortal releases](../OrgPortal/docs/deployment/RELEASE.md). PIdP owns identity,
+and the MedTech/LifeTech wrappers are released from BmoreMedTech. Keep sibling
+checkouts available for shared source and build inputs.
 
 ### OrgPortal tenants
 
 OrgPortal is the independent open-source application. Code Collective, MedTech
-and timebank communities are tenants selected at runtime by hostname, not
-separate frontend deployments. Tenant domains connect to the existing
-`codecollective-site` Worker and serve its shared portal bundle at their domain roots:
+and timebank communities are selected by hostname. Their domain owners forward
+portal routes to the independent `orgportal-web` service:
 
 | Domain | Community ID | Name |
 | --- | --- | --- |
