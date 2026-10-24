@@ -943,12 +943,12 @@ function renderBills() {
   const openCount = filteredEntries.filter((entry) => String(entry.bill.status || '').toLowerCase() === 'open').length;
   billCount.textContent = `${filteredEntries.length.toLocaleString()} jobs`;
   if (!allBills.length) {
-    statusMessage.textContent = 'USAJOBS data file is empty. Run fetch_jobs.py with API credentials or --input-json to populate data/usajobs.json.';
+    statusMessage.textContent = 'No listings are available in the cached USAJOBS snapshot.';
     return;
   }
   statusMessage.textContent = openCount
-    ? `${openCount.toLocaleString()} jobs are still open in the current filtered set.`
-    : 'No open jobs in the current filtered set.';
+    ? `${openCount.toLocaleString()} jobs are marked open in the cached data. Verify availability on USAJOBS.`
+    : 'No jobs are marked open in this filtered cached data.';
 }
 
 function updateSortIndicators() {
@@ -1708,7 +1708,7 @@ async function init() {
     console.error(error);
     billCount.textContent = 'No jobs loaded';
     statusMessage.textContent = 'Unable to load USAJOBS data.';
-    billsTableBody.innerHTML = '<tr><td colspan="5">The local USAJOBS cache is missing or unreadable.</td></tr>';
+    billsTableBody.innerHTML = '<tr><td colspan="5">The cached USAJOBS snapshot is unavailable. Please try again later.</td></tr>';
   }
 }
 
