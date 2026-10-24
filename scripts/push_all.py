@@ -242,7 +242,10 @@ class Release:
             for name in ['node_modules', 'calendar-next-app/node_modules']:
                 (frozen / name).symlink_to(collective / name, target_is_directory=True)
             self.run(frozen, 'rowhome-checkout', 'git', 'submodule', 'update', '--init', 'r8-rowhome')
-            (frozen / 'r8-rowhome/node_modules').symlink_to(collective / 'r8-rowhome/node_modules', target_is_directory=True)
+            dependencies = frozen / 'r8-rowhome/node_modules'
+            dependencies.mkdir()
+            for package in (collective / 'r8-rowhome/node_modules').iterdir():
+                (dependencies / package.name).symlink_to(package, target_is_directory=package.is_dir())
             self.run(frozen, 'site-dry-run', './deploy.sh', '--component', 'site', '--target', 'prod', '--dry-run')
             self.run(frozen, 'site-deploy', './deploy.sh', '--component', 'site', '--target', 'prod', '--skip-build')
         medtech = next((p for p in changed if p.name.lower() == 'bmoremedtech'), None)
@@ -280,7 +283,8 @@ class Release:
                         ('https://chat-codecollective.jcloiacon.workers.dev/health', sha)]
         pidp = next((p for p in changed if p.name.lower() == 'pidp'), None)
         if pidp: targets.append(('https://orgportal.cc/pidp/health', git(pidp, 'rev-parse', 'HEAD')))
-        if by_name.get('CodeCollective') in changed: targets.append(('https://codecollective.us/', None))
+        if by_name.get('CodeCollective') in changed:
+            targets += [('https://codecollective.us/', None), ('https://codecollective.us/__deployment.json', git(by_name['CodeCollective'], 'rev-parse', 'HEAD'))]
         if any(p.name.lower() == 'bmoremedtech' for p in changed): targets += [('https://lifetech.fyi/', None), ('https://medtech.social/', None)]
         if by_name.get('Deism') in changed: targets.append(('https://deism.church/', None))
         if self.root in changed: targets.append(('https://organization-archive-peers.jcloiacon.workers.dev/health', None))
