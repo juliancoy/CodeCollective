@@ -17,6 +17,8 @@ before(async () => {
   fs.mkdirSync(path.join(folder, 'usa'), { recursive: true });
   for (const file of ['index.html', 'jobs.js']) fs.copyFileSync(path.join(root, 'usa', file), path.join(folder, 'usa', file));
   fs.cpSync(path.join(root, 'css'), path.join(folder, 'css'), { recursive: true });
+  fs.mkdirSync(path.join(folder, 'js'));
+  fs.copyFileSync(path.join(root, 'js/reusableComponents.js'), path.join(folder, 'js/reusableComponents.js'));
   for (const version of [latest, archive]) {
     const key = `jobs/${version}/shards/state=ALL/page=0001.json.gz`;
     const records = Array.from({ length: 80 }, (_, i) => ({ job_id: String(700000 + i),
