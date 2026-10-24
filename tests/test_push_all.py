@@ -12,51 +12,47 @@ spec=importlib.util.spec_from_file_location('workspace_release',SCRIPT.with_name
 release_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(release_module)
 
 class ReleaseTests(unittest.TestCase):
-    def test_global_test_gate_calls_coordinator_and_pins_revisions(self):
+    def global_gate(self, root, run, statuses=None):
+        class Response:
+            def __init__(self,value):self.value=value
+            def __enter__(self):return self
+            def __exit__(self,*args):pass
+            def read(self,*args):return json.dumps(self.value).encode()
+        token=root/'token';token.write_text('synthetic-token')
+        replies=[{'suites':[{'id':'api'},{'id':'web'}]}, {'id':'request'}]
+        for status in statuses or ['passed']:
+            replies.append({'id':'request','status':status,'run_id':None if status=='queued' else 'synthetic-run'})
+            if status!='queued':replies.append({'run':run})
+        with patch.dict(release_module.os.environ,{'MAP_MASTER_API_TOKEN_FILE':str(token)}),patch.object(release_module,'git',return_value='reviewed'),patch.object(release_module.time,'sleep'),patch.object(release_module.urllib.request,'urlopen',side_effect=[Response(v) for v in replies]) as http:
+            release_module.Release(root,root).distributed()
+            return http.call_args_list
+
+    def fixture_run(self):
+        return {'id':'synthetic-run','status':'passed',
+            'repositories':{name:{'commit':'reviewed'} for name in ('.','OrgPortal','PIdP','CodeCollective')},
+            'selection':{'paths':[],'suites':['api','web']},
+            'hosts':[{'jobs':{'api':{'status':'passed'},'web':{'status':'reused'}}}]}
+
+    def test_global_test_gate_requests_all_suites_without_deployment_or_email_actions(self):
         with tempfile.TemporaryDirectory() as folder:
             root=pathlib.Path(folder);(root/'lan-monitor').mkdir()
-            run={'id':'synthetic-run','status':'passed','repositories':{name:{'commit':'reviewed'} for name in ('.','OrgPortal','PIdP','CodeCollective')},
-                 'hosts':[{'jobs':{'api':{'status':'passed'},'web':{'status':'reused'}}}]}
-            class Response:
-                def __init__(self,value):self.value=value
-                def __enter__(self):return self
-                def __exit__(self,*args):pass
-                def read(self,*args):return json.dumps(self.value).encode()
-            with patch.object(release_module,'git',return_value='reviewed'),patch.object(release_module.urllib.request,'urlopen',side_effect=[Response({'running':False}),Response({'run':{'id':'synthetic-run'}}),Response({'run':run})]) as http:
-                release_module.Release(root,root).distributed()
-                self.assertEqual(http.call_args_list[1].args[0].get_method(),'POST')
-                self.assertTrue(json.loads((root/'global-tests.json').read_text())['passed'])
+            calls=self.global_gate(root,self.fixture_run(),['queued','passed'])
+            request=calls[1].args[0]
+            self.assertEqual(request.get_method(),'POST')
+            self.assertTrue(request.full_url.endswith('/api/v1/master/test-requests'))
+            self.assertEqual(json.loads(request.data),{'suites':['api','web'],'force':False})
+            self.assertEqual(request.get_header('Authorization'),'Bearer synthetic-token')
+            self.assertTrue(json.loads((root/'global-tests.json').read_text())['passed'])
 
-    def test_global_test_gate_waits_for_focused_run_then_starts_full_run(self):
-        with tempfile.TemporaryDirectory() as folder:
-            root=pathlib.Path(folder);(root/'lan-monitor').mkdir()
-            refs={name:{'commit':'reviewed'} for name in ('.','OrgPortal','PIdP','CodeCollective')}
-            focused={'id':'focused','repositories':refs,'selection':{'paths':[],'suites':['monitor']}}
-            full={'id':'full','status':'passed','repositories':refs,'hosts':[{'jobs':{'web':{'status':'passed'}}}]}
-            class Response:
-                def __init__(self,value):self.value=value
-                def __enter__(self):return self
-                def __exit__(self,*args):pass
-                def read(self,*args):return json.dumps(self.value).encode()
-            responses=[{'running':True,'run':focused},{'running':False,'run':focused},
-                       {'run':{'id':'full'}},{'run':full}]
-            with patch.object(release_module,'git',return_value='reviewed'),patch.object(release_module.time,'sleep'),patch.object(release_module.urllib.request,'urlopen',side_effect=[Response(r) for r in responses]) as http:
-                release_module.Release(root,root).distributed()
-                self.assertEqual(http.call_args_list[2].args[0].get_method(),'POST')
-                self.assertEqual(json.loads((root/'global-tests.json').read_text())['id'],'full')
-
-    def test_global_test_gate_refuses_partial_runs_and_wrong_revisions(self):
-        for status,sha in [('partial','reviewed'),('passed','different')]:
-            with self.subTest(status=status,sha=sha),tempfile.TemporaryDirectory() as folder:
+    def test_global_test_gate_refuses_partial_runs_wrong_revisions_and_focused_scope(self):
+        for error in ['partial','revision','scope']:
+            with self.subTest(error=error),tempfile.TemporaryDirectory() as folder:
                 root=pathlib.Path(folder);(root/'lan-monitor').mkdir()
-                run={'id':'synthetic-run','status':status,'repositories':{name:{'commit':sha} for name in ('.','OrgPortal','PIdP','CodeCollective')},'hosts':[{'jobs':{'api':{'status':'passed'}}}]}
-                class Response:
-                    def __init__(self,value):self.value=value
-                    def __enter__(self):return self
-                    def __exit__(self,*args):pass
-                    def read(self,*args):return json.dumps(self.value).encode()
-                with patch.object(release_module,'git',return_value='reviewed'),patch.object(release_module.urllib.request,'urlopen',side_effect=[Response({'running':False}),Response({'run':{'id':'synthetic-run'}}),Response({'run':run})]):
-                    with self.assertRaises(RuntimeError):release_module.Release(root,root).distributed()
+                run=self.fixture_run()
+                if error=='partial':run['status']='partial'
+                if error=='revision':run['repositories']['CodeCollective']['commit']='different'
+                if error=='scope':run['selection']['suites']=['api']
+                with self.assertRaises(RuntimeError):self.global_gate(root,run)
 
     def test_dry_run_and_commit_push_with_spaces(self):
         with tempfile.TemporaryDirectory(prefix='workspace release ') as temp:

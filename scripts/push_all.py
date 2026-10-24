@@ -70,49 +70,54 @@ class Release:
     def distributed(self):
         if not (self.root / 'lan-monitor').is_dir():
             return
-        base = self.distributed_url.rstrip('/')
+        base = self.distributed_url.rstrip('/') + '/api/v1/master'
+        token_file = Path(os.environ.get('MAP_MASTER_API_TOKEN_FILE', str(Path.home() / '.config/map-master/api-token')))
+        token = token_file.read_text().strip()
+        if not token:
+            raise RuntimeError('Distributed test master token is empty')
         def request(path, body=None):
-            headers = {'Origin': base, 'Content-Type': 'application/json'}
-            req = urllib.request.Request(base + path, headers=headers,
+            req = urllib.request.Request(base + path,
+                headers={'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
                 data=json.dumps(body).encode() if body is not None else None)
             with urllib.request.urlopen(req, timeout=30) as response:
                 return json.load(response)
         expected = {name: git(self.root / name, 'rev-parse', 'HEAD') for name in ('.', 'OrgPortal', 'PIdP', 'CodeCollective')}
-        current = request('/api/distributed-tests')
+        suites = sorted(s['id'] for s in request('/suites')['suites'])
+        if not suites:
+            raise RuntimeError('Distributed test catalog is empty')
+        # Explicit suite selection skips the master's unrelated deployment/email actions.
+        selection = {'suites': suites, 'force': False}
+        queued = request('/test-requests', selection)
+        (self.folder / 'global-test-request.json').write_text(json.dumps(queued, indent=2) + '\n')
+        print('[global-tests] Queued all configured suites: ' + queued['id'], flush=True)
         deadline = time.monotonic() + self.distributed_timeout
-        while current.get('running'):
-            refs = (current.get('run') or {}).get('repositories', {})
-            if not (current.get('run') or {}).get('selection') and all(refs.get(name, {}).get('commit') == sha for name, sha in expected.items()):
-                break
-            print('[global-tests] Waiting for the existing run before starting the release revisions', flush=True)
-            if time.monotonic() >= deadline:
-                raise RuntimeError('Existing global test run did not finish before the release timeout')
-            time.sleep(5)
-            current = request('/api/distributed-tests')
-        if not current.get('running'):
-            current = request('/api/distributed-tests/start', {'force': False})
-        ident = current['run']['id']
-        print(f'[global-tests] Waiting for {ident}: {base}/api/distributed-tests?id={ident}', flush=True)
         previous = None
+        terminal = {'passed', 'failed', 'partial', 'stopped', 'interrupted'}
         while True:
-            current = request('/api/distributed-tests?id=' + ident)
-            run = current.get('run') or {}
+            status = request('/test-requests/' + queued['id'])
+            ident = status.get('run_id')
+            run = request('/runs/' + ident).get('run') or {} if ident else {}
             jobs = [job for host in run.get('hosts', []) for job in host.get('jobs', {}).values()]
-            progress = (run.get('status'), sum(j.get('status') in {'passed', 'reused'} for j in jobs), len(jobs))
+            progress = (status['status'], sum(j.get('status') in {'passed', 'reused'} for j in jobs), len(jobs))
             if progress != previous:
-                print(f'[global-tests] {ident}: {progress[0]}, {progress[1]}/{progress[2]} suites passed/reused', flush=True)
+                print(f'[global-tests] {ident or queued["id"]}: {progress[0]}, {progress[1]}/{progress[2]} jobs passed/reused', flush=True)
                 previous = progress
-            if run.get('status') in {'passed', 'failed', 'partial', 'stopped', 'interrupted'}:
+            if status['status'] in terminal:
                 refs = run.get('repositories', {})
                 matched = all(refs.get(name, {}).get('commit') == sha for name, sha in expected.items())
-                success = run.get('status') == 'passed' and not run.get('selection') and matched and bool(jobs) and all(j.get('status') in {'passed', 'reused'} for j in jobs)
-                (self.folder / 'global-tests.json').write_text(json.dumps({'id': ident, 'status': run.get('status'), 'revisionsMatch': matched,
-                    'expected': expected, 'suiteCount': len(jobs), 'excludedHosts': run.get('excluded_hosts', []), 'passed': success}, indent=2) + '\n')
+                scope = run.get('selection') or {}
+                complete = not scope.get('paths') and set(scope.get('suites', [])) == set(suites)
+                success = status['status'] == 'passed' and run.get('status') == 'passed' and complete and matched and bool(jobs) and all(j.get('status') in {'passed', 'reused'} for j in jobs)
+                receipt = {'id': ident, 'requestId': queued['id'], 'status': run.get('status'),
+                    'revisionsMatch': matched, 'completeSuiteSelection': complete, 'expected': expected,
+                    'suiteCount': len(jobs), 'excludedHosts': run.get('excluded_hosts', []), 'passed': success}
+                (self.folder / 'global-tests.json').write_text(json.dumps(receipt, indent=2) + '\n')
+                (self.folder / 'global-test-run.json').write_text(json.dumps(run, indent=2) + '\n')
                 if not success:
                     raise RuntimeError(f'Global distributed tests did not pass for the release revisions: {ident}')
                 return
             if time.monotonic() >= deadline:
-                raise RuntimeError(f'Global distributed tests timed out; run {ident} remains available in the dashboard')
+                raise RuntimeError('Global distributed tests timed out; request remains available: ' + queued['id'])
             time.sleep(5)
 
     def checkout(self, repo):
