@@ -107,7 +107,7 @@ class Release:
                 matched = all(refs.get(name, {}).get('commit') == sha for name, sha in expected.items())
                 success = run.get('status') == 'passed' and matched and bool(jobs) and all(j.get('status') in {'passed', 'reused'} for j in jobs)
                 (self.folder / 'global-tests.json').write_text(json.dumps({'id': ident, 'status': run.get('status'), 'revisionsMatch': matched,
-                    'expected': expected, 'suiteCount': len(jobs), 'passed': success}, indent=2) + '\n')
+                    'expected': expected, 'suiteCount': len(jobs), 'excludedHosts': run.get('excluded_hosts', []), 'passed': success}, indent=2) + '\n')
                 if not success:
                     raise RuntimeError(f'Global distributed tests did not pass for the release revisions: {ident}')
                 return
