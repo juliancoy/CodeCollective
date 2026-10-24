@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Code Collective | USAJOBS Tracker</title>
 
   <!-- SEO Meta Tags -->
@@ -1227,15 +1227,59 @@
       color: rgba(255, 255, 255, 0.85) !important;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 700px), (max-height: 500px) {
+      html, body, #wrapper, #main {
+        height: auto;
+        min-height: 100%;
+        overflow: visible;
+      }
+
       .bills-shell {
-        height: calc(100vh - 70px);
-        padding: 10px 12px 12px;
+        height: auto;
+        min-height: calc(100dvh - 70px);
+        padding: 10px 12px 80px;
       }
 
       .insights-grid {
-        grid-template-columns: minmax(0, 1fr);
+        display: flex;
+        flex: none;
+        flex-direction: column;
+        gap: 12px;
       }
+
+      #bills-column {
+        order: -1;
+        height: 70dvh;
+        min-height: 440px;
+      }
+
+      #sponsor-column .list-panel-body,
+      #category-column .list-panel-body {
+        min-height: 140px;
+        max-height: 260px;
+      }
+
+      .bills-table-wrap { min-height: 260px; }
+      .bills-table, .bills-table tbody { display: block; width: 100%; }
+      .bills-table thead { display: none; }
+      .bills-table tbody tr {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .bills-table tbody td { display: block; min-width: 0; width: auto; padding: 0; border: 0; }
+      .bills-table tbody td:nth-child(-n+3) { grid-column: 1 / -1; }
+      .bills-table tbody td:nth-child(2) { grid-row: 1; }
+      .bills-table tbody td:nth-child(5)::before { content: 'Closes '; }
+      .bills-table .bill-title { margin: 0; }
+      .bill-title-button, .bill-sponsor-button { min-height: 44px; }
+      .bill-title-button { display: flex; align-items: center; }
+      .panel-header-right { flex-wrap: wrap; justify-content: flex-end; }
+      .column-search, .snapshot-picker select { font-size: 16px; }
+      .snapshot-picker select { min-height: 44px; }
+      .toolbar-actions .toolbar-reset { min-height: 44px; }
 
       .panel-resize-handle {
         display: none;

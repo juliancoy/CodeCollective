@@ -122,3 +122,17 @@ published at https://developer.usajobs.gov/apirequest/index.
 
 Checks: `python -m unittest discover -s tests -p 'test_usajobs_compliance.py'`
 and `node --test tests/usajobs_navigation.test.cjs`.
+
+## Responsive browser regression
+
+`tests/usajobs-mobile.test.cjs` starts the real local server with two synthetic,
+onprivate snapshots and the actual tracker HTML, JavaScript, and CSS. It checks
+360, 390, and 412-pixel phones, landscape, and desktop: nonzero list height,
+scrolling to the last job, search, history changes, filter reset, and tapping the
+official listing link. External requests are blocked or fulfilled by test fixtures.
+
+The Organization distributed catalog includes this as the `usajobs` suite, pinned
+to the CodeCollective commit. Request `CodeCollective/usa/index.html` or suite
+`usajobs` through the test master's test-request API. Its browser/package versions
+match, and cached passes are invalidated by changes to tracker source, CSS, the
+local server, or this browser test.
