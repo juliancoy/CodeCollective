@@ -13,7 +13,7 @@ test('cached records link to the official announcement instead of application st
   assert.equal(navigate({}), '');
 });
 
-const loader = source.match(/async function loadData\(\) \{[\s\S]*?\n\}/)[0];
+const loader = source.match(/async function loadData\([^)]*\) \{[\s\S]*?\n\}/)[0];
 const { gzipSync } = require('node:zlib');
 test('R2 pages stay pinned to one version and retain the source retrieval date', async () => {
   const calls = [];
@@ -37,4 +37,18 @@ test('failed R2 pages do not display a partial snapshot', async () => {
     : new Response('', { status: 503 });
   const load = vm.runInNewContext(`(${loader})`, { fetch, Response, Blob, DecompressionStream, URLSearchParams, Uint8Array });
   await assert.rejects(load(), /Jobs page unavailable: 503/);
+});
+
+
+test('choosing history requests metadata and pages from that exact version', async () => {
+  const calls = [];
+  const fetch = async (url) => {
+    calls.push(String(url));
+    if (url === '/api/jobs/meta?version=archived') return Response.json({ version: 'archived', source_fetched_at: '2026-04-24T17:31:43Z', source_record_count: 1, states: { ALL: { shards: [{ page: 1, record_count: 1 }] } } });
+    return Response.json({ version: 'archived', records: [{ job_id: '123' }] });
+  };
+  const load = vm.runInNewContext(`(${loader})`, { fetch, Response, Blob, DecompressionStream, URLSearchParams, Uint8Array });
+  const payload = await load('archived');
+  assert.equal(payload.version, 'archived');
+  assert.deepEqual(calls, ['/api/jobs/meta?version=archived', '/api/jobs?version=archived&state=ALL&page=1']);
 });

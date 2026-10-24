@@ -8,7 +8,10 @@ The workspace `python run.py` starts CodeCollective's local site and USAJOBS API
 at http://localhost:8877/usa/. The site container runs `python3 run.py serve`
 from the CodeCollective checkout and reads its bind-mounted
 `usa/data/publish/jobs/latest.json`, versioned manifests, and gzip shards.
-Both `/api/jobs/meta` and `/api/jobs` read local files; neither proxies production
+The History dropdown lists saved snapshots by retrieval date and job count.
+Switching snapshots retains filters and loads every page from the selected version.
+`/api/jobs/versions` lists the locally stored snapshots; no missing history is
+downloaded automatically. Both `/api/jobs/meta` and `/api/jobs` read local files; neither proxies production
 nor calls USAJOBS. The displayed retrieval date belongs to that local snapshot.
 
 To restart only CodeCollective's site from this repository:

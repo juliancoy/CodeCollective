@@ -68,6 +68,19 @@ class LocalJobsTests(unittest.TestCase):
         self.assertEqual(self.request('/api/jobs/meta')[0], 404)
         self.assertEqual(self.request(f'/api/jobs?version={VERSION}')[0], 200)
 
+    def test_history_lists_saved_snapshots_newest_first_and_marks_latest(self):
+        newer = 'v20260501T120000Z'
+        manifest = {**self.manifest, 'version': newer, 'source_fetched_at': '2026-05-01T12:00:00Z'}
+        (self.dataset / newer).mkdir()
+        (self.dataset / newer / 'manifest.json').write_text(json.dumps(manifest))
+        status, _, body = self.request('/api/jobs/versions')
+        self.assertEqual(status, 200)
+        history = json.loads(body)
+        self.assertEqual(history['latest'], VERSION)
+        self.assertEqual([row['version'] for row in history['versions']], [newer, VERSION])
+        self.assertEqual(history['versions'][0]['source_fetched_at'], '2026-05-01T12:00:00Z')
+        self.assertEqual(self.request(f'/api/jobs/meta?version={newer}')[0], 200)
+
     def test_bad_queries_and_private_paths_are_rejected(self):
         for path, status in [('/api/jobs?page=0', 400), ('/api/jobs?page=no', 400),
                              ('/api/jobs?page=2', 404), ('/api/jobs?state=ZZ', 404),

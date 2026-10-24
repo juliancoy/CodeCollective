@@ -729,6 +729,27 @@ function normalizeStateParam(raw) {
   return value;
 }
 
+async function handleJobsVersions(request, env) {
+  if (!env.JOBS_BUCKET) return jsonResponse({ error: "Jobs storage unavailable" }, 404);
+  const latest = await readLatestJobsPointer(env);
+  const versions = [];
+  let cursor;
+  do {
+    const listing = await env.JOBS_BUCKET.list({ prefix: "jobs/", delimiter: "/", cursor });
+    for (const prefix of listing.delimitedPrefixes) {
+      const match = /^jobs\/(v[0-9]{8}T[0-9]{6}Z)\/$/.exec(prefix);
+      if (!match) continue;
+      const loaded = await readJobsManifest(env, match[1]);
+      if (!loaded) continue;
+      const { version, source_fetched_at, source_record_count } = loaded.manifest;
+      versions.push({ version, source_fetched_at, source_record_count });
+    }
+    cursor = listing.truncated ? listing.cursor : undefined;
+  } while (cursor);
+  versions.sort((a, b) => b.version.localeCompare(a.version));
+  return jsonResponse({ latest: latest?.version || "", versions });
+}
+
 async function handleJobsMeta(request, env) {
   const url = new URL(request.url);
   const version = url.searchParams.get("version") || "";
@@ -1062,6 +1083,10 @@ const productionWorker = {
 
     if (pathMatchesPrefix(path, "/api/map-data")) {
       return handlePublicMapData(request, url);
+    }
+
+    if (path === "/api/jobs/versions") {
+      return handleJobsVersions(request, env);
     }
 
     if (path === "/api/jobs/meta") {

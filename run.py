@@ -135,6 +135,23 @@ class LocalSiteHandler(SimpleHTTPRequestHandler):
         return path
 
     def jobs_response(self, path, query):
+        if path == '/api/jobs/versions':
+            latest = json.loads(self.local_object('jobs/latest.json').read_text())['version']
+            versions = []
+            for file in sorted(self.local_object('jobs').glob('v*/manifest.json'), reverse=True):
+                version = file.parent.name
+                if not re.fullmatch(r'v[0-9]{8}T[0-9]{6}Z', version):
+                    continue
+                manifest = json.loads(self.local_object(f'jobs/{version}/manifest.json').read_text())
+                versions.append({key: manifest[key] for key in
+                                 ('version', 'source_fetched_at', 'source_record_count')})
+            body = json.dumps({'latest': latest, 'versions': versions}).encode()
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            return io.BytesIO(body)
         version = query.get('version', [''])[0]
         if not version:
             version = json.loads(self.local_object('jobs/latest.json').read_text())['version']
@@ -170,7 +187,7 @@ class LocalSiteHandler(SimpleHTTPRequestHandler):
 
     def send_head(self):
         url = urlsplit(self.path)
-        if url.path in ('/api/jobs/meta', '/api/jobs'):
+        if url.path in ('/api/jobs/meta', '/api/jobs', '/api/jobs/versions'):
             try:
                 return self.jobs_response(url.path, parse_qs(url.query))
             except (json.JSONDecodeError, KeyError):

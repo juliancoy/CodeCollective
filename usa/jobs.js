@@ -12,6 +12,9 @@ const categoryColumn = document.getElementById('category-column');
 const categoryModeToggle = document.getElementById('category-mode-toggle');
 const billCount = document.getElementById('bill-count');
 const billUpdated = document.getElementById('bill-updated');
+const snapshotSelect = document.getElementById('snapshot-select');
+const snapshotStatus = document.getElementById('snapshot-status');
+let selectedSnapshot = '';
 const statusMessage = document.getElementById('status-message');
 const resetFiltersButton = document.getElementById('reset-filters');
 
@@ -1432,10 +1435,12 @@ function resetFilters() {
   renderBills();
 }
 
-async function loadData() {
-  const metaResponse = await fetch('/api/jobs/meta', { cache: 'no-store' });
+async function loadData(version = '') {
+  const metaUrl = version ? `/api/jobs/meta?${new URLSearchParams({ version })}` : '/api/jobs/meta';
+  const metaResponse = await fetch(metaUrl, { cache: 'no-store' });
   if (!metaResponse.ok) throw new Error(`Jobs metadata unavailable: ${metaResponse.status}`);
   const meta = await metaResponse.json();
+  if (version && meta.version !== version) throw new Error('Snapshot version mismatch');
   const all = meta.states?.ALL;
   if (!meta.version || !Array.isArray(all?.shards)) throw new Error('Invalid jobs manifest');
   const records = [];
@@ -1455,7 +1460,7 @@ async function loadData() {
     records.push(...page.records);
   }
   if (records.length !== meta.source_record_count) throw new Error('Incomplete jobs snapshot');
-  return { records, fetched_at: meta.source_fetched_at };
+  return { records, fetched_at: meta.source_fetched_at, version: meta.version };
 }
 
 function applyPersistedState(records, payload) {
@@ -1697,20 +1702,53 @@ function startColumnResize(event) {
   window.addEventListener('mouseup', stopColumnResize);
 }
 
+async function selectSnapshot(version) {
+  const previous = selectedSnapshot;
+  snapshotSelect.disabled = true;
+  snapshotStatus.textContent = 'Loading snapshot…';
+  try {
+    if (previous) persistFilters();
+    const payload = await loadData(version);
+    applyPersistedState(payload.records, payload);
+    selectedSnapshot = payload.version;
+    snapshotSelect.value = payload.version;
+    snapshotStatus.textContent = `Showing snapshot retrieved ${formatDateTime(payload.fetched_at)}.`;
+  } catch (error) {
+    snapshotSelect.value = previous;
+    snapshotStatus.textContent = 'Unable to load that snapshot. Your previous view is unchanged.';
+    statusMessage.textContent = snapshotStatus.textContent;
+    if (!previous) {
+      billCount.textContent = 'No jobs loaded';
+      statusMessage.textContent = 'The cached USAJOBS snapshot is unavailable.';
+    }
+  } finally {
+    snapshotSelect.disabled = false;
+  }
+}
+
 async function init() {
   loadColumnFontSizes();
   initializeGridWidths();
   try {
-    const payload = await loadData();
-    const records = Array.isArray(payload.records) ? payload.records : [];
-    applyPersistedState(records, payload);
+    const response = await fetch('/api/jobs/versions', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Snapshot history unavailable');
+    const history = await response.json();
+    snapshotSelect.replaceChildren();
+    for (const snapshot of history.versions) {
+      const label = `${snapshot.version === history.latest ? 'Latest · ' : ''}${formatDateTime(snapshot.source_fetched_at)} · ${snapshot.source_record_count.toLocaleString()} jobs`;
+      snapshotSelect.add(new Option(label, snapshot.version));
+    }
+    if (!history.versions.length) throw new Error('No saved snapshots');
+    await selectSnapshot(history.latest);
   } catch (error) {
-    console.error(error);
+    snapshotSelect.replaceChildren(new Option('History unavailable', ''));
+    snapshotStatus.textContent = 'No snapshot history is available.';
     billCount.textContent = 'No jobs loaded';
-    statusMessage.textContent = 'Unable to load USAJOBS data.';
-    billsTableBody.innerHTML = '<tr><td colspan="5">The cached USAJOBS snapshot is unavailable. Please try again later.</td></tr>';
+    statusMessage.textContent = 'Unable to load local USAJOBS history.';
   }
 }
+
+snapshotSelect.addEventListener('change', () => selectSnapshot(snapshotSelect.value));
 
 billFilterInput.addEventListener('input', () => {
   if (categoryPanelMode === 'filters') {
