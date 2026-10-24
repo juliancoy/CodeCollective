@@ -174,7 +174,10 @@ class Release:
             self.run(repo, 'agenda-build', 'npm', '--prefix', 'calendar-next-app', 'run', 'build')
             self.run(repo, 'rowhome-test', 'npm', '--prefix', 'r8-rowhome', 'test', '--', '--maxWorkers=2')
         elif repo.name.lower() == 'pidp':
-            self.run(repo, 'python-test', 'python3', '-m', 'pytest', 'tests/test_mcp_authorization.py', 'tests/test_retention.py')
+            self.run(repo, 'python-test', 'python3', '-c',
+                "import os,sys,tempfile,pathlib,pytest; root=pathlib.Path.cwd(); sys.path.insert(0,str(root)); "
+                "scratch=tempfile.TemporaryDirectory(); os.chdir(scratch.name); "
+                "raise SystemExit(pytest.main([str(root/'tests/test_mcp_authorization.py'), str(root/'tests/test_retention.py')]))")
             self.run(repo, 'worker-test', 'npm', '--prefix', 'serverless', 'test')
             self.run(repo, 'worker-types', 'npm', '--prefix', 'serverless', 'run', 'typecheck')
         elif repo.name.lower() == 'bmoremedtech':
