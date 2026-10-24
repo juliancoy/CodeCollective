@@ -95,6 +95,8 @@ published at https://developer.usajobs.gov/apirequest/index.
   authorization failures are not retried. Do not rotate keys or shard around
   throttling. Search uses at most 500 results per page and 10,000 per query;
   narrower queries partition results within those documented limits.
+- The tracker loads version-pinned R2 API shards and uses `source_fetched_at`
+  for its retrieval date, rather than the shard build time or a missing static file.
 - Collection remains paused; this review does not re-enable the workflow.
 
 Checks: `python -m unittest discover -s tests -p 'test_usajobs_compliance.py'`

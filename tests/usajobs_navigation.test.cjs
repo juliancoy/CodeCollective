@@ -12,3 +12,29 @@ test('cached records link to the official announcement instead of application st
   assert.equal(navigate({ job_id: 'bad', apply_url: 'https://example.com' }), '');
   assert.equal(navigate({}), '');
 });
+
+const loader = source.match(/async function loadData\(\) \{[\s\S]*?\n\}/)[0];
+const { gzipSync } = require('node:zlib');
+test('R2 pages stay pinned to one version and retain the source retrieval date', async () => {
+  const calls = [];
+  const fetch = async (url) => {
+    calls.push(String(url));
+    if (url === '/api/jobs/meta') return Response.json({ version: 'v1', source_fetched_at: '2026-10-02T03:17:41Z', source_record_count: 2, states: { ALL: { shards: [{ page: 1, record_count: 1 }, { page: 2, record_count: 1 }] } } });
+    const page = new URL(url, 'https://example.com').searchParams.get('page');
+    const json = JSON.stringify({ version: 'v1', records: [{ job_id: page }] });
+    return new Response(page === '1' ? gzipSync(json) : json);
+  };
+  const load = vm.runInNewContext(`(${loader})`, { fetch, Response, Blob, DecompressionStream, URLSearchParams, Uint8Array });
+  const payload = await load();
+  assert.equal(payload.records.length, 2);
+  assert.equal(payload.fetched_at, '2026-10-02T03:17:41Z');
+  assert.deepEqual(calls.slice(1), ['/api/jobs?version=v1&state=ALL&page=1', '/api/jobs?version=v1&state=ALL&page=2']);
+});
+
+test('failed R2 pages do not display a partial snapshot', async () => {
+  const fetch = async (url) => url === '/api/jobs/meta'
+    ? Response.json({ version: 'v1', source_record_count: 1, states: { ALL: { shards: [{ page: 1, record_count: 1 }] } } })
+    : new Response('', { status: 503 });
+  const load = vm.runInNewContext(`(${loader})`, { fetch, Response, Blob, DecompressionStream, URLSearchParams, Uint8Array });
+  await assert.rejects(load(), /Jobs page unavailable: 503/);
+});

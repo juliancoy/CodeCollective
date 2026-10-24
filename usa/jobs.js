@@ -1,5 +1,3 @@
-const DATA_URL = './data/usajobs-lite.json.gz';
-const FALLBACK_DATA_URL = './data/usajobs-lite.json';
 const FILTERS_STORAGE_KEY = 'usajobsFiltersV1';
 
 const billsTableBody = document.getElementById('bills-table-body');
@@ -1435,20 +1433,29 @@ function resetFilters() {
 }
 
 async function loadData() {
-  if (typeof DecompressionStream !== 'undefined') {
-    const response = await fetch(DATA_URL, { cache: 'no-store' });
-    if (response.ok && response.body) {
-      const stream = response.body.pipeThrough(new DecompressionStream('gzip'));
-      const text = await new Response(stream).text();
-      return JSON.parse(text);
-    }
+  const metaResponse = await fetch('/api/jobs/meta', { cache: 'no-store' });
+  if (!metaResponse.ok) throw new Error(`Jobs metadata unavailable: ${metaResponse.status}`);
+  const meta = await metaResponse.json();
+  const all = meta.states?.ALL;
+  if (!meta.version || !Array.isArray(all?.shards)) throw new Error('Invalid jobs manifest');
+  const records = [];
+  // Pin every page to the same snapshot, including its original retrieval date.
+  for (const shard of all.shards) {
+    const query = new URLSearchParams({ version: meta.version, state: 'ALL', page: String(shard.page) });
+    const response = await fetch(`/api/jobs?${query}`);
+    if (!response.ok) throw new Error(`Jobs page unavailable: ${response.status}`);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    // R2 objects can be raw gzip or already decoded by HTTP Content-Encoding.
+    const body = bytes[0] === 0x1f && bytes[1] === 0x8b
+      ? new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))
+      : bytes;
+    const page = await new Response(body).json();
+    if (page.version !== meta.version || !Array.isArray(page.records)
+        || page.records.length !== shard.record_count) throw new Error('Invalid jobs page');
+    records.push(...page.records);
   }
-
-  const fallbackResponse = await fetch(FALLBACK_DATA_URL, { cache: 'no-store' });
-  if (!fallbackResponse.ok) {
-    throw new Error(`Failed to load ${FALLBACK_DATA_URL}: ${fallbackResponse.status}`);
-  }
-  return fallbackResponse.json();
+  if (records.length !== meta.source_record_count) throw new Error('Incomplete jobs snapshot');
+  return { records, fetched_at: meta.source_fetched_at };
 }
 
 function applyPersistedState(records, payload) {
