@@ -230,16 +230,16 @@ class Release:
             self.run(self.root, 'portal-build', 'python3', 'run.py', '--release', 'build', '--release-checkout', str(frozen))
             self.run(self.root, 'portal-deploy', 'python3', 'run.py', '--release', 'deploy', '--release-checkout', str(frozen))
             worker = frozen / 'chat-worker'
-            (worker / 'node_modules').symlink_to(portal / 'chat-worker/node_modules', target_is_directory=True)
+            if not (worker / 'node_modules').exists():
+                (worker / 'node_modules').symlink_to(portal / 'chat-worker/node_modules', target_is_directory=True)
             self.run(worker, 'chat-metadata', 'npm', 'run', 'build:metadata')
             self.run(worker, 'chat-deploy', 'npx', '--no-install', 'wrangler', 'deploy', '--keep-vars', '--message', git(portal, 'rev-parse', 'HEAD'))
         if collective and (collective in changed or by_name.get('r8-rowhome') in changed):
             frozen = self.checkout(collective)
             for name in ['node_modules', 'calendar-next-app/node_modules']:
                 (frozen / name).symlink_to(collective / name, target_is_directory=True)
-            nested = frozen / 'r8-rowhome'
-            if nested.exists(): nested.rmdir()
-            nested.symlink_to(collective / 'r8-rowhome', target_is_directory=True)
+            self.run(frozen, 'rowhome-checkout', 'git', 'submodule', 'update', '--init', 'r8-rowhome')
+            (frozen / 'r8-rowhome/node_modules').symlink_to(collective / 'r8-rowhome/node_modules', target_is_directory=True)
             self.run(frozen, 'site-dry-run', './deploy.sh', '--component', 'site', '--target', 'prod', '--dry-run')
             self.run(frozen, 'site-deploy', './deploy.sh', '--component', 'site', '--target', 'prod', '--skip-build')
         medtech = next((p for p in changed if p.name.lower() == 'bmoremedtech'), None)
