@@ -2,6 +2,24 @@
 
 This pipeline keeps refined USAJOBS data out of git and publishes sharded JSON to Cloudflare R2.
 
+## Local deployment
+
+The workspace `python run.py` starts CodeCollective's local site and USAJOBS API
+at http://localhost:8877/usa/. The site container runs `python3 run.py serve`
+from the CodeCollective checkout and reads its bind-mounted
+`usa/data/publish/jobs/latest.json`, versioned manifests, and gzip shards.
+Both `/api/jobs/meta` and `/api/jobs` read local files; neither proxies production
+nor calls USAJOBS. The displayed retrieval date belongs to that local snapshot.
+
+To restart only CodeCollective's site from this repository:
+
+```bash
+python run.py start --no-r8 --no-datacenters
+```
+
+A missing local dataset produces an error rather than a remote fallback. Build
+shards using the commands below when preparing a new local snapshot.
+
 ## Local build of shards
 
 ```bash

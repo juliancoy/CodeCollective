@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import io
+import json
+import re
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, unquote, urlsplit
 import os
 import sys
 import time
@@ -22,7 +27,6 @@ root = Path(os.path.abspath(os.path.dirname(__file__)))
 portal_dir = Path(os.environ.get("ORGPORTAL_DIR", root.parent / "OrgPortal")).resolve()
 sys.path.append(str(portal_dir))
 
-import docker_utils
 
 
 PREFIX = "codecollective-"
@@ -42,10 +46,12 @@ def env_file_has_key(path: Path, key: str) -> bool:
 
 
 def ensure_datacenters_image(force_rebuild: bool = False) -> None:
+    import docker_utils
+
     images = docker_utils.DOCKER_CLIENT.images.list(name=DATACENTERS_IMAGE)
     if not force_rebuild:
         for image in images:
-            if DATACENTERS_IMAGE in image.tags:
+            if f"{DATACENTERS_IMAGE}:latest" in image.tags:
                 return
     print("Building datacenters helper image from datacenters/Dockerfile.kimi...")
     docker_utils.DOCKER_CLIENT.images.build(
@@ -57,6 +63,8 @@ def ensure_datacenters_image(force_rebuild: bool = False) -> None:
 
 
 def remove_container(name: str) -> None:
+    import docker_utils
+
     try:
         container = docker_utils.DOCKER_CLIENT.containers.get(name)
         container.stop()
@@ -96,22 +104,104 @@ def shared_python_container(name: str) -> dict:
 
 
 def start_static_site(port: int) -> None:
+    import docker_utils
+
     name = PREFIX + "website"
     remove_container(name)
     site = shared_python_container(name)
     site["command"] = [
         "python3",
-        "-m",
-        "http.server",
+        "run.py",
+        "serve",
+        "--site-port",
         str(port),
-        "--bind",
-        "127.0.0.1",
     ]
     docker_utils.run_container(site)
-    wait_for_http(f"http://127.0.0.1:{port}/projects.html", "main static site")
+    wait_for_http(f"http://127.0.0.1:{port}/projects.html", "main local site")
+    wait_for_http(f"http://127.0.0.1:{port}/api/jobs/meta", "local USAJOBS data")
+
+
+class LocalSiteHandler(SimpleHTTPRequestHandler):
+    """Serve the site and USAJOBS API entirely from the mounted local files."""
+
+    def __init__(self, *args, directory=None, **kwargs):
+        super().__init__(*args, directory=str(directory or root), **kwargs)
+
+    def local_object(self, key):
+        folder = (Path(self.directory) / 'usa/data/publish').resolve()
+        path = (folder / key).resolve()
+        if not path.is_relative_to(folder):
+            raise ValueError('Invalid dataset path')
+        return path
+
+    def jobs_response(self, path, query):
+        version = query.get('version', [''])[0]
+        if not version:
+            version = json.loads(self.local_object('jobs/latest.json').read_text())['version']
+        if not re.fullmatch(r'v[0-9]{8}T[0-9]{6}Z', version):
+            raise ValueError('Invalid jobs version')
+        manifest_key = f'jobs/{version}/manifest.json'
+        manifest = json.loads(self.local_object(manifest_key).read_text())
+        if path == '/api/jobs/meta':
+            body = json.dumps({**manifest, 'manifest_key': manifest_key}).encode()
+            stream, size, compressed = io.BytesIO(body), len(body), False
+        else:
+            page = int(query.get('page', ['1'])[0])
+            if page < 1:
+                raise ValueError('Invalid page')
+            state = query.get('state', ['ALL'])[0].upper()
+            entry = manifest['states'].get(state)
+            if not entry:
+                raise FileNotFoundError('State not found')
+            shard = next((item for item in entry['shards'] if item['page'] == page), None)
+            if not shard:
+                raise FileNotFoundError('Page not found')
+            file = self.local_object(shard['key'])
+            size, compressed = file.stat().st_size, True
+            stream = file.open('rb')
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(size))
+        self.send_header('Cache-Control', 'no-store')
+        if compressed:
+            self.send_header('Content-Encoding', 'gzip')
+        self.end_headers()
+        return stream
+
+    def send_head(self):
+        url = urlsplit(self.path)
+        if url.path in ('/api/jobs/meta', '/api/jobs'):
+            try:
+                return self.jobs_response(url.path, parse_qs(url.query))
+            except (json.JSONDecodeError, KeyError):
+                self.send_error(503, 'Local USAJOBS dataset is invalid')
+            except ValueError:
+                self.send_error(400, 'Invalid jobs query')
+            except FileNotFoundError:
+                self.send_error(404, 'Local USAJOBS data not found')
+            return None
+        path = Path(self.translate_path(self.path)).resolve()
+        relative = Path(unquote(url.path))
+        if (not path.is_relative_to(Path(self.directory).resolve())
+                or any(part.startswith('.') for part in relative.parts)
+                or path.suffix.lower() in {'.pem', '.key', '.db', '.sqlite', '.sqlite3'}):
+            self.send_error(404)
+            return None
+        return super().send_head()
+
+    def list_directory(self, path):
+        self.send_error(404)
+        return None
+
+
+def serve(args):
+    print(f'Local site and USAJOBS API: http://127.0.0.1:{args.site_port}/usa/', flush=True)
+    ThreadingHTTPServer(('127.0.0.1', args.site_port), LocalSiteHandler).serve_forever()
 
 
 def start_r8(port: int) -> None:
+    import docker_utils
+
     name = PREFIX + "r8-rowhome"
     remove_container(name)
     r8 = {
@@ -143,6 +233,8 @@ def start_r8(port: int) -> None:
 
 
 def start_datacenter_helpers(args: argparse.Namespace) -> None:
+    import docker_utils
+
     research_name = PREFIX + "datacenters-research"
     dashboard_name = PREFIX + "datacenters-dashboard"
     for name in (research_name, dashboard_name):
@@ -213,6 +305,7 @@ def start(args: argparse.Namespace) -> None:
         start_portal(args.portal_prefix, args.portal_network)
 
     print(f"Main site:             http://127.0.0.1:{args.site_port}/")
+    print(f"USAJOBS visualizer:     http://127.0.0.1:{args.site_port}/usa/")
     print(f"Branding:              http://127.0.0.1:{args.site_port}/branding.html")
     print(f"Kimi Inspector:        http://127.0.0.1:{args.site_port}/kimi-inspector.html")
     if not args.no_r8:
@@ -237,6 +330,8 @@ def stop(_args: argparse.Namespace) -> None:
 
 
 def status(_args: argparse.Namespace) -> None:
+    import docker_utils
+
     print(docker_utils.list_containers(show_all=False))
 
 
@@ -259,6 +354,10 @@ def parse_args() -> argparse.Namespace:
     start_parser.add_argument("--portal-network", default="codecollective")
     start_parser.add_argument("--rebuild", action="store_true")
     start_parser.set_defaults(func=start)
+
+    serve_parser = subparsers.add_parser("serve", help="Serve local files and the local USAJOBS API")
+    serve_parser.add_argument("--site-port", type=int, default=8877)
+    serve_parser.set_defaults(func=serve)
 
     stop_parser = subparsers.add_parser("stop")
     stop_parser.set_defaults(func=stop)
