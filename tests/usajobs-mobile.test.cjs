@@ -41,11 +41,12 @@ server=ThreadingHTTPServer(('127.0.0.1',0),functools.partial(module.LocalSiteHan
 print(server.server_port,flush=True)
 server.serve_forever()`;
   server = spawn('python3', ['-c', python, path.join(root, 'run.py'), folder], { stdio: ['ignore', 'pipe', 'pipe'] });
-  server.stderr.on('data', () => {});
+  let diagnostics = '';
+  server.stderr.on('data', bytes => { diagnostics = (diagnostics + String(bytes)).slice(-4096); });
   const port = await new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(Error('Local fixture server did not start')), 10000);
-    server.once('error', reject);
-    server.once('exit', code => { clearTimeout(timeout); reject(Error(`Fixture server exited: ${code}`)); });
+    const timeout = setTimeout(() => reject(Error('Local fixture server did not start within 60 seconds' + (diagnostics ? '\n' + diagnostics : ''))), 60000);
+    server.once('error', error => { clearTimeout(timeout); reject(error); });
+    server.once('exit', code => { clearTimeout(timeout); reject(Error(`Fixture server exited: ${code}\n${diagnostics}`)); });
     server.stdout.once('data', bytes => { clearTimeout(timeout); resolve(Number(String(bytes).trim())); });
   });
   origin = `http://127.0.0.1:${port}`;
