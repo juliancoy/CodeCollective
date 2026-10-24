@@ -101,7 +101,7 @@ def parse_args() -> argparse.Namespace:
         "--retries",
         type=int,
         default=DEFAULT_RETRIES,
-        help=f"Retry count for transient HTTP failures like 429/5xx (default: {DEFAULT_RETRIES})",
+        help=f"Retry count for transient HTTP 5xx failures (default: {DEFAULT_RETRIES})",
     )
     return parser.parse_args()
 
@@ -317,7 +317,11 @@ def fetch_api_payload(params: dict[str, Any], timeout: int = DEFAULT_TIMEOUT, re
             with urlopen(request, timeout=timeout) as response:  # noqa: S310
                 return json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
-            if exc.code not in {429, 500, 502, 503, 504} or attempt >= retries:
+            # Stop collection on throttling or an explicit server pause. Do not
+            # retry early, switch credentials, or shard around access limits.
+            if exc.code == 429 or exc.headers.get("Retry-After"):
+                raise
+            if exc.code not in {500, 502, 503, 504} or attempt >= retries:
                 raise
             delay = min(30, 2 ** (attempt + 1))
             print(

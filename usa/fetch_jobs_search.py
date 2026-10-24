@@ -229,7 +229,7 @@ def normalize_job(item: dict[str, Any]) -> dict[str, Any]:
         "total_openings": str(details.get("TotalOpenings", "")).strip(),
         "who_may_apply": str((details.get("WhoMayApply") or {}).get("Name", "")).strip(),
         "apply_url": apply_url,
-        "detail_url": str(details.get("DetailStatusUrl") or descriptor.get("PositionURI") or "").strip(),
+        "detail_url": str(descriptor.get("PositionURI") or "").strip(),
         "position_uri": str(descriptor.get("PositionURI", "")).strip(),
         "requirements": str(details.get("Requirements", "")).strip(),
         "required_documents": str(details.get("RequiredDocuments", "")).strip(),
@@ -354,7 +354,11 @@ def fetch_json(url: str, headers: dict[str, str] | None = None, timeout: int = D
             with urlopen(request, timeout=timeout) as response:  # noqa: S310
                 return json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
-            if exc.code not in {429, 500, 502, 503, 504} or attempt >= retries:
+            # Stop collection on throttling or an explicit server pause. Do not
+            # retry early, switch credentials, or shard around access limits.
+            if exc.code == 429 or exc.headers.get("Retry-After"):
+                raise
+            if exc.code not in {500, 502, 503, 504} or attempt >= retries:
                 raise
             delay = min(30, 2 ** (attempt + 1))
             print(f"Retrying Search request after HTTP {exc.code} (attempt {attempt + 1}/{retries}, wait {delay}s)", file=sys.stderr, flush=True)

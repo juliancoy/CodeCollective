@@ -839,7 +839,9 @@ function sortEntries(entries) {
 }
 
 function getJobNavigationUrl(bill) {
-  return bill.apply_url || bill.detail_url || '';
+  // Use the official announcement, never an application-status endpoint.
+  const jobId = String(bill.job_id || '').trim();
+  return /^\d+$/.test(jobId) ? `https://www.usajobs.gov/job/${jobId}` : '';
 }
 
 function formatBillSalary(bill) {
@@ -1171,11 +1173,11 @@ function renderBillModal(bill) {
         `).join('')}
         <tr>
           <th>Job Detail</th>
-          <td>${bill.detail_url ? `<a href="${escapeHtml(bill.detail_url)}" target="_blank" rel="noopener noreferrer">Open USAJOBS listing</a>` : 'N/A'}</td>
+          <td>${getJobNavigationUrl(bill) ? `<a href="${escapeHtml(getJobNavigationUrl(bill))}" target="_blank" rel="noopener noreferrer">Open USAJOBS listing</a>` : 'N/A'}</td>
         </tr>
         <tr>
           <th>Apply Link</th>
-          <td>${bill.apply_url ? `<a href="${escapeHtml(bill.apply_url)}" target="_blank" rel="noopener noreferrer">Apply online</a>` : 'N/A'}</td>
+          <td>${getJobNavigationUrl(bill) ? `<a href="${escapeHtml(getJobNavigationUrl(bill))}" target="_blank" rel="noopener noreferrer">View official application instructions</a>` : 'N/A'}</td>
         </tr>
       </tbody>
     </table>
@@ -1479,7 +1481,7 @@ function applyPersistedState(records, payload) {
     activeSponsor = '';
   }
 
-  billUpdated.textContent = payload.fetched_at ? `Updated ${formatDateTime(payload.fetched_at)}` : '';
+  billUpdated.textContent = payload.fetched_at ? `Data retrieved ${formatDateTime(payload.fetched_at)}` : 'Retrieval date unavailable';
 
   renderSponsorTable();
   syncCategoryPanelMode();
