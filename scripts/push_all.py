@@ -230,8 +230,11 @@ class Release:
             self.run(self.root, 'portal-build', 'python3', 'run.py', '--release', 'build', '--release-checkout', str(frozen))
             self.run(self.root, 'portal-deploy', 'python3', 'run.py', '--release', 'deploy', '--release-checkout', str(frozen))
             worker = frozen / 'chat-worker'
-            if not (worker / 'node_modules').exists():
-                (worker / 'node_modules').symlink_to(portal / 'chat-worker/node_modules', target_is_directory=True)
+            dependencies = worker / 'node_modules'
+            if dependencies.is_dir() and not dependencies.is_symlink() and not any(dependencies.iterdir()):
+                dependencies.rmdir()
+            if not dependencies.exists():
+                dependencies.symlink_to(portal / 'chat-worker/node_modules', target_is_directory=True)
             self.run(worker, 'chat-metadata', 'npm', 'run', 'build:metadata')
             self.run(worker, 'chat-deploy', 'npx', '--no-install', 'wrangler', 'deploy', '--keep-vars', '--message', git(portal, 'rev-parse', 'HEAD'))
         if collective and (collective in changed or by_name.get('r8-rowhome') in changed):
