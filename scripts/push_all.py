@@ -77,12 +77,12 @@ class Release:
                 data=json.dumps(body).encode() if body is not None else None)
             with urllib.request.urlopen(req, timeout=30) as response:
                 return json.load(response)
-        expected = {name: git(self.root / name, 'rev-parse', 'HEAD') for name in ('.', 'OrgPortal', 'PIdP')}
+        expected = {name: git(self.root / name, 'rev-parse', 'HEAD') for name in ('.', 'OrgPortal', 'PIdP', 'CodeCollective')}
         current = request('/api/distributed-tests')
         deadline = time.monotonic() + self.distributed_timeout
         while current.get('running'):
             refs = (current.get('run') or {}).get('repositories', {})
-            if all(refs.get(name, {}).get('commit') == sha for name, sha in expected.items()):
+            if not (current.get('run') or {}).get('selection') and all(refs.get(name, {}).get('commit') == sha for name, sha in expected.items()):
                 break
             print('[global-tests] Waiting for the existing run before starting the release revisions', flush=True)
             if time.monotonic() >= deadline:
@@ -105,7 +105,7 @@ class Release:
             if run.get('status') in {'passed', 'failed', 'partial', 'stopped', 'interrupted'}:
                 refs = run.get('repositories', {})
                 matched = all(refs.get(name, {}).get('commit') == sha for name, sha in expected.items())
-                success = run.get('status') == 'passed' and matched and bool(jobs) and all(j.get('status') in {'passed', 'reused'} for j in jobs)
+                success = run.get('status') == 'passed' and not run.get('selection') and matched and bool(jobs) and all(j.get('status') in {'passed', 'reused'} for j in jobs)
                 (self.folder / 'global-tests.json').write_text(json.dumps({'id': ident, 'status': run.get('status'), 'revisionsMatch': matched,
                     'expected': expected, 'suiteCount': len(jobs), 'excludedHosts': run.get('excluded_hosts', []), 'passed': success}, indent=2) + '\n')
                 if not success:
