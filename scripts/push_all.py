@@ -68,7 +68,7 @@ class Release:
         self.distributed_timeout = 7200
 
     def distributed(self):
-        if not (self.root / 'lan-monitor').is_dir():
+        if not (self.root / 'swarm-control/server').is_dir():
             return
         base = self.distributed_url.rstrip('/') + '/api/v1/master'
         token_file = Path(os.environ.get('MAP_MASTER_API_TOKEN_FILE', str(Path.home() / '.config/map-master/api-token')))
@@ -162,8 +162,8 @@ class Release:
         self.run(repo, 'diff-check', 'git', 'diff', '--check', 'HEAD')
         if repo == self.root and (repo / 'peer-worker/package.json').exists():
             self.run(repo, 'workspace-test', 'python3', '-m', 'unittest', 'discover', '-s', 'tests')
-            self.run(repo / 'lan-monitor', 'lan-test', 'npm', 'test')
-            self.run(repo / 'lan-monitor', 'lan-python-test', 'python3', '-m', 'unittest', 'discover', '-s', 'tests')
+            self.run(repo / 'swarm-control/server', 'lan-test', 'npm', 'test')
+            self.run(repo / 'swarm-control/server', 'lan-python-test', 'python3', '-m', 'unittest', 'discover', '-s', 'tests')
             self.run(repo / 'peer-worker', 'peer-test', 'npm', 'test')
             self.run(repo / 'peer-worker', 'peer-types', 'npm', 'run', 'typecheck')
             self.run(repo, 'peer-browser', 'python3', 'scripts/check_peer_browser.py')
@@ -273,6 +273,8 @@ class Release:
                 branch = json.load(response)['result']['production_branch']
             self.run(frozen, 'deploy', 'npx', '--no-install', 'wrangler', 'pages', 'deploy', 'build', '--project-name', 'deism', '--branch', branch)
         if self.root in changed and (self.root / 'peer-worker/package.json').exists():
+            if (Path.home()/'.config/systemd/user/swarm-control.target').is_file():
+                self.run(self.root/'swarm-control','swarm-deploy','python3','run.py','deploy','--revision',git(self.root,'rev-parse','HEAD'))
             frozen = self.checkout(self.root) / 'peer-worker'
             (frozen / 'node_modules').symlink_to(self.root / 'peer-worker/node_modules', target_is_directory=True)
             self.run(frozen, 'peer-deploy', 'npm', 'run', 'deploy', '--', '--keep-vars', '--message', git(self.root, 'rev-parse', 'HEAD'))

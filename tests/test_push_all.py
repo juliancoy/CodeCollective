@@ -35,7 +35,7 @@ class ReleaseTests(unittest.TestCase):
 
     def test_global_test_gate_requests_all_suites_without_deployment_or_email_actions(self):
         with tempfile.TemporaryDirectory() as folder:
-            root=pathlib.Path(folder);(root/'lan-monitor').mkdir()
+            root=pathlib.Path(folder);(root/'swarm-control/server').mkdir(parents=True)
             calls=self.global_gate(root,self.fixture_run(),['queued','passed'])
             request=calls[1].args[0]
             self.assertEqual(request.get_method(),'POST')
@@ -46,7 +46,7 @@ class ReleaseTests(unittest.TestCase):
 
     def test_global_gate_collapses_large_granular_catalog_to_parent_suites(self):
         with tempfile.TemporaryDirectory() as folder:
-            root=pathlib.Path(folder);(root/'lan-monitor').mkdir()
+            root=pathlib.Path(folder);(root/'swarm-control/server').mkdir(parents=True)
             catalog=[{'id':'api'},{'id':'web'}]+[{'id':'api--'+str(i)} for i in range(307)]
             calls=self.global_gate(root,self.fixture_run(),catalog=catalog)
             self.assertEqual(json.loads(calls[1].args[0].data)['suites'],['api','web'])
@@ -55,7 +55,7 @@ class ReleaseTests(unittest.TestCase):
     def test_global_test_gate_refuses_partial_runs_wrong_revisions_and_focused_scope(self):
         for error in ['partial','revision','scope']:
             with self.subTest(error=error),tempfile.TemporaryDirectory() as folder:
-                root=pathlib.Path(folder);(root/'lan-monitor').mkdir()
+                root=pathlib.Path(folder);(root/'swarm-control/server').mkdir(parents=True)
                 run=self.fixture_run()
                 if error=='partial':run['status']='partial'
                 if error=='revision':run['repositories']['CodeCollective']['commit']='different'
