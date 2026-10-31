@@ -1189,6 +1189,17 @@ export default {
     if (env.WEB_PREVIEW === 'true') return previewResponse(request, env);
     const url = new URL(request.url);
     const tenant = isOrgGroupSiteHost(url.hostname, env);
+    // Normalize only public site navigations; API and authentication requests
+    // retain their existing routing and authorization behavior.
+    if (["GET", "HEAD"].includes(request.method)
+        && ["codecollective.us", "www.codecollective.us"].includes(url.hostname)
+        && !/^\/(?:api|pidp|auth|\.well-known)(?:\/|$)/.test(url.pathname)
+        && (url.protocol !== "https:" || url.hostname !== "codecollective.us")) {
+      url.protocol = "https:";
+      url.hostname = "codecollective.us";
+      url.port = "";
+      return Response.redirect(url.toString(), 308);
+    }
     // Tenant frontend releases belong to OrgPortal. A service binding preserves
     // the original URL and streamed request, including WebSocket upgrades.
     if (env.ORGPORTAL_WEB && (tenant || pathMatchesPrefix(url.pathname, "/__portal_root"))) return env.ORGPORTAL_WEB.fetch(request);

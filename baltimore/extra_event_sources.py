@@ -7,6 +7,13 @@ where available; events are deduplicated against all other sources downstream.
 
 sources = [
     {
+        "name": "B'More Clubhouse",
+        "url": "https://www.bmoreclubhouse.org/events/",
+        "feed_url": "https://www.bmoreclubhouse.org/wp-json/tribe/events/v1/events?per_page=50",
+        "source_kind": "tribe_events",
+        "tags": ["Health", "Mental Health", "Community"],
+    },
+    {
         "name": "Impact Maryland — The Banner",
         "url": "https://impactmaryland.thebaltimorebanner.com/",
         "source_kind": "banner_events",

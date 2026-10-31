@@ -12,6 +12,8 @@ version_metadata = { binding = "CF_VERSION_METADATA" }
 directory = ".cloudflare/site"
 binding = "ASSETS"
 run_worker_first = true
+html_handling = "auto-trailing-slash"
+not_found_handling = "none"
 
 [vars]
 GOVERNANCE_API_ORIGIN = "https://org-codecollective.jcloiacon.workers.dev"

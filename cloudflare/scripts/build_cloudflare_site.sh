@@ -130,6 +130,9 @@ for dirpath, _, filenames in os.walk(root):
 print(f"[cloudflare] removed {removed} non-URI-safe files")
 PY
 
+echo "[cloudflare] preparing canonical search pages and sitemap from final assets"
+python3 "$ROOT_DIR/genSitemap.py" --root "$OUT_DIR" --prepare-html
+
 echo "[cloudflare] writing static cache headers"
 cat > "$OUT_DIR/_headers" <<'EOF'
 /*
