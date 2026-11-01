@@ -111,6 +111,15 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(git('log', '-1', '--format=%s'), 'Reviewed change')
             self.assertFalse(git('status', '--porcelain'))
             self.assertEqual(git('rev-parse', 'HEAD'), run('git', '--git-dir', str(remote), 'rev-parse', 'refs/heads/main'))
+            phases=[]
+            original=release_module.Release.run
+            def record(instance, repo, label, *command):
+                phases.append(label)
+                return original(instance,repo,label,*command)
+            with patch.object(release_module.Release,'run',new=record),patch.object(release_module.sys,'argv',[str(SCRIPT),str(repo.parent),'--skip-deploy']):
+                self.assertEqual(release_module.main(),0)
+            self.assertNotIn('push',phases)
+
 
 if __name__ == '__main__':
     unittest.main()

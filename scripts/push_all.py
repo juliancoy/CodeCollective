@@ -415,7 +415,7 @@ def main():
                     release.run(repo, 'generated-stage', 'git', 'add', '-A')
                     release.run(repo, 'generated-commit', 'git', 'commit', '-m', 'Update generated release assets')
                     changed.add(repo)
-                if s['branch'] and s['remote']:
+                if s['branch'] and s['remote'] and (not s['upstream'] or s['ahead']):
                     release.run(repo, 'push', 'git', 'push', *([] if s['upstream'] else ['--set-upstream']), s['remote'], f'HEAD:{s["remote_ref"]}')
             for repo in aliases:
                 if state(repo)['dirty']:
