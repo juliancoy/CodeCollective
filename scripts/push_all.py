@@ -362,7 +362,7 @@ def main():
     # Serialize releases in this workspace, but do not disturb another active release.
     with (root / '.push-all.lock').open('w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        folder = root / '.local-releases' / dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+        folder = root / '.local-releases' / dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
         folder.mkdir(parents=True, mode=0o700)
         release = Release(root, folder)
         release.reviewed_migrations = set(args.reviewed_migration)
