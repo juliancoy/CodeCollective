@@ -62,6 +62,23 @@ class ReleaseTests(unittest.TestCase):
                 if error=='scope':run['selection']['suites']=['api']
                 with self.assertRaises(RuntimeError):self.global_gate(root,run)
 
+    def test_unborn_local_repository_is_committed_without_a_remote(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=pathlib.Path(temp);repo=root/'local-only';repo.mkdir()
+            def run(*args):
+                return subprocess.run(args,check=True,capture_output=True,text=True).stdout.strip()
+            run('git','init','-b','main',str(repo))
+            run('git','-C',str(repo),'config','user.name','Release Test')
+            run('git','-C',str(repo),'config','user.email','test@example.invalid')
+            (repo/'file.txt').write_text('reviewed source\n')
+            self.assertIsNone(release_module.state(repo)['commit'])
+            self.assertIsNone(release_module.state(repo)['remote'])
+            run(str(SCRIPT),str(root),'--dry-run')
+            self.assertIsNone(release_module.state(repo)['commit'])
+            run(str(SCRIPT),str(root),'--skip-deploy')
+            self.assertTrue(release_module.state(repo)['commit'])
+            self.assertFalse(release_module.state(repo)['dirty'])
+
     def test_dry_run_and_commit_push_with_spaces(self):
         with tempfile.TemporaryDirectory(prefix='workspace release ') as temp:
             root = pathlib.Path(temp)

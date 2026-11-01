@@ -1,6 +1,7 @@
 from city_source_taxonomy import apply_city_source_taxonomy
 
 sources = [
+    {"url": "https://startdmv.org/events", "group_name": "StartDMV", "source_kind": "startdmv", "tags": ["Tech Community", "Startup", "Business"]},
     {"url": "https://dc.aitinkerers.org/", "group_name": "AI Tinkerers DC", "source_kind": "web_events_page", "tags": ["Tech Skills", "AI", "Tech Community"]},
     {"url": "https://luma.com/aibuildclub", "group_name": "AI Build Club DC", "tags": ["Tech Skills", "AI", "Tech Community"]},
     {"url": "https://www.meetup.com/hac-dc/", "group_name": "HacDC", "tags": ["Makerspace", "Robotics", "Tech Community"]},

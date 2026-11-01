@@ -17,6 +17,7 @@ import scrape_tribe
 import scrape_biotrac
 import scrape_active_data_calendar
 import scrape_web_events
+import scrape_startdmv
 from dc import scrape_empowerdc
 import scrape_legistar
 import scrape_thread_helpcenter
@@ -90,6 +91,7 @@ SOURCE_KIND_CONCURRENCY = {
     "active_data_calendar_rss": 1,
     "gbci_events": 1,
     "bdc_events": 1,
+    "startdmv": 1,
     "bsfs_events": 1,
     "unknown": 2,
 }
@@ -200,6 +202,9 @@ def infer_source_kind(source_url):
     host = parsed.netloc.lower()
     path = parsed.path or ""
     segments = [segment for segment in path.split("/") if segment]
+
+    if host in {"startdmv.org", "www.startdmv.org"}:
+        return "startdmv"
 
     if "meetup.com" in host:
         return "meetup"
@@ -534,6 +539,7 @@ def fetch_events_from_source(source, city):
                 source_url, source.get("ticket_url")
             ),
         ),
+        "startdmv": ("Fetching events from", lambda: scrape_startdmv.scrape(source_url)),
         "web_events_page": (
             "Fetching events from",
             lambda: scrape_web_events.parse_web_events_page(

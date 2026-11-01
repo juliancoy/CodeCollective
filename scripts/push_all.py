@@ -46,14 +46,14 @@ def discover(root):
 def state(repo):
     branch = git(repo, 'branch', '--show-current')
     upstream = git(repo, 'rev-parse', '--abbrev-ref', '@{upstream}', check=False)
-    remote = git(repo, 'config', f'branch.{branch}.remote', check=False) or 'origin'
+    remote = git(repo, 'config', f'branch.{branch}.remote', check=False) or ('origin' if git(repo,'remote','get-url','origin',check=False) else None)
     remote_ref = git(repo, 'config', f'branch.{branch}.merge', check=False) or f'refs/heads/{branch}'
     ahead = behind = 0
     if upstream:
         behind, ahead = map(int, git(repo, 'rev-list', '--left-right', '--count', f'{upstream}...HEAD').split())
     return dict(branch=branch, upstream=upstream, remote=remote, remote_ref=remote_ref,
                 dirty=bool(git(repo, 'status', '--porcelain')), ahead=ahead, behind=behind,
-                commit=git(repo, 'rev-parse', 'HEAD'))
+                commit=git(repo, 'rev-parse', '--verify', 'HEAD', check=False) or None)
 
 
 class Release:
@@ -378,7 +378,10 @@ def main():
                     continue
                 if s['dirty'] or s['ahead'] or s['behind'] or args.deploy_all:
                     changed.add(repo)
-                release.run(repo, 'fetch', 'git', 'fetch', '--prune', s['remote'])
+                if s['remote']:
+                    release.run(repo, 'fetch', 'git', 'fetch', '--prune', s['remote'])
+                else:
+                    print(f'[{repo.name}] No remote configured; committing and validating locally only.',flush=True)
                 if s['upstream'] and git(repo, 'rev-parse', s['upstream']) != s['commit']:
                     changed.add(repo)
                 if s['dirty']:
@@ -389,7 +392,7 @@ def main():
                                 Path(name).suffix.lower() in {'.pem', '.key', '.p12', '.pfx', '.sqlite', '.sqlite3', '.db', '.har'} or
                                 leaf in {'credentials.json', 'secrets.json', 'id_rsa', 'id_ed25519'}):
                             raise RuntimeError('Exclude sensitive/runtime file before publication: ' + str(repo / name))
-                    release.run(repo, 'diff-check', 'git', 'diff', '--check', 'HEAD')
+                    release.run(repo, 'diff-check', 'git', 'diff', '--check', *(['HEAD'] if s['commit'] else []))
                     release.run(repo, 'stage', 'git', 'add', '-A')
                     release.run(repo, 'commit', 'git', 'commit', '-m', args.message)
                 if s['upstream']:
@@ -412,7 +415,7 @@ def main():
                     release.run(repo, 'generated-stage', 'git', 'add', '-A')
                     release.run(repo, 'generated-commit', 'git', 'commit', '-m', 'Update generated release assets')
                     changed.add(repo)
-                if s['branch']:
+                if s['branch'] and s['remote']:
                     release.run(repo, 'push', 'git', 'push', *([] if s['upstream'] else ['--set-upstream']), s['remote'], f'HEAD:{s["remote_ref"]}')
             for repo in aliases:
                 if state(repo)['dirty']:
