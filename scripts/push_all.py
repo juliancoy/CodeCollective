@@ -82,6 +82,9 @@ class Release:
             with urllib.request.urlopen(req, timeout=30) as response:
                 return json.load(response)
         expected = {name: git(self.root / name, 'rev-parse', 'HEAD') for name in ('.', 'OrgPortal', 'PIdP', 'CodeCollective')}
+        if (self.root/'JSwarm/.git').exists():
+            for name in ('JSwarm','GenomeHarbor'):
+                expected[name]=git(self.root/name,'rev-parse','HEAD')
         # The catalog includes granular jobs; requests select their parent suites.
         suites = sorted({s['id'].split('--', 1)[0] for s in request('/suites')['suites']})
         if not suites:
@@ -129,6 +132,9 @@ class Release:
         target.parent.mkdir(parents=True, exist_ok=True)
         self.run(repo, 'release-checkout', 'git', 'worktree', 'add', '--detach', str(target), git(repo, 'rev-parse', 'HEAD'))
         self.checkouts[repo] = target
+        if repo==self.root and (repo/'JSwarm/.git').exists():
+            for name in ('JSwarm','GenomeHarbor'):
+                (target/name).symlink_to(self.checkout(repo/name),target_is_directory=True)
         return target
 
     def credentials(self):

@@ -52,6 +52,16 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(json.loads(calls[1].args[0].data)['suites'],['api','web'])
             self.assertTrue(json.loads((root/'global-tests.json').read_text())['completeSuiteSelection'])
 
+    def test_split_workspace_gate_checks_both_owning_repository_revisions(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=pathlib.Path(folder);(root/'swarm-control/server').mkdir(parents=True)
+            (root/'JSwarm/.git').mkdir(parents=True)
+            run=self.fixture_run()
+            run['repositories'].update({name:{'commit':'reviewed'} for name in ('JSwarm','GenomeHarbor')})
+            self.global_gate(root,run)
+            run['repositories']['JSwarm']['commit']='different'
+            with self.assertRaises(RuntimeError):self.global_gate(root,run)
+
     def test_global_test_gate_refuses_partial_runs_wrong_revisions_and_focused_scope(self):
         for error in ['partial','revision','scope']:
             with self.subTest(error=error),tempfile.TemporaryDirectory() as folder:
