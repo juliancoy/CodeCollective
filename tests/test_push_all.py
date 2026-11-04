@@ -12,6 +12,24 @@ spec=importlib.util.spec_from_file_location('workspace_release',SCRIPT.with_name
 release_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(release_module)
 
 class ReleaseTests(unittest.TestCase):
+    def test_split_release_preserves_owner_workspace_parent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base=pathlib.Path(directory);root=base/'Organization';root.mkdir()
+            def init(repo):
+                subprocess.run(['git','init','-q',str(repo)],check=True)
+                subprocess.run(['git','-C',str(repo),'add','.'],check=True)
+                subprocess.run(['git','-C',str(repo),'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','Fixture'],check=True)
+            (root/'run.py').symlink_to('JSwarm/run.py')
+            init(root)
+            for name in ('JSwarm','GenomeHarbor'):
+                owner=root/name;owner.mkdir();(owner/'run.py').write_text('reviewed source\n');init(owner)
+            folder=base/'release';folder.mkdir()
+            release=release_module.Release(root,folder)
+            frozen=release.checkout(root)
+            self.assertEqual((frozen/'run.py').read_text(),'reviewed source\n')
+            self.assertEqual((frozen/'run.py').resolve().parent.parent,frozen)
+            self.assertEqual(release.checkout(root/'JSwarm'),frozen/'JSwarm')
+
     def global_gate(self, root, run, statuses=None, catalog=None):
         class Response:
             def __init__(self,value):self.value=value
