@@ -1,6 +1,6 @@
 [
     {
-        "timestamp": "2026-11-06T04:48:21.416471-05:00",
+        "timestamp": "2026-11-07T04:10:37.161365-05:00",
         "city": "philadelphia",
         "stage": "source_fetch",
         "error": "404 Client Error: Not Found for url: https://luma.com/uev",
@@ -10,7 +10,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 626, in fetch_events_from_source\n    return apply_source_metadata(fetcher(), source), unmatched_sources, error_entries\n                                 ^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/genCalendar.py\", line 510, in <lambda>\n    lambda: scrape_luma_orgpage.fetch_and_parse_luma_events(source.get(\"feed_url\") or source_url),\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/scrape_luma_orgpage.py\", line 42, in fetch_and_parse_luma_events\n    response.raise_for_status()  # Raise an exception for bad status codes\n    ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/requests/models.py\", line 1167, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 404 Client Error: Not Found for url: https://luma.com/uev\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.160288-05:00",
+        "timestamp": "2026-11-07T04:10:45.000160-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/4/1/d/4/highres_536836852.jpeg",
@@ -22,19 +22,31 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/4/1/d/4/highres_536836852.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.160807-05:00",
+        "timestamp": "2026-11-07T04:10:45.000641-05:00",
         "city": "philadelphia",
         "stage": "image_download",
-        "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/9/4/7/d/highres_536978013.jpeg",
-        "source_url": "https://secure.meetupstatic.com/photos/event/9/4/7/d/highres_536978013.jpeg",
+        "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/b/2/7/highres_537002855.jpeg",
+        "source_url": "https://secure.meetupstatic.com/photos/event/b/2/7/highres_537002855.jpeg",
         "context": {
-            "event_name": "GTM Coaching Night: The GTM Flywheel + Talent Ladder"
+            "event_name": "GTM Growth Night: Community, Earned Media + the GTM Flywheel"
         },
         "error_type": "PermissionError",
-        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/9/4/7/d/highres_536978013.jpeg\n"
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/b/2/7/highres_537002855.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.161180-05:00",
+        "timestamp": "2026-11-07T04:10:45.000951-05:00",
+        "city": "philadelphia",
+        "stage": "image_download",
+        "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/8/c/3/highres_537002243.jpeg",
+        "source_url": "https://secure.meetupstatic.com/photos/event/8/c/3/highres_537002243.jpeg",
+        "context": {
+            "event_name": "(CS)\u00b2AI Online\u2122 Seminar: Cybersecurity in America\u2019s Water Industry"
+        },
+        "error_type": "PermissionError",
+        "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/8/c/3/highres_537002243.jpeg\n"
+    },
+    {
+        "timestamp": "2026-11-07T04:10:45.001235-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/d/f/b/c/highres_536877276.jpeg",
@@ -46,7 +58,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/d/f/b/c/highres_536877276.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.161530-05:00",
+        "timestamp": "2026-11-07T04:10:45.001544-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/3/b/1/5/highres_536955125.jpeg",
@@ -58,7 +70,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/3/b/1/5/highres_536955125.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.161922-05:00",
+        "timestamp": "2026-11-07T04:10:45.001816-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/3/d/e/2/highres_536955842.jpeg",
@@ -70,7 +82,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/3/d/e/2/highres_536955842.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.162265-05:00",
+        "timestamp": "2026-11-07T04:10:45.002077-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/3/e/d/f/highres_536956095.jpeg",
@@ -82,7 +94,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/3/e/d/f/highres_536956095.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.162601-05:00",
+        "timestamp": "2026-11-07T04:10:45.002379-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/d/5/f/6/highres_536994774.jpeg",
@@ -94,7 +106,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/d/5/f/6/highres_536994774.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.163026-05:00",
+        "timestamp": "2026-11-07T04:10:45.002690-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/b/8/c/6/highres_536987302.jpeg",
@@ -106,7 +118,7 @@
         "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/CodeCollective/CodeCollective/calendar_normalize.py\", line 37, in download_event_images\n    response = requests.get(image_url, headers=headers, timeout=10)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/run_calendar.py\", line 26, in polite_requests_get\n    return http_client.polite_get(_LEGACY_SESSION, url, timeout=timeout, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 290, in polite_get\n    _enforce_robots(session, url, timeout=timeout, user_agent=str(session.headers.get(\"User-Agent\") or DEFAULT_USER_AGENT))\n  File \"/home/runner/work/CodeCollective/CodeCollective/http_client.py\", line 272, in _enforce_robots\n    raise PermissionError(f\"Blocked by robots.txt policy: {url}\")\nPermissionError: Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/b/8/c/6/highres_536987302.jpeg\n"
     },
     {
-        "timestamp": "2026-11-06T04:48:26.163371-05:00",
+        "timestamp": "2026-11-07T04:10:45.002963-05:00",
         "city": "philadelphia",
         "stage": "image_download",
         "error": "Blocked by robots.txt policy: https://secure.meetupstatic.com/photos/event/d/e/1/4/highres_536876852.jpeg",
