@@ -41,7 +41,7 @@ class OurSocials extends HTMLElement {
         this.innerHTML = `
             <aside id="socialButtons" class="social__container">
                 <a
-                    href="https://chat.whatsapp.com/JFlI9aRvNaGCTU2lOFXpOt"
+                    href="https://chat.whatsapp.com/J5P9iAcOyFKEw7k8zVx1X7"
                     target="_blank"
                     class="social__link"
                 >
