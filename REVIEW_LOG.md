@@ -12,3 +12,7 @@
   "personnel/juliancoy.html": "1c8daf5f323dc1f2ddb26146f45b96a21eefa84d036ed22645205a67882d0ad7"
 }
 ```
+
+## 2026-11-13 canonical checkout follow-up
+
+Updated local release dependency selection and isolated checkout fixtures from GenomeHarbor to HarborGenetics. Host `python3 -m unittest discover -s tests -p test_push_all.py` passed; exact content fingerprint and output remain in the adjacent local test log. These local scripts do not change the deployed static site artifact.

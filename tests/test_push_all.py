@@ -21,7 +21,7 @@ class ReleaseTests(unittest.TestCase):
                 subprocess.run(['git','-C',str(repo),'-c','user.name=Fixture','-c','user.email=fixture@example.invalid','commit','-qm','Fixture'],check=True)
             (root/'run.py').symlink_to('JSwarm/run.py')
             init(root)
-            for name in ('JSwarm','GenomeHarbor'):
+            for name in ('JSwarm','HarborGenetics'):
                 owner=root/name;owner.mkdir();(owner/'run.py').write_text('reviewed source\n');init(owner)
             folder=base/'release';folder.mkdir()
             release=release_module.Release(root,folder)
@@ -75,7 +75,7 @@ class ReleaseTests(unittest.TestCase):
             root=pathlib.Path(folder);(root/'swarm-control/server').mkdir(parents=True)
             (root/'JSwarm/.git').mkdir(parents=True)
             run=self.fixture_run()
-            run['repositories'].update({name:{'commit':'reviewed'} for name in ('JSwarm','GenomeHarbor')})
+            run['repositories'].update({name:{'commit':'reviewed'} for name in ('JSwarm','HarborGenetics')})
             self.global_gate(root,run)
             run['repositories']['JSwarm']['commit']='different'
             with self.assertRaises(RuntimeError):self.global_gate(root,run)

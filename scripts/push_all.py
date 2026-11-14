@@ -83,7 +83,7 @@ class Release:
                 return json.load(response)
         expected = {name: git(self.root / name, 'rev-parse', 'HEAD') for name in ('.', 'OrgPortal', 'PIdP', 'CodeCollective')}
         if (self.root/'JSwarm/.git').exists():
-            for name in ('JSwarm','GenomeHarbor'):
+            for name in ('JSwarm','HarborGenetics'):
                 expected[name]=git(self.root/name,'rev-parse','HEAD')
         # The catalog includes granular jobs; requests select their parent suites.
         suites = sorted({s['id'].split('--', 1)[0] for s in request('/suites')['suites']})
@@ -129,13 +129,13 @@ class Release:
             return self.checkouts[repo]
         name = 'BmoreMedTech' if repo.name.lower() == 'bmoremedtech' else repo.name
         target = self.folder / 'checkouts' / name
-        if repo in (self.root/'JSwarm',self.root/'GenomeHarbor'):
+        if repo in (self.root/'JSwarm',self.root/'HarborGenetics'):
             target=self.folder/'checkouts'/self.root.name/name
         target.parent.mkdir(parents=True, exist_ok=True)
         self.run(repo, 'release-checkout', 'git', 'worktree', 'add', '--detach', str(target), git(repo, 'rev-parse', 'HEAD'))
         self.checkouts[repo] = target
         if repo==self.root and (repo/'JSwarm/.git').exists():
-            for name in ('JSwarm','GenomeHarbor'):
+            for name in ('JSwarm','HarborGenetics'):
                 self.checkout(repo/name)
         return target
 
