@@ -11,20 +11,16 @@ const NAV = [
 
 export type BrandBandProps = {
   city: string;
-  /** H1 and meta line in the scrolling introduction. */
-  title: ReactNode;
-  meta: ReactNode;
   /** The search pill stays mounted in the sticky bar. */
   pill: ReactNode;
   onSubscribe: () => void;
 };
 
-/** Stable sticky navigation; the introduction scrolls independently. */
-export function BrandBand({ city, title, meta, pill, onSubscribe }: BrandBandProps) {
+/** Stable sticky navigation and calendar controls. */
+export function BrandBand({ city, pill, onSubscribe }: BrandBandProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <>
     <header
       data-calendar-band
       className="calendar-brand-band sticky top-0 z-40 w-full"
@@ -71,7 +67,7 @@ export function BrandBand({ city, title, meta, pill, onSubscribe }: BrandBandPro
               aria-expanded={menuOpen}
               aria-controls="mobile-nav"
               aria-label="Menu"
-              className="flex items-center justify-center rounded-[var(--r-pill)] border md:hidden"
+              className="flex items-center justify-center rounded-[var(--r-pill)] border"
               style={{ borderColor: 'rgb(135 206 235 / 0.4)', color: 'var(--brand-ink)', minWidth: 44, minHeight: 44 }}
             >
               <MenuIcon size={18} strokeWidth={1.5} aria-hidden />
@@ -86,7 +82,7 @@ export function BrandBand({ city, title, meta, pill, onSubscribe }: BrandBandPro
         <nav
           id="mobile-nav"
           aria-label="Main"
-          className="relative border-t md:hidden"
+          className="relative border-t"
           style={{ borderColor: 'rgb(135 206 235 / 0.25)' }}
         >
           <ul className="m-0 list-none p-2">
@@ -126,29 +122,5 @@ export function BrandBand({ city, title, meta, pill, onSubscribe }: BrandBandPro
         ))}
       </nav>
     </header>
-    <section className="calendar-intro" aria-label="Calendar introduction">
-      <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6">
-            <nav aria-label="Main" className="hidden flex-1 justify-center md:flex">
-              <ul className="flex list-none items-center gap-6 p-0">
-                {NAV.map((item) => (
-                  <li key={item.label}>
-                    <a
-                      href={item.href}
-                      aria-current={item.current ? 'page' : undefined}
-                      className="t-meta"
-                      style={{ color: 'var(--brand-soft-ink)' }}
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-
-        <h1 className="t-h1 mt-5">{title}</h1>
-        <p className="t-band-meta mt-2">{meta}</p>
-      </div>
-    </section>
-    </>
   );
 }

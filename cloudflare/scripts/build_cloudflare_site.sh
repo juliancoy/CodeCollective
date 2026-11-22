@@ -34,6 +34,13 @@ rsync -a \
   --exclude='.github/' \
   --exclude='.cloudflare/' \
   --exclude='.docker-local/' \
+  --exclude='.local/' \
+  --exclude='.test-output/' \
+  --exclude='.test-log*' \
+  --exclude='*.test-log*' \
+  --exclude='TEST_LOG*' \
+  --exclude='test-results/' \
+  --exclude='playwright-report/' \
   --exclude='OrgPortal/' \
   --exclude='portal/' \
   --exclude='p/' \

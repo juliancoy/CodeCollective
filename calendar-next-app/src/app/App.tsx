@@ -19,7 +19,6 @@ import {
   AgendaSkeleton,
   EmptyState,
   ErrorState,
-  MetaSkeleton,
   TideSkeleton,
 } from '../components/States/States';
 import { StatusChip, dataStatus } from '../components/States/StatusChip';
@@ -28,7 +27,6 @@ import { getCity } from '../data/cities';
 import { invalidateEvents } from '../data/fetchEvents';
 import { buildPredicates, type FilterState } from '../data/filters';
 import { isSectorId } from '../data/sectors';
-import { relativeTime } from '../data/time';
 import type { DatePreset, SectorId } from '../data/types';
 import { useChromeHeight, useDarkTheme, useMediaQuery } from './layoutHooks';
 import { useCalendar } from './useCalendar';
@@ -308,15 +306,6 @@ function Calendar() {
         city={url.city}
         onSubscribe={() => setSubscribeOpen(true)}
         pill={pill}
-        title={<>What&rsquo;s on in {cal.cityLabel}</>}
-        meta={
-          <>
-            {cal.events.length.toLocaleString('en-US')} events from {cal.organizers} organizers.
-            {cal.newestScrapeAt && <> Updated {relativeTime(cal.newestScrapeAt, cal.now)}.</>}{' '}
-            {cal.tzLabel === 'your time' ? 'Times in your time.' : `${cal.tzLabel}.`}
-            <StatusChip status={status} />
-          </>
-        }
       />
 
       <ControlBar
@@ -338,6 +327,12 @@ function Calendar() {
         className="mx-auto w-full max-w-[1440px] px-4 pb-24 sm:px-6"
         aria-label={`${cal.cityLabel} events`}
       >
+        <h1 className="sr-only">{cal.cityLabel} events</h1>
+        {status.kind !== 'ok' && (
+          <div className="pt-3">
+            <StatusChip status={status} />
+          </div>
+        )}
         <p className="sr-only" role="status" aria-live="polite">
           {total === 1 ? '1 event' : `${total} events`}
         </p>
@@ -486,14 +481,7 @@ function Calendar() {
 function LoadingShell({ cityLabel }: { cityLabel: string }) {
   return (
     <>
-      <div style={{ background: 'var(--brand)' }}>
-        <div className="mx-auto w-full max-w-[1440px] px-4 pt-[72px] pb-7 sm:px-6">
-          <h1 className="t-h1" style={{ color: 'var(--brand-ink)' }}>
-            What&rsquo;s on in {cityLabel}
-          </h1>
-          <MetaSkeleton />
-        </div>
-      </div>
+      <h1 className="sr-only">{cityLabel} events</h1>
       <TideSkeleton />
       <AgendaSkeleton />
     </>
