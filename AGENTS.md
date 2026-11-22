@@ -1,3 +1,14 @@
+## Tech Party deployment boundary
+
+Code Collective publishes `codecollective-site` for `codecollective.us` and
+`www.codecollective.us`. Tech Party independently publishes `techparty-site`
+for `techparty.us` from the sibling TechParty repository. Never build or deploy
+Tech Party as a side effect of a Code Collective-only task, or the reverse.
+Use `./deploy.sh --component site --target prod` for this website alone.
+The workspace `push-all.sh --deploy-all` coordinator is only for an explicitly
+requested workspace-wide release. Cross-site links and shared OrgPortal services
+do not make the sites a single deployment or rollback unit.
+
 ## Independent OrgPortal release (2026-10-13)
 
 OrgPortal now owns its `orgportal-web` frontend and API release workflow.

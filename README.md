@@ -7,7 +7,14 @@ https://codecollective.us/.
 
 ## Deployment
 
-For a reviewed workspace release, use the existing release coordinator:
+Code Collective and Tech Party are separate applications. This repository builds
+`.cloudflare/site/` and publishes `codecollective-site` for `codecollective.us`
+and `www.codecollective.us`. The sibling TechParty repository builds its own
+`dist/` and publishes `techparty-site` for `techparty.us`. Builds, releases and
+rollbacks are independent; changing either site does not require releasing the
+other, even when a page links to the other site or shares OrgPortal services.
+
+Only for an explicitly requested workspace-wide release, use the coordinator:
 
 ```bash
 ./scripts/push-all.sh --deploy-all
