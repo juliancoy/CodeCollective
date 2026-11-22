@@ -35,6 +35,7 @@ rsync -a \
   --exclude='.cloudflare/' \
   --exclude='.docker-local/' \
   --exclude='.local/' \
+  --exclude='.cache/' \
   --exclude='.test-output/' \
   --exclude='.test-log*' \
   --exclude='*.test-log*' \
